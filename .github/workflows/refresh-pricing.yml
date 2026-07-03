@@ -33,3 +33,10 @@ jobs:
             git commit -m "chore: refresh pricing.json ($(date -u +%Y-%m-%dT%H:%M) UTC)"
             git push
           fi
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy public --project-name payg-inference-calculator --branch main

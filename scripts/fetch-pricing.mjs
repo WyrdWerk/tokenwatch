@@ -184,7 +184,9 @@ async function main() {
       const data = await fetchJson(prov.url);
       const models = prov.parse(data).filter((m) =>
         !m.id.endsWith(':free') &&
-        (m.pricing.input !== null || m.pricing.output !== null)
+        (m.pricing.input !== null || m.pricing.output !== null) &&
+        (m.pricing.input ?? 0) >= 0 &&
+        (m.pricing.output ?? 0) >= 0
       );
       out.providers.push({ key: prov.key, name: prov.name, model_count: models.length, status: 'ok' });
       out.models.push(...models);
