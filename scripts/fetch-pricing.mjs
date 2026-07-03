@@ -10,6 +10,7 @@
  * {
  *   id:          "provider/model"        (normalized cross-provider key where possible)
  *   name:        string
+ *   org:         "anthropic" | "openai" | "deepseek" | ...  (underlying model creator)
  *   provider:    "openrouter" | "wafer" | "crof" | "deepinfra" | "ember"
  *   context_length: number | null
  *   pricing: {
@@ -78,8 +79,48 @@ function num(v) {
 const perTokToPerM = (v) => { const n = num(v); return n === null ? null : n * 1e6; };
 /** cents/M → $/M tokens */
 const centsToDollars = (v) => { const n = num(v); return n === null ? null : n / 100; };
-/** $/M → $/M (identity) */
 const passthrough = (v) => num(v);
+
+// ── org extraction ────────────────────────────────────────────────────────────
+
+/** Canonicalize an org prefix — normalize variants to a single key. */
+const ORG_ALIASES = {
+  'deepseek-ai': 'deepseek',
+  'zai-org': 'z-ai',
+  'minimaxai': 'minimax',
+  'xiaomimimo': 'xiaomi',
+  'meta-llama': 'meta',
+  'mistralai': 'mistral',
+  'nousresearch': 'nous',
+  'moonshotai': 'moonshot',
+  'ibm-granite': 'ibm',
+  'bytedance-seed': 'bytedance',
+  'stepfun-ai': 'stepfun',
+};
+
+/** Extract org from a model ID with a slash prefix. */
+function orgFromId(id) {
+  if (!id.includes('/')) return null;
+  let org = id.split('/')[0].replace(/^[~]/, '').toLowerCase();
+  return ORG_ALIASES[org] || org;
+}
+
+/** Extract org from model name when ID has no slash.
+ *  Names like "DeepSeek: DeepSeek V4 Pro" → "deepseek" */
+function orgFromName(name) {
+  if (!name) return null;
+  const match = name.match(/^(?:~)?([^:]+):/);
+  if (!match) return null;
+  let org = match[1].trim().toLowerCase();
+  return ORG_ALIASES[org] || org;
+}
+
+/** Build canonical model ID for cross-referencing. */
+function canonicalId(id) {
+  let k = id.includes('/') ? id.split('/').slice(-1)[0] : id;
+  k = k.replace(/:free$/, '').toLowerCase().trim();
+  return k;
+}
 
 // ── provider parsers ──────────────────────────────────────────────────────────
 
@@ -197,6 +238,20 @@ async function main() {
     }
   }
 
+  // Enrich models with org field (underlying model creator, not the API provider)
+  // 1. Build canonical → org map from models with slash in ID
+  const canonToOrg = {};
+  for (const m of out.models) {
+    const org = orgFromId(m.id);
+    if (org) canonToOrg[canonicalId(m.id)] = org;
+  }
+  // 2. Assign org to each model: direct from ID, cross-ref, or from name
+  let unresolved = 0;
+  for (const m of out.models) {
+    m.org = orgFromId(m.id) || canonToOrg[canonicalId(m.id)] || orgFromName(m.name);
+    if (!m.org) { m.org = m.provider; unresolved++; }
+  }
+  if (unresolved) console.warn(`⚠ ${unresolved} models could not resolve org — using provider name as fallback`);
   await mkdir('public', { recursive: true });
   await writeFile('public/pricing.json', JSON.stringify(out, null, 2));
   console.log(`\n→ Wrote public/pricing.json (${out.models.length} models from ${out.providers.length} providers)`);

@@ -93,11 +93,25 @@ select:focus, input:focus { border-color: var(--accent); }
   margin-bottom: 1.25rem;
 }
 
-.token-grid {
+.usage-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1rem;
 }
+
+.usage-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+.usage-summary #tokenBreakdown { font-variant-numeric: tabular-nums; }
+.pct-ok { color: var(--green); font-weight: 600; }
+.pct-warn { color: var(--yellow); font-weight: 600; }
+.total-field input { font-size: 1.1rem; font-weight: 600; }
 
 .token-field { display: flex; flex-direction: column; gap: 0.2rem; }
 .token-field label { font-size: 0.85rem; font-weight: 600; }
@@ -158,6 +172,16 @@ tbody tr:hover { background: var(--surface-2); }
   font-weight: 600;
   background: var(--surface-2);
   border: 1px solid var(--border);
+}
+.org-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
 }
 .cost { font-weight: 700; }
 .cost-zero { color: var(--green); }
