@@ -1,3 +1,17 @@
+# CRITICAL: Delegation Gate
+
+Before ANY tool call on a new task, STOP and classify:
+1. Will this task require reading 3+ files or running multiple analysis scripts?
+   → YES: Dispatch `explore` subagent(s) FIRST. Do NOT read files inline.
+2. Is this a code edit that depends on investigation findings?
+   → Investigate via subagent, then edit inline with the returned findings.
+3. Is this a single quick lookup or sequential edit?
+   → Proceed inline.
+
+Rules: Investigation = delegate. Editing/deciding = inline. Never both.
+
+---
+
 # AGENTS.md — TokenWatch
 
 ## Project overview
