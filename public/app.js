@@ -244,9 +244,8 @@ function orgDisplay(org) {
   return org.charAt(0).toUpperCase() + org.slice(1);
 }
 
-function providerName(key) {
-  const p = state.data.providers.find((p) => p.key === key);
-  return p ? p.name : key;
+function providerName(key, display) {
+  return display || state.data.providers.find((p) => p.key === key)?.name || key;
 }
 
 function fmtPrice(p) {
@@ -270,7 +269,7 @@ function esc(s) {
 
 function renderTable(rows, tokens) {
   if (rows.length === 0) {
-    els.resultsBody.innerHTML = `<tr><td colspan="8" class="empty">No offerings match your criteria. Some providers may not support the token types you entered.</td></tr>`;
+    els.resultsBody.innerHTML = `<tr><td colspan="9" class="empty">No offerings match your criteria. Some providers may not support the token types you entered.</td></tr>`;
     return;
   }
 
@@ -278,11 +277,18 @@ function renderTable(rows, tokens) {
     .map((r, i) => {
       const p = r.model.pricing;
       const cheapest = i === 0 && r.cost > 0;
+      const quant = r.model.quantization && r.model.quantization !== 'unknown'
+        ? `<span class="quant">${esc(r.model.quantization)}</span>`
+        : '<span class="quant quant-none">—</span>';
+      const promo = r.model.discount > 0
+        ? ` <span class="promo-badge" title="${(r.model.discount * 100).toFixed(0)}% off">promo</span>`
+        : '';
       return `<tr>
         <td class="rank">${i + 1}${cheapest ? ' 🏆' : ''}</td>
         <td><span class="org-badge">${esc(orgDisplay(r.model.org))}</span></td>
-        <td><span class="provider-badge">${esc(providerName(r.model.provider))}</span></td>
-        <td>${esc(r.model.id)}</td>
+        <td><span class="provider-badge">${esc(providerName(r.model.provider, r.model.provider_display))}</span></td>
+        <td>${quant}</td>
+        <td>${esc(r.model.id)}${promo}</td>
         <td class="num">${fmtPrice(p.input)}</td>
         <td class="num">${fmtPrice(p.output)}</td>
         <td class="num">${fmtPrice(p.cache_read)}</td>

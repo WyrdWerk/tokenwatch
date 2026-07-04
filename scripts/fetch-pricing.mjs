@@ -2,43 +2,37 @@
 /**
  * fetch-pricing.mjs
  *
- * Fetches /v1/models from each public provider, normalizes pricing to a
- * canonical schema (all prices in USD per million tokens), and writes
- * public/pricing.json for the static frontend to consume.
+ * Fetches pricing from direct providers + OpenRouter (de-aggregated per backend
+ * inference provider), normalizes to $/M tokens, and writes public/pricing.json.
  *
- * Canonical model record:
+ * Tier 1 — Direct providers: DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac
+ *          (authoritative source for their own offerings)
+ * Tier 2 — OpenRouter /endpoints: de-aggregated per-backend pricing
+ *          (each backend like Fireworks, Together, Novita becomes its own row)
+ * Tier 3 — CSV-sourced: Hyper, Makora, Xiaomimimo (manual-pricing.csv)
+ *          OpenCode Go (hardcoded)
+ *
+ * Precedence: (canonical_model, normalized_provider, quantization) — direct wins
+ * over OpenRouter, which wins over CSV/hardcoded.
+ *
+ * Model record:
  * {
- *   id:          "provider/model"        (normalized cross-provider key where possible)
+ *   id:          "provider/model"        (display ID)
  *   name:        string
- *   org:         "anthropic" | "openai" | "deepseek" | ...  (underlying model creator)
- *   provider:    "openrouter" | "wafer" | "crof" | "deepinfra" | "ember"
+ *   org:         "anthropic" | "openai" | "deepseek" | ...  (model creator)
+ *   provider:    "deepinfra" | "fireworks" | "together" | ...  (inference provider)
+ *   quantization: "fp8" | "fp4" | "unknown" | null
+ *   discount:    number  (0 = structural, >0 = promo fraction, e.g. 0.7 = 70% off)
  *   context_length: number | null
- *   pricing: {
- *     input:       number | null   ($/M tokens)
- *     output:      number | null   ($/M tokens)
- *     cache_read:  number | null   ($/M tokens)
- *     cache_write: number | null   ($/M tokens)
- *   }
+ *   pricing: { input, output, cache_read, cache_write }  ($/M tokens)
  * }
- *
- * Unit conversions (all → $/M tokens):
- *   openrouter / ember  → $/token      → ×1e6
- *   crof                         → $/M          → as-is
- *   wafer                        → cents/M      → ÷100
- *   deepinfra                    → $/M          → as-is
  */
 
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 
-// ── providers config ──────────────────────────────────────────────────────────
+// ── direct providers config ───────────────────────────────────────────────────
 
-const PROVIDERS = [
-  {
-    key: 'openrouter',
-    name: 'OpenRouter',
-    url: 'https://openrouter.ai/api/v1/models',
-    parse: parseOpenRouter,
-  },
+const DIRECT_PROVIDERS = [
   {
     key: 'deepinfra',
     name: 'DeepInfra',
@@ -59,15 +53,9 @@ const PROVIDERS = [
   },
   {
     key: 'wafer',
-    name: 'Wafer (Pass)',
+    name: 'Wafer',
     url: 'https://pass.wafer.ai/v1/models',
     parse: parseWafer,
-  },
-  {
-    key: 'llmgateway',
-    name: 'LLMGateway',
-    url: 'https://api.llmgateway.io/v1/models',
-    parse: parseLLMGateway,
   },
   {
     key: 'synthetic',
@@ -82,6 +70,14 @@ const PROVIDERS = [
     parse: parseLilac,
   },
 ];
+
+// ── OpenRouter config ──────────────────────────────────────────────────────────
+
+const OPENROUTER_MODELS_URL = 'https://openrouter.ai/api/v1/models';
+const OPENROUTER_ENDPOINT_BASE = 'https://openrouter.ai/api/v1/models';
+const OR_CONCURRENCY = 20;
+const OR_MAX_RETRIES = 1;
+const OR_RETRY_DELAY_MS = 2000;
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -98,6 +94,13 @@ const perTokToPerM = (v) => { const n = num(v); return n === null ? null : n * 1
 /** cents/M → $/M tokens */
 const centsToDollars = (v) => { const n = num(v); return n === null ? null : n / 100; };
 const passthrough = (v) => num(v);
+/** Filter out non-text models by ID pattern.
+ *  Applied ONLY to direct providers (which lack modality metadata).
+ *  OpenRouter rows are filtered via architecture.output_modalities instead. */
+const NON_TEXT_ID = /(?:^|[-/])(embed|embedding|embeddinggemma|clip|bge|tts|bark|parler|kokoro|openvoice)(?:[-/]|$)/i;
+function isTextModel(id) {
+  return !NON_TEXT_ID.test(id);
+}
 
 // ── org extraction ────────────────────────────────────────────────────────────
 
@@ -105,9 +108,6 @@ const passthrough = (v) => num(v);
 const ORG_ALIASES = {
   'deepseek-ai': 'deepseek',
   'zai-org': 'z-ai',
-  'zai': 'z-ai',
-  'minimaxai': 'minimax',
-  'xiaomimimo': 'xiaomi',
   'meta-llama': 'meta',
   'mistralai': 'mistral',
   'nousresearch': 'nous',
@@ -115,14 +115,8 @@ const ORG_ALIASES = {
   'ibm-granite': 'ibm',
   'bytedance-seed': 'bytedance',
   'stepfun-ai': 'stepfun',
-  // LLMGateway provider IDs
-  'google-ai-studio': 'google',
-  'google-vertex': 'google',
-  'vertex-anthropic': 'anthropic',
-  'vertex-openai': 'openai',
-  'aws-bedrock': 'amazon',
-  'together-ai': 'together',
-  'inference.net': 'inference-net',
+  'minimaxai': 'minimax',
+  'xiaomimimo': 'xiaomi',
 };
 
 /** Extract org from a model ID with a slash prefix. */
@@ -143,54 +137,111 @@ function orgFromName(name) {
 }
 
 /** Build canonical model ID for cross-referencing.
- *  Strips provider prefix, suffixes (:free, dates like -2024-08-06,
- *  -preview, -preview-05-06, :thinking), and lowercases.
- *  Used for MATCHING only — display ID stays as-is.
- *  Turbo variants are kept separate (genuinely different SKUs). */
+ *  Strips provider prefix, suffixes (:free, dates, -preview, :thinking), lowercases.
+ *  Turbo variants kept separate (different SKUs). */
 function canonicalId(id) {
   let k = id.includes('/') ? id.split('/').slice(-1)[0] : id;
   k = k.replace(/:free$/, '')
        .replace(/:thinking$/, '')
-       .replace(/-(\d{4})-\d{2}-\d{2}$/, '')           // date-suffixed: gpt-4o-2024-08-06 → gpt-4o
-       .replace(/-preview-\d{2}-\d{2}$/, '')            // gemini-2.5-pro-preview-05-06 → gemini-2.5-pro
-       .replace(/-preview$/, '')                        // gpt-4-turbo-preview → gpt-4-turbo
+       .replace(/-(\d{4})-\d{2}-\d{2}$/, '')
+       .replace(/-preview-\d{2}-\d{2}$/, '')
+       .replace(/-preview$/, '')
        .toLowerCase().trim();
   return k;
 }
 
 /** Build a key for org cross-referencing.
- *  Like canonicalId but also strips quantization suffixes (-fp8, -nvfp4, etc.)
- *  so that glm-5.2-fp8 can resolve org from glm-5.2. */
+ *  Like canonicalId but also strips quantization suffixes. */
 function orgLookupKey(id) {
   return canonicalId(id)
     .replace(/-(fp8|nvfp4|int4-mixed-ar|int4)$/, '')
-    .replace(/-long$/, ''); // opencode tiered variant
+    .replace(/-long$/, '');
 }
 
-// ── provider parsers ──────────────────────────────────────────────────────────
+// ── provider-name normalization ───────────────────────────────────────────────
 
-function parseOpenRouter(data) {
-  return (data.data || []).map((m) => ({
-    id: m.id,
-    name: m.name || m.id,
-    provider: 'openrouter',
-    context_length: m.context_length ?? null,
-    pricing: {
-      input: perTokToPerM(m.pricing?.prompt),
-      output: perTokToPerM(m.pricing?.completion),
-      cache_read: perTokToPerM(m.pricing?.input_cache_read),
-      cache_write: perTokToPerM(m.pricing?.input_cache_write),
-    },
-  }));
+/** Normalize provider names across sources to a single key.
+ *  Direct providers use lowercase keys (ember, deepinfra, wafer).
+ *  OpenRouter uses display names (EmberCloud, DeepInfra, Wafer).
+ *  This map reconciles them for dedup precedence. */
+const PROVIDER_NAME_MAP = {
+  // OpenRouter display name → normalized key (matching direct provider keys)
+  'deepinfra': 'deepinfra',
+  'embercloud': 'ember',
+  'wafer': 'wafer',
+  'crof': 'crof',
+  'synthetic': 'synthetic',
+  'lilac': 'lilac',
+  // Infra providers without direct fetch — keep OpenRouter display name lowercased
+  'fireworks': 'fireworks',
+  'together': 'together',
+  'novita': 'novita',
+  'siliconflow': 'siliconflow',
+  'gmicloud': 'gmicloud',
+  'digitalocean': 'digitalocean',
+  'parasail': 'parasail',
+  'akashml': 'akashml',
+  'venice': 'venice',
+  'morph': 'morph',
+  'dekallm': 'dekallm',
+  'cohere': 'cohere',
+  'groq': 'groq',
+  'nebius': 'nebius',
+  'sambanova': 'sambanova',
+  'streamlake': 'streamlake',
+  'atlascloud': 'atlascloud',
+  'baidu': 'baidu',
+  'alibaba': 'alibaba',
+  'minimax': 'minimax',
+  'mistral': 'mistral',
+  'anthropic': 'anthropic',
+  'openai': 'openai',
+  'azure': 'azure',
+  'google': 'google',
+  'google ai studio': 'google',
+  'amazon bedrock': 'amazon',
+  'z.ai': 'z-ai',
+  'xai': 'xai',
+  'deepseek': 'deepseek',
+  'moonshot ai': 'moonshot',
+  'sakana ai': 'sakana',
+  'arcee ai': 'arcee',
+  'inception': 'inception',
+  'infermatic': 'infermatic',
+  'mara': 'mara',
+  'nextbit': 'nextbit',
+  'nex agi': 'nex-agi',
+  'poolside': 'poolside',
+  'phala': 'phala',
+  'friendli': 'friendli',
+  'chutes': 'chutes',
+  'wandb': 'wandb',
+};
+
+/** Normalize a provider display name to a lowercase key. */
+function normalizeProvider(displayName) {
+  const key = displayName.toLowerCase().trim();
+  return PROVIDER_NAME_MAP[key] || key.replace(/[\s.]/g, '-');
 }
+
+// ── direct provider parsers ───────────────────────────────────────────────────
 
 function parseDeepInfra(data) {
   return (data.data || [])
-    .filter((m) => m.metadata?.pricing && Object.keys(m.metadata.pricing).length > 0)
+    .filter((m) => {
+      if (!m.metadata?.pricing || Object.keys(m.metadata.pricing).length === 0) return false;
+      // Exclude non-text models via structured tags (more maintainable than regex)
+      const tags = m.metadata?.tags || [];
+      const NON_TEXT_TAGS = ['image-gen', 'tts', 'stt', 'automatic-speech-recognition', 'embed', 'embeddings', 'video-gen', 'audio'];
+      if (tags.some(t => NON_TEXT_TAGS.includes(t))) return false;
+      return true;
+    })
     .map((m) => ({
       id: m.id,
       name: m.id,
       provider: 'deepinfra',
+      quantization: null,
+      discount: 0,
       context_length: m.metadata?.context_length ?? null,
       pricing: {
         input: passthrough(m.metadata.pricing?.input_tokens),
@@ -206,6 +257,8 @@ function parseCrof(data) {
     id: m.id,
     name: m.name || m.id,
     provider: 'crof',
+    quantization: null,
+    discount: 0,
     context_length: m.context_length ?? null,
     pricing: {
       input: passthrough(m.pricing?.prompt),
@@ -221,6 +274,8 @@ function parseEmber(data) {
     id: m.id,
     name: m.name || m.id,
     provider: 'ember',
+    quantization: null,
+    discount: 0,
     context_length: m.context_length ?? null,
     pricing: {
       input: perTokToPerM(m.pricing?.prompt),
@@ -240,6 +295,8 @@ function parseWafer(data) {
         id: m.id,
         name: m.wafer?.display_name || m.id,
         provider: 'wafer',
+        quantization: null,
+        discount: 0,
         context_length: m.wafer?.context_length ?? m.max_model_len ?? null,
         pricing: {
           input: centsToDollars(p.input_cents_per_million),
@@ -251,36 +308,17 @@ function parseWafer(data) {
     });
 }
 
-function parseLLMGateway(data) {
-  return (data.data || []).map((m) => {
-    const org = m.providers?.[0]?.providerId || null;
-    return {
-      id: m.id,
-      name: m.name || m.id,
-      provider: 'llmgateway',
-      context_length: m.context_length ?? null,
-      org: org ? (ORG_ALIASES[org] || org) : null,
-      pricing: {
-        input: perTokToPerM(m.pricing?.prompt),
-        output: perTokToPerM(m.pricing?.completion),
-        cache_read: perTokToPerM(m.pricing?.input_cache_read),
-        cache_write: perTokToPerM(m.pricing?.input_cache_write),
-      },
-    };
-  });
-}
-
 function parseSynthetic(data) {
   return (data.data || []).map((m) => {
     const inputPerM = perTokToPerM(m.pricing?.prompt);
-    // Cache read is always 20% of input price (per user spec)
     const cacheRead = inputPerM !== null ? inputPerM * 0.20 : null;
-    // Extract org from hugging_face_id field (e.g., zai-org/GLM-5.2 → z-ai)
     const org = m.hugging_face_id ? orgFromId(m.hugging_face_id) : null;
     return {
       id: m.id,
       name: m.name || m.id,
       provider: 'synthetic',
+      quantization: null,
+      discount: 0,
       context_length: m.context_length ?? null,
       org,
       pricing: {
@@ -298,6 +336,8 @@ function parseLilac(data) {
     id: m.id,
     name: m.name || m.id,
     provider: 'lilac',
+    quantization: null,
+    discount: 0,
     context_length: m.context_length ?? null,
     pricing: {
       input: perTokToPerM(m.pricing?.prompt),
@@ -308,9 +348,116 @@ function parseLilac(data) {
   }));
 }
 
+// ── OpenRouter de-aggregation ─────────────────────────────────────────────────
+
+/** Fetch JSON with retry on 429/5xx. */
+async function fetchJsonWithRetry(url, retries = OR_MAX_RETRIES) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(45_000),
+      });
+      if (res.ok) return res.json();
+      if ((res.status === 429 || res.status >= 500) && attempt < retries) {
+        await new Promise((r) => setTimeout(r, OR_RETRY_DELAY_MS));
+        continue;
+      }
+      throw new Error(`HTTP ${res.status} for ${url}`);
+    } catch (err) {
+      if (attempt < retries && err.name !== 'AbortError') {
+        await new Promise((r) => setTimeout(r, OR_RETRY_DELAY_MS));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
+/** Fetch /endpoints for a single model, return per-backend rows. */
+async function fetchModelEndpoints(model) {
+  const slug = model.canonical_slug;
+  if (!slug) return [];
+  // CRITICAL: do NOT encode the slug — the / is a literal path separator
+  const url = `${OPENROUTER_ENDPOINT_BASE}/${slug}/endpoints`;
+  const data = await fetchJsonWithRetry(url);
+  const endpoints = data.data?.endpoints || [];
+  const modelId = data.data?.model_id || model.id;
+  const modelName = data.data?.model_name || model.name || model.id;
+
+  return endpoints.map((ep) => ({
+    id: modelId,
+    name: modelName,
+    provider: normalizeProvider(ep.provider_name),
+    provider_display: ep.provider_name,
+    quantization: ep.quantization || null,
+    discount: ep.pricing?.discount || 0,
+    context_length: ep.context_length ?? model.context_length ?? null,
+    pricing: {
+      input: perTokToPerM(ep.pricing?.prompt),
+      output: perTokToPerM(ep.pricing?.completion),
+      cache_read: perTokToPerM(ep.pricing?.input_cache_read),
+      cache_write: null,
+    },
+  }));
+}
+
+/** De-aggregate OpenRouter: fetch /v1/models, then /endpoints per model. */
+async function fetchOpenRouter() {
+  const data = await fetchJsonWithRetry(OPENROUTER_MODELS_URL);
+  const allModels = data.data || [];
+
+  // Filter: non-:free, priced, text-output only
+  const textModels = allModels.filter((m) => {
+    if (m.id.endsWith(':free')) return false;
+    if (!m.pricing?.prompt || parseFloat(m.pricing.prompt) <= 0) return false;
+    // Text-output only: output_modalities must be exactly ["text"]
+    // (allows multimodal input like text+image->text, excludes image/audio/video output)
+    const outputMods = m.architecture?.output_modalities;
+    if (!outputMods || !Array.isArray(outputMods)) return true; // assume text if missing
+    return outputMods.length === 1 && outputMods[0] === 'text';
+  });
+
+  console.log(`  OpenRouter: ${allModels.length} total → ${textModels.length} text-output priced models`);
+
+  // Fetch /endpoints concurrently with bounded pool
+  const results = [];
+  let failed = 0;
+  for (let i = 0; i < textModels.length; i += OR_CONCURRENCY) {
+    const batch = textModels.slice(i, i + OR_CONCURRENCY);
+    const batchResults = await Promise.allSettled(batch.map((m) => fetchModelEndpoints(m)));
+    for (let j = 0; j < batchResults.length; j++) {
+      const r = batchResults[j];
+      if (r.status === 'fulfilled') {
+        results.push(...r.value);
+      } else {
+        failed++;
+        if (failed <= 5) console.error(`    ✗ ${batch[j].id}: ${r.reason?.message || r.reason}`);
+      }
+    }
+    if (i % (OR_CONCURRENCY * 5) === 0 && i > 0) {
+      console.log(`    ... ${i + batch.length}/${textModels.length} models fetched`);
+    }
+  }
+
+  const failureRate = textModels.length > 0 ? failed / textModels.length : 0;
+  if (failureRate > 0.20) {
+    throw new Error(`OpenRouter endpoints failure rate ${(failureRate * 100).toFixed(1)}% (${failed}/${textModels.length}) exceeds 20% threshold — aborting`);
+  }
+
+  // Filter: drop zero-price rows (both input and output null/0)
+  const priced = results.filter((m) =>
+    (m.pricing.input !== null || m.pricing.output !== null) &&
+    (m.pricing.input ?? 0) >= 0 &&
+    (m.pricing.output ?? 0) >= 0 &&
+    ((m.pricing.input ?? 0) > 0 || (m.pricing.output ?? 0) > 0)
+  );
+
+  console.log(`  OpenRouter: ${priced.length} backend rows from ${textModels.length - failed}/${textModels.length} models (${failed} failed)`);
+  return { models: priced, modelCount: textModels.length, failed };
+}
+
 // ── CSV-sourced providers (Hyper, Makora, Xiaomimimo) ───────────────────────────
-// CSV format: col0=model_name, col1=input_$/M, col2=output_$/M, col3=cache_$/M
-// Sections start with a URL line. We extract only the 3 requested providers.
 
 const CSV_PROVIDER_SECTIONS = {
   'https://hyper.charm.land/v1': 'hyper',
@@ -327,15 +474,12 @@ const CSV_PROVIDER_NAMES = {
 function parseCsvProviders(csvText) {
   const lines = csvText.split('\n');
   const providers = [];
-  let currentUrl = null;
   let currentProvider = null;
 
   for (const line of lines) {
     const col0 = (line.split(',')[0] || '').trim();
 
-    // Check if this line is a section header (URL)
     if (col0.startsWith('https://')) {
-      // Match URL to our known providers (normalize trailing slashes and paths)
       const normalized = col0.replace(/\/+$/, '').replace('/chat/completions', '');
       currentProvider = CSV_PROVIDER_SECTIONS[normalized] || null;
       if (currentProvider) {
@@ -346,7 +490,6 @@ function parseCsvProviders(csvText) {
       continue;
     }
 
-    // Parse model row if we're inside a tracked provider section
     if (currentProvider && providers.length > 0) {
       const parts = line.split(',');
       const name = (parts[0] || '').trim();
@@ -360,6 +503,8 @@ function parseCsvProviders(csvText) {
               id: name.toLowerCase().replace(/\s+/g, '-'),
               name,
               provider: currentProvider,
+              quantization: null,
+              discount: 0,
               context_length: null,
               pricing: { input, output, cache_read: cacheRead, cache_write: null },
             });
@@ -372,7 +517,7 @@ function parseCsvProviders(csvText) {
   return providers;
 }
 
-// ── OpenCode Go (hardcoded pricing from user-provided table) ───────────────────
+// ── OpenCode Go (hardcoded pricing) ───────────────────────────────────────────
 
 const OPENCODE_GO_MODELS = [
   { id: 'glm-5.2', name: 'GLM-5.2', input: 1.40, output: 4.40, cache_read: 0.26 },
@@ -398,9 +543,32 @@ function parseOpenCodeGo() {
     id: m.id,
     name: m.name,
     provider: 'opencode',
+    quantization: null,
+    discount: 0,
     context_length: null,
     pricing: { input: m.input, output: m.output, cache_read: m.cache_read, cache_write: null },
   }));
+}
+
+// ── dedup / precedence ────────────────────────────────────────────────────────
+
+/** Build a dedup key: (canonical_model, normalized_provider, quantization). */
+function dedupKey(m) {
+  return `${canonicalId(m.id)}|${normalizeProvider(m.provider)}|${m.quantization || 'any'}`;
+}
+
+/** Apply 3-tier precedence: direct > OpenRouter > CSV/hardcoded.
+ *  First occurrence of a key wins (we insert tiers in order). */
+function dedupModels(tieredModels) {
+  const seen = new Set();
+  const result = [];
+  for (const m of tieredModels) {
+    const key = dedupKey(m);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(m);
+  }
+  return result;
 }
 
 // ── main ───────────────────────────────────────────────────────────────────────
@@ -416,19 +584,22 @@ async function fetchJson(url) {
 
 async function main() {
   const out = { generated_at: new Date().toISOString(), providers: [], models: [] };
+  const tieredModels = []; // collected in tier order for dedup
 
-  for (const prov of PROVIDERS) {
+  // ── Tier 1: Direct providers ──
+  for (const prov of DIRECT_PROVIDERS) {
     try {
       const data = await fetchJson(prov.url);
       const models = prov.parse(data).filter((m) =>
         !m.id.endsWith(':free') &&
+        isTextModel(m.id) &&
         (m.pricing.input !== null || m.pricing.output !== null) &&
         (m.pricing.input ?? 0) >= 0 &&
         (m.pricing.output ?? 0) >= 0 &&
         ((m.pricing.input ?? 0) > 0 || (m.pricing.output ?? 0) > 0)
       );
       out.providers.push({ key: prov.key, name: prov.name, model_count: models.length, status: 'ok' });
-      out.models.push(...models);
+      tieredModels.push(...models);
       console.log(`✓ ${prov.name}: ${models.length} models`);
     } catch (err) {
       out.providers.push({ key: prov.key, name: prov.name, model_count: 0, status: `error: ${err.message}` });
@@ -436,32 +607,63 @@ async function main() {
     }
   }
 
-  // CSV-sourced providers (Hyper, Makora, Xiaomimimo)
+  // ── Tier 2: OpenRouter de-aggregated ──
+  try {
+    const or = await fetchOpenRouter();
+    out.providers.push({ key: 'openrouter', name: 'OpenRouter (de-aggregated)', model_count: or.models.length, status: 'ok' });
+    tieredModels.push(...or.models);
+    console.log(`✓ OpenRouter: ${or.models.length} backend rows`);
+  } catch (err) {
+    out.providers.push({ key: 'openrouter', name: 'OpenRouter (de-aggregated)', model_count: 0, status: `error: ${err.message}` });
+    console.error(`✗ OpenRouter: ${err.message}`);
+  }
+
+  // ── Tier 3: CSV + OpenCode Go ──
   try {
     const csvText = await readFile('data/manual-pricing.csv', 'utf-8');
     const csvProviders = parseCsvProviders(csvText);
     for (const prov of csvProviders) {
       out.providers.push({ key: prov.key, name: prov.name, model_count: prov.models.length, status: 'ok' });
-      out.models.push(...prov.models);
+      tieredModels.push(...prov.models);
       console.log(`✓ ${prov.name} (CSV): ${prov.models.length} models`);
     }
   } catch (err) {
     console.error(`✗ CSV providers: ${err.message}`);
   }
 
-  // OpenCode Go (hardcoded pricing)
   try {
     const ocModels = parseOpenCodeGo();
     out.providers.push({ key: 'opencode', name: 'OpenCode Go', model_count: ocModels.length, status: 'ok' });
-    out.models.push(...ocModels);
+    tieredModels.push(...ocModels);
     console.log(`✓ OpenCode Go: ${ocModels.length} models`);
   } catch (err) {
     out.providers.push({ key: 'opencode', name: 'OpenCode Go', model_count: 0, status: `error: ${err.message}` });
     console.error(`✗ OpenCode Go: ${err.message}`);
   }
 
-  // Enrich models with org field (underlying model creator, not the API provider)
-  // 1. Build canonical → org map from models with slash in ID
+  // ── Dedup with 3-tier precedence ──
+  out.models = dedupModels(tieredModels);
+  const deduped = tieredModels.length - out.models.length;
+  if (deduped > 0) console.log(`  Deduped ${deduped} overlapping rows (direct > OpenRouter > CSV)`);
+
+  // ── Coverage-drop check: compare against last pricing.json ──
+  try {
+    const prev = JSON.parse(await readFile('public/pricing.json', 'utf-8'));
+    const prevCount = prev.models?.length || 0;
+    const drop = prevCount > 0 ? (prevCount - out.models.length) / prevCount : 0;
+    if (prevCount > 0 && drop > 0.15) {
+      throw new Error(`Coverage drop: ${out.models.length} models vs previous ${prevCount} (${(drop * 100).toFixed(1)}% drop) exceeds 15% threshold — aborting to preserve last-good data`);
+    }
+    console.log(`  Previous: ${prevCount} models | Current: ${out.models.length} models`);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      // No previous file — first run, proceed
+    } else {
+      throw err; // re-throw coverage-drop or read errors
+    }
+  }
+
+  // ── Org enrichment ──
   const canonToOrg = {};
   for (const m of out.models) {
     const org = m.org || orgFromId(m.id);
@@ -470,13 +672,13 @@ async function main() {
       canonToOrg[orgLookupKey(m.id)] = org;
     }
   }
-  // 2. Assign org to each model: direct from ID, cross-ref, or from name
   let unresolved = 0;
   for (const m of out.models) {
     m.org = m.org || orgFromId(m.id) || canonToOrg[orgLookupKey(m.id)] || canonToOrg[canonicalId(m.id)] || orgFromName(m.name);
     if (!m.org) { m.org = m.provider; unresolved++; }
   }
   if (unresolved) console.warn(`⚠ ${unresolved} models could not resolve org — using provider name as fallback`);
+
   await mkdir('public', { recursive: true });
   await writeFile('public/pricing.json', JSON.stringify(out, null, 2));
   console.log(`\n→ Wrote public/pricing.json (${out.models.length} models from ${out.providers.length} providers)`);

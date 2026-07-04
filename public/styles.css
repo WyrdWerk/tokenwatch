@@ -185,6 +185,9 @@ tbody tr:hover { background: var(--surface-2); }
 .cost { font-weight: 700; }
 .cost-zero { color: var(--green); }
 .missing { color: var(--text-dim); font-style: italic; }
+.quant { font-size: 0.78rem; font-variant-numeric: tabular-nums; color: var(--text-dim); }
+.quant-none { opacity: 0.4; }
+.promo-badge { display: inline-block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 0.1rem 0.3rem; border-radius: 3px; background: color-mix(in srgb, var(--yellow) 20%, transparent); color: var(--yellow); border: 1px solid color-mix(in srgb, var(--yellow) 40%, transparent); margin-left: 0.3rem; vertical-align: middle; }
 
 /* ── Footer ────────────────────────────────────────────── */
 footer {

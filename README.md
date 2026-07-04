@@ -1,21 +1,23 @@
 # 💰 PAYG Inference Calculator
 
-Compare pay-as-you-go LLM inference pricing across providers. Enter your token volumes and find the cheapest option.
+Compare pay-as-you-go LLM inference pricing across inference providers. Enter your token volumes and find the cheapest option.
 
 **Live site:** https://payg-inference-calculator.pages.dev
 
 ## How it works
 
-1. **`scripts/fetch-pricing.mjs`** fetches `/v1/models` from 5 public provider APIs, normalizes all pricing to $/M tokens, extracts the underlying org (model creator) from model IDs, and writes `public/pricing.json`.
+1. **`scripts/fetch-pricing.mjs`** fetches pricing from 3 tiers: direct providers (DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac), OpenRouter's de-aggregated `/endpoints` API (per-backend pricing for Fireworks, Together, Novita, SiliconFlow, etc.), and CSV-sourced static providers (Hyper, Makora, Xiaomimimo, OpenCode Go). Normalizes all pricing to $/M tokens and writes `public/pricing.json`.
 2. **`public/`** is a zero-dependency static site (HTML/CSS/JS) that loads `pricing.json` client-side and computes costs in-browser.
 3. **GitHub Actions** runs the fetch script daily (`0 0 * * *` UTC), commits updated pricing, and deploys to Cloudflare Pages.
 
 ## Usage
 
-- **Search by provider**: Type an org name (e.g. "openai", "z.ai", "deepseek") to filter results to that model creator across all API platforms.
+- **Search by provider**: Type an org name (e.g. "openai", "z.ai", "deepseek") to filter results to that model creator across all inference platforms.
 - **Search by model**: Type a model name (e.g. "glm", "kimi", "gpt-4o") to filter results to matching models across all providers.
-- **Both together**: Use both search fields simultaneously (AND filter) — e.g. "z-ai" + "glm" shows only GLM models served under the Z.ai org.
+- **Both together**: Use both search fields simultaneously (AND filter).
 - **Token input**: Enter total tokens (in millions) and set the percentage breakdown across input, cached input, and output. The calculator computes costs per offering and sorts cheapest-first.
+- **Quantization**: Each offering shows its quantization (fp8, fp4, int4, etc.) — same model at different quantizations has different prices.
+- **Promo badges**: Discounted offerings show a "promo" badge with the discount percentage. These are temporary prices — structural prices have no badge.
 
 ### Token calculation
 
@@ -34,36 +36,27 @@ Presets: Agentic (2.5/97/0.5), Balanced (30/50/20), Heavy output (10/0/90), No c
 
 ## Data sources
 
-| Provider | Key | Models | Source | Unit source |
-|---|---|---|---|---|
-| OpenRouter | `openrouter` | ~310 | API | $/token → ×1e6 |
-| DeepInfra | `deepinfra` | ~114 | API | $/M (passthrough) |
-| Crof | `crof` | ~23 | API | $/M (passthrough) |
-| EmberCloud | `ember` | ~12 | API | $/token → ×1e6 |
-| Wafer (Pass) | `wafer` | ~7 | API | cents/M → ÷100 |
-| LLMGateway | `llmgateway` | ~195 | API | $/token → ×1e6 |
-| Synthetic | `synthetic` | ~11 | API | $/token → ×1e6, cache=20% input |
-| Lilac | `lilac` | ~6 | API | $/token → ×1e6 |
-| Hyper | `hyper` | ~20 | CSV | $/M (passthrough) |
-| Makora | `makora` | ~9 | CSV | $/M (passthrough) |
-| Xiaomimimo | `xiaomimimo` | ~3 | CSV | $/M (passthrough) |
-| OpenCode Go | `opencode` | ~16 | Hardcoded | $/M (passthrough) |
+| Source | Tier | Description |
+|---|---|---|
+| Direct providers | Tier 1 | DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac — fetched via their own `/v1/models` endpoints |
+| OpenRouter `/endpoints` | Tier 2 | De-aggregated per-backend pricing — each backend (Fireworks, Together, Novita, SiliconFlow, etc.) becomes its own row |
+| CSV-sourced | Tier 3 | Hyper, Makora, Xiaomimimo (from `data/manual-pricing.csv`) |
+| Hardcoded | Tier 3 | OpenCode Go (16 models with user-provided pricing) |
 
-**Total: ~726 models across 12 providers and 60+ underlying orgs** (Anthropic, OpenAI, Google, DeepSeek, Z.ai, Qwen, Meta, Mistral, etc.)
+**3-tier precedence**: when the same (model, provider, quantization) appears in multiple tiers, the higher-authority tier wins — direct > OpenRouter > CSV/hardcoded.
 
-OpenRouter and LLMGateway are aggregators — the `org` field extracts the underlying model creator from the model ID prefix (e.g., `anthropic/claude-sonnet-5` → org: `anthropic`). For LLMGateway (bare IDs like `gpt-4o-mini`), org is extracted from the `providers[0].providerId` field. For Synthetic (alias IDs like `syn:large:text`), org is extracted from the `hugging_face_id` field. CSV-sourced providers (Hyper, Makora, Xiaomimimo) use cross-referencing against the canonical→org map built from API providers.
+**Total: ~944 text-generation models across ~75 inference providers and 60+ underlying orgs** (Anthropic, OpenAI, Google, DeepSeek, Z.ai, Qwen, Meta, Mistral, etc.)
+
+Only text-generation models are included. TTS, image generation, video generation, and embeddings are filtered out. Multimodal input (text+image→text) is allowed.
 
 ## Development
 
 ```bash
-# Fetch pricing data
+# Fetch pricing data (~317 API calls, ~15-20s)
 npm run fetch
 
 # Serve locally
 npm run serve
-
-# Build for production (fetch + serve)
-npm run build:prod
 ```
 
 Requires Node ≥18 (uses native `fetch`). No dependencies.
@@ -72,13 +65,13 @@ Requires Node ≥18 (uses native `fetch`). No dependencies.
 
 ```
 scripts/
-  fetch-pricing.mjs          # Provider fetch + normalization + org extraction
+  fetch-pricing.mjs          # 3-tier fetch + OpenRouter de-aggregation + org extraction + dedup
 data/
-  manual-pricing.csv          # Static pricing for CSV-sourced providers (Hyper, Makora, Xiaomimimo)
+  manual-pricing.csv          # Static pricing for CSV-sourced providers
 public/
-  index.html                 # UI: dual search, usage inputs, results table
-  app.js                     # State, search, cost computation, rendering
-  styles.css                 # Dark/light theme via prefers-color-scheme
+  index.html                 # UI: dual search, usage inputs, results table (9 columns)
+  app.js                     # State, search, cost computation, rendering (quant, promo badges)
+  styles.css                 # Dark/light theme, quant, promo-badge styles
   pricing.json               # Generated data (refreshed daily by CI)
 .github/workflows/
   refresh-pricing.yml        # Daily cron: fetch → commit → deploy to Cloudflare
@@ -87,10 +80,12 @@ public/
 ## CI/CD
 
 The `refresh-pricing.yml` workflow runs daily at 00:00 UTC:
-1. Fetches pricing from all 5 providers
-2. Filters out `:free` entries and negative placeholder prices
-3. Commits `pricing.json` if changed
-4. Deploys `public/` to Cloudflare Pages
+1. Fetches pricing from all sources (~317 API calls)
+2. Filters to text-generation models only
+3. Applies 3-tier dedup precedence
+4. Aborts if >20% of API calls fail or model count drops >15% vs previous run
+5. Commits `pricing.json` if changed
+6. Deploys `public/` to Cloudflare Pages
 
 GitHub secrets required: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.
 
