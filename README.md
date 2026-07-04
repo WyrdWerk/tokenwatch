@@ -1,4 +1,4 @@
-# 💰 PAYG Inference Calculator
+# 💰 TokenWatch
 
 Compare pay-as-you-go LLM inference pricing across inference providers. Enter your token volumes and find the cheapest option.
 
@@ -12,11 +12,10 @@ Compare pay-as-you-go LLM inference pricing across inference providers. Enter yo
 
 ## Usage
 
-- **Search by provider**: Type an org name (e.g. "openai", "z.ai", "deepseek") to filter results to that model creator across all inference platforms.
+- **Search by provider**: Type a provider name (e.g. "deepinfra", "fireworks", "wafer") to filter results to that inference provider across all models.
 - **Search by model**: Type a model name (e.g. "glm", "kimi", "gpt-4o") to filter results to matching models across all providers.
 - **Both together**: Use both search fields simultaneously (AND filter).
 - **Token input**: Enter total tokens (in millions) and set the percentage breakdown across input, cached input, and output. The calculator computes costs per offering and sorts cheapest-first.
-- **Quantization**: Each offering shows its quantization (fp8, fp4, int4, etc.) — same model at different quantizations has different prices.
 - **Promo badges**: Discounted offerings show a "promo" badge with the discount percentage. These are temporary prices — structural prices have no badge.
 
 ### Token calculation
@@ -43,9 +42,9 @@ Presets: Agentic (2.5/97/0.5), Balanced (30/50/20), Heavy output (10/0/90), No c
 | CSV-sourced | Tier 3 | Hyper, Makora, Xiaomimimo (from `data/manual-pricing.csv`) |
 | Hardcoded | Tier 3 | OpenCode Go (16 models with user-provided pricing) |
 
-**3-tier precedence**: when the same (model, provider, quantization) appears in multiple tiers, the higher-authority tier wins — direct > OpenRouter > CSV/hardcoded.
+**3-tier precedence**: when the same (model, provider) appears in multiple tiers, the higher-authority tier wins — direct > OpenRouter > CSV/hardcoded. Quantization is not part of the dedup key — same model+provider at different quants collapses to one row.
 
-**Total: ~944 text-generation models across ~75 inference providers and 60+ underlying orgs** (Anthropic, OpenAI, Google, DeepSeek, Z.ai, Qwen, Meta, Mistral, etc.)
+**Total: ~892 text-generation models across ~75 inference providers and 60+ underlying orgs** (Anthropic, OpenAI, Google, DeepSeek, Z.ai, Qwen, Meta, Mistral, etc.)
 
 Only text-generation models are included. TTS, image generation, video generation, and embeddings are filtered out. Multimodal input (text+image→text) is allowed.
 
@@ -69,9 +68,9 @@ scripts/
 data/
   manual-pricing.csv          # Static pricing for CSV-sourced providers
 public/
-  index.html                 # UI: dual search, usage inputs, results table (9 columns)
-  app.js                     # State, search, cost computation, rendering (quant, promo badges)
-  styles.css                 # Dark/light theme, quant, promo-badge styles
+  index.html                 # UI: dual search, usage inputs, results table (8 columns)
+  app.js                     # State, search, cost computation, rendering (promo badges)
+  styles.css                 # Dark/light theme, promo-badge, header-row, responsive
   pricing.json               # Generated data (refreshed daily by CI)
 .github/workflows/
   refresh-pricing.yml        # Daily cron: fetch → commit → deploy to Cloudflare

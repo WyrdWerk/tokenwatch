@@ -1,4 +1,4 @@
-# AGENTS.md — PAYG Inference Calculator
+# AGENTS.md — TokenWatch
 
 ## Project overview
 
@@ -10,9 +10,9 @@ Static site comparing pay-as-you-go LLM API pricing across inference providers. 
   - **Tier 1 — Direct providers** (authoritative): DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac — fetched via their own `/v1/models` endpoints
   - **Tier 2 — OpenRouter de-aggregated**: `/v1/models` lists models, then `/endpoints` per model returns per-backend pricing. Each backend (Fireworks, Together, Novita, SiliconFlow, etc.) becomes its own row — NOT "OpenRouter"
   - **Tier 3 — CSV/hardcoded**: Hyper, Makora, Xiaomimimo (CSV), OpenCode Go (hardcoded)
-  - **3-tier precedence**: `(canonical_model, normalized_provider, quantization)` — direct wins over OpenRouter, which wins over CSV/hardcoded
-  - Writes `public/pricing.json` with ~944 text-generation models across ~75 inference providers
-- **Frontend**: `public/` static site loads `pricing.json` client-side. Dual typeahead search (by org and by model). Cost computation entirely in-browser. Quantization column and promo badges for discounted offerings.
+  - **3-tier precedence**: `(canonical_model, normalized_provider)` — direct wins over OpenRouter, which wins over CSV/hardcoded. Quantization is NOT part of the dedup key — same model+provider at different quants collapses to one row (first-seen/highest-tier wins).
+  - Writes `public/pricing.json` with ~892 text-generation models across ~75 inference providers
+- **Frontend**: `public/` static site loads `pricing.json` client-side. Dual typeahead search (by inference provider and by model). Cost computation entirely in-browser. Promo badges for discounted offerings. Quantization column removed (may revisit later).
 - **CI/CD**: `.github/workflows/refresh-pricing.yml` runs daily at 00:00 UTC — fetch → commit → deploy to Cloudflare Pages.
 
 ## Key conventions
@@ -59,7 +59,7 @@ Org aliases: `deepseek-ai`→`deepseek`, `zai-org`→`z-ai`, `meta-llama`→`met
 
 ### Canonical model ID
 
-Used for cross-provider matching: strips provider prefix, removes suffixes (`:free`, date suffixes, `-preview`, `:thinking`), lowercases. Turbo variants kept separate. Example: `z-ai/glm-5.2`, `zai-org/GLM-5.2`, `GLM-5.2` (Wafer) all canonicalize to `glm-5.2`.
+Used for cross-provider matching and dedup: strips provider prefix, removes suffixes (`:free`, date suffixes, `-preview`, `:thinking`), lowercases. Turbo variants kept separate. Quantization suffixes baked into the model ID (e.g. `glm-5.2-fp8`, `glm-5.2-nvfp4`) are left as-is — they are distinct entries, not collapsed. Example: `z-ai/glm-5.2`, `zai-org/GLM-5.2`, `GLM-5.2` (Wafer) all canonicalize to `glm-5.2`.
 
 ### Cost computation
 
@@ -77,9 +77,9 @@ The pipeline includes unattended-operation safeguards:
 | File | Purpose |
 |---|---|
 | `scripts/fetch-pricing.mjs` | 3-tier fetch, OpenRouter de-aggregation, org extraction, dedup, pricing normalization |
-| `public/app.js` | Frontend state, selectors, cost computation, rendering (quant column, promo badges) |
-| `public/index.html` | UI layout: controls, usage-grid, results table (9 columns incl. Quant) |
-| `public/styles.css` | Dark/light theme, org-badge, provider-badge, quant, promo-badge, pct-ok/pct-warn |
+| `public/app.js` | Frontend state, selectors, cost computation, rendering (promo badges) |
+| `public/index.html` | UI layout: controls, usage-grid, results table (8 columns) |
+| `public/styles.css` | Dark/light theme, org-badge, provider-badge, promo-badge, header-row, repo-link, responsive |
 | `public/pricing.json` | Generated data (do not hand-edit — CI refreshes daily) |
 | `.github/workflows/refresh-pricing.yml` | Daily cron + Cloudflare deploy |
 | `data/manual-pricing.csv` | Static pricing for CSV-sourced providers (Hyper, Makora, Xiaomimimo) |

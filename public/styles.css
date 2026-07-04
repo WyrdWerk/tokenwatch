@@ -44,13 +44,30 @@ header {
   padding: 2.5rem 1rem 1.5rem;
 }
 
+.header-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
 header h1 { font-size: 1.8rem; font-weight: 700; }
 .subtitle { color: var(--text-dim); margin-top: 0.3rem; font-size: 0.95rem; }
+.repo-link {
+  font-size: 0.85rem;
+  color: var(--accent);
+  text-decoration: none;
+  border: 1px solid var(--border);
+  padding: 0.25rem 0.7rem;
+  border-radius: 6px;
+  transition: border-color 0.15s;
+}
+.repo-link:hover { border-color: var(--accent); text-decoration: underline; }
 
 main {
-  max-width: 1100px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 1rem 2rem;
+  padding: 0 1.5rem 2rem;
 }
 
 h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }
@@ -155,7 +172,7 @@ select:focus, input:focus { border-color: var(--accent); }
 
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-th, td { padding: 0.6rem 0.7rem; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th, td { padding: 0.55rem 0.55rem; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
 th { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600; }
 th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 tbody tr:hover { background: var(--surface-2); }
@@ -202,9 +219,22 @@ footer {
 .footer-links a:hover { text-decoration: underline; }
 
 /* ── Responsive ────────────────────────────────────────── */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   header { padding: 1.5rem 1rem 1rem; }
   header h1 { font-size: 1.4rem; }
+  .header-row { flex-direction: column; gap: 0.5rem; }
   .controls { flex-direction: column; }
   .control-group { min-width: 100%; }
+  main { padding: 0 0.75rem 2rem; }
+  .controls, .token-inputs, .results { padding: 1rem; }
+  th, td { padding: 0.4rem 0.4rem; font-size: 0.78rem; }
+  th { font-size: 0.68rem; }
+  /* Allow text wrapping on mobile to avoid horizontal scroll */
+  td { white-space: normal; word-break: break-word; }
+  .org-badge, .provider-badge { font-size: 0.72rem; padding: 0.1rem 0.35rem; }
+}
+
+@media (max-width: 640px) {
+  .usage-grid { grid-template-columns: 1fr 1fr; }
+  .total-field { grid-column: 1 / -1; }
 }

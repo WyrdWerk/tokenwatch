@@ -12,8 +12,10 @@
  * Tier 3 — CSV-sourced: Hyper, Makora, Xiaomimimo (manual-pricing.csv)
  *          OpenCode Go (hardcoded)
  *
- * Precedence: (canonical_model, normalized_provider, quantization) — direct wins
- * over OpenRouter, which wins over CSV/hardcoded.
+ * Precedence: (canonical_model, normalized_provider) — direct wins over
+ * OpenRouter, which wins over CSV/hardcoded. Quantization is NOT part of
+ * the dedup key — same model+provider at different quants collapses to
+ * one row (first-seen / highest-tier wins).
  *
  * Model record:
  * {
@@ -136,9 +138,11 @@ function orgFromName(name) {
   return ORG_ALIASES[org] || org;
 }
 
-/** Build canonical model ID for cross-referencing.
+/** Build canonical model ID for cross-referencing and dedup.
  *  Strips provider prefix, suffixes (:free, dates, -preview, :thinking), lowercases.
- *  Turbo variants kept separate (different SKUs). */
+ *  Turbo variants kept separate (different SKUs).
+ *  Quantization suffixes baked into the ID (e.g. glm-5.2-fp8) are left as-is —
+ *  they are distinct model entries, not collapsed. */
 function canonicalId(id) {
   let k = id.includes('/') ? id.split('/').slice(-1)[0] : id;
   k = k.replace(/:free$/, '')
@@ -151,10 +155,11 @@ function canonicalId(id) {
 }
 
 /** Build a key for org cross-referencing.
- *  Like canonicalId but also strips quantization suffixes. */
+ *  Like canonicalId but also strips quantization and tier suffixes.
+ *  Used ONLY for org resolution — not for dedup or model display. */
 function orgLookupKey(id) {
   return canonicalId(id)
-    .replace(/-(fp8|nvfp4|int4-mixed-ar|int4)$/, '')
+    .replace(/-(fp8|nvfp4|int4-mixed-ar|int4|bf16|fp16|fp6|mxfp4)$/, '')
     .replace(/-long$/, '');
 }
 
@@ -552,13 +557,17 @@ function parseOpenCodeGo() {
 
 // ── dedup / precedence ────────────────────────────────────────────────────────
 
-/** Build a dedup key: (canonical_model, normalized_provider, quantization). */
+/** Build a dedup key: (canonical_model, normalized_provider).
+ *  Quantization is NOT part of the key — the same model from the same
+ *  inference provider at different quantizations collapses to one row
+ *  (the first-seen / highest-tier row wins). */
 function dedupKey(m) {
-  return `${canonicalId(m.id)}|${normalizeProvider(m.provider)}|${m.quantization || 'any'}`;
+  return `${canonicalId(m.id)}|${normalizeProvider(m.provider)}`;
 }
 
 /** Apply 3-tier precedence: direct > OpenRouter > CSV/hardcoded.
- *  First occurrence of a key wins (we insert tiers in order). */
+ *  Models are inserted in tier order, so the first occurrence of a key
+ *  is from the highest-authority tier. Later duplicates are dropped. */
 function dedupModels(tieredModels) {
   const seen = new Set();
   const result = [];

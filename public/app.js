@@ -1,12 +1,13 @@
-// PAYG Inference Calculator — app.js
-// Loads pricing.json, lets the user search by provider (org) and/or model name,
-// enter token volumes as total + percentage breakdown, and computes per-offering cost.
+// TokenWatch — app.js
+// Loads pricing.json, lets the user search by provider (inference host) and/or
+// model name, enter token volumes as total + percentage breakdown, and computes
+// per-offering cost.
 
 const state = {
   data: null,             // { generated_at, providers, models }
-  providerSearch: '',     // org name filter text
+  providerSearch: '',     // provider name filter text
   modelSearch: '',        // canonical model name filter text
-  orgDisplayName: {},     // org key → pretty display name (e.g. "z-ai" → "Z.ai")
+  providerDisplayName: {},// provider display name lowercase → pretty (e.g. "deepinfra" → "DeepInfra")
   modelDisplayName: {},   // canonical → display name
 };
 
@@ -63,18 +64,18 @@ function canonicalModelId(id) {
 // ── Selectors ──────────────────────────────────────────────────────────────────
 
 function populateDatalists() {
-  // Build org display names and populate org datalist
-  const orgCounts = {};
+  // Build provider display names and populate provider datalist
+  const provCounts = {};
   for (const m of state.data.models) {
-    orgCounts[m.org] = (orgCounts[m.org] || 0) + 1;
+    const name = providerName(m.provider, m.provider_display);
+ provCounts[name] = (provCounts[name] || 0) + 1;
   }
-  state.orgDisplayName = {};
-  els.orgList.innerHTML = Object.keys(orgCounts)
-    .sort((a, b) => orgCounts[b] - orgCounts[a])  // most models first
-    .map((org) => {
-      const display = orgDisplay(org);
-      state.orgDisplayName[org] = display;
-      return `<option value="${display}">`;
+  state.providerDisplayName = {};
+  els.orgList.innerHTML = Object.keys(provCounts)
+    .sort((a, b) => provCounts[b] - provCounts[a])  // most models first
+    .map((name) => {
+      state.providerDisplayName[name.toLowerCase()] = name;
+      return `<option value="${name}">`;
     })
     .join('');
 
@@ -180,18 +181,22 @@ function computeAndRender() {
   }
 
   // Filter offerings: AND of provider search + model search
-  // Provider search matches against org (display name or raw key)
+  // Provider search matches against inference provider (display name or raw key)
   // Model search matches against canonical model display name
   let offerings = state.data.models.filter((m) => {
     if (provSearch) {
-      const orgDisplay = (state.orgDisplayName[m.org] || m.org).toLowerCase();
-      if (!orgDisplay.includes(provSearch) && !m.org.toLowerCase().includes(provSearch)) return false;
+      const provName = providerName(m.provider, m.provider_display).toLowerCase();
+      if (!provName.includes(provSearch) && !m.provider.toLowerCase().includes(provSearch)) return false;
     }
     if (modSearch) {
+      // Normalize spaces and hyphens to the same separator so "glm 5.2"
+      // matches "glm-5.2" — users naturally type spaces, IDs use hyphens.
+      const norm = (s) => s.toLowerCase().replace(/[\s-]+/g, ' ');
+      const q = norm(modSearch);
       const canon = canonicalModelId(m.id);
-      const modDisplay = (state.modelDisplayName[canon] || canon).toLowerCase();
-      const rawId = m.id.split('/').slice(-1)[0].toLowerCase();
-      if (!modDisplay.includes(modSearch) && !rawId.includes(modSearch)) return false;
+      const modDisplay = norm(state.modelDisplayName[canon] || canon);
+      const rawId = norm(m.id.split('/').slice(-1)[0]);
+      if (!modDisplay.includes(q) && !rawId.includes(q)) return false;
     }
     return true;
   });
@@ -269,7 +274,7 @@ function esc(s) {
 
 function renderTable(rows, tokens) {
   if (rows.length === 0) {
-    els.resultsBody.innerHTML = `<tr><td colspan="9" class="empty">No offerings match your criteria. Some providers may not support the token types you entered.</td></tr>`;
+    els.resultsBody.innerHTML = `<tr><td colspan="8" class="empty">No offerings match your criteria. Some providers may not support the token types you entered.</td></tr>`;
     return;
   }
 
@@ -277,9 +282,6 @@ function renderTable(rows, tokens) {
     .map((r, i) => {
       const p = r.model.pricing;
       const cheapest = i === 0 && r.cost > 0;
-      const quant = r.model.quantization && r.model.quantization !== 'unknown'
-        ? `<span class="quant">${esc(r.model.quantization)}</span>`
-        : '<span class="quant quant-none">—</span>';
       const promo = r.model.discount > 0
         ? ` <span class="promo-badge" title="${(r.model.discount * 100).toFixed(0)}% off">promo</span>`
         : '';
@@ -287,7 +289,6 @@ function renderTable(rows, tokens) {
         <td class="rank">${i + 1}${cheapest ? ' 🏆' : ''}</td>
         <td><span class="org-badge">${esc(orgDisplay(r.model.org))}</span></td>
         <td><span class="provider-badge">${esc(providerName(r.model.provider, r.model.provider_display))}</span></td>
-        <td>${quant}</td>
         <td>${esc(r.model.id)}${promo}</td>
         <td class="num">${fmtPrice(p.input)}</td>
         <td class="num">${fmtPrice(p.output)}</td>

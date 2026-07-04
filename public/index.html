@@ -3,14 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PAYG Inference Calculator — Compare LLM API Costs</title>
+  <title>TokenWatch — Compare LLM API Costs</title>
   <meta name="description" content="Compare pay-as-you-go LLM inference pricing across providers. Enter your token volumes and find the cheapest option." />
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>" />
 </head>
 <body>
   <header>
-    <h1>💰 PAYG Inference Calculator</h1>
+    <div class="header-row">
+      <h1>💰 TokenWatch</h1>
+      <a class="repo-link" href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">GitHub</a>
+    </div>
     <p class="subtitle">Compare pay-as-you-go LLM inference pricing across providers</p>
   </header>
 
@@ -19,7 +22,7 @@
     <section class="controls" id="controls">
       <div class="control-group">
         <label for="providerSearch">Search by provider</label>
-        <input type="text" id="providerSearch" placeholder="Type an org name…" list="orgList" autocomplete="off" />
+        <input type="text" id="providerSearch" placeholder="Type a provider name…" list="orgList" autocomplete="off" />
         <datalist id="orgList"></datalist>
       </div>
 
@@ -81,17 +84,14 @@
               <th>#</th>
               <th>Org</th>
               <th>Provider</th>
-              <th>Quant</th>
               <th>Model</th>
               <th class="num">Input $/M</th>
               <th class="num">Output $/M</th>
               <th class="num">Cache Read $/M</th>
               <th class="num">Total Cost</th>
-            </tr>
           </thead>
           <tbody id="resultsBody">
-            <tr><td colspan="9" class="empty">Select a model or provider to see pricing.</td></tr>
-          </tbody>
+            <tr><td colspan="8" class="empty">Select a model or provider to see pricing.</td></tr>
         </table>
       </div>
     </section>
@@ -104,7 +104,7 @@
     </p>
     <p class="footer-links">
       <a href="https://tiny.cc/payginference" target="_blank" rel="noopener">Original spreadsheet</a>
-      · <a href="https://github.com/WyrdWerk/payg-inference-calculator" target="_blank" rel="noopener">Source</a>
+      · <a href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">Source</a>
     </p>
   </footer>
 
