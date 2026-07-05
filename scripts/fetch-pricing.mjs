@@ -71,6 +71,12 @@ const DIRECT_PROVIDERS = [
     url: 'https://api.getlilac.com/v1/models',
     parse: parseLilac,
   },
+  {
+    key: 'sambanova',
+    name: 'SambaNova',
+    url: 'https://api.sambanova.ai/v1/models',
+    parse: parseSambaNova,
+  },
 ];
 
 // ── OpenRouter config ──────────────────────────────────────────────────────────
@@ -183,6 +189,7 @@ const PROVIDER_NAME_MAP = {
   'crof': 'crof',
   'synthetic': 'synthetic',
   'lilac': 'lilac',
+  'xiaomimimo': 'xiaomi',
   // Infra providers without direct fetch — keep OpenRouter display name lowercased
   'fireworks': 'fireworks',
   'together': 'together',
@@ -227,6 +234,58 @@ const PROVIDER_NAME_MAP = {
   'friendli': 'friendli',
   'chutes': 'chutes',
   'wandb': 'wandb',
+};
+
+const MANUAL_PROVIDER_META = {
+  crof: {
+    privacy_policy_url: 'https://crof.ai/privacy',
+    terms_of_service_url: 'https://crof.ai/tos',
+    status_page_url: null,
+    headquarters: null,
+    datacenters: null,
+  },
+  ember: {
+    privacy_policy_url: 'https://www.embercloud.ai/privacy',
+    terms_of_service_url: 'https://www.embercloud.ai/terms',
+    status_page_url: null,
+    headquarters: null,
+    datacenters: null,
+  },
+  hyper: {
+    privacy_policy_url: 'https://hyper.charm.land/privacy',
+    terms_of_service_url: 'https://hyper.charm.land/terms',
+    status_page_url: null,
+    headquarters: null,
+    datacenters: null,
+  },
+  lilac: {
+    privacy_policy_url: 'https://getlilac.com/privacy',
+    terms_of_service_url: 'https://getlilac.com/terms',
+    status_page_url: null,
+    headquarters: null,
+    datacenters: null,
+  },
+  makora: {
+    privacy_policy_url: 'https://www.makora.com/privacy-policy',
+    terms_of_service_url: 'https://www.makora.com/terms-of-service',
+    status_page_url: null,
+    headquarters: null,
+    datacenters: null,
+  },
+  synthetic: {
+    privacy_policy_url: 'https://synthetic.new/policies/privacy',
+    terms_of_service_url: 'https://synthetic.new/policies/terms-of-service',
+    status_page_url: null,
+    headquarters: null,
+    datacenters: null,
+  },
+  opencode: {
+    privacy_policy_url: 'https://opencode.ai/legal/privacy-policy',
+    terms_of_service_url: 'https://opencode.ai/legal/terms-of-service',
+    status_page_url: null,
+    headquarters: null,
+    datacenters: null,
+  },
 };
 
 /** Normalize a provider display name to a lowercase key. */
@@ -359,6 +418,46 @@ function parseLilac(data) {
   }));
 }
 
+function parseSambaNova(data) {
+  return (data.data || data)
+    .filter((m) => m.pricing && (m.pricing.prompt || m.pricing.completion))
+    .filter((m) => {
+      const group = m.display?.group?.id;
+      return group === 'text' || group === 'reasoning' || !group;
+    })
+    .map((m) => {
+      // Resolve org from bare IDs — SambaNova IDs don't have a consistent
+      // slash prefix pattern. Try orgFromId first (handles "google/gemma-..."),
+      // then match leading segments against ORG_ALIASES (handles "Meta-Llama-..."),
+      // then orgFromName, then fall through to the standard pipeline.
+      let org = orgFromId(m.id);
+      if (!org) {
+        const segments = m.id.split(/[-/]/);
+        // Try first segment, then first two segments joined with '-'
+        for (let i = 1; i <= 2 && i <= segments.length && !org; i++) {
+          const candidate = segments.slice(0, i).join('-').toLowerCase();
+          org = ORG_ALIASES[candidate] || null;
+        }
+      }
+      if (!org) org = orgFromName(m.id);
+      return {
+        id: m.id,
+        name: m.id,
+        org,
+        provider: 'sambanova',
+        quantization: null,
+        discount: 0,
+        context_length: m.context_length ?? null,
+        pricing: {
+          input: perTokToPerM(m.pricing.prompt),
+          output: perTokToPerM(m.pricing.completion),
+          cache_read: m.pricing.input_cache_read != null ? perTokToPerM(m.pricing.input_cache_read) : null,
+          cache_write: m.pricing.input_cache_write != null ? perTokToPerM(m.pricing.input_cache_write) : null,
+        },
+      };
+    })
+}
+
 // ── OpenRouter de-aggregation ─────────────────────────────────────────────────
 
 /** Fetch JSON with retry on 429/5xx. */
@@ -404,11 +503,13 @@ async function fetchModelEndpoints(model) {
     quantization: ep.quantization || null,
     discount: ep.pricing?.discount || 0,
     context_length: ep.context_length ?? model.context_length ?? null,
+    max_completion_tokens: ep.max_completion_tokens ?? null,
+    uptime_30m: ep.uptime_last_30m ?? null,
     pricing: {
       input: perTokToPerM(ep.pricing?.prompt),
       output: perTokToPerM(ep.pricing?.completion),
       cache_read: perTokToPerM(ep.pricing?.input_cache_read),
-      cache_write: null,
+      cache_write: perTokToPerM(ep.pricing?.input_cache_write),
     },
   }));
 }
@@ -466,6 +567,39 @@ async function fetchOpenRouter() {
 
   console.log(`  OpenRouter: ${priced.length} backend rows from ${textModels.length - failed}/${textModels.length} models (${failed} failed)`);
   return { models: priced, modelCount: textModels.length, failed };
+}
+
+async function fetchProviderMeta() {
+  const meta = {};
+  for (const [slug, info] of Object.entries(MANUAL_PROVIDER_META)) {
+    meta[slug] = { ...info, source: 'manual' };
+  }
+  try {
+    const data = await fetchJsonWithRetry('https://openrouter.ai/api/v1/providers');
+    const providers = data.data || [];
+    for (const p of providers) {
+      meta[p.slug] = {
+        privacy_policy_url: p.privacy_policy_url || null,
+        terms_of_service_url: p.terms_of_service_url || null,
+        status_page_url: p.status_page_url || null,
+        headquarters: p.headquarters || null,
+        datacenters: p.datacenters || null,
+        source: 'openrouter',
+      };
+    }
+    console.log(`  Provider metadata: ${providers.length} from OpenRouter + ${Object.keys(MANUAL_PROVIDER_META).length} manual`);
+  } catch (err) {
+    console.error(`⚠ Provider metadata fetch failed: ${err.message} — continuing with manual only`);
+  }
+  // Resolve alias keys: if PROVIDER_NAME_MAP maps a raw key → canonical key
+  // that exists in meta, copy the canonical's metadata to the raw key.
+  // This ensures e.g. providers_meta['xiaomimimo'] inherits OR's 'xiaomi' data.
+  for (const [raw, canonical] of Object.entries(PROVIDER_NAME_MAP)) {
+    if (raw !== canonical && meta[canonical] && !meta[raw]) {
+      meta[raw] = meta[canonical];
+    }
+  }
+  return meta;
 }
 
 // ── CSV-sourced providers (Hyper, Makora, Xiaomimimo) ───────────────────────────
@@ -648,6 +782,15 @@ async function fetchJson(url) {
 }
 
 async function main() {
+  // Usage: node scripts/fetch-pricing.mjs [--dry-run]
+  //   --dry-run  Fetch and process but don't write pricing.json
+  if (process.argv.includes('--help') || process.argv.includes('-h')) {
+    console.log(`Usage: node scripts/fetch-pricing.mjs [--dry-run]
+  --dry-run  Fetch and process but don't write pricing.json`);
+    return;
+  }
+  const dryRun = process.argv.includes('--dry-run');
+
   const out = { generated_at: new Date().toISOString(), providers: [], models: [] };
   const tieredModels = []; // collected in tier order for dedup
 
@@ -712,9 +855,10 @@ async function main() {
   if (deduped > 0) console.log(`  Deduped ${deduped} overlapping rows (direct > OpenRouter > CSV)`);
 
   // ── Coverage-drop check: compare against last pricing.json ──
+  let prevCount = null;
   try {
     const prev = JSON.parse(await readFile('public/pricing.json', 'utf-8'));
-    const prevCount = prev.models?.length || 0;
+    prevCount = prev.models?.length || 0;
     const drop = prevCount > 0 ? (prevCount - out.models.length) / prevCount : 0;
     if (prevCount > 0 && drop > 0.15) {
       throw new Error(`Coverage drop: ${out.models.length} models vs previous ${prevCount} (${(drop * 100).toFixed(1)}% drop) exceeds 15% threshold — aborting to preserve last-good data`);
@@ -743,6 +887,27 @@ async function main() {
     if (!m.org) { m.org = m.provider; unresolved++; }
   }
   if (unresolved) console.warn(`⚠ ${unresolved} models could not resolve org — using provider name as fallback`);
+
+  // ── Provider metadata ──
+  out.providers_meta = await fetchProviderMeta();
+
+  if (dryRun) {
+    console.log('\n── Summary ──');
+    console.log(`  Models: ${out.models.length}`);
+    console.log(`  Providers: ${out.providers.length}`);
+    for (const p of out.providers) {
+      console.log(`    ${p.name}: ${p.model_count} (${p.status})`);
+    }
+    if (prevCount !== null) {
+      const delta = out.models.length - prevCount;
+      const sign = delta >= 0 ? '+' : '';
+      console.log(`  Coverage delta: ${sign}${delta} (${prevCount} → ${out.models.length})`);
+    } else {
+      console.log('  Coverage delta: (no previous pricing.json)');
+    }
+    console.log(`\n→ Dry run — pricing.json not written (${out.models.length} models from ${out.providers.length} providers)`);
+    return;
+  }
 
   await mkdir('public', { recursive: true });
   await writeFile('public/pricing.json', JSON.stringify(out, null, 2));

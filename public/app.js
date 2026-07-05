@@ -11,6 +11,10 @@ const state = {
   modelDisplayName: {},   // canonical → display name
   sortBy: 'cost',         // current sort column key
   sortDir: 'asc',         // 'asc' or 'desc'
+  costMode: 'perRequest', // 'perRequest' or 'monthly'
+  groupBy: 'none',
+  compareSelection: [], // array of model objects (max 4)
+  currentRows: null,
 };
 
 // ── DOM ───────────────────────────────────────────────────────────────────────
@@ -30,7 +34,130 @@ const els = {
   resultsTitle: $('resultsTitle'),
   lastUpdated: $('lastUpdated'),
   promoOnly: $('promoOnly'),
+  modePerRequest: $('modePerRequest'),
+  modeMonthly: $('modeMonthly'),
+  totalTokensLabel: $('totalTokensLabel'),
+  totalTokensHint: $('totalTokensHint'),
+  costColumnHeader: $('costColumnHeader'),
+  groupBy: $('groupBy'),
+  compareTray: $('compareTray'),
+  compareCount: $('compareCount'),
+  compareBtn: $('compareBtn'),
+  compareClear: $('compareClear'),
+  compareModal: $('compareModal'),
+  compareClose: $('compareClose'),
+  compareBody: $('compareBody'),
 };
+
+
+// Default control values — used to keep shared URLs minimal when unchanged
+const DEFAULTS = {
+  totalTokens: '1000',
+  inputPct: '2.5',
+  cacheReadPct: '97',
+  outputPct: '0.5',
+  providerSearch: '',
+  modelSearch: '',
+  promoOnly: false,
+  sortBy: 'cost',
+  sortDir: 'asc',
+  groupBy: 'none',
+  compareSelection: [], // array of model objects (max 4)
+  currentRows: null,
+};
+
+// ── URL hash state ─────────────────────────────────────────────────────────────
+
+/** Build a hash query string from current UI + sort state. Omits default values. */
+function serializeState() {
+  const params = new URLSearchParams();
+
+  const tokens = els.totalTokens.value;
+  if (tokens !== DEFAULTS.totalTokens) params.set('tokens', tokens);
+
+  const { inputPct, cacheReadPct, outputPct } = els;
+  const mixDefault =
+    inputPct.value === DEFAULTS.inputPct &&
+    cacheReadPct.value === DEFAULTS.cacheReadPct &&
+    outputPct.value === DEFAULTS.outputPct;
+  if (!mixDefault) {
+    params.set('mix', `${inputPct.value},${cacheReadPct.value},${outputPct.value}`);
+  }
+
+  const provider = els.providerSearch.value.trim();
+  if (provider) params.set('provider', provider);
+
+  const model = els.modelSearch.value.trim();
+  if (model) params.set('model', model);
+
+  if (els.promoOnly.checked) params.set('promo', '1');
+
+  if (state.sortBy !== DEFAULTS.sortBy || state.sortDir !== DEFAULTS.sortDir) {
+    params.set('sort', `${state.sortBy}:${state.sortDir}`);
+  }
+
+  if (state.costMode === 'monthly') params.set('mode', 'monthly');
+
+  if (els.groupBy.value !== 'none') params.set('group', els.groupBy.value);
+
+  return params.toString();
+}
+
+/** Apply hash params to controls and sort state. Resets omitted keys to defaults. */
+function deserializeState(hash) {
+  els.totalTokens.value = DEFAULTS.totalTokens;
+  els.inputPct.value = DEFAULTS.inputPct;
+  els.cacheReadPct.value = DEFAULTS.cacheReadPct;
+  els.outputPct.value = DEFAULTS.outputPct;
+  els.providerSearch.value = DEFAULTS.providerSearch;
+  els.modelSearch.value = DEFAULTS.modelSearch;
+  els.promoOnly.checked = DEFAULTS.promoOnly;
+  state.sortBy = DEFAULTS.sortBy;
+  state.sortDir = DEFAULTS.sortDir;
+  state.costMode = 'perRequest';
+  els.modePerRequest.classList.toggle('active', true);
+  els.modeMonthly.classList.toggle('active', false);
+  els.totalTokensLabel.textContent = 'Total tokens';
+  els.totalTokensHint.textContent = 'Million tokens (e.g. 1000 = 1B tokens)';
+  els.costColumnHeader.textContent = 'Total Cost';
+  els.groupBy.value = DEFAULTS.groupBy;
+
+  const raw = (hash || '').replace(/^#/, '');
+  if (!raw) return;
+
+  const params = new URLSearchParams(raw);
+
+  if (params.has('tokens')) els.totalTokens.value = params.get('tokens');
+  if (params.has('mix')) {
+    const [input, cache, output] = params.get('mix').split(',');
+    if (input !== undefined) els.inputPct.value = input;
+    if (cache !== undefined) els.cacheReadPct.value = cache;
+    if (output !== undefined) els.outputPct.value = output;
+  }
+  if (params.has('provider')) els.providerSearch.value = params.get('provider');
+  if (params.has('model')) els.modelSearch.value = params.get('model');
+  if (params.has('promo')) els.promoOnly.checked = params.get('promo') === '1';
+  if (params.has('sort')) {
+    const [by, dir] = params.get('sort').split(':');
+    if (by) state.sortBy = by;
+    if (dir === 'asc' || dir === 'desc') state.sortDir = dir;
+  }
+
+  const mode = params.get('mode');
+  if (mode === 'monthly') setCostMode('monthly');
+
+  const group = params.get('group');
+  if (group) els.groupBy.value = group;
+}
+
+/** Sync the URL hash to current state without adding history entries. */
+function updateHash() {
+  const hash = serializeState();
+  const current = location.hash.slice(1);
+  if (hash === current) return;
+  const url = hash ? `#${hash}` : `${location.pathname}${location.search}`;
+  history.replaceState(null, '', url);
+}
 
 
 // ── Init ───────────────────────────────────────────────────────────────────────
@@ -39,13 +166,15 @@ async function init() {
     const res = await fetch('pricing.json');
     state.data = await res.json();
   } catch (err) {
-    els.resultsBody.innerHTML = `<tr><td colspan="9" class="empty">Could not load pricing.json. Run <code>node scripts/fetch-pricing.mjs</code> first.</td></tr>`;
+    els.resultsBody.innerHTML = `<tr><td colspan="10" class="empty">Could not load pricing.json. Run <code>node scripts/fetch-pricing.mjs</code> first.</td></tr>`;
     return;
   }
 
   els.lastUpdated.textContent = `Data updated: ${new Date(state.data.generated_at).toLocaleString()}`;
   populateDatalists();
+  deserializeState(location.hash.slice(1));
   attachListeners();
+  updateCompareTray();
   computeAndRender();
 }
 
@@ -105,10 +234,42 @@ function populateDatalists() {
 }
 
 // ── Event listeners ────────────────────────────────────────────────────────────
+
+function setCostMode(mode) {
+  state.costMode = mode;
+  els.modePerRequest.classList.toggle('active', mode === 'perRequest');
+  els.modeMonthly.classList.toggle('active', mode === 'monthly');
+  if (mode === 'monthly') {
+    els.totalTokensLabel.textContent = 'Monthly tokens';
+    els.totalTokensHint.textContent = 'Million tokens/month (e.g. 1000 = 1B tokens/month)';
+    els.costColumnHeader.textContent = 'Monthly Cost';
+  } else {
+    els.totalTokensLabel.textContent = 'Total tokens';
+    els.totalTokensHint.textContent = 'Million tokens (e.g. 1000 = 1B tokens)';
+    els.costColumnHeader.textContent = 'Total Cost';
+  }
+  computeAndRender();
+}
+
 function attachListeners() {
+  els.modePerRequest.addEventListener('click', () => setCostMode('perRequest'));
+  els.modeMonthly.addEventListener('click', () => setCostMode('monthly'));
+
   els.providerSearch.addEventListener('input', () => computeAndRender());
   els.modelSearch.addEventListener('input', () => computeAndRender());
   els.promoOnly.addEventListener('change', () => computeAndRender());
+  els.groupBy.addEventListener('change', () => computeAndRender());
+
+  els.resultsBody.addEventListener('click', (e) => {
+    const header = e.target.closest('.group-header');
+    if (!header) return;
+    header.classList.toggle('collapsed');
+    const group = header.dataset.group;
+    const collapsed = header.classList.contains('collapsed');
+    els.resultsBody.querySelectorAll(`tr[data-group="${CSS.escape(group)}"]:not(.group-header)`).forEach((row) => {
+      row.style.display = collapsed ? 'none' : '';
+    });
+  });
 
   for (const id of ['totalTokens', 'inputPct', 'cacheReadPct', 'outputPct']) {
     els[id].addEventListener('input', () => computeAndRender());
@@ -131,6 +292,25 @@ function attachListeners() {
       computeAndRender();
     });
   });
+
+  // Comparison checkboxes (event delegation on tbody)
+  els.resultsBody.addEventListener('change', (e) => {
+    if (!e.target.classList.contains('compare-check')) return;
+    const idx = parseInt(e.target.dataset.idx, 10);
+    const model = state.currentRows?.[idx]?.model;
+    if (model) toggleCompare(model);
+  });
+  els.compareBtn.addEventListener('click', showCompareModal);
+  els.compareClose.addEventListener('click', closeCompareModal);
+  els.compareClear.addEventListener('click', clearCompare);
+  els.compareModal.addEventListener('click', (e) => {
+    if (e.target === els.compareModal) closeCompareModal();
+  });
+
+  window.addEventListener('hashchange', () => {
+    deserializeState(location.hash.slice(1));
+    computeAndRender();
+  });
 }
 
 function applyPreset(name) {
@@ -145,6 +325,89 @@ function applyPreset(name) {
   for (const [k, v] of Object.entries(p)) els[k].value = v;
   computeAndRender();
 }
+
+
+// Comparison UI (compare-tray, compare-modal)
+function toggleCompare(model) {
+  const idx = state.compareSelection.findIndex(m => m.id === model.id && m.provider === model.provider);
+  if (idx >= 0) {
+    state.compareSelection.splice(idx, 1);
+  } else {
+    if (state.compareSelection.length >= 4) return; // max 4
+    state.compareSelection.push(model);
+  }
+  updateCompareTray();
+  computeAndRender();
+}
+
+function updateCompareTray() {
+  const n = state.compareSelection.length;
+  els.compareTray.style.display = n > 0 ? '' : 'none';
+  els.compareCount.textContent = `${n} selected`;
+  els.compareBtn.disabled = n < 2;
+}
+
+function showCompareModal() {
+  if (state.compareSelection.length < 2) return;
+  const tokens = getTokens();
+  const models = state.compareSelection;
+
+  const rows = [
+    { label: 'Org', getValue: m => esc(orgDisplay(m.org)) },
+    { label: 'Provider', getValue: m => esc(providerName(m.provider, m.provider_display)) },
+    { label: 'Model', getValue: m => esc(m.name && m.name !== m.id ? m.name : m.id) },
+    { label: 'Input $/M', getValue: m => fmtPrice(m.pricing.input), getRaw: m => m.pricing.input, isCost: true },
+    { label: 'Output $/M', getValue: m => fmtPrice(m.pricing.output), getRaw: m => m.pricing.output, isCost: true },
+    { label: 'Cache Read $/M', getValue: m => fmtPrice(m.pricing.cache_read), getRaw: m => m.pricing.cache_read, isCost: true },
+    { label: 'Cache Write $/M', getValue: m => fmtPrice(m.pricing.cache_write), getRaw: m => m.pricing.cache_write, isCost: true },
+    { label: 'Context', getValue: m => fmtContext(m.context_length) },
+    { label: 'Max Output Tokens', getValue: m => m.max_completion_tokens ? m.max_completion_tokens.toLocaleString() : '<span class="missing">—</span>' },
+    { label: 'Uptime (30m)', getValue: m => m.uptime_30m != null ? `${m.uptime_30m.toFixed(2)}%` : '<span class="missing">—</span>' },
+    { label: 'Discount', getValue: m => m.discount > 0 ? `<span class="promo-badge">${(m.discount * 100).toFixed(0)}% off</span>` : '—' },
+    { label: els.costColumnHeader?.textContent || 'Total Cost', getValue: m => fmtCost(costFor(m.pricing, tokens)), getRaw: m => costFor(m.pricing, tokens), isCost: true },
+  ];
+
+  let html = '<table class="compare-table"><thead><tr><th>Metric</th>';
+  for (const m of models) {
+    const name = m.name && m.name !== m.id ? m.name : m.id;
+    html += `<th>${esc(name)}</th>`;
+  }
+  html += '</tr></thead><tbody>';
+
+  for (const row of rows) {
+    html += `<tr><td class="compare-label">${row.label}</td>`;
+    if (row.isCost && row.getRaw) {
+      const values = models.map(m => row.getRaw(m));
+      const nonNull = values.filter(v => v !== null && v !== undefined);
+      const cheapest = nonNull.length > 0 ? Math.min(...nonNull) : null;
+      for (const m of models) {
+        const v = row.getRaw(m);
+        const isCheapest = cheapest !== null && v !== null && v !== undefined && v === cheapest;
+        html += `<td class="num${isCheapest ? ' compare-cheapest' : ''}">${row.getValue(m)}</td>`;
+      }
+    } else {
+      for (const m of models) {
+        html += `<td>${row.getValue(m)}</td>`;
+      }
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+
+  els.compareBody.innerHTML = html;
+  els.compareModal.style.display = '';
+}
+
+function closeCompareModal() {
+  els.compareModal.style.display = 'none';
+}
+
+function clearCompare() {
+  state.compareSelection = [];
+  updateCompareTray();
+  computeAndRender();
+}
+
 
 // ── Token computation ──────────────────────────────────────────────────────────
 
@@ -255,7 +518,9 @@ function computeAndRender() {
     }
   });
 
+  state.currentRows = rows;
   renderTable(rows, tokens);
+  updateHash();
 }
 
 /** Pretty-display an org key: "z-ai" → "Z.ai", "openai" → "OpenAI", "deepseek" → "DeepSeek" */
@@ -321,6 +586,7 @@ function sortRows(rows) {
       case 'input':     va = a.model.pricing.input; vb = b.model.pricing.input; break;
       case 'output':    va = a.model.pricing.output; vb = b.model.pricing.output; break;
       case 'cache_read':va = a.model.pricing.cache_read; vb = b.model.pricing.cache_read; break;
+      case 'cache_write': va = a.model.pricing.cache_write; vb = b.model.pricing.cache_write; break;
       case 'context':   va = a.model.context_length; vb = b.model.context_length; break;
       case 'cost':
       default:          va = a.cost; vb = b.cost; break;
@@ -341,34 +607,134 @@ function fmtContext(ctx) {
   if (ctx >= 1e3) return `${Math.round(ctx / 1e3)}K`;
   return String(ctx);
 }
-function renderTable(rows, tokens) {
-  if (rows.length === 0) {
-    els.resultsBody.innerHTML = `<tr><td colspan="9" class="empty">No offerings match your criteria. Some providers may not support the token types you entered.</td></tr>`;
-    return;
-  }
 
+const HQ_FLAGS = { US:'🇺🇸', SG:'🇸🇬', CN:'🇨🇳', IL:'🇮🇱', FR:'🇫🇷', NL:'🇳🇱', ES:'🇪🇸', ID:'🇮🇩', SE:'🇸🇪', GB:'🇬🇧', DE:'🇩🇪', CA:'🇨🇦', JP:'🇯🇵', KR:'🇰🇷', IN:'🇮🇳' };
+
+function providerMetaHtml(providerKey) {
+  const meta = state.data.providers_meta?.[providerKey];
+  if (!meta) return '';
+  let html = '';
+  const hq = meta.headquarters;
+  if (hq) {
+    const flag = HQ_FLAGS[hq];
+    if (flag) {
+      html += `<span class="hq-badge" title="Headquartered in ${esc(hq)}">${flag}</span>`;
+    } else {
+      html += `<span class="hq-badge" title="Headquartered in ${esc(hq)}">${esc(hq)}</span>`;
+    }
+  }
+  if (meta.privacy_policy_url) {
+    html += `<a href="${esc(meta.privacy_policy_url)}" target="_blank" rel="noopener" class="meta-link" title="Privacy Policy">🔒</a>`;
+  }
+  if (meta.terms_of_service_url) {
+    html += `<a href="${esc(meta.terms_of_service_url)}" target="_blank" rel="noopener" class="meta-link" title="Terms of Service">📋</a>`;
+  }
+  if (meta.status_page_url) {
+    html += `<a href="${esc(meta.status_page_url)}" target="_blank" rel="noopener" class="meta-link" title="Status Page">📊</a>`;
+  }
+  return html;
+}
+
+function renderProviderCell(r) {
+  const name = providerName(r.model.provider, r.model.provider_display);
+  return `<span class="provider-badge">${esc(name)}</span>${providerMetaHtml(r.model.provider)}`;
+}
+
+function globalCheapestCost(rows) {
+  if (state.sortBy !== 'cost' || state.sortDir !== 'asc') return null;
+  const hit = rows.find((r) => r.cost > 0);
+  return hit ? hit.cost : null;
+}
+
+function renderModelRow(r, rank, groupKey, cheapest) {
+  const p = r.model.pricing;
+  const promo = r.model.discount > 0
+    ? ` <span class="promo-badge" title="${(r.model.discount * 100).toFixed(0)}% off">promo</span>`
+    : '';
+  const modelDisplay = (r.model.name && r.model.name !== r.model.id) ? r.model.name : r.model.id;
+  const groupAttr = groupKey !== undefined ? ` data-group="${esc(groupKey)}"` : '';
+  const isSelected = state.compareSelection.some(m => m.id === r.model.id && m.provider === r.model.provider);
+  const rowIdx = state.currentRows
+    ? state.currentRows.findIndex((x) => x.model.id === r.model.id && x.model.provider === r.model.provider)
+    : rank - 1;
+  const checkbox = `<input type="checkbox" class="compare-check" data-idx="${rowIdx}" ${isSelected ? 'checked' : ''}${state.compareSelection.length >= 4 && !isSelected ? ' disabled' : ''}>`;
+  return `<tr${groupAttr}>
+    <td class="rank">${checkbox} ${rank}${cheapest ? ' 🏆' : ''}</td>
+    <td><span class="org-badge">${esc(orgDisplay(r.model.org))}</span></td>
+    <td>${renderProviderCell(r)}</td>
+    <td>${esc(modelDisplay)}${promo}</td>
+    <td class="num">${fmtPrice(p.input)}</td>
+    <td class="num">${fmtPrice(p.output)}</td>
+    <td class="num">${fmtPrice(p.cache_read)}</td>
+    <td class="num">${fmtPrice(p.cache_write)}</td>
+    <td class="num">${fmtContext(r.model.context_length)}</td>
+    <td class="num cost">${fmtCost(r.cost)}</td>
+  </tr>`;
+}
+
+function renderFlatTable(rows, tokens) {
+  const cheapestCost = globalCheapestCost(rows);
   els.resultsBody.innerHTML = rows
     .map((r, i) => {
-      const p = r.model.pricing;
-      const cheapest = i === 0 && r.cost > 0 && state.sortBy === 'cost' && state.sortDir === 'asc';
-      const promo = r.model.discount > 0
-        ? ` <span class="promo-badge" title="${(r.model.discount * 100).toFixed(0)}% off">promo</span>`
-        : '';
-      // Use name if it's more readable than the raw ID, otherwise use ID
-      const modelDisplay = (r.model.name && r.model.name !== r.model.id) ? r.model.name : r.model.id;
-      return `<tr>
-        <td class="rank">${i + 1}${cheapest ? ' 🏆' : ''}</td>
-        <td><span class="org-badge">${esc(orgDisplay(r.model.org))}</span></td>
-        <td><span class="provider-badge">${esc(providerName(r.model.provider, r.model.provider_display))}</span></td>
-        <td>${esc(modelDisplay)}${promo}</td>
-        <td class="num">${fmtPrice(p.input)}</td>
-        <td class="num">${fmtPrice(p.output)}</td>
-        <td class="num">${fmtPrice(p.cache_read)}</td>
-        <td class="num">${fmtContext(r.model.context_length)}</td>
-        <td class="num cost">${fmtCost(r.cost)}</td>
-      </tr>`;
+      const cheapest = cheapestCost !== null && r.cost > 0 && r.cost === cheapestCost;
+      return renderModelRow(r, i + 1, undefined, cheapest);
     })
     .join('');
+}
+
+function renderGroupedTable(rows, tokens, groupBy) {
+  const cheapestCost = globalCheapestCost(rows);
+  const groups = new Map();
+  for (const r of rows) {
+    const key = groupBy === 'org' ? r.model.org : r.model.provider;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(r);
+  }
+
+  const sortedKeys = [...groups.keys()].sort((a, b) => {
+    const da = groupBy === 'org' ? orgDisplay(a) : providerName(a);
+    const db = groupBy === 'org' ? orgDisplay(b) : providerName(b);
+    return da.localeCompare(db);
+  });
+
+  let html = '';
+  let rank = 0;
+  for (const key of sortedKeys) {
+    const groupRows = groups.get(key);
+    const groupName = groupBy === 'org' ? orgDisplay(key) : providerName(key);
+    const groupCheapest = groupRows.reduce(
+      (min, r) => (r.cost > 0 && (min === null || r.cost < min) ? r.cost : min),
+      null,
+    );
+    html += `<tr class="group-header" data-group="${esc(key)}">
+      <td colspan="10">
+        <span class="collapse-arrow">▼</span>
+        ${esc(groupName)}
+        <span class="group-count">${groupRows.length} model${groupRows.length === 1 ? '' : 's'}</span>
+        ${groupCheapest !== null ? `<span class="group-cheapest">from ${fmtCost(groupCheapest)}</span>` : ''}
+      </td>
+    </tr>`;
+    for (const r of groupRows) {
+      rank += 1;
+      const cheapest = cheapestCost !== null && r.cost > 0 && r.cost === cheapestCost;
+      html += renderModelRow(r, rank, key, cheapest);
+    }
+  }
+  els.resultsBody.innerHTML = html;
+}
+
+function renderTable(rows, tokens) {
+  if (rows.length === 0) {
+    els.resultsBody.innerHTML = `<tr><td colspan="10" class="empty">No offerings match your criteria. Some providers may not support the token types you entered.</td></tr>`;
+    return;
+  }
+  const groupBy = els.groupBy?.value || 'none';
+  state.groupBy = groupBy;
+  if (groupBy === 'none') {
+    renderFlatTable(rows, tokens);
+  } else {
+    renderGroupedTable(rows, tokens, groupBy);
+  }
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────────

@@ -5,12 +5,16 @@ on:
     # daily at 00:00 UTC
     - cron: '0 0 * * *'
   workflow_dispatch: {} # manual trigger
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
   refresh:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,6 +37,19 @@ jobs:
             git commit -m "chore: refresh pricing.json ($(date -u +%Y-%m-%dT%H:%M) UTC)"
             git push
           fi
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy public --project-name payg-inference-calculator --branch main
+
+  deploy:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

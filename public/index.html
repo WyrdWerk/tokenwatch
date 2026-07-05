@@ -44,11 +44,15 @@
     <!-- ── Token inputs ─────────────────────────────────────────────────── -->
     <section class="token-inputs">
       <h2>Your Usage</h2>
+      <div class="cost-mode-toggle">
+        <button class="mode-btn active" id="modePerRequest" type="button">Per Request</button>
+        <button class="mode-btn" id="modeMonthly" type="button">Monthly Volume</button>
+      </div>
       <div class="usage-grid">
         <div class="token-field total-field">
-          <label for="totalTokens">Total tokens</label>
+          <label for="totalTokens" id="totalTokensLabel">Total tokens</label>
           <input type="number" id="totalTokens" value="1000" min="0" step="1" />
-          <small>Million tokens (e.g. 1000 = 1B tokens)</small>
+          <small id="totalTokensHint">Million tokens (e.g. 1000 = 1B tokens)</small>
         </div>
         <div class="token-field">
           <label for="inputPct">Input %</label>
@@ -85,6 +89,14 @@
         <h2 id="resultsTitle">Results</h2>
         <span class="last-updated" id="lastUpdated"></span>
       </div>
+      <div class="group-control">
+        <label for="groupBy">Group by:</label>
+        <select id="groupBy">
+          <option value="none">None (flat)</option>
+          <option value="org">Organization</option>
+          <option value="provider">Provider</option>
+        </select>
+      </div>
       <div class="table-wrap">
         <table id="resultsTable">
           <thead>
@@ -96,14 +108,21 @@
               <th class="sortable num" data-sort="input">Input $/M</th>
               <th class="sortable num" data-sort="output">Output $/M</th>
               <th class="sortable num" data-sort="cache_read">Cache Read $/M</th>
+              <th class="sortable num" data-sort="cache_write">Cache Write $/M</th>
               <th class="sortable num" data-sort="context">Context</th>
-              <th class="sortable num" data-sort="cost">Total Cost</th>
+              <th class="sortable num" data-sort="cost" id="costColumnHeader">Total Cost</th>
           </thead>
           <tbody id="resultsBody">
-            <tr><td colspan="9" class="empty">Select a model or provider to see pricing.</td></tr>
+            <tr><td colspan="10" class="empty">Select a model or provider to see pricing.</td></tr>
         </table>
       </div>
     </section>
+
+    <div class="compare-tray" id="compareTray" style="display:none;">
+      <span id="compareCount">0 selected</span>
+      <button id="compareBtn" type="button">Compare</button>
+      <button id="compareClear" type="button">Clear</button>
+    </div>
   </main>
 
   <footer>
@@ -116,6 +135,16 @@
       · <a href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">Source</a>
     </p>
   </footer>
+
+  <div class="compare-modal" id="compareModal" style="display:none;">
+    <div class="compare-modal-content">
+      <div class="compare-modal-header">
+        <h2>Comparison</h2>
+        <button id="compareClose" type="button">✕</button>
+      </div>
+      <div id="compareBody"></div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
