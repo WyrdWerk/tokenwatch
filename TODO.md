@@ -2,34 +2,25 @@
 
 ## Critical bugs
 
-### MOBILE UI BROKEN — column misalignment
-The 10-column table is misaligned on mobile (and possibly desktop). Symptoms:
-- Cache and write data is NOT populated — the cells are empty/null
-- Context data is getting populated in the cache and write column
-- Total cost is getting populated in the context column
-- Total cost column is completely empty
-- The UI is screwed in multiple ways
+### STALE CACHE — column misalignment on returning visitors
+**Status**: Code is correct in production. The deployed index.html has 10 `<th>` headers and app.js renderModelRow outputs 10 matching `<td>` cells in the correct order. Verified against live site.
 
-**Root cause hypothesis**: When the Cache Write $/M column was added (going from 9 to 10 columns), the `renderModelRow` function's `<td>` order may not match the `<th>` header order. The column indices may be off by one, causing data to render in the wrong columns. Need to verify that the `<td>` elements in `renderModelRow` match the `<th>` order in `index.html` exactly:
-1. # (rank + checkbox)
-2. Org
-3. Provider
-4. Model
-5. Input $/M
-6. Output $/M
-7. Cache Read $/M
-8. Cache Write $/M
-9. Context
-10. Total Cost
+**Real cause**: `<script src="app.js">` and `<link rel="stylesheet" href="styles.css">` have no cache-busting. Returning visitors get the OLD cached 9-cell app.js rendered against the NEW 10-column HTML header — causing data to appear in wrong columns (context in cache/write, total cost in context, total cost empty). This is a stale-browser/CDN cache issue, not a code bug.
 
-**Fix**: Verify `renderModelRow` in `public/app.js` outputs `<td>` in the exact same order as the `<th>` headers in `public/index.html`. Test on both desktop and mobile viewports.
+**Fix**: Add cache-busting query strings to app.js and styles.css in index.html:
+```html
+<link rel="stylesheet" href="styles.css?v=20260705" />
+<script src="app.js?v=20260705"></script>
+```
+Or use a content hash. Update the version string on each deploy. A hard-refresh (Ctrl+Shift+R) confirms the fix immediately.
 
 ### MOBILE RESPONSIVE LAYOUT
-Beyond the column misalignment, the mobile layout needs work:
+The 10-column table is too wide for mobile screens. Needs work:
 - Table is too wide for mobile screens
 - Horizontal scroll fallback is functional but not great
 - Consider card layout on mobile (≤640px)
 - Usage grid stacking needs testing
+
 
 ## Planned features
 
