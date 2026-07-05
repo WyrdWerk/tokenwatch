@@ -241,8 +241,11 @@ const MANUAL_PROVIDER_META = {
     privacy_policy_url: 'https://crof.ai/privacy',
     terms_of_service_url: 'https://crof.ai/tos',
     status_page_url: null,
-    headquarters: null,
-    datacenters: null,
+    headquarters: 'US',
+    datacenters: ['US'],
+    retains_prompts: false,  // ZDR: "processed in real-time and are not stored, logged, or accessible"
+    may_train: false,         // "We do NOT use your data for: Training AI models"
+    retention_days: null,
   },
   ember: {
     privacy_policy_url: 'https://www.embercloud.ai/privacy',
@@ -250,41 +253,67 @@ const MANUAL_PROVIDER_META = {
     status_page_url: null,
     headquarters: null,
     datacenters: null,
+    // ZDR status not determined — policy not reviewed
   },
   hyper: {
     privacy_policy_url: 'https://hyper.charm.land/privacy',
     terms_of_service_url: 'https://hyper.charm.land/terms',
     status_page_url: null,
-    headquarters: null,
-    datacenters: null,
+    headquarters: 'US',
+    datacenters: ['US'],
+    retains_prompts: true,   // "not retained by default" but may retain up to 30 days
+    may_train: false,         // "Your prompts and outputs are never used to train AI models"
+    retention_days: 30,
   },
   lilac: {
     privacy_policy_url: 'https://getlilac.com/privacy',
     terms_of_service_url: 'https://getlilac.com/terms',
     status_page_url: null,
-    headquarters: null,
+    headquarters: 'US',
     datacenters: null,
+    retains_prompts: false,  // ZDR (API): "not stored at rest after the response is returned"
+    may_train: false,         // "We do not use your API inputs or outputs for training models — ever"
+    retention_days: null,
   },
   makora: {
     privacy_policy_url: 'https://www.makora.com/privacy-policy',
     terms_of_service_url: 'https://www.makora.com/terms-of-service',
     status_page_url: null,
-    headquarters: null,
-    datacenters: null,
+    headquarters: 'US',
+    datacenters: ['US'],
+    retains_prompts: false,  // ZDR on PAYG tier: "processed transiently — not written to durable storage"
+    may_train: false,         // "We do not use customer Inputs/Outputs from any tier to train or improve models"
+    retention_days: null,
   },
   synthetic: {
     privacy_policy_url: 'https://synthetic.new/policies/privacy',
     terms_of_service_url: 'https://synthetic.new/policies/terms-of-service',
     status_page_url: null,
-    headquarters: null,
-    datacenters: null,
+    headquarters: 'US',
+    datacenters: ['US'],
+    retains_prompts: false,  // ZDR (API): "deleted from our systems" after completion
+    may_train: false,         // "we do not use prompts or completions... to train, fine-tune, benchmark"
+    retention_days: 0,
   },
   opencode: {
     privacy_policy_url: 'https://opencode.ai/legal/privacy-policy',
     terms_of_service_url: 'https://opencode.ai/legal/terms-of-service',
     status_page_url: null,
-    headquarters: null,
-    datacenters: null,
+    headquarters: 'US',
+    datacenters: ['US', 'EU', 'SG'],
+    retains_prompts: true,   // Own privacy policy retains prompts as Personal Data; upstream providers ZDR
+    may_train: false,         // "Our providers follow a zero-retention policy and do not use your data for training"
+    retention_days: null,
+  },
+  xiaomimimo: {
+    privacy_policy_url: 'https://privacy.mi.com/XiaomiMiMoPlatform/en_GB/',
+    terms_of_service_url: 'https://mimo.mi.com/docs/quick-start/terms/user-agreement',
+    status_page_url: null,
+    headquarters: 'NL',
+    datacenters: ['NL', 'SG'],
+    retains_prompts: true,   // "we need to collect the content submitted by you" — not ZDR
+    may_train: false,         // "Xiaomi will not use the content you provide for model training"
+    retention_days: null,
   },
 };
 
@@ -602,6 +631,13 @@ async function fetchProviderMeta() {
     const data = await fetchJsonWithRetry('https://openrouter.ai/api/v1/providers');
     const providers = data.data || [];
     for (const p of providers) {
+      // Don't overwrite manual entries — they carry ZDR fields OR doesn't provide
+      if (meta[p.slug]?.source === 'manual') {
+        if (!meta[p.slug].privacy_policy_url) meta[p.slug].privacy_policy_url = p.privacy_policy_url || null;
+        if (!meta[p.slug].terms_of_service_url) meta[p.slug].terms_of_service_url = p.terms_of_service_url || null;
+        if (!meta[p.slug].status_page_url) meta[p.slug].status_page_url = p.status_page_url || null;
+        continue;
+      }
       meta[p.slug] = {
         privacy_policy_url: p.privacy_policy_url || null,
         terms_of_service_url: p.terms_of_service_url || null,

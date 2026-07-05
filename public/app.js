@@ -245,9 +245,9 @@ function setCostMode(mode) {
   els.modePerRequest.classList.toggle('active', mode === 'perRequest');
   els.modeMonthly.classList.toggle('active', mode === 'monthly');
   if (mode === 'monthly') {
-    els.totalTokensLabel.textContent = 'Monthly tokens';
-    els.totalTokensHint.textContent = 'Million tokens/month (e.g. 1000 = 1B tokens/month)';
-    els.costColumnHeader.textContent = 'Monthly Cost';
+    els.totalTokensLabel.textContent = 'Daily tokens';
+    els.totalTokensHint.textContent = 'Million tokens/day (e.g. 33 = 33M tokens/day)';
+    els.costColumnHeader.textContent = 'Monthly Cost (×30 days)';
   } else {
     els.totalTokensLabel.textContent = 'Total tokens';
     els.totalTokensHint.textContent = 'Million tokens (e.g. 1000 = 1B tokens)';
@@ -356,6 +356,7 @@ function updateCompareTray() {
 function showCompareModal() {
   if (state.compareSelection.length < 2) return;
   const tokens = getTokens();
+  const modeMultiplier = state.costMode === 'monthly' ? 30 : 1;
   const models = state.compareSelection;
 
   const rows = [
@@ -371,7 +372,7 @@ function showCompareModal() {
     { label: 'Max Output Tokens', getValue: m => m.max_completion_tokens ? m.max_completion_tokens.toLocaleString() : '<span class="missing">—</span>' },
     { label: 'Uptime (30m)', getValue: m => m.uptime_30m != null ? `${m.uptime_30m.toFixed(2)}%` : '<span class="missing">—</span>' },
     { label: 'Discount', getValue: m => m.discount > 0 ? `<span class="promo-badge">${(m.discount * 100).toFixed(0)}% off</span>` : '—' },
-    { label: els.costColumnHeader?.textContent || 'Total Cost', getValue: m => fmtCost(costFor(m.pricing, tokens)), getRaw: m => costFor(m.pricing, tokens), isCost: true },
+    { label: els.costColumnHeader?.textContent || 'Total Cost', getValue: m => fmtCost(costFor(m.pricing, tokens) * modeMultiplier), getRaw: m => costFor(m.pricing, tokens) * modeMultiplier, isCost: true },
   ];
 
   let html = '<table class="compare-table"><thead><tr><th>Metric</th>';
@@ -513,9 +514,11 @@ function computeAndRender() {
   els.resultsTitle.textContent = title;
 
   // Compute costs
+  const modeMultiplier = state.costMode === 'monthly' ? 30 : 1;
   const rows = offerings
     .map((m) => ({ model: m, cost: costFor(m.pricing, tokens) }))
-    .filter((r) => r.cost !== null);
+    .filter((r) => r.cost !== null)
+    .map((r) => ({ ...r, cost: r.cost * modeMultiplier }));
 
   // Sort by current sort column
   sortRows(rows);
