@@ -6,9 +6,11 @@ Compare pay-as-you-go LLM inference pricing across inference providers. Enter yo
 
 ## How it works
 
-1. **`scripts/fetch-pricing.mjs`** fetches pricing from 3 tiers: direct providers (DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac), OpenRouter's de-aggregated `/endpoints` API (per-backend pricing for Fireworks, Together, Novita, SiliconFlow, etc.), and CSV-sourced static providers (Hyper, Makora, Xiaomimimo, OpenCode Go). Normalizes all pricing to $/M tokens and writes `public/pricing.json`.
+1. **`scripts/fetch-pricing.mjs`** fetches pricing from 3 tiers: direct providers (DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac, SambaNova), OpenRouter's de-aggregated `/endpoints` API (per-backend pricing for Fireworks, Together, Novita, SiliconFlow, etc.), and CSV-sourced static providers (Hyper, Makora, Xiaomimimo, OpenCode Go). Also fetches provider metadata (privacy policies, ToS, HQ, datacenters) from OpenRouter's `/api/v1/providers`. Normalizes all pricing to $/M tokens and writes `public/pricing.json`.
 2. **`public/`** is a zero-dependency static site (HTML/CSS/JS) that loads `pricing.json` client-side and computes costs in-browser.
-3. **GitHub Actions** runs the fetch script daily (`0 0 * * *` UTC), commits updated pricing, and deploys to Cloudflare Pages.
+3. **`functions/api/v1/`** provides a queryable API via Cloudflare Pages Functions (filtering, sorting, model lookup).
+4. **`public/widget/`** contains an embeddable widget for external sites.
+5. **GitHub Actions** runs the fetch script daily (`0 0 * * *` UTC), commits updated pricing, and deploys to Cloudflare Pages. Pushes to `main` also trigger a deploy.
 
 ## Usage
 
@@ -16,7 +18,13 @@ Compare pay-as-you-go LLM inference pricing across inference providers. Enter yo
 - **Search by model**: Type a model name (e.g. "glm", "kimi", "gpt-4o") to filter results to matching models across all providers.
 - **Both together**: Use both search fields simultaneously (AND filter).
 - **Token input**: Enter total tokens (in millions) and set the percentage breakdown across input, cached input, and output. The calculator computes costs per offering and sorts cheapest-first.
-- **Promo badges**: Discounted offerings show a "promo" badge with the discount percentage. These are temporary prices — structural prices have no badge.
+- **Cost mode**: Toggle between "Per Request" and "Monthly Volume" — same computation, different labels.
+- **Group by**: Group results by Organization, Provider, or keep flat.
+- **Compare**: Checkboxes on each row let you select up to 4 models for side-by-side comparison in a modal.
+- **Provider metadata**: HQ flag badges (🇺🇸🇸🇬🇨🇳) and links to privacy policy, ToS, and status pages appear next to provider names.
+- **Promo badges**: Discounted offerings show a "promo" badge with the discount percentage.
+- **Shareable URLs**: All state (search, tokens, mix, sort, mode, group) is encoded in the URL hash for sharing.
+- **Cache Write column**: Display-only — shows cache write pricing when available, not included in cost computation.
 
 ### Token calculation
 
@@ -37,22 +45,49 @@ Presets: Agentic (2.5/97/0.5), Balanced (30/50/20), Heavy output (10/0/90), No c
 
 | Source | Tier | Description |
 |---|---|---|
-| Direct providers | Tier 1 | DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac — fetched via their own `/v1/models` endpoints |
-| OpenRouter `/endpoints` | Tier 2 | De-aggregated per-backend pricing — each backend (Fireworks, Together, Novita, SiliconFlow, etc.) becomes its own row |
+| Direct providers | Tier 1 | DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac, SambaNova — fetched via their own `/v1/models` endpoints |
+| OpenRouter `/endpoints` | Tier 2 | De-aggregated per-backend pricing — each backend (Fireworks, Together, Novita, SiliconFlow, etc.) becomes its own row. Also captures cache_write, uptime, max_completion_tokens. |
 | CSV-sourced | Tier 3 | Hyper, Makora, Xiaomimimo (from `data/manual-pricing.csv`) |
 | Hardcoded | Tier 3 | OpenCode Go (16 models with user-provided pricing) |
 
 **3-tier precedence**: when the same (model, provider) appears in multiple tiers, the higher-authority tier wins — direct > OpenRouter > CSV/hardcoded. Quantization is not part of the dedup key — same model+provider at different quants collapses to one row.
 
-**Total: ~892 text-generation models across ~75 inference providers and 60+ underlying orgs** (Anthropic, OpenAI, Google, DeepSeek, Z.ai, Qwen, Meta, Mistral, etc.)
+**Total: ~891 text-generation models across ~75 inference providers and 60+ underlying orgs** (Anthropic, OpenAI, Google, DeepSeek, Z.ai, Qwen, Meta, Mistral, etc.)
 
 Only text-generation models are included. TTS, image generation, video generation, and embeddings are filtered out. Multimodal input (text+image→text) is allowed.
+
+## API
+
+Cloudflare Pages Functions serve a queryable API at `/api/v1/`:
+
+- `GET /api/v1/stats` — summary statistics
+- `GET /api/v1/providers` — provider metadata (privacy/ToS/status URLs, HQ, datacenters)
+- `GET /api/v1/models` — list models with filters: `?org=`, `?provider=`, `?min_context=`, `?promo=true`, `?search=`, `?sort=`, `?order=`, `?limit=`, `?offset=`
+- `GET /api/v1/models/:canonicalId/providers` — all providers hosting a model, sorted by cost
+
+All responses include CORS headers for cross-origin use.
+
+## Embeddable widget
+
+Embed a live pricing card on any site:
+
+```html
+<div data-tw-model="glm-5.2" data-tw-tokens="1000" data-tw-mix="2.5,97,0.5"></div>
+<script src="https://tokenwatch.wyrdwerk.com/widget/embed.js"></script>
+```
+
+Options via data attributes: `data-tw-model` (required), `data-tw-tokens` (default: 1000), `data-tw-mix` (default: "2.5,97,0.5"), `data-tw-theme` (auto/dark/light).
+
+Demo: https://tokenwatch.wyrdwerk.com/widget/demo.html
 
 ## Development
 
 ```bash
 # Fetch pricing data (~317 API calls, ~15-20s)
 npm run fetch
+
+# Dry run — process but don't write pricing.json
+npm run fetch -- --dry-run
 
 # Serve locally
 npm run serve
@@ -64,27 +99,33 @@ Requires Node ≥18 (uses native `fetch`). No dependencies.
 
 ```
 scripts/
-  fetch-pricing.mjs          # 3-tier fetch + OpenRouter de-aggregation + org extraction + dedup
+  fetch-pricing.mjs          # 3-tier fetch + OR de-aggregation + provider metadata + org extraction + dedup
 data/
   manual-pricing.csv          # Static pricing for CSV-sourced providers
 public/
-  index.html                 # UI: dual search, usage inputs, results table (8 columns)
-  app.js                     # State, search, cost computation, rendering (promo badges)
-  styles.css                 # Dark/light theme, promo-badge, header-row, responsive
+  index.html                 # UI: dual search, usage inputs, 10-column results table, group-by, comparison modal
+  app.js                     # State, URL hash, search, cost computation, group-by, comparison, monthly mode, rendering
+  styles.css                 # Dark/light theme, all badges, group headers, comparison modal, mode toggle, responsive
   pricing.json               # Generated data (refreshed daily by CI)
+  widget/
+    embed.js                 # Embeddable widget (Shadow DOM, auto-detect, theme support)
+    demo.html                # Widget demo page
+functions/
+  api/v1/
+    [[route]].js             # Cloudflare Pages Functions API
 .github/workflows/
-  refresh-pricing.yml        # Daily cron: fetch → commit → deploy to Cloudflare
+  refresh-pricing.yml        # Daily cron (fetch+deploy) + push-to-main (deploy-only)
 ```
 
 ## CI/CD
 
-The `refresh-pricing.yml` workflow runs daily at 00:00 UTC:
-1. Fetches pricing from all sources (~317 API calls)
-2. Filters to text-generation models only
-3. Applies 3-tier dedup precedence
-4. Aborts if >20% of API calls fail or model count drops >15% vs previous run
-5. Commits `pricing.json` if changed
-6. Deploys `public/` to Cloudflare Pages
+The `refresh-pricing.yml` workflow has two triggers:
+- **Daily cron** (00:00 UTC): fetch pricing → commit `pricing.json` if changed → deploy to Cloudflare Pages
+- **Push to main**: deploy-only (no fetch)
+
+Safety checks:
+- Aborts if >20% of API calls fail
+- Aborts if model count drops >15% vs previous run
 
 GitHub secrets required: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.
 
