@@ -48,7 +48,30 @@ const els = {
   compareModal: $('compareModal'),
   compareClose: $('compareClose'),
   compareBody: $('compareBody'),
+  cacheWriteTokens: $('cacheWriteTokens'),
+  amortizeN: $('amortizeN'),
 };
+
+
+// Theme toggle
+const themeToggle = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('tw-theme', theme);
+  themeToggle.textContent = theme === 'dark' ? '☀' : '☾';
+}
+const savedTheme = localStorage.getItem('tw-theme');
+if (savedTheme) {
+  applyTheme(savedTheme);
+} else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  applyTheme('dark');
+} else {
+  applyTheme('light');
+}
+themeToggle.addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+});
 
 
 // Default control values — used to keep shared URLs minimal when unchanged
@@ -64,8 +87,6 @@ const DEFAULTS = {
   sortBy: 'cost',
   sortDir: 'asc',
   groupBy: 'none',
-  compareSelection: [], // array of model objects (max 4)
-  currentRows: null,
 };
 
 // ── URL hash state ─────────────────────────────────────────────────────────────
@@ -103,6 +124,11 @@ function serializeState() {
 
   if (els.groupBy.value !== 'none') params.set('group', els.groupBy.value);
 
+  const cacheWriteVal = parseFloat(document.getElementById('cacheWriteTokens').value) || 0;
+  const amortizeVal = parseInt(document.getElementById('amortizeN').value, 10) || 1;
+  if (cacheWriteVal > 0) params.set('cw', document.getElementById('cacheWriteTokens').value);
+  if (amortizeVal !== 1) params.set('cwn', String(amortizeVal));
+
   return params.toString();
 }
 
@@ -125,6 +151,8 @@ function deserializeState(hash) {
   els.totalTokensHint.textContent = 'Million tokens (e.g. 1000 = 1B tokens)';
   els.costColumnHeader.textContent = 'Total Cost';
   els.groupBy.value = DEFAULTS.groupBy;
+  document.getElementById('cacheWriteTokens').value = '0';
+  document.getElementById('amortizeN').value = '1';
 
   const raw = (hash || '').replace(/^#/, '');
   if (!raw) return;
@@ -153,6 +181,8 @@ function deserializeState(hash) {
 
   const group = params.get('group');
   if (group) els.groupBy.value = group;
+  if (params.has('cw')) document.getElementById('cacheWriteTokens').value = params.get('cw');
+  if (params.has('cwn')) document.getElementById('amortizeN').value = params.get('cwn');
 }
 
 /** Sync the URL hash to current state without adding history entries. */
@@ -277,7 +307,7 @@ function attachListeners() {
     });
   });
 
-  for (const id of ['totalTokens', 'inputPct', 'cacheReadPct', 'outputPct']) {
+  for (const id of ['totalTokens', 'inputPct', 'cacheReadPct', 'outputPct', 'cacheWriteTokens', 'amortizeN']) {
     els[id].addEventListener('input', () => computeAndRender());
   }
 
@@ -293,7 +323,7 @@ function attachListeners() {
         state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
       } else {
         state.sortBy = col;
-        state.sortDir = col === 'cost' || col === 'input' || col === 'output' || col === 'cache_read' || col === 'context' ? 'asc' : 'asc';
+        state.sortDir = 'asc';
       }
       computeAndRender();
     });
@@ -420,39 +450,34 @@ function clearCompare() {
 // ── Token computation ──────────────────────────────────────────────────────────
 
 function getTokens() {
-  const total = Math.max(0, parseFloat(els.totalTokens.value) || 0) * 1e6; // millions → tokens
+  const total = Math.max(0, parseFloat(els.totalTokens.value) || 0) * 1e6;
   const inputPct = Math.max(0, parseFloat(els.inputPct.value) || 0);
   const cacheReadPct = Math.max(0, parseFloat(els.cacheReadPct.value) || 0);
   const outputPct = Math.max(0, parseFloat(els.outputPct.value) || 0);
-  const sum = inputPct + cacheReadPct + outputPct;
+  const cacheWriteTokens = Math.max(0, parseFloat(document.getElementById('cacheWriteTokens').value) || 0) * 1e6;
+  const amortizeN = Math.max(1, parseInt(document.getElementById('amortizeN').value, 10) || 1);
   return {
-    total,
-    inputPct,
-    cacheReadPct,
-    outputPct,
-    sum,
+    total, inputPct, cacheReadPct, outputPct, sum: inputPct + cacheReadPct + outputPct,
     input: total * inputPct / 100,
     cacheRead: total * cacheReadPct / 100,
-    cacheWrite: 0, // not exposed in percentage model
+    cacheWrite: cacheWriteTokens,
+    amortizeN,
     output: total * outputPct / 100,
   };
 }
 
 /** cost = (tokens × $/M) / 1e6  — prices are $/M tokens */
 function costFor(pricing, tokens) {
-  const c = (price, tok) => (price !== null ? (price * tok) / 1e6 : null);
-  const parts = [
-    c(pricing.input, tokens.input),
-    c(pricing.output, tokens.output),
-    c(pricing.cache_read, tokens.cacheRead),
-    c(pricing.cache_write, tokens.cacheWrite),
-  ];
-  // If a component is null (unsupported), treat as 0 IF tokens for it are 0;
-  // otherwise the offering can't serve that usage → exclude.
-  if (parts.some((p, i) => p === null && [tokens.input, tokens.output, tokens.cacheRead, tokens.cacheWrite][i] > 0)) {
-    return null; // this offering doesn't support requested token types
-  }
-  return parts.reduce((a, b) => a + (b || 0), 0);
+  const c = (price, tok) => (price != null ? (price * tok) / 1e6 : null);
+  const inputCost = c(pricing.input, tokens.input);
+  const outputCost = c(pricing.output, tokens.output);
+  const cacheReadCost = c(pricing.cache_read, tokens.cacheRead);
+  const cacheWriteCost = tokens.cacheWrite > 0 ? c(pricing.cache_write, tokens.cacheWrite / (tokens.amortizeN || 1)) : 0;
+  if (tokens.input > 0 && inputCost === null) return null;
+  if (tokens.output > 0 && outputCost === null) return null;
+  if (tokens.cacheRead > 0 && cacheReadCost === null) return null;
+  if (tokens.cacheWrite > 0 && cacheWriteCost === null) return null;
+  return (inputCost || 0) + (outputCost || 0) + (cacheReadCost || 0) + (cacheWriteCost || 0);
 }
 
 // ── Rendering ─────────────────────────────────────────────────────────────────
@@ -673,16 +698,16 @@ function renderModelRow(r, rank, groupKey, cheapest) {
     : rank - 1;
   const checkbox = `<input type="checkbox" class="compare-check" data-idx="${rowIdx}" ${isSelected ? 'checked' : ''}${state.compareSelection.length >= 4 && !isSelected ? ' disabled' : ''}>`;
   return `<tr${groupAttr}>
-    <td class="rank">${checkbox} ${rank}${cheapest ? ' 🏆' : ''}</td>
-    <td><span class="org-badge">${esc(orgDisplay(r.model.org))}</span></td>
-    <td>${renderProviderCell(r)}</td>
-    <td>${esc(modelDisplay)}${promo}</td>
-    <td class="num">${fmtPrice(p.input)}</td>
-    <td class="num">${fmtPrice(p.output)}</td>
-    <td class="num">${fmtPrice(p.cache_read)}</td>
-    <td class="num">${fmtPrice(p.cache_write)}</td>
-    <td class="num">${fmtContext(r.model.context_length)}</td>
-    <td class="num cost">${fmtCost(r.cost)}</td>
+    <td class="rank" data-label="#">${checkbox} ${rank}${cheapest ? ' 🏆' : ''}</td>
+    <td data-label="Org"><span class="org-badge">${esc(orgDisplay(r.model.org))}</span></td>
+    <td data-label="Provider">${renderProviderCell(r)}</td>
+    <td data-label="Model">${esc(modelDisplay)}${promo}</td>
+    <td class="num" data-label="Input $/M">${fmtPrice(p.input)}</td>
+    <td class="num" data-label="Output $/M">${fmtPrice(p.output)}</td>
+    <td class="num" data-label="Cache Read $/M">${fmtPrice(p.cache_read)}</td>
+    <td class="num" data-label="Cache Write $/M">${fmtPrice(p.cache_write)}</td>
+    <td class="num" data-label="Context">${fmtContext(r.model.context_length)}</td>
+    <td class="num cost" data-label="Total Cost">${fmtCost(r.cost)}</td>
   </tr>`;
 }
 

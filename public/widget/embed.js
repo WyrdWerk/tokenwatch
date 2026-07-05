@@ -3,7 +3,20 @@
 
   // Determine API base URL from script src or fallback to relative
   var scriptSrc = (document.currentScript && document.currentScript.src) || '';
+  // Fallback: find the last loaded script tag pointing to embed.js
+  if (!scriptSrc) {
+    var scripts = document.getElementsByTagName('script');
+    for (var i = scripts.length - 1; i >= 0; i--) {
+      var s = scripts[i];
+      if (s.src && /\/widget\/embed\.js/.test(s.src)) { scriptSrc = s.src; break; }
+    }
+  }
   var baseUrl = scriptSrc ? scriptSrc.replace(/\/widget\/embed\.js.*$/, '') : '';
+  // Allow explicit override via data attribute on any widget element
+  if (!baseUrl) {
+    var probe = document.querySelector('[data-tw-base]');
+    if (probe) baseUrl = probe.getAttribute('data-tw-base').replace(/\/$/, '');
+  }
   var API_BASE = baseUrl + '/api/v1/models';
 
   var DEFAULTS = {
@@ -32,9 +45,15 @@
     return '$' + c.toFixed(2);
   }
 
-  function computeCost(pricing, totalTokens, mix) {
+  function computeCost(pricing, totalTokens, mix, cacheWriteTokens, amortizeN) {
     var parts = mix.split(',').map(parseFloat);
     var inputPct = parts[0] || 0, cachePct = parts[1] || 0, outputPct = parts[2] || 0;
+    var sum = inputPct + cachePct + outputPct;
+    if (sum > 0 && Math.abs(sum - 100) > 1) {
+      inputPct = inputPct / sum * 100;
+      cachePct = cachePct / sum * 100;
+      outputPct = outputPct / sum * 100;
+    }
     var total = totalTokens * 1e6;
     var inputTokens = total * inputPct / 100;
     var cacheTokens = total * cachePct / 100;
@@ -55,43 +74,48 @@
       if (pricing.output === null || pricing.output === undefined) { valid = false; }
       else cost += (pricing.output * outputTokens) / 1e6;
     }
+    if (cacheWriteTokens > 0 && pricing.cache_write != null) {
+      cost += (pricing.cache_write * cacheWriteTokens * 1e6) / 1e6 / (amortizeN || 1);
+    }
 
     return valid ? cost : null;
   }
 
   var STYLES = {
     dark: {
-      bg: '#0f1117', surface: '#1a1d28', border: '#2e3344',
-      text: '#e4e7ef', dim: '#8b90a3', accent: '#6c8cff', green: '#4ade80',
+      bg: '#1a1612', surface: '#242020', border: '#3a3530',
+      text: '#e4e0d8', dim: '#9a9088', accent: '#1E6E8E', green: '#4a9d6f',
     },
     light: {
-      bg: '#f8f9fb', surface: '#ffffff', border: '#e0e4ee',
-      text: '#1a1d28', dim: '#6b7280', accent: '#4361ee', green: '#16a34a',
+      bg: '#F8F5F0', surface: '#FFFFFF', border: '#E0D6CA',
+      text: '#0D1725', dim: '#486680', accent: '#1E6E8E', green: '#2d8a5a',
     },
   };
 
-  function renderWidget(target, data) {
+  function renderWidget(target, data, tokens, mix) {
     var model = target.getAttribute('data-tw-model');
-    var tokens = parseFloat(target.getAttribute('data-tw-tokens')) || DEFAULTS.tokens;
-    var mix = target.getAttribute('data-tw-mix') || DEFAULTS.mix;
+    if (tokens === undefined) tokens = parseFloat(target.getAttribute('data-tw-tokens')) || DEFAULTS.tokens;
+    if (mix === undefined) mix = target.getAttribute('data-tw-mix') || DEFAULTS.mix;
+    var cacheWrite = parseFloat(target.getAttribute('data-tw-cache-write')) || 0;
+    var amortizeN = parseInt(target.getAttribute('data-tw-amortize'), 10) || 1;
     var theme = getTheme(target.getAttribute('data-tw-theme'));
     var c = STYLES[theme];
 
     var shadow = target.shadowRoot || target.attachShadow({ mode: 'open' });
 
     if (!data || data.error) {
-      shadow.innerHTML = '<style>' + getCss(c) + '</style><div class="tw-card tw-error">' + (data && data.error ? data.error : 'Failed to load') + '</div>';
+      shadow.innerHTML = '<style>' + getCss(c) + '</style><div class="tw-card tw-error">' + (data && data.error ? esc(data.error) : 'Failed to load') + '</div>';
       return;
     }
 
     var providers = data.providers || [];
     if (providers.length === 0) {
-      shadow.innerHTML = '<style>' + getCss(c) + '</style><div class="tw-card tw-error">No providers found for ' + model + '</div>';
+      shadow.innerHTML = '<style>' + getCss(c) + '</style><div class="tw-card tw-error">No providers found for ' + esc(model) + '</div>';
       return;
     }
 
     var cheapest = providers[0]; // API returns sorted by cost
-    var cost = computeCost(cheapest.pricing, tokens, mix);
+    var cost = computeCost(cheapest.pricing, tokens, mix, cacheWrite, amortizeN);
     var promo = cheapest.discount > 0 ? ' <span class="tw-promo">' + (cheapest.discount * 100).toFixed(0) + '% off</span>' : '';
 
     var html = '<style>' + getCss(c) + '</style>' +
@@ -107,6 +131,7 @@
           '<div class="tw-price-row"><span>Input</span><span>' + fmtPrice(cheapest.pricing.input) + '/M</span></div>' +
           '<div class="tw-price-row"><span>Output</span><span>' + fmtPrice(cheapest.pricing.output) + '/M</span></div>' +
           '<div class="tw-price-row"><span>Cache Read</span><span>' + fmtPrice(cheapest.pricing.cache_read) + '/M</span></div>' +
+          '<div class="tw-price-row"><span>Cache Write</span><span>' + fmtPrice(cheapest.pricing.cache_write) + '/M</span></div>' +
         '</div>' +
         '<div class="tw-total">' +
           '<span>Cost for ' + tokens + 'M tokens</span>' +
@@ -123,7 +148,7 @@
   }
 
   function getCss(c) {
-    return '.tw-card{background:' + c.bg + ';border:1px solid ' + c.border + ';border-radius:10px;padding:1rem;max-width:320px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:' + c.text + ';font-size:0.85rem;line-height:1.5}' +
+    return '.tw-card{background:' + c.bg + ';border:1px solid ' + c.border + ';border-radius:8px;padding:1rem;max-width:320px;font-family:\'Space Grotesk\',system-ui,sans-serif;color:' + c.text + ';font-size:0.85rem;line-height:1.5}' +
       '.tw-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem}' +
       '.tw-model{font-weight:600;font-size:0.95rem}' +
       '.tw-providers{color:' + c.dim + ';font-size:0.75rem}' +
@@ -143,14 +168,20 @@
   async function fetchAndRender(target) {
     var model = target.getAttribute('data-tw-model');
     if (!model) return;
+    var tokens = parseFloat(target.getAttribute('data-tw-tokens')) || DEFAULTS.tokens;
+    var mix = target.getAttribute('data-tw-mix') || DEFAULTS.mix;
 
-    var url = API_BASE + '/' + model.split('/').map(encodeURIComponent).join('/') + '/providers';
+    var url = API_BASE + '/' + model.split('/').map(encodeURIComponent).join('/') + '/providers?tokens=' + encodeURIComponent(tokens) + '&mix=' + encodeURIComponent(mix);
     try {
       var res = await fetch(url);
+      if (!res.ok) {
+        renderWidget(target, { error: 'API error: ' + res.status + ' ' + res.statusText }, tokens, mix);
+        return;
+      }
       var data = await res.json();
-      renderWidget(target, data);
+      renderWidget(target, data, tokens, mix);
     } catch (err) {
-      renderWidget(target, { error: 'Failed to fetch: ' + err.message });
+      renderWidget(target, { error: 'Failed to fetch: ' + err.message }, tokens, mix);
     }
   }
 

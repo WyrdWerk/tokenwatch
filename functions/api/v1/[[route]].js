@@ -97,12 +97,33 @@ export async function onRequestGet(context) {
         return json({ error: 'Model not found', canonical_id: canonicalId }, 404);
       }
 
-      // Sort by cost (if we can compute a simple input+output cost)
-      const sorted = matches.sort((a, b) => {
-        const costA = (a.pricing.input || 0) + (a.pricing.output || 0);
-        const costB = (b.pricing.input || 0) + (b.pricing.output || 0);
-        return costA - costB;
-      });
+      // Sort by cost — use mix-aware cost if params provided, else input+output
+      const reqTokens = parseFloat(params.get('tokens'));
+      const reqMix = params.get('mix'); // 'inputPct,cachePct,outputPct'
+      let sorted;
+      if (reqTokens > 0 && reqMix) {
+        const parts = reqMix.split(',').map(parseFloat);
+        const inputPct = parts[0] || 0, cachePct = parts[1] || 0, outputPct = parts[2] || 0;
+        const total = reqTokens * 1e6;
+        const costFn = (m) => {
+          const p = m.pricing;
+          let c = 0, valid = true;
+          const iT = total * inputPct / 100;
+          const cT = total * cachePct / 100;
+          const oT = total * outputPct / 100;
+          if (iT > 0) { if (p.input == null) valid = false; else c += (p.input * iT) / 1e6; }
+          if (cT > 0) { if (p.cache_read == null) valid = false; else c += (p.cache_read * cT) / 1e6; }
+          if (oT > 0) { if (p.output == null) valid = false; else c += (p.output * oT) / 1e6; }
+          return valid ? c : Infinity;
+        };
+        sorted = matches.sort((a, b) => costFn(a) - costFn(b));
+      } else {
+        sorted = matches.sort((a, b) => {
+          const costA = (a.pricing.input || 0) + (a.pricing.output || 0);
+          const costB = (b.pricing.input || 0) + (b.pricing.output || 0);
+          return costA - costB;
+        });
+      }
 
       return json({
         canonical_id: target,

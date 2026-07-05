@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TokenWatch — Compare LLM API Costs</title>
   <meta name="description" content="Compare pay-as-you-go LLM inference pricing across providers. Enter your token volumes and find the cheapest option." />
-  <link rel="stylesheet" href="styles.css?v=20260705c" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=20260706a" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>" />
 </head>
 <body>
@@ -14,6 +17,7 @@
       <h1>💰 TokenWatch</h1>
       <a class="repo-link" href="https://wyrdwerk.com" target="_blank" rel="noopener">WyrdWerk</a>
       <a class="repo-link" href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">GitHub</a>
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle dark/light mode"></button>
     </div>
     <p class="subtitle">Compare pay-as-you-go LLM inference pricing across providers</p>
   </header>
@@ -21,6 +25,7 @@
   <main>
     <!-- ── Controls ─────────────────────────────────────────────────────── -->
     <section class="controls" id="controls">
+      <span class="section-label">PROVIDERS</span>
       <div class="control-group">
         <label for="providerSearch">Search by provider</label>
         <input type="text" id="providerSearch" placeholder="Type a provider name…" list="orgList" autocomplete="off" />
@@ -48,6 +53,7 @@
 
     <!-- ── Token inputs ─────────────────────────────────────────────────── -->
     <section class="token-inputs">
+      <span class="section-label">USAGE</span>
       <h2>Your Usage</h2>
       <div class="cost-mode-toggle">
         <button class="mode-btn active" id="modePerRequest" type="button">Per Request</button>
@@ -86,10 +92,20 @@
         <button data-preset="heavy-output">Heavy output (10 / 0 / 90)</button>
         <button data-preset="no-cache">No cache (70 / 0 / 30)</button>
       </div>
+      <details class="advanced-cache">
+        <summary>Advanced: cache write</summary>
+        <div class="cache-write-grid">
+          <label for="cacheWriteTokens">Cache write tokens (M, one-time)</label>
+          <input type="number" id="cacheWriteTokens" min="0" step="0.1" value="0" placeholder="0">
+          <label for="amortizeN">Amortize over N requests</label>
+          <input type="number" id="amortizeN" min="1" step="1" value="1" placeholder="1">
+        </div>
+      </details>
     </section>
 
     <!-- ── Results ──────────────────────────────────────────────────────── -->
     <section class="results">
+      <span class="section-label">PRICING</span>
       <div class="results-header">
         <h2 id="resultsTitle">Results</h2>
         <span class="last-updated" id="lastUpdated"></span>
@@ -116,15 +132,17 @@
               <th class="sortable num" data-sort="cache_write">Cache Write $/M</th>
               <th class="sortable num" data-sort="context">Context</th>
               <th class="sortable num" data-sort="cost" id="costColumnHeader">Total Cost</th>
+            </tr>
           </thead>
           <tbody id="resultsBody">
             <tr><td colspan="10" class="empty">Select a model or provider to see pricing.</td></tr>
+          </tbody>
         </table>
       </div>
     </section>
 
     <div class="compare-tray" id="compareTray" style="display:none;">
-      <span id="compareCount">0 selected</span>
+      <span id="compareCount" class="compare-tray-info">0 selected</span>
       <button id="compareBtn" type="button">Compare</button>
       <button id="compareClear" type="button">Clear</button>
     </div>
@@ -151,6 +169,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20260705c"></script>
+  <script src="app.js?v=20260706a"></script>
 </body>
 </html>
