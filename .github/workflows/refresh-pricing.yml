@@ -23,18 +23,24 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Fetch & normalize pricing
+      - name: Fetch & normalize text pricing
         run: node scripts/fetch-pricing.mjs
 
-      - name: Commit pricing.json
+      - name: Fetch & normalize image pricing
+        run: node scripts/fetch-images.mjs
+
+      - name: Fetch & normalize video pricing
+        run: node scripts/fetch-videos.mjs
+
+      - name: Commit pricing data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/pricing.json
+          git add public/pricing.json public/image-pricing.json public/video-pricing.json
           if git diff --cached --quiet; then
             echo "No pricing changes — skipping commit."
           else
-            git commit -m "chore: refresh pricing.json ($(date -u +%Y-%m-%dT%H:%M) UTC)"
+            git commit -m "chore: refresh pricing data ($(date -u +%Y-%m-%dT%H:%M) UTC)"
             git push
           fi
 
