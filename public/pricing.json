@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-05T07:03:36.836Z",
+  "generated_at": "2026-07-06T03:52:37.397Z",
   "providers": [
     {
       "key": "deepinfra",
@@ -76,227 +76,19 @@
   ],
   "models": [
     {
-      "id": "deepseek-ai/DeepSeek-V3.1-Terminus",
-      "name": "deepseek-ai/DeepSeek-V3.1-Terminus",
+      "id": "MiniMaxAI/MiniMax-M3",
+      "name": "MiniMaxAI/MiniMax-M3",
       "provider": "deepinfra",
       "quantization": null,
       "discount": 0,
-      "context_length": 163840,
+      "context_length": 524288,
       "pricing": {
-        "input": 0.27,
-        "output": 0.95,
-        "cache_read": 0.12999999960000003,
-        "cache_write": null
-      },
-      "org": "deepseek",
-      "zdr": true
-    },
-    {
-      "id": "Qwen/Qwen3.7-Max",
-      "name": "Qwen/Qwen3.7-Max",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 256000,
-      "pricing": {
-        "input": 2.5,
-        "output": 7.5,
-        "cache_read": 0.5,
-        "cache_write": null
-      },
-      "org": "qwen",
-      "zdr": true
-    },
-    {
-      "id": "meta-llama/Meta-Llama-3.1-8B-Instruct",
-      "name": "meta-llama/Meta-Llama-3.1-8B-Instruct",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 131072,
-      "pricing": {
-        "input": 0.02,
-        "output": 0.05,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "meta",
-      "zdr": true
-    },
-    {
-      "id": "Qwen/Qwen3-30B-A3B",
-      "name": "Qwen/Qwen3-30B-A3B",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 40960,
-      "pricing": {
-        "input": 0.12000000000000001,
-        "output": 0.5,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "qwen",
-      "zdr": true
-    },
-    {
-      "id": "google/gemma-4-31B-it",
-      "name": "google/gemma-4-31B-it",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.13,
-        "output": 0.38,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "google",
-      "zdr": true
-    },
-    {
-      "id": "Qwen/Qwen3-Next-80B-A3B-Instruct",
-      "name": "Qwen/Qwen3-Next-80B-A3B-Instruct",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.09,
-        "output": 1.1,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "qwen",
-      "zdr": true
-    },
-    {
-      "id": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
-      "name": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 327680,
-      "pricing": {
-        "input": 0.1,
-        "output": 0.3,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "meta",
-      "zdr": true
-    },
-    {
-      "id": "zai-org/GLM-5.1",
-      "name": "zai-org/GLM-5.1",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 202752,
-      "pricing": {
-        "input": 1.05,
-        "output": 3.5,
-        "cache_read": 0.205000005,
-        "cache_write": null
-      },
-      "org": "z-ai",
-      "zdr": true
-    },
-    {
-      "id": "MiniMaxAI/MiniMax-M2.5",
-      "name": "MiniMaxAI/MiniMax-M2.5",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 196608,
-      "pricing": {
-        "input": 0.15,
-        "output": 1.15,
-        "cache_read": 0.03,
+        "input": 0.3,
+        "output": 1.2,
+        "cache_read": 0.06,
         "cache_write": null
       },
       "org": "minimax",
-      "zdr": true
-    },
-    {
-      "id": "zai-org/GLM-5.2",
-      "name": "zai-org/GLM-5.2",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 1048576,
-      "pricing": {
-        "input": 0.9299999999999999,
-        "output": 2.9999999999999996,
-        "cache_read": 0.18000000269999997,
-        "cache_write": null
-      },
-      "org": "z-ai",
-      "zdr": true
-    },
-    {
-      "id": "google/gemma-3-4b-it",
-      "name": "google/gemma-3-4b-it",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 131072,
-      "pricing": {
-        "input": 0.05,
-        "output": 0.1,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "google",
-      "zdr": true
-    },
-    {
-      "id": "zai-org/GLM-4.6",
-      "name": "zai-org/GLM-4.6",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 202752,
-      "pricing": {
-        "input": 0.43,
-        "output": 1.74,
-        "cache_read": 0.0799999993,
-        "cache_write": null
-      },
-      "org": "z-ai",
-      "zdr": true
-    },
-    {
-      "id": "mistralai/Mistral-Nemo-Instruct-2407",
-      "name": "mistralai/Mistral-Nemo-Instruct-2407",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 131072,
-      "pricing": {
-        "input": 0.02,
-        "output": 0.04,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "mistral",
-      "zdr": true
-    },
-    {
-      "id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
-      "name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 131072,
-      "pricing": {
-        "input": 0.345,
-        "output": 0.345,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "meta",
       "zdr": true
     },
     {
@@ -316,163 +108,19 @@
       "zdr": true
     },
     {
-      "id": "ByteDance/Seed-2.0-mini",
-      "name": "ByteDance/Seed-2.0-mini",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 256000,
-      "pricing": {
-        "input": 0.1,
-        "output": 0.4,
-        "cache_read": 0.020000000000000004,
-        "cache_write": null
-      },
-      "org": "bytedance",
-      "zdr": true
-    },
-    {
-      "id": "google/gemini-1.5-flash-8b",
-      "name": "google/gemini-1.5-flash-8b",
+      "id": "google/gemini-3.1-pro",
+      "name": "google/gemini-3.1-pro",
       "provider": "deepinfra",
       "quantization": null,
       "discount": 0,
       "context_length": 1000000,
       "pricing": {
-        "input": 0.0375,
-        "output": 0.15,
+        "input": 2,
+        "output": 11.999999999999998,
         "cache_read": null,
         "cache_write": null
       },
       "org": "google",
-      "zdr": true
-    },
-    {
-      "id": "deepseek-ai/DeepSeek-V4-Pro",
-      "name": "deepseek-ai/DeepSeek-V4-Pro",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 1048576,
-      "pricing": {
-        "input": 1.2999999999999998,
-        "output": 2.5999999999999996,
-        "cache_read": 0.10000000399999999,
-        "cache_write": null
-      },
-      "org": "deepseek",
-      "zdr": true
-    },
-    {
-      "id": "deepseek-ai/DeepSeek-V3.2",
-      "name": "deepseek-ai/DeepSeek-V3.2",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 163840,
-      "pricing": {
-        "input": 0.26,
-        "output": 0.38,
-        "cache_read": 0.13,
-        "cache_write": null
-      },
-      "org": "deepseek",
-      "zdr": true
-    },
-    {
-      "id": "anthropic/claude-opus-4-8",
-      "name": "anthropic/claude-opus-4-8",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 1000000,
-      "pricing": {
-        "input": 5,
-        "output": 25,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "anthropic",
-      "zdr": true
-    },
-    {
-      "id": "anthropic/claude-opus-4-7",
-      "name": "anthropic/claude-opus-4-7",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 1000000,
-      "pricing": {
-        "input": 5,
-        "output": 25,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "anthropic",
-      "zdr": true
-    },
-    {
-      "id": "deepseek-ai/DeepSeek-V3",
-      "name": "deepseek-ai/DeepSeek-V3",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 163840,
-      "pricing": {
-        "input": 0.32,
-        "output": 0.8899999999999999,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "deepseek",
-      "zdr": true
-    },
-    {
-      "id": "Qwen/Qwen3-VL-235B-A22B-Instruct",
-      "name": "Qwen/Qwen3-VL-235B-A22B-Instruct",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.2,
-        "output": 0.8799999999999999,
-        "cache_read": 0.11000000000000001,
-        "cache_write": null
-      },
-      "org": "qwen",
-      "zdr": true
-    },
-    {
-      "id": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-      "name": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 131072,
-      "pricing": {
-        "input": 0.4,
-        "output": 0.4,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "meta",
-      "zdr": true
-    },
-    {
-      "id": "openai/gpt-oss-120b-Turbo",
-      "name": "openai/gpt-oss-120b-Turbo",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 131072,
-      "pricing": {
-        "input": 0.15,
-        "output": 0.6,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "openai",
       "zdr": true
     },
     {
@@ -508,6 +156,1014 @@
       "zdr": true
     },
     {
+      "id": "Qwen/Qwen2.5-72B-Instruct",
+      "name": "Qwen/Qwen2.5-72B-Instruct",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 32768,
+      "pricing": {
+        "input": 0.36,
+        "output": 0.4,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "qwen",
+      "zdr": true
+    },
+    {
+      "id": "openai/gpt-oss-120b",
+      "name": "openai/gpt-oss-120b",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 131072,
+      "pricing": {
+        "input": 0.039,
+        "output": 0.16999999999999998,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "openai",
+      "zdr": true
+    },
+    {
+      "id": "zai-org/GLM-4.7-Flash",
+      "name": "zai-org/GLM-4.7-Flash",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 202752,
+      "pricing": {
+        "input": 0.060000000000000005,
+        "output": 0.4,
+        "cache_read": 0.0100000002,
+        "cache_write": null
+      },
+      "org": "z-ai",
+      "zdr": true
+    },
+    {
+      "id": "stepfun-ai/Step-3.7-Flash",
+      "name": "stepfun-ai/Step-3.7-Flash",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.2,
+        "output": 1.15,
+        "cache_read": 0.04000000000000001,
+        "cache_write": null
+      },
+      "org": "stepfun",
+      "zdr": true
+    },
+    {
+      "id": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+      "name": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.09,
+        "output": 0.1,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "qwen",
+      "zdr": true
+    },
+    {
+      "id": "Sao10K/L3.1-70B-Euryale-v2.2",
+      "name": "Sao10K/L3.1-70B-Euryale-v2.2",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 131072,
+      "pricing": {
+        "input": 0.85,
+        "output": 0.85,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "sao10k",
+      "zdr": true
+    },
+    {
+      "id": "google/gemma-3-27b-it",
+      "name": "google/gemma-3-27b-it",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 131072,
+      "pricing": {
+        "input": 0.08,
+        "output": 0.16,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "google",
+      "zdr": true
+    },
+    {
+      "id": "Qwen/Qwen3-Max",
+      "name": "Qwen/Qwen3-Max",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 256000,
+      "pricing": {
+        "input": 1.2,
+        "output": 5.999999999999999,
+        "cache_read": 0.24,
+        "cache_write": null
+      },
+      "org": "qwen",
+      "zdr": true
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V3.2",
+      "name": "deepseek-ai/DeepSeek-V3.2",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 163840,
+      "pricing": {
+        "input": 0.26,
+        "output": 0.38,
+        "cache_read": 0.13,
+        "cache_write": null
+      },
+      "org": "deepseek",
+      "zdr": true
+    },
+    {
+      "id": "nvidia/Nemotron-Content-Safety-3.5",
+      "name": "nvidia/Nemotron-Content-Safety-3.5",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 131072,
+      "pricing": {
+        "input": 0.2,
+        "output": 0.2,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "nvidia",
+      "zdr": true
+    },
+    {
+      "id": "moonshotai/Kimi-K2.6",
+      "name": "moonshotai/Kimi-K2.6",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.7499999999999999,
+        "output": 3.5,
+        "cache_read": 0.15,
+        "cache_write": null
+      },
+      "org": "moonshot",
+      "zdr": true
+    },
+    {
+      "id": "Sao10K/L3-8B-Lunaris-v1-Turbo",
+      "name": "Sao10K/L3-8B-Lunaris-v1-Turbo",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 8192,
+      "pricing": {
+        "input": 0.04,
+        "output": 0.05,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "sao10k",
+      "zdr": true
+    },
+    {
+      "id": "nvidia/Nemotron-3-Nano-Omni-30B-A3B-Reasoning",
+      "name": "nvidia/Nemotron-3-Nano-Omni-30B-A3B-Reasoning",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.2,
+        "output": 0.8,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "nvidia",
+      "zdr": true
+    },
+    {
+      "id": "zai-org/GLM-5.2",
+      "name": "zai-org/GLM-5.2",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 1048576,
+      "pricing": {
+        "input": 0.9299999999999999,
+        "output": 2.9999999999999996,
+        "cache_read": 0.18000000269999997,
+        "cache_write": null
+      },
+      "org": "z-ai",
+      "zdr": true
+    },
+    {
+      "id": "openai/gpt-oss-20b",
+      "name": "openai/gpt-oss-20b",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 131072,
+      "pricing": {
+        "input": 0.030000000000000002,
+        "output": 0.14,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "openai",
+      "zdr": true
+    },
+    {
+      "id": "nvidia/Nemotron-3-Nano-30B-A3B",
+      "name": "nvidia/Nemotron-3-Nano-30B-A3B",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.05,
+        "output": 0.2,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "nvidia",
+      "zdr": true
+    },
+    {
+      "id": "zai-org/GLM-4.7",
+      "name": "zai-org/GLM-4.7",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 202752,
+      "pricing": {
+        "input": 0.4,
+        "output": 1.75,
+        "cache_read": 0.08000000000000002,
+        "cache_write": null
+      },
+      "org": "z-ai",
+      "zdr": true
+    },
+    {
+      "id": "Gryphe/MythoMax-L2-13b",
+      "name": "Gryphe/MythoMax-L2-13b",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 4096,
+      "pricing": {
+        "input": 0.4,
+        "output": 0.4,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "gryphe",
+      "zdr": true
+    },
+    {
+      "id": "NousResearch/Hermes-3-Llama-3.1-70B",
+      "name": "NousResearch/Hermes-3-Llama-3.1-70B",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 131072,
+      "pricing": {
+        "input": 0.7,
+        "output": 0.7,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "nous",
+      "zdr": true
+    },
+    {
+      "id": "Qwen/Qwen3-30B-A3B",
+      "name": "Qwen/Qwen3-30B-A3B",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 40960,
+      "pricing": {
+        "input": 0.12000000000000001,
+        "output": 0.5,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "qwen",
+      "zdr": true
+    },
+    {
+      "id": "Qwen/Qwen3.6-35B-A3B",
+      "name": "Qwen/Qwen3.6-35B-A3B",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.15,
+        "output": 0.95,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "qwen",
+      "zdr": true
+    },
+    {
+      "id": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+      "name": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 131072,
+      "pricing": {
+        "input": 0.4,
+        "output": 0.4,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "meta",
+      "zdr": true
+    },
+    {
+      "id": "anthropic/claude-opus-4-8",
+      "name": "anthropic/claude-opus-4-8",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 1000000,
+      "pricing": {
+        "input": 5,
+        "output": 25,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "anthropic",
+      "zdr": true
+    },
+    {
+      "id": "google/gemma-4-31B-it-turbo",
+      "name": "google/gemma-4-31B-it-turbo",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.12000000000000001,
+        "output": 0.37,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "google",
+      "zdr": true
+    },
+    {
+      "id": "google/gemma-4-31B-it",
+      "name": "google/gemma-4-31B-it",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.13,
+        "output": 0.38,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "google",
+      "zdr": true
+    },
+    {
+      "id": "ByteDance/Seed-1.8",
+      "name": "ByteDance/Seed-1.8",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 256000,
+      "pricing": {
+        "input": 0.25,
+        "output": 2,
+        "cache_read": 0.05,
+        "cache_write": null
+      },
+      "org": "bytedance",
+      "zdr": true
+    },
+    {
+      "id": "anthropic/claude-sonnet-4-6",
+      "name": "anthropic/claude-sonnet-4-6",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 1000000,
+      "pricing": {
+        "input": 2.9999999999999996,
+        "output": 15,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "anthropic",
+      "zdr": true
+    },
+    {
+      "id": "Qwen/Qwen3.7-Max",
+      "name": "Qwen/Qwen3.7-Max",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 256000,
+      "pricing": {
+        "input": 2.5,
+        "output": 7.5,
+        "cache_read": 0.5,
+        "cache_write": null
+      },
+      "org": "qwen",
+      "zdr": true
+    },
+    {
+      "id": "Qwen/Qwen3.5-9B",
+      "name": "Qwen/Qwen3.5-9B",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.1,
+        "output": 0.15,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "qwen",
+      "zdr": true
+    },
+    {
+      "id": "ByteDance/Seed-2.0-pro",
+      "name": "ByteDance/Seed-2.0-pro",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 256000,
+      "pricing": {
+        "input": 0.5,
+        "output": 2.9999999999999996,
+        "cache_read": 0.1,
+        "cache_write": null
+      },
+      "org": "bytedance",
+      "zdr": true
+    },
+    {
+      "id": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+      "name": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 327680,
+      "pricing": {
+        "input": 0.1,
+        "output": 0.3,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "meta",
+      "zdr": true
+    },
+    {
+      "id": "mistralai/Mistral-Small-3.2-24B-Instruct-2506",
+      "name": "mistralai/Mistral-Small-3.2-24B-Instruct-2506",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 128000,
+      "pricing": {
+        "input": 0.075,
+        "output": 0.2,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "mistral",
+      "zdr": true
+    },
+    {
+      "id": "moonshotai/Kimi-K2.5",
+      "name": "moonshotai/Kimi-K2.5",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.45,
+        "output": 2.25,
+        "cache_read": 0.070000002,
+        "cache_write": null
+      },
+      "org": "moonshot",
+      "zdr": true
+    },
+    {
+      "id": "Qwen/Qwen3-32B",
+      "name": "Qwen/Qwen3-32B",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 40960,
+      "pricing": {
+        "input": 0.08,
+        "output": 0.28,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "qwen",
+      "zdr": true
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V3-0324",
+      "name": "deepseek-ai/DeepSeek-V3-0324",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 163840,
+      "pricing": {
+        "input": 0.24000000000000002,
+        "output": 0.9,
+        "cache_read": 0.135,
+        "cache_write": null
+      },
+      "org": "deepseek",
+      "zdr": true
+    },
+    {
+      "id": "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B",
+      "name": "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.5,
+        "output": 2.2,
+        "cache_read": 0.1,
+        "cache_write": null
+      },
+      "org": "nvidia",
+      "zdr": true
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V3",
+      "name": "deepseek-ai/DeepSeek-V3",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 163840,
+      "pricing": {
+        "input": 0.32,
+        "output": 0.8899999999999999,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "deepseek",
+      "zdr": true
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-R1-0528",
+      "name": "deepseek-ai/DeepSeek-R1-0528",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 163840,
+      "pricing": {
+        "input": 0.5,
+        "output": 2.15,
+        "cache_read": 0.35,
+        "cache_write": null
+      },
+      "org": "deepseek",
+      "zdr": true
+    },
+    {
+      "id": "anthropic/claude-opus-4-7",
+      "name": "anthropic/claude-opus-4-7",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 1000000,
+      "pricing": {
+        "input": 5,
+        "output": 25,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "anthropic",
+      "zdr": true
+    },
+    {
+      "id": "anthropic/claude-haiku-4-5",
+      "name": "anthropic/claude-haiku-4-5",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 200000,
+      "pricing": {
+        "input": 1,
+        "output": 5,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "anthropic",
+      "zdr": true
+    },
+    {
+      "id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
+      "name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 131072,
+      "pricing": {
+        "input": 0.345,
+        "output": 0.345,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "meta",
+      "zdr": true
+    },
+    {
+      "id": "google/gemma-3-12b-it",
+      "name": "google/gemma-3-12b-it",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 131072,
+      "pricing": {
+        "input": 0.05,
+        "output": 0.15,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "google",
+      "zdr": true
+    },
+    {
+      "id": "Qwen/Qwen3.6-27B",
+      "name": "Qwen/Qwen3.6-27B",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.32,
+        "output": 3.2,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "qwen",
+      "zdr": true
+    },
+    {
+      "id": "moonshotai/Kimi-K2.7-Code",
+      "name": "moonshotai/Kimi-K2.7-Code",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.74,
+        "output": 3.5,
+        "cache_read": 0.149999998,
+        "cache_write": null
+      },
+      "org": "moonshot",
+      "zdr": true
+    },
+    {
+      "id": "nvidia/Llama-3.3-Nemotron-Super-49B-v1.5",
+      "name": "nvidia/Llama-3.3-Nemotron-Super-49B-v1.5",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 131072,
+      "pricing": {
+        "input": 0.4,
+        "output": 0.4,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "nvidia",
+      "zdr": true
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V3.1-Terminus",
+      "name": "deepseek-ai/DeepSeek-V3.1-Terminus",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 163840,
+      "pricing": {
+        "input": 0.27,
+        "output": 0.95,
+        "cache_read": 0.12999999960000003,
+        "cache_write": null
+      },
+      "org": "deepseek",
+      "zdr": true
+    },
+    {
+      "id": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+      "name": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 131072,
+      "pricing": {
+        "input": 0.02,
+        "output": 0.030000000000000002,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "meta",
+      "zdr": true
+    },
+    {
+      "id": "mistralai/Mistral-Small-24B-Instruct-2501",
+      "name": "mistralai/Mistral-Small-24B-Instruct-2501",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 32768,
+      "pricing": {
+        "input": 0.05,
+        "output": 0.08,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "mistral",
+      "zdr": true
+    },
+    {
+      "id": "Qwen/Qwen3.5-27B",
+      "name": "Qwen/Qwen3.5-27B",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.26,
+        "output": 2.5999999999999996,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "qwen",
+      "zdr": true
+    },
+    {
+      "id": "ByteDance/Seed-2.0-code",
+      "name": "ByteDance/Seed-2.0-code",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 256000,
+      "pricing": {
+        "input": 0.5,
+        "output": 2.9999999999999996,
+        "cache_read": 0.1,
+        "cache_write": null
+      },
+      "org": "bytedance",
+      "zdr": true
+    },
+    {
+      "id": "Qwen/Qwen3-235B-A22B-Thinking-2507",
+      "name": "Qwen/Qwen3-235B-A22B-Thinking-2507",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.22999999999999998,
+        "output": 2.3,
+        "cache_read": 0.20000000059999998,
+        "cache_write": null
+      },
+      "org": "qwen",
+      "zdr": true
+    },
+    {
+      "id": "NousResearch/Hermes-3-Llama-3.1-405B",
+      "name": "NousResearch/Hermes-3-Llama-3.1-405B",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 131072,
+      "pricing": {
+        "input": 1,
+        "output": 1,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "nous",
+      "zdr": true
+    },
+    {
+      "id": "Qwen/Qwen3-VL-235B-A22B-Instruct",
+      "name": "Qwen/Qwen3-VL-235B-A22B-Instruct",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.2,
+        "output": 0.8799999999999999,
+        "cache_read": 0.11000000000000001,
+        "cache_write": null
+      },
+      "org": "qwen",
+      "zdr": true
+    },
+    {
+      "id": "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
+      "name": "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.3,
+        "output": 1,
+        "cache_read": 0.09999999899999999,
+        "cache_write": null
+      },
+      "org": "qwen",
+      "zdr": true
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V4-Pro",
+      "name": "deepseek-ai/DeepSeek-V4-Pro",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 1048576,
+      "pricing": {
+        "input": 1.2999999999999998,
+        "output": 2.5999999999999996,
+        "cache_read": 0.10000000399999999,
+        "cache_write": null
+      },
+      "org": "deepseek",
+      "zdr": true
+    },
+    {
+      "id": "MiniMaxAI/MiniMax-M2.7",
+      "name": "MiniMaxAI/MiniMax-M2.7",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 196608,
+      "pricing": {
+        "input": 0.25,
+        "output": 1,
+        "cache_read": 0.05,
+        "cache_write": null
+      },
+      "org": "minimax",
+      "zdr": true
+    },
+    {
+      "id": "zai-org/GLM-5",
+      "name": "zai-org/GLM-5",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 202752,
+      "pricing": {
+        "input": 0.6,
+        "output": 2.08,
+        "cache_read": 0.12,
+        "cache_write": null
+      },
+      "org": "z-ai",
+      "zdr": true
+    },
+    {
+      "id": "openai/gpt-oss-120b-Turbo",
+      "name": "openai/gpt-oss-120b-Turbo",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 131072,
+      "pricing": {
+        "input": 0.15,
+        "output": 0.6,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "openai",
+      "zdr": true
+    },
+    {
+      "id": "XiaomiMiMo/MiMo-V2.5-Pro",
+      "name": "XiaomiMiMo/MiMo-V2.5-Pro",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 1048576,
+      "pricing": {
+        "input": 1,
+        "output": 2.9999999999999996,
+        "cache_read": 0.2,
+        "cache_write": null
+      },
+      "org": "xiaomi",
+      "zdr": true
+    },
+    {
+      "id": "google/gemini-3.1-flash-lite",
+      "name": "google/gemini-3.1-flash-lite",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 1000000,
+      "pricing": {
+        "input": 0.25,
+        "output": 1.4999999999999998,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "google",
+      "zdr": true
+    },
+    {
+      "id": "ByteDance/Seed-2.0-mini",
+      "name": "ByteDance/Seed-2.0-mini",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 256000,
+      "pricing": {
+        "input": 0.1,
+        "output": 0.4,
+        "cache_read": 0.020000000000000004,
+        "cache_write": null
+      },
+      "org": "bytedance",
+      "zdr": true
+    },
+    {
+      "id": "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
+      "name": "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.08499999999999999,
+        "output": 0.4,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "nvidia",
+      "zdr": true
+    },
+    {
+      "id": "XiaomiMiMo/MiMo-V2.5",
+      "name": "XiaomiMiMo/MiMo-V2.5",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.4,
+        "output": 2,
+        "cache_read": 0.08000000000000002,
+        "cache_write": null
+      },
+      "org": "xiaomi",
+      "zdr": true
+    },
+    {
       "id": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
       "name": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
       "provider": "deepinfra",
@@ -517,22 +1173,6 @@
       "pricing": {
         "input": 0.15,
         "output": 0.6,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "meta",
-      "zdr": true
-    },
-    {
-      "id": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-      "name": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 131072,
-      "pricing": {
-        "input": 0.1,
-        "output": 0.32,
         "cache_read": null,
         "cache_write": null
       },
@@ -556,35 +1196,19 @@
       "zdr": true
     },
     {
-      "id": "stepfun-ai/Step-3.7-Flash",
-      "name": "stepfun-ai/Step-3.7-Flash",
+      "id": "meta-llama/Llama-Guard-4-12B",
+      "name": "meta-llama/Llama-Guard-4-12B",
       "provider": "deepinfra",
       "quantization": null,
       "discount": 0,
-      "context_length": 262144,
+      "context_length": 163840,
       "pricing": {
-        "input": 0.2,
-        "output": 1.15,
-        "cache_read": 0.04000000000000001,
+        "input": 0.18,
+        "output": 0.18,
+        "cache_read": null,
         "cache_write": null
       },
-      "org": "stepfun",
-      "zdr": true
-    },
-    {
-      "id": "zai-org/GLM-4.7-Flash",
-      "name": "zai-org/GLM-4.7-Flash",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 202752,
-      "pricing": {
-        "input": 0.060000000000000005,
-        "output": 0.4,
-        "cache_read": 0.0100000002,
-        "cache_write": null
-      },
-      "org": "z-ai",
+      "org": "meta",
       "zdr": true
     },
     {
@@ -604,63 +1228,47 @@
       "zdr": true
     },
     {
-      "id": "Qwen/Qwen3.5-397B-A17B",
-      "name": "Qwen/Qwen3.5-397B-A17B",
+      "id": "deepseek-ai/DeepSeek-V3.1",
+      "name": "deepseek-ai/DeepSeek-V3.1",
       "provider": "deepinfra",
       "quantization": null,
       "discount": 0,
-      "context_length": 262144,
+      "context_length": 163840,
       "pricing": {
-        "input": 0.45,
-        "output": 2.9999999999999996,
-        "cache_read": 0.22000000050000001,
+        "input": 0.21,
+        "output": 0.7899999999999999,
+        "cache_read": 0.1300000002,
         "cache_write": null
       },
-      "org": "qwen",
+      "org": "deepseek",
       "zdr": true
     },
     {
-      "id": "Gryphe/MythoMax-L2-13b",
-      "name": "Gryphe/MythoMax-L2-13b",
+      "id": "MiniMaxAI/MiniMax-M2.5",
+      "name": "MiniMaxAI/MiniMax-M2.5",
       "provider": "deepinfra",
       "quantization": null,
       "discount": 0,
-      "context_length": 4096,
+      "context_length": 196608,
       "pricing": {
-        "input": 0.4,
-        "output": 0.4,
-        "cache_read": null,
+        "input": 0.15,
+        "output": 1.15,
+        "cache_read": 0.03,
         "cache_write": null
       },
-      "org": "gryphe",
+      "org": "minimax",
       "zdr": true
     },
     {
-      "id": "zai-org/GLM-5",
-      "name": "zai-org/GLM-5",
+      "id": "mistralai/Mistral-Nemo-Instruct-2407",
+      "name": "mistralai/Mistral-Nemo-Instruct-2407",
       "provider": "deepinfra",
       "quantization": null,
       "discount": 0,
-      "context_length": 202752,
+      "context_length": 131072,
       "pricing": {
-        "input": 0.6,
-        "output": 2.08,
-        "cache_read": 0.12,
-        "cache_write": null
-      },
-      "org": "z-ai",
-      "zdr": true
-    },
-    {
-      "id": "mistralai/Mistral-Small-24B-Instruct-2501",
-      "name": "mistralai/Mistral-Small-24B-Instruct-2501",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 32768,
-      "pricing": {
-        "input": 0.05,
-        "output": 0.08,
+        "input": 0.02,
+        "output": 0.04,
         "cache_read": null,
         "cache_write": null
       },
@@ -668,319 +1276,63 @@
       "zdr": true
     },
     {
-      "id": "Qwen/Qwen3.5-122B-A10B",
-      "name": "Qwen/Qwen3.5-122B-A10B",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 16384,
-      "pricing": {
-        "input": 0.29,
-        "output": 2.4,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "qwen",
-      "zdr": true
-    },
-    {
-      "id": "ByteDance/Seed-1.8",
-      "name": "ByteDance/Seed-1.8",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 256000,
-      "pricing": {
-        "input": 0.25,
-        "output": 2,
-        "cache_read": 0.05,
-        "cache_write": null
-      },
-      "org": "bytedance",
-      "zdr": true
-    },
-    {
-      "id": "moonshotai/Kimi-K2.7-Code",
-      "name": "moonshotai/Kimi-K2.7-Code",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.74,
-        "output": 3.5,
-        "cache_read": 0.149999998,
-        "cache_write": null
-      },
-      "org": "moonshot",
-      "zdr": true
-    },
-    {
-      "id": "google/gemini-2.5-pro",
-      "name": "google/gemini-2.5-pro",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 1000000,
-      "pricing": {
-        "input": 1.25,
-        "output": 10,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "google",
-      "zdr": true
-    },
-    {
-      "id": "Qwen/Qwen3.6-35B-A3B",
-      "name": "Qwen/Qwen3.6-35B-A3B",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.15,
-        "output": 0.95,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "qwen",
-      "zdr": true
-    },
-    {
-      "id": "zai-org/GLM-4.7",
-      "name": "zai-org/GLM-4.7",
+      "id": "zai-org/GLM-5.1",
+      "name": "zai-org/GLM-5.1",
       "provider": "deepinfra",
       "quantization": null,
       "discount": 0,
       "context_length": 202752,
       "pricing": {
-        "input": 0.4,
-        "output": 1.75,
-        "cache_read": 0.08000000000000002,
+        "input": 1.05,
+        "output": 3.5,
+        "cache_read": 0.205000005,
         "cache_write": null
       },
       "org": "z-ai",
       "zdr": true
     },
     {
-      "id": "NousResearch/Hermes-3-Llama-3.1-70B",
-      "name": "NousResearch/Hermes-3-Llama-3.1-70B",
+      "id": "zai-org/GLM-4.6",
+      "name": "zai-org/GLM-4.6",
       "provider": "deepinfra",
       "quantization": null,
       "discount": 0,
-      "context_length": 131072,
+      "context_length": 202752,
       "pricing": {
-        "input": 0.7,
-        "output": 0.7,
+        "input": 0.43,
+        "output": 1.74,
+        "cache_read": 0.0799999993,
+        "cache_write": null
+      },
+      "org": "z-ai",
+      "zdr": true
+    },
+    {
+      "id": "microsoft/phi-4",
+      "name": "microsoft/phi-4",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 16384,
+      "pricing": {
+        "input": 0.07,
+        "output": 0.14,
         "cache_read": null,
         "cache_write": null
       },
-      "org": "nous",
+      "org": "microsoft",
       "zdr": true
     },
     {
-      "id": "deepseek-ai/DeepSeek-R1-0528",
-      "name": "deepseek-ai/DeepSeek-R1-0528",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 163840,
-      "pricing": {
-        "input": 0.5,
-        "output": 2.15,
-        "cache_read": 0.35,
-        "cache_write": null
-      },
-      "org": "deepseek",
-      "zdr": true
-    },
-    {
-      "id": "Qwen/Qwen3.6-27B",
-      "name": "Qwen/Qwen3.6-27B",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.32,
-        "output": 3.2,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "qwen",
-      "zdr": true
-    },
-    {
-      "id": "meta-llama/Llama-Guard-4-12B",
-      "name": "meta-llama/Llama-Guard-4-12B",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 163840,
-      "pricing": {
-        "input": 0.18,
-        "output": 0.18,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "meta",
-      "zdr": true
-    },
-    {
-      "id": "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
-      "name": "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.3,
-        "output": 1,
-        "cache_read": 0.09999999899999999,
-        "cache_write": null
-      },
-      "org": "qwen",
-      "zdr": true
-    },
-    {
-      "id": "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
-      "name": "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.08499999999999999,
-        "output": 0.4,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "nvidia",
-      "zdr": true
-    },
-    {
-      "id": "ByteDance/Seed-2.0-code",
-      "name": "ByteDance/Seed-2.0-code",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 256000,
-      "pricing": {
-        "input": 0.5,
-        "output": 2.9999999999999996,
-        "cache_read": 0.1,
-        "cache_write": null
-      },
-      "org": "bytedance",
-      "zdr": true
-    },
-    {
-      "id": "MiniMaxAI/MiniMax-M3",
-      "name": "MiniMaxAI/MiniMax-M3",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 524288,
-      "pricing": {
-        "input": 0.3,
-        "output": 1.2,
-        "cache_read": 0.06,
-        "cache_write": null
-      },
-      "org": "minimax",
-      "zdr": true
-    },
-    {
-      "id": "Sao10K/L3-8B-Lunaris-v1-Turbo",
-      "name": "Sao10K/L3-8B-Lunaris-v1-Turbo",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 8192,
-      "pricing": {
-        "input": 0.04,
-        "output": 0.05,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "sao10k",
-      "zdr": true
-    },
-    {
-      "id": "Qwen/Qwen3.5-27B",
-      "name": "Qwen/Qwen3.5-27B",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.26,
-        "output": 2.5999999999999996,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "qwen",
-      "zdr": true
-    },
-    {
-      "id": "anthropic/claude-sonnet-4-6",
-      "name": "anthropic/claude-sonnet-4-6",
+      "id": "google/gemini-2.5-flash",
+      "name": "google/gemini-2.5-flash",
       "provider": "deepinfra",
       "quantization": null,
       "discount": 0,
       "context_length": 1000000,
       "pricing": {
-        "input": 2.9999999999999996,
-        "output": 15,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "anthropic",
-      "zdr": true
-    },
-    {
-      "id": "openai/gpt-oss-20b",
-      "name": "openai/gpt-oss-20b",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 131072,
-      "pricing": {
-        "input": 0.030000000000000002,
-        "output": 0.14,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "openai",
-      "zdr": true
-    },
-    {
-      "id": "Qwen/Qwen3.5-9B",
-      "name": "Qwen/Qwen3.5-9B",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.1,
-        "output": 0.15,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "qwen",
-      "zdr": true
-    },
-    {
-      "id": "google/gemma-4-26B-A4B-it",
-      "name": "google/gemma-4-26B-A4B-it",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.07,
-        "output": 0.33999999999999997,
+        "input": 0.3,
+        "output": 2.5,
         "cache_read": null,
         "cache_write": null
       },
@@ -1004,310 +1356,6 @@
       "zdr": true
     },
     {
-      "id": "deepseek-ai/DeepSeek-V3.1",
-      "name": "deepseek-ai/DeepSeek-V3.1",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 163840,
-      "pricing": {
-        "input": 0.21,
-        "output": 0.7899999999999999,
-        "cache_read": 0.1300000002,
-        "cache_write": null
-      },
-      "org": "deepseek",
-      "zdr": true
-    },
-    {
-      "id": "Qwen/Qwen3-235B-A22B-Thinking-2507",
-      "name": "Qwen/Qwen3-235B-A22B-Thinking-2507",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.22999999999999998,
-        "output": 2.3,
-        "cache_read": 0.20000000059999998,
-        "cache_write": null
-      },
-      "org": "qwen",
-      "zdr": true
-    },
-    {
-      "id": "google/gemini-2.5-flash",
-      "name": "google/gemini-2.5-flash",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 1000000,
-      "pricing": {
-        "input": 0.3,
-        "output": 2.5,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "google",
-      "zdr": true
-    },
-    {
-      "id": "moonshotai/Kimi-K2.6",
-      "name": "moonshotai/Kimi-K2.6",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.7499999999999999,
-        "output": 3.5,
-        "cache_read": 0.15,
-        "cache_write": null
-      },
-      "org": "moonshot",
-      "zdr": true
-    },
-    {
-      "id": "Qwen/Qwen3-235B-A22B-Instruct-2507",
-      "name": "Qwen/Qwen3-235B-A22B-Instruct-2507",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.09,
-        "output": 0.1,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "qwen",
-      "zdr": true
-    },
-    {
-      "id": "microsoft/phi-4",
-      "name": "microsoft/phi-4",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 16384,
-      "pricing": {
-        "input": 0.07,
-        "output": 0.14,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "microsoft",
-      "zdr": true
-    },
-    {
-      "id": "nvidia/Nemotron-3-Nano-Omni-30B-A3B-Reasoning",
-      "name": "nvidia/Nemotron-3-Nano-Omni-30B-A3B-Reasoning",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.2,
-        "output": 0.8,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "nvidia",
-      "zdr": true
-    },
-    {
-      "id": "mistralai/Mistral-Small-3.2-24B-Instruct-2506",
-      "name": "mistralai/Mistral-Small-3.2-24B-Instruct-2506",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 128000,
-      "pricing": {
-        "input": 0.075,
-        "output": 0.2,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "mistral",
-      "zdr": true
-    },
-    {
-      "id": "NousResearch/Hermes-3-Llama-3.1-405B",
-      "name": "NousResearch/Hermes-3-Llama-3.1-405B",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 131072,
-      "pricing": {
-        "input": 1,
-        "output": 1,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "nous",
-      "zdr": true
-    },
-    {
-      "id": "Sao10K/L3.1-70B-Euryale-v2.2",
-      "name": "Sao10K/L3.1-70B-Euryale-v2.2",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 131072,
-      "pricing": {
-        "input": 0.85,
-        "output": 0.85,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "sao10k",
-      "zdr": true
-    },
-    {
-      "id": "google/gemini-3.1-flash-lite",
-      "name": "google/gemini-3.1-flash-lite",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 1000000,
-      "pricing": {
-        "input": 0.25,
-        "output": 1.4999999999999998,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "google",
-      "zdr": true
-    },
-    {
-      "id": "nvidia/Nemotron-Content-Safety-3.5",
-      "name": "nvidia/Nemotron-Content-Safety-3.5",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 131072,
-      "pricing": {
-        "input": 0.2,
-        "output": 0.2,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "nvidia",
-      "zdr": true
-    },
-    {
-      "id": "Qwen/Qwen3-Max",
-      "name": "Qwen/Qwen3-Max",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 256000,
-      "pricing": {
-        "input": 1.2,
-        "output": 5.999999999999999,
-        "cache_read": 0.24,
-        "cache_write": null
-      },
-      "org": "qwen",
-      "zdr": true
-    },
-    {
-      "id": "ByteDance/Seed-2.0-pro",
-      "name": "ByteDance/Seed-2.0-pro",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 256000,
-      "pricing": {
-        "input": 0.5,
-        "output": 2.9999999999999996,
-        "cache_read": 0.1,
-        "cache_write": null
-      },
-      "org": "bytedance",
-      "zdr": true
-    },
-    {
-      "id": "openai/gpt-oss-120b",
-      "name": "openai/gpt-oss-120b",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 131072,
-      "pricing": {
-        "input": 0.039,
-        "output": 0.16999999999999998,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "openai",
-      "zdr": true
-    },
-    {
-      "id": "google/gemini-3.1-pro",
-      "name": "google/gemini-3.1-pro",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 1000000,
-      "pricing": {
-        "input": 2,
-        "output": 11.999999999999998,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "google",
-      "zdr": true
-    },
-    {
-      "id": "XiaomiMiMo/MiMo-V2.5-Pro",
-      "name": "XiaomiMiMo/MiMo-V2.5-Pro",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 1048576,
-      "pricing": {
-        "input": 1,
-        "output": 2.9999999999999996,
-        "cache_read": 0.2,
-        "cache_write": null
-      },
-      "org": "xiaomi",
-      "zdr": true
-    },
-    {
-      "id": "deepseek-ai/DeepSeek-V3-0324",
-      "name": "deepseek-ai/DeepSeek-V3-0324",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 163840,
-      "pricing": {
-        "input": 0.24000000000000002,
-        "output": 0.9,
-        "cache_read": 0.135,
-        "cache_write": null
-      },
-      "org": "deepseek",
-      "zdr": true
-    },
-    {
-      "id": "XiaomiMiMo/MiMo-V2.5",
-      "name": "XiaomiMiMo/MiMo-V2.5",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.4,
-        "output": 2,
-        "cache_read": 0.08000000000000002,
-        "cache_write": null
-      },
-      "org": "xiaomi",
-      "zdr": true
-    },
-    {
       "id": "google/gemini-3.5-flash",
       "name": "google/gemini-3.5-flash",
       "provider": "deepinfra",
@@ -1324,126 +1372,14 @@
       "zdr": true
     },
     {
-      "id": "google/gemma-3-27b-it",
-      "name": "google/gemma-3-27b-it",
+      "id": "google/gemini-1.5-flash-8b",
+      "name": "google/gemini-1.5-flash-8b",
       "provider": "deepinfra",
       "quantization": null,
       "discount": 0,
-      "context_length": 131072,
+      "context_length": 1000000,
       "pricing": {
-        "input": 0.08,
-        "output": 0.16,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "google",
-      "zdr": true
-    },
-    {
-      "id": "Qwen/Qwen3-32B",
-      "name": "Qwen/Qwen3-32B",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 40960,
-      "pricing": {
-        "input": 0.08,
-        "output": 0.28,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "qwen",
-      "zdr": true
-    },
-    {
-      "id": "Qwen/Qwen2.5-72B-Instruct",
-      "name": "Qwen/Qwen2.5-72B-Instruct",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 32768,
-      "pricing": {
-        "input": 0.36,
-        "output": 0.4,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "qwen",
-      "zdr": true
-    },
-    {
-      "id": "moonshotai/Kimi-K2.5",
-      "name": "moonshotai/Kimi-K2.5",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.45,
-        "output": 2.25,
-        "cache_read": 0.070000002,
-        "cache_write": null
-      },
-      "org": "moonshot",
-      "zdr": true
-    },
-    {
-      "id": "google/gemma-4-31B-it-turbo",
-      "name": "google/gemma-4-31B-it-turbo",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.12000000000000001,
-        "output": 0.37,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "google",
-      "zdr": true
-    },
-    {
-      "id": "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B",
-      "name": "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 262144,
-      "pricing": {
-        "input": 0.5,
-        "output": 2.2,
-        "cache_read": 0.1,
-        "cache_write": null
-      },
-      "org": "nvidia",
-      "zdr": true
-    },
-    {
-      "id": "nvidia/Llama-3.3-Nemotron-Super-49B-v1.5",
-      "name": "nvidia/Llama-3.3-Nemotron-Super-49B-v1.5",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 131072,
-      "pricing": {
-        "input": 0.4,
-        "output": 0.4,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "nvidia",
-      "zdr": true
-    },
-    {
-      "id": "google/gemma-3-12b-it",
-      "name": "google/gemma-3-12b-it",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 131072,
-      "pricing": {
-        "input": 0.05,
+        "input": 0.0375,
         "output": 0.15,
         "cache_read": null,
         "cache_write": null
@@ -1452,35 +1388,67 @@
       "zdr": true
     },
     {
-      "id": "MiniMaxAI/MiniMax-M2.7",
-      "name": "MiniMaxAI/MiniMax-M2.7",
+      "id": "Qwen/Qwen3.5-122B-A10B",
+      "name": "Qwen/Qwen3.5-122B-A10B",
       "provider": "deepinfra",
       "quantization": null,
       "discount": 0,
-      "context_length": 196608,
+      "context_length": 16384,
       "pricing": {
-        "input": 0.25,
-        "output": 1,
-        "cache_read": 0.05,
+        "input": 0.29,
+        "output": 2.4,
+        "cache_read": null,
         "cache_write": null
       },
-      "org": "minimax",
+      "org": "qwen",
       "zdr": true
     },
     {
-      "id": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-      "name": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+      "id": "google/gemma-4-26B-A4B-it",
+      "name": "google/gemma-4-26B-A4B-it",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.07,
+        "output": 0.33999999999999997,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "google",
+      "zdr": true
+    },
+    {
+      "id": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "name": "meta-llama/Meta-Llama-3.1-8B-Instruct",
       "provider": "deepinfra",
       "quantization": null,
       "discount": 0,
       "context_length": 131072,
       "pricing": {
         "input": 0.02,
-        "output": 0.030000000000000002,
+        "output": 0.05,
         "cache_read": null,
         "cache_write": null
       },
       "org": "meta",
+      "zdr": true
+    },
+    {
+      "id": "Qwen/Qwen3-Next-80B-A3B-Instruct",
+      "name": "Qwen/Qwen3-Next-80B-A3B-Instruct",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 262144,
+      "pricing": {
+        "input": 0.09,
+        "output": 1.1,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "qwen",
       "zdr": true
     },
     {
@@ -1500,35 +1468,67 @@
       "zdr": true
     },
     {
-      "id": "anthropic/claude-haiku-4-5",
-      "name": "anthropic/claude-haiku-4-5",
-      "provider": "deepinfra",
-      "quantization": null,
-      "discount": 0,
-      "context_length": 200000,
-      "pricing": {
-        "input": 1,
-        "output": 5,
-        "cache_read": null,
-        "cache_write": null
-      },
-      "org": "anthropic",
-      "zdr": true
-    },
-    {
-      "id": "nvidia/Nemotron-3-Nano-30B-A3B",
-      "name": "nvidia/Nemotron-3-Nano-30B-A3B",
+      "id": "Qwen/Qwen3.5-397B-A17B",
+      "name": "Qwen/Qwen3.5-397B-A17B",
       "provider": "deepinfra",
       "quantization": null,
       "discount": 0,
       "context_length": 262144,
       "pricing": {
-        "input": 0.05,
-        "output": 0.2,
+        "input": 0.45,
+        "output": 2.9999999999999996,
+        "cache_read": 0.22000000050000001,
+        "cache_write": null
+      },
+      "org": "qwen",
+      "zdr": true
+    },
+    {
+      "id": "google/gemini-2.5-pro",
+      "name": "google/gemini-2.5-pro",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 1000000,
+      "pricing": {
+        "input": 1.25,
+        "output": 10,
         "cache_read": null,
         "cache_write": null
       },
-      "org": "nvidia",
+      "org": "google",
+      "zdr": true
+    },
+    {
+      "id": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "name": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 131072,
+      "pricing": {
+        "input": 0.1,
+        "output": 0.32,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "meta",
+      "zdr": true
+    },
+    {
+      "id": "google/gemma-3-4b-it",
+      "name": "google/gemma-3-4b-it",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 131072,
+      "pricing": {
+        "input": 0.05,
+        "output": 0.1,
+        "cache_read": null,
+        "cache_write": null
+      },
+      "org": "google",
       "zdr": true
     },
     {
@@ -2588,7 +2588,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.867197875166,
+      "uptime_30m": 99.74652796113429,
       "pricing": {
         "input": 2,
         "output": 10,
@@ -2607,7 +2607,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.79338842975206,
+      "uptime_30m": 99.54337899543378,
       "pricing": {
         "input": 2,
         "output": 10,
@@ -2626,7 +2626,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 128000,
-      "uptime_30m": null,
+      "uptime_30m": 99.43661971830986,
       "pricing": {
         "input": 2,
         "output": 10,
@@ -2660,14 +2660,14 @@
       "provider": "novita",
       "provider_display": "Novita",
       "quantization": "fp8",
-      "discount": 0.48,
+      "discount": 0.51,
       "context_length": 1048576,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.37385750005254,
+      "uptime_30m": 99.71445221445221,
       "pricing": {
-        "input": 0.728,
-        "output": 2.288,
-        "cache_read": 0.1352,
+        "input": 0.6859999999999999,
+        "output": 2.156,
+        "cache_read": 0.12739999999999999,
         "cache_write": null
       },
       "org": "z-ai",
@@ -2682,11 +2682,11 @@
       "discount": 0,
       "context_length": 1024000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.87027242790141,
+      "uptime_30m": 99.8660514957583,
       "pricing": {
-        "input": 0.728,
-        "output": 2.288,
-        "cache_read": 0.1352,
+        "input": 0.7,
+        "output": 2.2,
+        "cache_read": 0.13,
         "cache_write": null
       },
       "org": "z-ai"
@@ -2700,7 +2700,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": null,
-      "uptime_30m": 80.1670146137787,
+      "uptime_30m": 95.2054794520548,
       "pricing": {
         "input": 0.94,
         "output": 3,
@@ -2719,7 +2719,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 202752,
-      "uptime_30m": 98.21272885789016,
+      "uptime_30m": 99.63080168776372,
       "pricing": {
         "input": 0.96,
         "output": 3.06,
@@ -2737,7 +2737,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": null,
-      "uptime_30m": 98.57029388403494,
+      "uptime_30m": 89.11319394376352,
       "pricing": {
         "input": 0.98,
         "output": 3.08,
@@ -2755,7 +2755,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": null,
-      "uptime_30m": 90.11532125205932,
+      "uptime_30m": 94.74358974358974,
       "pricing": {
         "input": 1.0499999999999998,
         "output": 4.4,
@@ -2774,7 +2774,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 1048576,
-      "uptime_30m": 98.1081081081081,
+      "uptime_30m": 89.60000000000001,
       "pricing": {
         "input": 1.1,
         "output": 4.1,
@@ -2793,7 +2793,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.76303317535546,
+      "uptime_30m": 99.90800367985281,
       "pricing": {
         "input": 1.12,
         "output": 3.9600000000000004,
@@ -2811,7 +2811,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 1048576,
-      "uptime_30m": 97.47822099954149,
+      "uptime_30m": 99.90859232175502,
       "pricing": {
         "input": 1.15,
         "output": 3.62,
@@ -2830,7 +2830,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 131072,
-      "uptime_30m": 94.95114006514657,
+      "uptime_30m": 99.66101694915255,
       "pricing": {
         "input": 1.2,
         "output": 3.75,
@@ -2849,7 +2849,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 1048576,
-      "uptime_30m": 95.84158415841584,
+      "uptime_30m": 99.03536977491962,
       "pricing": {
         "input": 1.2,
         "output": 4.199999999999999,
@@ -2868,7 +2868,7 @@
       "discount": 0,
       "context_length": 224250,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.14772727272727,
+      "uptime_30m": 99.77827050997783,
       "pricing": {
         "input": 1.3,
         "output": 4.4,
@@ -2887,7 +2887,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.59723820483313,
+      "uptime_30m": 99.83739837398375,
       "pricing": {
         "input": 1.302,
         "output": 4.092,
@@ -2906,7 +2906,7 @@
       "discount": 0.058,
       "context_length": 1048576,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.91902834008097,
+      "uptime_30m": 99.99384615384615,
       "pricing": {
         "input": 1.3188,
         "output": 4.1448,
@@ -2924,7 +2924,7 @@
       "discount": 0.05,
       "context_length": 1048576,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.55499046408137,
+      "uptime_30m": 100,
       "pricing": {
         "input": 1.33,
         "output": 4.18,
@@ -2962,7 +2962,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.71418849948962,
+      "uptime_30m": 99.76881426050983,
       "pricing": {
         "input": 1.4,
         "output": 4.4,
@@ -2981,7 +2981,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": null,
-      "uptime_30m": 99.59573686144799,
+      "uptime_30m": 99.72350230414746,
       "pricing": {
         "input": 1.4,
         "output": 4.4,
@@ -3000,7 +3000,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 100,
+      "uptime_30m": 92.5925925925926,
       "pricing": {
         "input": 1.4,
         "output": 4.4,
@@ -3018,7 +3018,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 1048576,
-      "uptime_30m": 99.40633245382587,
+      "uptime_30m": 99.96179560649475,
       "pricing": {
         "input": 1.4,
         "output": 4.4,
@@ -3036,7 +3036,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.77272727272727,
+      "uptime_30m": 99.51603145795524,
       "pricing": {
         "input": 1.4,
         "output": 4.4,
@@ -3055,7 +3055,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.83249581239531,
+      "uptime_30m": 99.3801652892562,
       "pricing": {
         "input": 1.4,
         "output": 4.4,
@@ -3074,7 +3074,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": null,
-      "uptime_30m": 99.87720016373312,
+      "uptime_30m": 97.4485596707819,
       "pricing": {
         "input": 1.4,
         "output": 4.4,
@@ -3093,7 +3093,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 1048576,
-      "uptime_30m": 94.37229437229438,
+      "uptime_30m": 94.85981308411215,
       "pricing": {
         "input": 1.4,
         "output": 4.4,
@@ -3131,7 +3131,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.7887621461766,
+      "uptime_30m": 99.84301412872841,
       "pricing": {
         "input": 0.75,
         "output": 3.5,
@@ -3169,11 +3169,11 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.98816427979642,
+      "uptime_30m": 99.90515333544103,
       "pricing": {
-        "input": 0.88,
-        "output": 3.81,
-        "cache_read": 0.16999999999999998,
+        "input": 0.9099999999999999,
+        "output": 3.84,
+        "cache_read": 0.18,
         "cache_write": null
       },
       "org": "moonshot"
@@ -3187,7 +3187,7 @@
       "discount": 0.04,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": null,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.912,
         "output": 3.84,
@@ -3206,7 +3206,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.92082343626286,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.94,
         "output": 4,
@@ -3281,7 +3281,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": null,
-      "uptime_30m": 100,
+      "uptime_30m": 99.77628635346755,
       "pricing": {
         "input": 0.95,
         "output": 4,
@@ -3337,7 +3337,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 100,
+      "uptime_30m": 99.7229916897507,
       "pricing": {
         "input": 10,
         "output": 50,
@@ -3355,7 +3355,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 94.81132075471697,
+      "uptime_30m": 99.49643822156719,
       "pricing": {
         "input": 10,
         "output": 50,
@@ -3373,7 +3373,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": null,
+      "uptime_30m": 42.62295081967213,
       "pricing": {
         "input": 0.25,
         "output": 1,
@@ -3391,7 +3391,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 256000,
-      "uptime_30m": null,
+      "uptime_30m": 70.1923076923077,
       "pricing": {
         "input": 0.5,
         "output": 2.5,
@@ -3410,7 +3410,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 16384,
-      "uptime_30m": 84.92647058823529,
+      "uptime_30m": 91.64420485175202,
       "pricing": {
         "input": 0.5,
         "output": 2.2,
@@ -3429,7 +3429,7 @@
       "discount": 0,
       "context_length": 512288,
       "max_completion_tokens": null,
-      "uptime_30m": 100,
+      "uptime_30m": 99.95256166982922,
       "pricing": {
         "input": 0.6,
         "output": 3.5999999999999996,
@@ -3467,7 +3467,7 @@
       "discount": 0.2,
       "context_length": 1000000,
       "max_completion_tokens": 65536,
-      "uptime_30m": 99.99619221689132,
+      "uptime_30m": 99.99744943504987,
       "pricing": {
         "input": 0.32,
         "output": 1.28,
@@ -3485,7 +3485,7 @@
       "discount": 0,
       "context_length": 524288,
       "max_completion_tokens": 512000,
-      "uptime_30m": 99.92304521093858,
+      "uptime_30m": 99.883668478906,
       "pricing": {
         "input": 0.3,
         "output": 1.2,
@@ -3503,7 +3503,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.42462600690449,
+      "uptime_30m": 99.15966386554622,
       "pricing": {
         "input": 0.3,
         "output": 1.2,
@@ -3522,7 +3522,7 @@
       "discount": 0,
       "context_length": 524300,
       "max_completion_tokens": 524288,
-      "uptime_30m": 99.57805907172997,
+      "uptime_30m": 98.88682745825604,
       "pricing": {
         "input": 0.3,
         "output": 1.2,
@@ -3541,7 +3541,7 @@
       "discount": 0,
       "context_length": 524288,
       "max_completion_tokens": null,
-      "uptime_30m": 99.58898479243732,
+      "uptime_30m": 99.59306061255087,
       "pricing": {
         "input": 0.3,
         "output": 1.2,
@@ -3579,7 +3579,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": 256000,
-      "uptime_30m": 99.30555555555556,
+      "uptime_30m": 99.76798143851508,
       "pricing": {
         "input": 0.6,
         "output": 2.4,
@@ -3598,7 +3598,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": 256000,
-      "uptime_30m": 98.76977152899823,
+      "uptime_30m": 89.59276018099548,
       "pricing": {
         "input": 0.19999999999999998,
         "output": 1.15,
@@ -3616,7 +3616,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 256000,
-      "uptime_30m": 92.7007299270073,
+      "uptime_30m": 85.16129032258064,
       "pricing": {
         "input": 0.19999999999999998,
         "output": 1.15,
@@ -3653,7 +3653,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 100,
+      "uptime_30m": 99.9775684163302,
       "pricing": {
         "input": 5,
         "output": 25,
@@ -3672,7 +3672,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 128000,
-      "uptime_30m": null,
+      "uptime_30m": 99.88425925925925,
       "pricing": {
         "input": 5,
         "output": 25,
@@ -3746,7 +3746,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 65536,
-      "uptime_30m": 99.80322409747976,
+      "uptime_30m": 99.84536196346124,
       "pricing": {
         "input": 1.5,
         "output": 9,
@@ -3821,7 +3821,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 65536,
-      "uptime_30m": 98.75832149001421,
+      "uptime_30m": 98.90108319757638,
       "pricing": {
         "input": 0.25,
         "output": 1.5,
@@ -3840,7 +3840,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": null,
+      "uptime_30m": 100,
       "pricing": {
         "input": 5,
         "output": 30,
@@ -3858,7 +3858,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": null,
-      "uptime_30m": 100,
+      "uptime_30m": 99.9949487296055,
       "pricing": {
         "input": 1.25,
         "output": 2.5,
@@ -3932,7 +3932,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 32768,
-      "uptime_30m": 100,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.19999999999999998,
         "output": 0.39999999999999997,
@@ -3986,7 +3986,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.94034302759135,
+      "uptime_30m": 99.9239977199316,
       "pricing": {
         "input": 0.14,
         "output": 1,
@@ -4005,7 +4005,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.90563812219864,
+      "uptime_30m": 99.9316161385913,
       "pricing": {
         "input": 0.15,
         "output": 1,
@@ -4024,7 +4024,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": 99.533527696793,
+      "uptime_30m": 99.73971889640812,
       "pricing": {
         "input": 0.16119999999999998,
         "output": 0.9652499999999999,
@@ -4043,7 +4043,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.89189189189189,
+      "uptime_30m": 99.079754601227,
       "pricing": {
         "input": 0.19999999999999998,
         "output": 1.5999999999999999,
@@ -4081,7 +4081,7 @@
       "discount": 0.2,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": 100,
+      "uptime_30m": null,
       "pricing": {
         "input": 1.04,
         "output": 6.24,
@@ -4118,7 +4118,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.86072423398329,
+      "uptime_30m": 99.41948510853105,
       "pricing": {
         "input": 0.28900000000000003,
         "output": 2.4,
@@ -4137,7 +4137,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": 99.97146118721462,
+      "uptime_30m": 89.30778739184177,
       "pricing": {
         "input": 0.3,
         "output": 2,
@@ -4155,7 +4155,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 97.10550887021475,
+      "uptime_30m": 94.66911764705883,
       "pricing": {
         "input": 0.3,
         "output": 3.1999999999999997,
@@ -4174,7 +4174,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.7579529737206,
+      "uptime_30m": 89.55067920585162,
       "pricing": {
         "input": 0.32,
         "output": 2.7,
@@ -4193,7 +4193,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": 65536,
-      "uptime_30m": 100,
+      "uptime_30m": 99.33110367892976,
       "pricing": {
         "input": 0.325,
         "output": 3.25,
@@ -4212,7 +4212,7 @@
       "discount": 0.25,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": 100,
+      "uptime_30m": 98.75,
       "pricing": {
         "input": 0.44999999999999996,
         "output": 2.7,
@@ -4249,7 +4249,7 @@
       "discount": 0,
       "context_length": 1050000,
       "max_completion_tokens": 128000,
-      "uptime_30m": null,
+      "uptime_30m": 100,
       "pricing": {
         "input": 30,
         "output": 180,
@@ -4267,7 +4267,7 @@
       "discount": 0,
       "context_length": 1050000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 90.52116124519063,
+      "uptime_30m": 76.16355218964377,
       "pricing": {
         "input": 5,
         "output": 30,
@@ -4285,7 +4285,7 @@
       "discount": 0,
       "context_length": 1050000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.789441089952,
+      "uptime_30m": 99.62930011862396,
       "pricing": {
         "input": 5,
         "output": 30,
@@ -4304,7 +4304,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 384000,
-      "uptime_30m": 99.99897203947368,
+      "uptime_30m": 99.99467650920964,
       "pricing": {
         "input": 0.435,
         "output": 0.87,
@@ -4322,7 +4322,7 @@
       "discount": 0,
       "context_length": 1024000,
       "max_completion_tokens": 384000,
-      "uptime_30m": 99.78831632491864,
+      "uptime_30m": 99.25709140027014,
       "pricing": {
         "input": 0.7482,
         "output": 1.4964,
@@ -4340,7 +4340,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 393216,
-      "uptime_30m": 99.84530434222117,
+      "uptime_30m": 98.98989898989899,
       "pricing": {
         "input": 0.7605,
         "output": 1.521,
@@ -4358,7 +4358,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": null,
-      "uptime_30m": 99.81327800829875,
+      "uptime_30m": 99.70163316582915,
       "pricing": {
         "input": 1.131,
         "output": 2.262,
@@ -4376,7 +4376,7 @@
       "discount": 0,
       "context_length": 87040,
       "max_completion_tokens": null,
-      "uptime_30m": 99.94959677419355,
+      "uptime_30m": 99.98932627444283,
       "pricing": {
         "input": 1.392,
         "output": 2.784,
@@ -4395,7 +4395,7 @@
       "discount": 0.02,
       "context_length": 1048576,
       "max_completion_tokens": 393216,
-      "uptime_30m": 99.95968554726869,
+      "uptime_30m": 99.74374743747437,
       "pricing": {
         "input": 1.568,
         "output": 3.136,
@@ -4414,7 +4414,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 393216,
-      "uptime_30m": 94.85023646873357,
+      "uptime_30m": 99.46539946539946,
       "pricing": {
         "input": 1.5999999999999999,
         "output": 3.1350000000000002,
@@ -4433,7 +4433,7 @@
       "discount": 0.33,
       "context_length": 1000000,
       "max_completion_tokens": 393216,
-      "uptime_30m": 99.86981588246235,
+      "uptime_30m": 99.59994073196029,
       "pricing": {
         "input": 1.608,
         "output": 3.216,
@@ -4451,7 +4451,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 32768,
-      "uptime_30m": 99.78632478632478,
+      "uptime_30m": 98.54182655410591,
       "pricing": {
         "input": 1.6500000000000001,
         "output": 3.3009999999999997,
@@ -4470,7 +4470,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 393216,
-      "uptime_30m": 99.83839689722043,
+      "uptime_30m": 99.81989283623756,
       "pricing": {
         "input": 1.68,
         "output": 3.38,
@@ -4489,7 +4489,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 1048576,
-      "uptime_30m": 97.5,
+      "uptime_30m": 97.47784594410362,
       "pricing": {
         "input": 1.74,
         "output": 3.48,
@@ -4508,7 +4508,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 1048576,
-      "uptime_30m": 97.59119064005506,
+      "uptime_30m": 99.39414921239398,
       "pricing": {
         "input": 1.74,
         "output": 3.48,
@@ -4527,7 +4527,7 @@
       "discount": 0,
       "context_length": 512000,
       "max_completion_tokens": null,
-      "uptime_30m": 99.33333333333333,
+      "uptime_30m": 98.55842185128984,
       "pricing": {
         "input": 1.74,
         "output": 3.48,
@@ -4546,7 +4546,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": null,
-      "uptime_30m": 43.20208316894185,
+      "uptime_30m": 56.61914460285132,
       "pricing": {
         "input": 1.74,
         "output": 3.48,
@@ -4565,7 +4565,7 @@
       "discount": 0,
       "context_length": 1048575,
       "max_completion_tokens": null,
-      "uptime_30m": 99.85084277797392,
+      "uptime_30m": 99.02622061937599,
       "pricing": {
         "input": 0.098,
         "output": 0.196,
@@ -4583,7 +4583,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.8865728806069,
+      "uptime_30m": 99.79721900347624,
       "pricing": {
         "input": 0.0983,
         "output": 0.1966,
@@ -4601,7 +4601,7 @@
       "discount": 0,
       "context_length": 65536,
       "max_completion_tokens": null,
-      "uptime_30m": 99.66405375139978,
+      "uptime_30m": 98.82360206255596,
       "pricing": {
         "input": 0.112,
         "output": 0.224,
@@ -4620,7 +4620,7 @@
       "discount": 0,
       "context_length": 1024000,
       "max_completion_tokens": 384000,
-      "uptime_30m": 98.68974827285,
+      "uptime_30m": 96.91483273502939,
       "pricing": {
         "input": 0.1288,
         "output": 0.2576,
@@ -4638,7 +4638,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 393216,
-      "uptime_30m": 99.78212258471419,
+      "uptime_30m": 98.61853832442068,
       "pricing": {
         "input": 0.13,
         "output": 0.28,
@@ -4657,7 +4657,7 @@
       "discount": 0.33,
       "context_length": 1000000,
       "max_completion_tokens": 393216,
-      "uptime_30m": 99.85778050061263,
+      "uptime_30m": 91.60672628304822,
       "pricing": {
         "input": 0.134,
         "output": 0.268,
@@ -4675,7 +4675,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 32768,
-      "uptime_30m": 99.21113023522662,
+      "uptime_30m": 99.45511740253905,
       "pricing": {
         "input": 0.13799999999999998,
         "output": 0.275,
@@ -4694,7 +4694,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 1048576,
-      "uptime_30m": 97.77894460488316,
+      "uptime_30m": 97.17144385363244,
       "pricing": {
         "input": 0.13899999999999998,
         "output": 0.27799999999999997,
@@ -4713,7 +4713,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 1048576,
-      "uptime_30m": 98.9622545528538,
+      "uptime_30m": 98.4226077011056,
       "pricing": {
         "input": 0.14,
         "output": 0.28,
@@ -4732,7 +4732,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 1048576,
-      "uptime_30m": 99.14814452168804,
+      "uptime_30m": 99.5551753635586,
       "pricing": {
         "input": 0.14,
         "output": 0.28,
@@ -4751,7 +4751,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": null,
-      "uptime_30m": 96.28651733242484,
+      "uptime_30m": 91.3217375127895,
       "pricing": {
         "input": 0.14,
         "output": 0.28,
@@ -4770,7 +4770,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 393216,
-      "uptime_30m": 99.63489221180902,
+      "uptime_30m": 99.58147475081228,
       "pricing": {
         "input": 0.14,
         "output": 0.28,
@@ -4789,7 +4789,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 1048576,
-      "uptime_30m": 99.44128919056195,
+      "uptime_30m": 99.24833312366336,
       "pricing": {
         "input": 0.14,
         "output": 0.28,
@@ -4808,7 +4808,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 393216,
-      "uptime_30m": 99.56260414187098,
+      "uptime_30m": 99.49900923468053,
       "pricing": {
         "input": 0.14,
         "output": 0.28,
@@ -4827,7 +4827,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 384000,
-      "uptime_30m": 99.99922849626206,
+      "uptime_30m": 99.9946024720678,
       "pricing": {
         "input": 0.14,
         "output": 0.28,
@@ -4864,7 +4864,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": null,
-      "uptime_30m": 99.93500162495937,
+      "uptime_30m": 99.89353207346286,
       "pricing": {
         "input": 0.063,
         "output": 0.21,
@@ -4882,7 +4882,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.6788990825688,
+      "uptime_30m": 99.94934143870314,
       "pricing": {
         "input": 0.06599999999999999,
         "output": 0.26,
@@ -4901,7 +4901,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.97591232084788,
+      "uptime_30m": 99.94038037321886,
       "pricing": {
         "input": 0.435,
         "output": 0.87,
@@ -4919,7 +4919,7 @@
       "discount": 0,
       "context_length": 1024000,
       "max_completion_tokens": 131072,
-      "uptime_30m": 96.92307692307692,
+      "uptime_30m": 99.5475113122172,
       "pricing": {
         "input": 0.435,
         "output": 0.87,
@@ -4938,7 +4938,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.93880048959608,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.522,
         "output": 1.044,
@@ -4957,7 +4957,7 @@
       "discount": 0,
       "context_length": 87040,
       "max_completion_tokens": null,
-      "uptime_30m": 99.41804073714839,
+      "uptime_30m": 99.86522911051213,
       "pricing": {
         "input": 0.6,
         "output": 3,
@@ -4976,7 +4976,7 @@
       "discount": 0,
       "context_length": 32000,
       "max_completion_tokens": null,
-      "uptime_30m": 99.36930623686054,
+      "uptime_30m": 79.55133735979292,
       "pricing": {
         "input": 0.105,
         "output": 0.28,
@@ -4995,7 +4995,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.86105321661803,
+      "uptime_30m": 99.83976129959112,
       "pricing": {
         "input": 0.14,
         "output": 0.28,
@@ -5013,7 +5013,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 1048576,
-      "uptime_30m": 95.89285714285715,
+      "uptime_30m": 96.01471489883508,
       "pricing": {
         "input": 0.14,
         "output": 0.28,
@@ -5032,7 +5032,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 65536,
-      "uptime_30m": 93.6952714535902,
+      "uptime_30m": 94.27987742594485,
       "pricing": {
         "input": 0.14,
         "output": 0.28,
@@ -5070,7 +5070,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.49468548527618,
+      "uptime_30m": 99.66537966537966,
       "pricing": {
         "input": 0.66,
         "output": 3.41,
@@ -5089,7 +5089,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.90273162032909,
+      "uptime_30m": 99.94404029099049,
       "pricing": {
         "input": 0.66,
         "output": 3.41,
@@ -5126,7 +5126,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 100,
+      "uptime_30m": 99.21259842519686,
       "pricing": {
         "input": 0.684,
         "output": 3.42,
@@ -5144,7 +5144,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 100,
+      "uptime_30m": 99.91482112436117,
       "pricing": {
         "input": 0.7,
         "output": 3.4,
@@ -5163,7 +5163,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.36507936507937,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.75,
         "output": 3.5,
@@ -5220,7 +5220,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.77441185949083,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.77,
         "output": 4,
@@ -5239,7 +5239,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.88109393579072,
+      "uptime_30m": 99.62894248608535,
       "pricing": {
         "input": 0.7999999999999999,
         "output": 3.4,
@@ -5258,7 +5258,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": 256000,
-      "uptime_30m": 100,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.855,
         "output": 3.5999999999999996,
@@ -5295,7 +5295,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 100,
+      "uptime_30m": 99.71014492753623,
       "pricing": {
         "input": 0.95,
         "output": 4,
@@ -5314,7 +5314,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.5049504950495,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.95,
         "output": 4,
@@ -5333,7 +5333,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.35483870967742,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.95,
         "output": 4,
@@ -5351,7 +5351,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.6124031007752,
+      "uptime_30m": null,
       "pricing": {
         "input": 1.0899999999999999,
         "output": 4.6,
@@ -5370,7 +5370,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": null,
-      "uptime_30m": 100,
+      "uptime_30m": 99.18200408997954,
       "pricing": {
         "input": 1.2,
         "output": 4.5,
@@ -5465,7 +5465,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.94378864530636,
+      "uptime_30m": null,
       "pricing": {
         "input": 5,
         "output": 25,
@@ -5483,7 +5483,7 @@
       "discount": 0.31,
       "context_length": 200000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.8989898989899,
+      "uptime_30m": 99.89915966386555,
       "pricing": {
         "input": 0.966,
         "output": 3.036,
@@ -5501,7 +5501,7 @@
       "discount": 0,
       "context_length": 65536,
       "max_completion_tokens": null,
-      "uptime_30m": 44.09448818897638,
+      "uptime_30m": 61.6,
       "pricing": {
         "input": 0.975,
         "output": 4.300000000000001,
@@ -5520,7 +5520,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": null,
-      "uptime_30m": 99.1304347826087,
+      "uptime_30m": 94.9074074074074,
       "pricing": {
         "input": 0.98,
         "output": 3.08,
@@ -5538,7 +5538,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 65535,
-      "uptime_30m": 96.84542586750788,
+      "uptime_30m": 99.2462311557789,
       "pricing": {
         "input": 0.98,
         "output": 3.08,
@@ -5556,7 +5556,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.57173447537473,
+      "uptime_30m": 99.85955056179775,
       "pricing": {
         "input": 0.98,
         "output": 3.08,
@@ -5574,7 +5574,7 @@
       "discount": 0,
       "context_length": 204800,
       "max_completion_tokens": 131072,
-      "uptime_30m": 100,
+      "uptime_30m": 98.1981981981982,
       "pricing": {
         "input": 1.19,
         "output": 3.74,
@@ -5593,7 +5593,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 202752,
-      "uptime_30m": 96.17021276595744,
+      "uptime_30m": 96.42857142857143,
       "pricing": {
         "input": 1.21,
         "output": 4.199999999999999,
@@ -5612,7 +5612,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 202752,
-      "uptime_30m": 99.1822429906542,
+      "uptime_30m": 99.09502262443439,
       "pricing": {
         "input": 1.26,
         "output": 3.9600000000000004,
@@ -5650,7 +5650,7 @@
       "discount": 0,
       "context_length": 204800,
       "max_completion_tokens": 131072,
-      "uptime_30m": 100,
+      "uptime_30m": 95.86776859504133,
       "pricing": {
         "input": 1.38,
         "output": 4.4,
@@ -5725,7 +5725,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": null,
-      "uptime_30m": 90.44585987261146,
+      "uptime_30m": 99.45652173913044,
       "pricing": {
         "input": 1.4,
         "output": 4.4,
@@ -5744,7 +5744,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.86842105263159,
+      "uptime_30m": 98.65451388888889,
       "pricing": {
         "input": 1.4,
         "output": 4.4,
@@ -5763,7 +5763,7 @@
       "discount": 0,
       "context_length": 200000,
       "max_completion_tokens": 24000,
-      "uptime_30m": null,
+      "uptime_30m": 98.11320754716981,
       "pricing": {
         "input": 1.54,
         "output": 4.84,
@@ -5782,7 +5782,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": null,
-      "uptime_30m": 99.66814159292035,
+      "uptime_30m": 99.25308320305714,
       "pricing": {
         "input": 0.06,
         "output": 0.33,
@@ -5801,7 +5801,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": 256000,
-      "uptime_30m": 71.72672136996076,
+      "uptime_30m": 73.58866504317024,
       "pricing": {
         "input": 0.09999999999999999,
         "output": 0.3,
@@ -5819,7 +5819,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 97.02158016764758,
+      "uptime_30m": 3.2350142721217887,
       "pricing": {
         "input": 0.12,
         "output": 0.39999999999999997,
@@ -5838,7 +5838,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.7136682874122,
+      "uptime_30m": 99.95430080227482,
       "pricing": {
         "input": 0.13,
         "output": 0.39999999999999997,
@@ -5857,7 +5857,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.30656345750685,
+      "uptime_30m": 99.34640522875817,
       "pricing": {
         "input": 0.13,
         "output": 0.39999999999999997,
@@ -5876,7 +5876,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.83060785718939,
+      "uptime_30m": 99.69995713673381,
       "pricing": {
         "input": 0.13,
         "output": 0.39999999999999997,
@@ -5895,7 +5895,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": 8192,
-      "uptime_30m": 99.53560371517027,
+      "uptime_30m": 98.92386333064299,
       "pricing": {
         "input": 0.13,
         "output": 0.39999999999999997,
@@ -5914,7 +5914,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.94345170775843,
+      "uptime_30m": 99.89176024895143,
       "pricing": {
         "input": 0.13,
         "output": 0.39999999999999997,
@@ -5933,7 +5933,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.92024361948955,
+      "uptime_30m": 99.97618291521118,
       "pricing": {
         "input": 0.15,
         "output": 0.6,
@@ -5952,7 +5952,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.88343190194567,
+      "uptime_30m": 99.93211675917422,
       "pricing": {
         "input": 0.12,
         "output": 0.35,
@@ -5971,7 +5971,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": 8192,
-      "uptime_30m": 99.68379446640316,
+      "uptime_30m": 99.86584107327141,
       "pricing": {
         "input": 0.12,
         "output": 0.36,
@@ -5990,7 +5990,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 65536,
-      "uptime_30m": 91.7395808079695,
+      "uptime_30m": 91.84711142281056,
       "pricing": {
         "input": 0.12,
         "output": 0.37,
@@ -6008,7 +6008,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 95.78283247551053,
+      "uptime_30m": 22.71973466003317,
       "pricing": {
         "input": 0.13,
         "output": 0.39999999999999997,
@@ -6027,7 +6027,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.77569600211109,
+      "uptime_30m": 99.13419913419914,
       "pricing": {
         "input": 0.14,
         "output": 0.39999999999999997,
@@ -6046,7 +6046,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 98.66925692083535,
+      "uptime_30m": 98.58060910868957,
       "pricing": {
         "input": 0.15,
         "output": 0.39999999999999997,
@@ -6065,7 +6065,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 96.76384059909067,
+      "uptime_30m": 90.80975063042868,
       "pricing": {
         "input": 0.15,
         "output": 0.45999999999999996,
@@ -6103,7 +6103,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.96682149966821,
+      "uptime_30m": 99.79105725031341,
       "pricing": {
         "input": 0.22,
         "output": 0.59,
@@ -6122,7 +6122,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": null,
-      "uptime_30m": 78.42857142857143,
+      "uptime_30m": 87.01149425287356,
       "pricing": {
         "input": 0.28,
         "output": 0.86,
@@ -6196,7 +6196,7 @@
       "discount": 0,
       "context_length": 2000000,
       "max_completion_tokens": null,
-      "uptime_30m": null,
+      "uptime_30m": 53.06122448979592,
       "pricing": {
         "input": 1.25,
         "output": 2.5,
@@ -6215,7 +6215,7 @@
       "discount": 0,
       "context_length": 2000000,
       "max_completion_tokens": null,
-      "uptime_30m": 99.94229659549913,
+      "uptime_30m": 99.89149305555556,
       "pricing": {
         "input": 1.25,
         "output": 2.5,
@@ -6234,7 +6234,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": 80000,
-      "uptime_30m": 100,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.3,
         "output": 1.2,
@@ -6290,7 +6290,7 @@
       "discount": 0.7,
       "context_length": 196608,
       "max_completion_tokens": 196608,
-      "uptime_30m": 95.88537839823658,
+      "uptime_30m": 99.75186104218362,
       "pricing": {
         "input": 0.18,
         "output": 0.72,
@@ -6309,7 +6309,7 @@
       "discount": 0.1,
       "context_length": 204800,
       "max_completion_tokens": 131072,
-      "uptime_30m": 100,
+      "uptime_30m": 99.12891986062718,
       "pricing": {
         "input": 0.27,
         "output": 1.08,
@@ -6328,7 +6328,7 @@
       "discount": 0,
       "context_length": 196608,
       "max_completion_tokens": 196608,
-      "uptime_30m": 98.82154882154882,
+      "uptime_30m": 94.3089430894309,
       "pricing": {
         "input": 0.27899999999999997,
         "output": 1.2,
@@ -6347,7 +6347,7 @@
       "discount": 0,
       "context_length": 204800,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.31412894375858,
+      "uptime_30m": 97.10467706013362,
       "pricing": {
         "input": 0.3,
         "output": 1.2,
@@ -6366,7 +6366,7 @@
       "discount": 0,
       "context_length": 196608,
       "max_completion_tokens": null,
-      "uptime_30m": 100,
+      "uptime_30m": 99.49579831932773,
       "pricing": {
         "input": 0.3,
         "output": 1.2,
@@ -6404,7 +6404,7 @@
       "discount": 0,
       "context_length": 196608,
       "max_completion_tokens": 131072,
-      "uptime_30m": 98.5981308411215,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.6,
         "output": 1.7999999999999998,
@@ -6423,7 +6423,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.98556373610509,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.19999999999999998,
         "output": 1.25,
@@ -6442,7 +6442,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 82.91079098407388,
+      "uptime_30m": 98.11296889205107,
       "pricing": {
         "input": 0.19999999999999998,
         "output": 1.25,
@@ -6460,7 +6460,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.7723217032798,
+      "uptime_30m": 90.86431513181856,
       "pricing": {
         "input": 0.75,
         "output": 4.5,
@@ -6478,7 +6478,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 100,
+      "uptime_30m": 99.9944876247175,
       "pricing": {
         "input": 0.75,
         "output": 4.5,
@@ -6534,7 +6534,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 131072,
-      "uptime_30m": 97.39583333333334,
+      "uptime_30m": 96.29629629629629,
       "pricing": {
         "input": 1.2,
         "output": 4,
@@ -6553,7 +6553,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 131072,
-      "uptime_30m": 90.0990099009901,
+      "uptime_30m": 91.66666666666666,
       "pricing": {
         "input": 1.2,
         "output": 4,
@@ -6572,7 +6572,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": null,
-      "uptime_30m": 98.18840579710145,
+      "uptime_30m": 98.55072463768117,
       "pricing": {
         "input": 0.08,
         "output": 0.44999999999999996,
@@ -6591,7 +6591,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 16384,
-      "uptime_30m": 98.89502762430939,
+      "uptime_30m": 98.59649122807016,
       "pricing": {
         "input": 0.08499999999999999,
         "output": 0.39999999999999997,
@@ -6610,7 +6610,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": null,
-      "uptime_30m": 98.31932773109243,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.21,
         "output": 0.45499999999999996,
@@ -6667,7 +6667,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.20740864341731,
+      "uptime_30m": 98.50133214920072,
       "pricing": {
         "input": 0.09999999999999999,
         "output": 0.15,
@@ -6686,7 +6686,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": 32768,
-      "uptime_30m": 100,
+      "uptime_30m": 99.90656388694231,
       "pricing": {
         "input": 0.09999999999999999,
         "output": 0.15,
@@ -6705,7 +6705,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": null,
-      "uptime_30m": 99.94591671173607,
+      "uptime_30m": 99.73086446334374,
       "pricing": {
         "input": 0.16999999999999998,
         "output": 0.25,
@@ -6761,7 +6761,7 @@
       "discount": 0,
       "context_length": 1050000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 98.97973003476142,
+      "uptime_30m": 99.84268226734181,
       "pricing": {
         "input": 2.5,
         "output": 15,
@@ -6779,7 +6779,7 @@
       "discount": 0,
       "context_length": 1050000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.83519501922726,
+      "uptime_30m": 100,
       "pricing": {
         "input": 2.5,
         "output": 15,
@@ -6798,7 +6798,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 50000,
-      "uptime_30m": 100,
+      "uptime_30m": 99.93825254708243,
       "pricing": {
         "input": 0.25,
         "output": 0.75,
@@ -6836,7 +6836,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 16384,
-      "uptime_30m": 100,
+      "uptime_30m": 99.76043805612595,
       "pricing": {
         "input": 1.75,
         "output": 14,
@@ -6929,7 +6929,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": 98.6046511627907,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.22499999999999998,
         "output": 1.7999999999999998,
@@ -6986,7 +6986,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.25187032418953,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.25,
         "output": 1.25,
@@ -7005,7 +7005,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": 16384,
-      "uptime_30m": null,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.3125,
         "output": 1.25,
@@ -7024,7 +7024,7 @@
       "discount": 0.35,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": 97.58108851017042,
+      "uptime_30m": 99.59062151097878,
       "pricing": {
         "input": 0.195,
         "output": 1.56,
@@ -7042,7 +7042,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 83.55795148247978,
+      "uptime_30m": 97.92387543252595,
       "pricing": {
         "input": 0.25,
         "output": 2,
@@ -7061,7 +7061,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": 100,
+      "uptime_30m": 99.8076923076923,
       "pricing": {
         "input": 0.27,
         "output": 2.16,
@@ -7080,7 +7080,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 100,
+      "uptime_30m": 66.45569620253164,
       "pricing": {
         "input": 0.3,
         "output": 2.4,
@@ -7099,7 +7099,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": 99.56043956043956,
+      "uptime_30m": 99.78354978354979,
       "pricing": {
         "input": 0.3,
         "output": 2.4,
@@ -7118,7 +7118,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 96.32224168126095,
+      "uptime_30m": 31.842105263157894,
       "pricing": {
         "input": 0.26,
         "output": 2.08,
@@ -7137,7 +7137,7 @@
       "discount": 0.35,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": 94.79166666666666,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.26,
         "output": 2.08,
@@ -7155,7 +7155,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": 95.05703422053232,
+      "uptime_30m": 99.84301412872841,
       "pricing": {
         "input": 0.3,
         "output": 2.4,
@@ -7174,7 +7174,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": 97.52475247524752,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.39999999999999997,
         "output": 3.1999999999999997,
@@ -7193,7 +7193,7 @@
       "discount": 0.35,
       "context_length": 1000000,
       "max_completion_tokens": 65536,
-      "uptime_30m": 99.99747097948965,
+      "uptime_30m": 99.99733027204528,
       "pricing": {
         "input": 0.065,
         "output": 0.26,
@@ -7248,7 +7248,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 97.79904306220095,
+      "uptime_30m": 94.62669683257919,
       "pricing": {
         "input": 1.75,
         "output": 14,
@@ -7266,7 +7266,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 100,
+      "uptime_30m": 96.86411149825784,
       "pricing": {
         "input": 1.75,
         "output": 14,
@@ -7303,7 +7303,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 65536,
-      "uptime_30m": 99.0969426612991,
+      "uptime_30m": 98.64799824983592,
       "pricing": {
         "input": 2,
         "output": 12,
@@ -7341,7 +7341,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.95301271420675,
+      "uptime_30m": null,
       "pricing": {
         "input": 3,
         "output": 15,
@@ -7359,7 +7359,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.7308209959623,
+      "uptime_30m": 100,
       "pricing": {
         "input": 3,
         "output": 15,
@@ -7378,7 +7378,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 128000,
-      "uptime_30m": null,
+      "uptime_30m": 99.74424552429667,
       "pricing": {
         "input": 3,
         "output": 15,
@@ -7452,7 +7452,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": 99.32975871313673,
+      "uptime_30m": 92.96875,
       "pricing": {
         "input": 0.44999999999999996,
         "output": 3,
@@ -7470,7 +7470,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.74424552429667,
+      "uptime_30m": 98.86762983209684,
       "pricing": {
         "input": 0.5,
         "output": 3.5,
@@ -7508,7 +7508,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": null,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.55,
         "output": 3.5,
@@ -7527,7 +7527,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.39819458375125,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.55,
         "output": 3.5,
@@ -7620,7 +7620,7 @@
       "discount": 0.6,
       "context_length": 196608,
       "max_completion_tokens": 196608,
-      "uptime_30m": 92.96296296296296,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.12,
         "output": 0.48,
@@ -7788,7 +7788,7 @@
       "discount": 0,
       "context_length": 204800,
       "max_completion_tokens": 131072,
-      "uptime_30m": 98,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.3,
         "output": 1.2,
@@ -7883,7 +7883,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": null,
-      "uptime_30m": 96.09582963620231,
+      "uptime_30m": 64.375,
       "pricing": {
         "input": 0.6,
         "output": 1.92,
@@ -7901,7 +7901,7 @@
       "discount": 0,
       "context_length": 198000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 100,
+      "uptime_30m": 99.42528735632183,
       "pricing": {
         "input": 0.65,
         "output": 2.08,
@@ -7919,7 +7919,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.75460122699387,
+      "uptime_30m": 99.92412746585735,
       "pricing": {
         "input": 0.7,
         "output": 2.24,
@@ -7937,7 +7937,7 @@
       "discount": 0,
       "context_length": 64000,
       "max_completion_tokens": null,
-      "uptime_30m": 52.88461538461539,
+      "uptime_30m": 81.53846153846153,
       "pricing": {
         "input": 0.75,
         "output": 2.4,
@@ -7956,7 +7956,7 @@
       "discount": 0,
       "context_length": 204800,
       "max_completion_tokens": 131072,
-      "uptime_30m": 100,
+      "uptime_30m": 99.92427110942825,
       "pricing": {
         "input": 0.95,
         "output": 2.5500000000000003,
@@ -7975,7 +7975,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 65535,
-      "uptime_30m": null,
+      "uptime_30m": 90.82125603864735,
       "pricing": {
         "input": 0.95,
         "output": 2.5500000000000003,
@@ -7993,7 +7993,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 202752,
-      "uptime_30m": 99.28825622775801,
+      "uptime_30m": 99.84924170829396,
       "pricing": {
         "input": 0.95,
         "output": 3.15,
@@ -8012,7 +8012,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 131072,
-      "uptime_30m": 97.5609756097561,
+      "uptime_30m": 40.77802890212999,
       "pricing": {
         "input": 1,
         "output": 3.1999999999999997,
@@ -8050,7 +8050,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 131072,
-      "uptime_30m": 92.43353783231085,
+      "uptime_30m": 98.64375194119475,
       "pricing": {
         "input": 1,
         "output": 3.1999999999999997,
@@ -8069,7 +8069,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 131072,
-      "uptime_30m": 97.02970297029702,
+      "uptime_30m": 82.7433628318584,
       "pricing": {
         "input": 1,
         "output": 3.1999999999999997,
@@ -8088,7 +8088,7 @@
       "discount": 0,
       "context_length": 198000,
       "max_completion_tokens": 32000,
-      "uptime_30m": null,
+      "uptime_30m": 95.32780708364731,
       "pricing": {
         "input": 1,
         "output": 3.1999999999999997,
@@ -8107,7 +8107,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 202752,
-      "uptime_30m": null,
+      "uptime_30m": 98.17073170731707,
       "pricing": {
         "input": 1.2,
         "output": 3.5,
@@ -8163,7 +8163,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 100,
+      "uptime_30m": 99.95064165844028,
       "pricing": {
         "input": 5,
         "output": 25,
@@ -8201,7 +8201,7 @@
       "discount": 0,
       "context_length": 1000000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.97830802603038,
+      "uptime_30m": null,
       "pricing": {
         "input": 5,
         "output": 25,
@@ -8257,7 +8257,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": 64000,
-      "uptime_30m": 100,
+      "uptime_30m": 99.55801104972376,
       "pricing": {
         "input": 0.18,
         "output": 0.8999999999999999,
@@ -8313,7 +8313,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": null,
-      "uptime_30m": 98.95833333333334,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.375,
         "output": 2.025,
@@ -8332,7 +8332,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 100,
+      "uptime_30m": 99.98673564133173,
       "pricing": {
         "input": 0.39999999999999997,
         "output": 1.9,
@@ -8351,7 +8351,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 65535,
-      "uptime_30m": 97.1563981042654,
+      "uptime_30m": 98.7012987012987,
       "pricing": {
         "input": 0.44,
         "output": 2,
@@ -8369,7 +8369,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.89550679205851,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.44999999999999996,
         "output": 2.25,
@@ -8388,7 +8388,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 100,
+      "uptime_30m": 99.75903614457832,
       "pricing": {
         "input": 0.49,
         "output": 2.5,
@@ -8407,7 +8407,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": 256000,
-      "uptime_30m": 99.77168949771689,
+      "uptime_30m": 99.62406015037594,
       "pricing": {
         "input": 0.54,
         "output": 2.7,
@@ -8444,7 +8444,7 @@
       "discount": 0.05,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 100,
+      "uptime_30m": 98.87218045112782,
       "pricing": {
         "input": 0.5700000000000001,
         "output": 2.8499999999999996,
@@ -8482,7 +8482,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.23664122137404,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.6,
         "output": 3,
@@ -8501,7 +8501,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": null,
-      "uptime_30m": 100,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.15,
         "output": 0.6,
@@ -8556,7 +8556,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 26.804860614724802,
+      "uptime_30m": 19.217081850533805,
       "pricing": {
         "input": 0.060500000000000005,
         "output": 0.39999999999999997,
@@ -8574,7 +8574,7 @@
       "discount": 0,
       "context_length": 200000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 66.79389312977099,
+      "uptime_30m": 25.710014947683106,
       "pricing": {
         "input": 0.07,
         "output": 0.39999999999999997,
@@ -8593,7 +8593,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 16384,
-      "uptime_30m": 100,
+      "uptime_30m": 99.6415770609319,
       "pricing": {
         "input": 0.125,
         "output": 0.5,
@@ -8612,7 +8612,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.39393939393939,
+      "uptime_30m": null,
       "pricing": {
         "input": 1.75,
         "output": 14,
@@ -8687,7 +8687,7 @@
       "discount": 0,
       "context_length": 204800,
       "max_completion_tokens": 131072,
-      "uptime_30m": null,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.3,
         "output": 1.2,
@@ -8725,7 +8725,7 @@
       "discount": 0,
       "context_length": 200000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 96.16087751371116,
+      "uptime_30m": 92.27053140096618,
       "pricing": {
         "input": 0.48,
         "output": 1.76,
@@ -8743,7 +8743,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 202752,
-      "uptime_30m": 98.42931937172776,
+      "uptime_30m": 97.60999456816948,
       "pricing": {
         "input": 0.52,
         "output": 1.85,
@@ -8762,7 +8762,7 @@
       "discount": 0.1,
       "context_length": 204800,
       "max_completion_tokens": 131072,
-      "uptime_30m": 95.65217391304348,
+      "uptime_30m": 94.81927710843372,
       "pricing": {
         "input": 0.54,
         "output": 1.9800000000000002,
@@ -8800,7 +8800,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 131072,
-      "uptime_30m": 96.87123947051745,
+      "uptime_30m": 90.85173501577287,
       "pricing": {
         "input": 0.6,
         "output": 2.2,
@@ -8838,7 +8838,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.35897435897436,
+      "uptime_30m": 98.52941176470588,
       "pricing": {
         "input": 0.85,
         "output": 3.3000000000000003,
@@ -8876,7 +8876,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 65535,
-      "uptime_30m": 98.80344204658029,
+      "uptime_30m": 98.70937157813209,
       "pricing": {
         "input": 0.5,
         "output": 3,
@@ -8914,7 +8914,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": null,
-      "uptime_30m": 79.06647807637907,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.06,
         "output": 0.24,
@@ -8933,7 +8933,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 16384,
-      "uptime_30m": 98.66310160427807,
+      "uptime_30m": 98.65771812080537,
       "pricing": {
         "input": 1.75,
         "output": 14,
@@ -8988,7 +8988,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 88.14032638101055,
+      "uptime_30m": 96.51436646255299,
       "pricing": {
         "input": 1.75,
         "output": 14,
@@ -9062,7 +9062,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 32768,
-      "uptime_30m": 96.91119691119691,
+      "uptime_30m": 94.70198675496688,
       "pricing": {
         "input": 0.3,
         "output": 0.8999999999999999,
@@ -9081,7 +9081,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 32768,
-      "uptime_30m": 96.93877551020408,
+      "uptime_30m": 99.55156950672645,
       "pricing": {
         "input": 0.3,
         "output": 0.8999999999999999,
@@ -9156,7 +9156,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": null,
-      "uptime_30m": 99.75547987075365,
+      "uptime_30m": 99.7795456723857,
       "pricing": {
         "input": 0.19999999999999998,
         "output": 0.19999999999999998,
@@ -9174,7 +9174,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 97.8743961352657,
+      "uptime_30m": 99.78947368421053,
       "pricing": {
         "input": 0.35,
         "output": 0.35,
@@ -9193,7 +9193,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": null,
-      "uptime_30m": 97.86995515695067,
+      "uptime_30m": 99.58730977559969,
       "pricing": {
         "input": 0.15,
         "output": 0.15,
@@ -9211,7 +9211,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 100,
+      "uptime_30m": 97.88235294117648,
       "pricing": {
         "input": 0.3,
         "output": 0.3,
@@ -9230,7 +9230,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": null,
-      "uptime_30m": 99.82389937106917,
+      "uptime_30m": 99.90310077519379,
       "pricing": {
         "input": 0.09999999999999999,
         "output": 0.09999999999999999,
@@ -9248,7 +9248,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 100,
+      "uptime_30m": 99.78632478632478,
       "pricing": {
         "input": 0.15,
         "output": 0.15,
@@ -9267,7 +9267,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": null,
-      "uptime_30m": 100,
+      "uptime_30m": 99.87381703470032,
       "pricing": {
         "input": 0.5,
         "output": 1.5,
@@ -9285,7 +9285,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 100,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.045,
         "output": 0.15,
@@ -9304,7 +9304,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 64000,
-      "uptime_30m": 99.9294664343208,
+      "uptime_30m": 99.8810850984764,
       "pricing": {
         "input": 0.2288,
         "output": 0.3432,
@@ -9322,7 +9322,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 65536,
-      "uptime_30m": 99.96826907821672,
+      "uptime_30m": 99.98191354675349,
       "pricing": {
         "input": 0.252,
         "output": 0.378,
@@ -9340,7 +9340,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 163840,
-      "uptime_30m": 99.68688845401175,
+      "uptime_30m": 99.73579920739762,
       "pricing": {
         "input": 0.25899999999999995,
         "output": 0.42,
@@ -9359,7 +9359,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 163840,
-      "uptime_30m": 99.93580787675113,
+      "uptime_30m": 99.93863686171377,
       "pricing": {
         "input": 0.26,
         "output": 0.38,
@@ -9378,7 +9378,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 65536,
-      "uptime_30m": 99.97696913864579,
+      "uptime_30m": 99.9926982427104,
       "pricing": {
         "input": 0.26899999999999996,
         "output": 0.39999999999999997,
@@ -9397,7 +9397,7 @@
       "discount": 0,
       "context_length": 160000,
       "max_completion_tokens": 32768,
-      "uptime_30m": 97.8021978021978,
+      "uptime_30m": 97.27272727272728,
       "pricing": {
         "input": 0.33,
         "output": 0.48,
@@ -9416,7 +9416,7 @@
       "discount": 0.35,
       "context_length": 131072,
       "max_completion_tokens": 65536,
-      "uptime_30m": 99.74311069593648,
+      "uptime_30m": 97.6693372177713,
       "pricing": {
         "input": 0.3705,
         "output": 1.1115000000000002,
@@ -9434,7 +9434,7 @@
       "discount": 0,
       "context_length": 65536,
       "max_completion_tokens": 128000,
-      "uptime_30m": 90.25210084033614,
+      "uptime_30m": 98.4594775619558,
       "pricing": {
         "input": 0.425,
         "output": 1.3599999999999999,
@@ -9453,7 +9453,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 163840,
-      "uptime_30m": 99.8779594825482,
+      "uptime_30m": 99.98066511987625,
       "pricing": {
         "input": 0.5,
         "output": 1.5,
@@ -9471,7 +9471,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 65536,
-      "uptime_30m": 99.22804760373111,
+      "uptime_30m": 99.56405909421167,
       "pricing": {
         "input": 0.56,
         "output": 1.68,
@@ -9509,7 +9509,7 @@
       "discount": 0,
       "context_length": 200000,
       "max_completion_tokens": 64000,
-      "uptime_30m": null,
+      "uptime_30m": 100,
       "pricing": {
         "input": 5,
         "output": 25,
@@ -9603,7 +9603,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.8534440644846,
+      "uptime_30m": 99.55028618152085,
       "pricing": {
         "input": 1.25,
         "output": 10,
@@ -9640,7 +9640,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.91575400168492,
+      "uptime_30m": 99.84954864593782,
       "pricing": {
         "input": 1.25,
         "output": 10,
@@ -9677,7 +9677,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 96.875,
+      "uptime_30m": null,
       "pricing": {
         "input": 1.25,
         "output": 10,
@@ -9695,7 +9695,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 100000,
-      "uptime_30m": 97.70491803278688,
+      "uptime_30m": 98.66220735785953,
       "pricing": {
         "input": 0.25,
         "output": 2,
@@ -9808,7 +9808,7 @@
       "discount": 0,
       "context_length": 32000,
       "max_completion_tokens": null,
-      "uptime_30m": 100,
+      "uptime_30m": 99.02912621359224,
       "pricing": {
         "input": 0.09999999999999999,
         "output": 0.3,
@@ -9976,7 +9976,7 @@
       "discount": 0,
       "context_length": 200000,
       "max_completion_tokens": 64000,
-      "uptime_30m": 100,
+      "uptime_30m": 99.95017438963627,
       "pricing": {
         "input": 1,
         "output": 5,
@@ -10012,7 +10012,7 @@
       "discount": 0.35,
       "context_length": 131072,
       "max_completion_tokens": 32768,
-      "uptime_30m": 99.65442764578833,
+      "uptime_30m": 99.83887210473313,
       "pricing": {
         "input": 0.117,
         "output": 0.45499999999999996,
@@ -10030,7 +10030,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.20499716070414,
+      "uptime_30m": 99.8044487900269,
       "pricing": {
         "input": 0.25,
         "output": 0.75,
@@ -10140,7 +10140,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 32768,
-      "uptime_30m": 97.60479041916167,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.19999999999999998,
         "output": 0.7,
@@ -10159,7 +10159,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 97.04301075268818,
+      "uptime_30m": 99.08536585365853,
       "pricing": {
         "input": 0.19999999999999998,
         "output": 0.7,
@@ -10178,7 +10178,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 94.91525423728814,
+      "uptime_30m": 89.20454545454545,
       "pricing": {
         "input": 0.29,
         "output": 1,
@@ -10197,7 +10197,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": null,
+      "uptime_30m": 100,
       "pricing": {
         "input": 15,
         "output": 120,
@@ -10215,7 +10215,7 @@
       "discount": 0,
       "context_length": 198000,
       "max_completion_tokens": 16384,
-      "uptime_30m": null,
+      "uptime_30m": 99.57983193277312,
       "pricing": {
         "input": 0.43,
         "output": 1.75,
@@ -10234,7 +10234,7 @@
       "discount": 0,
       "context_length": 204800,
       "max_completion_tokens": 131072,
-      "uptime_30m": 98.65771812080537,
+      "uptime_30m": 94.41624365482234,
       "pricing": {
         "input": 0.55,
         "output": 2.2,
@@ -10253,7 +10253,7 @@
       "discount": 0,
       "context_length": 202752,
       "max_completion_tokens": 131072,
-      "uptime_30m": 87.72455089820359,
+      "uptime_30m": 75,
       "pricing": {
         "input": 0.6,
         "output": 2.2,
@@ -10347,7 +10347,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 65536,
-      "uptime_30m": 100,
+      "uptime_30m": 99.92503748125937,
       "pricing": {
         "input": 0.27,
         "output": 0.41,
@@ -10366,7 +10366,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 163840,
-      "uptime_30m": 99.67637540453075,
+      "uptime_30m": 99.70674486803519,
       "pricing": {
         "input": 0.27,
         "output": 0.41,
@@ -10385,7 +10385,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 163840,
-      "uptime_30m": 100,
+      "uptime_30m": 99.60652051714446,
       "pricing": {
         "input": 0.27,
         "output": 0.41,
@@ -10461,7 +10461,7 @@
       "discount": 0.35,
       "context_length": 131072,
       "max_completion_tokens": 32768,
-      "uptime_30m": null,
+      "uptime_30m": 99.9124343257443,
       "pricing": {
         "input": 0.26,
         "output": 2.6,
@@ -10498,7 +10498,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.75247524752476,
+      "uptime_30m": 83.58831710709318,
       "pricing": {
         "input": 0.21,
         "output": 1.9,
@@ -10517,7 +10517,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 32768,
-      "uptime_30m": 99.81334577694821,
+      "uptime_30m": 98.12943453020856,
       "pricing": {
         "input": 0.21,
         "output": 1.9,
@@ -10554,7 +10554,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 32768,
-      "uptime_30m": 98.78831076265146,
+      "uptime_30m": 85.0958126330731,
       "pricing": {
         "input": 0.3,
         "output": 1.5,
@@ -10627,7 +10627,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 163840,
-      "uptime_30m": 95.96774193548387,
+      "uptime_30m": 87.11656441717791,
       "pricing": {
         "input": 0.27,
         "output": 1,
@@ -10757,7 +10757,7 @@
       "discount": 0.35,
       "context_length": 131072,
       "max_completion_tokens": 32768,
-      "uptime_30m": 99.97337593184238,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.0975,
         "output": 0.78,
@@ -10775,7 +10775,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.87405541561712,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.09999999999999999,
         "output": 1.1,
@@ -10850,7 +10850,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 100352,
-      "uptime_30m": 99.58440530377993,
+      "uptime_30m": 99.45471069372917,
       "pricing": {
         "input": 0.6,
         "output": 2.5,
@@ -10869,7 +10869,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 16384,
-      "uptime_30m": 96.80824944758164,
+      "uptime_30m": 99.97841105354058,
       "pricing": {
         "input": 1,
         "output": 3,
@@ -10888,7 +10888,7 @@
       "discount": 0.35,
       "context_length": 81920,
       "max_completion_tokens": 32768,
-      "uptime_30m": 100,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.13,
         "output": 1.56,
@@ -10944,7 +10944,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 32768,
-      "uptime_30m": 99.98194619967504,
+      "uptime_30m": 99.9006359300477,
       "pricing": {
         "input": 0.21,
         "output": 0.7899999999999999,
@@ -10982,7 +10982,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 163840,
-      "uptime_30m": 96.30266552020636,
+      "uptime_30m": 78.96749521988528,
       "pricing": {
         "input": 0.27,
         "output": 1,
@@ -11001,7 +11001,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 65536,
-      "uptime_30m": 100,
+      "uptime_30m": 99.91147308781869,
       "pricing": {
         "input": 0.3,
         "output": 0.95,
@@ -11020,7 +11020,7 @@
       "discount": 0,
       "context_length": 161000,
       "max_completion_tokens": 161000,
-      "uptime_30m": 100,
+      "uptime_30m": 99.98780785174348,
       "pricing": {
         "input": 0.55,
         "output": 1.6500000000000001,
@@ -11039,7 +11039,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 32768,
-      "uptime_30m": 100,
+      "uptime_30m": 99.29742388758783,
       "pricing": {
         "input": 0.6,
         "output": 1.7,
@@ -11058,7 +11058,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 7168,
-      "uptime_30m": 99.77827050997783,
+      "uptime_30m": 99.89365473236441,
       "pricing": {
         "input": 0.65,
         "output": 1.5,
@@ -11169,7 +11169,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 98.68421052631578,
+      "uptime_30m": 99.53416149068323,
       "pricing": {
         "input": 1.25,
         "output": 10,
@@ -11188,7 +11188,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 98.72174590802805,
+      "uptime_30m": 98.31836967364971,
       "pricing": {
         "input": 1.25,
         "output": 10,
@@ -11206,7 +11206,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 97.35209190882841,
+      "uptime_30m": 96.0845931713946,
       "pricing": {
         "input": 0.25,
         "output": 2,
@@ -11262,7 +11262,7 @@
       "discount": 0,
       "context_length": 400000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 95.78161104841743,
+      "uptime_30m": 97.74880968890122,
       "pricing": {
         "input": 0.049999999999999996,
         "output": 0.39999999999999997,
@@ -11280,7 +11280,7 @@
       "discount": 0.8,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 51.95035460992907,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.03,
         "output": 0.15,
@@ -11299,7 +11299,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": null,
-      "uptime_30m": 99.26981509833942,
+      "uptime_30m": 99.5329201473098,
       "pricing": {
         "input": 0.038000000000000006,
         "output": 0.18,
@@ -11318,7 +11318,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.93816664090276,
+      "uptime_30m": 99.97162583940225,
       "pricing": {
         "input": 0.04,
         "output": 0.14,
@@ -11337,7 +11337,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 32768,
-      "uptime_30m": 100,
+      "uptime_30m": 99.29977437174202,
       "pricing": {
         "input": 0.049999999999999996,
         "output": 0.25,
@@ -11356,7 +11356,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 98.91821722198183,
+      "uptime_30m": 98.86141834743006,
       "pricing": {
         "input": 0.049999999999999996,
         "output": 0.375,
@@ -11375,7 +11375,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 8192,
-      "uptime_30m": 99.91909385113269,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.049999999999999996,
         "output": 0.44999999999999996,
@@ -11394,7 +11394,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": null,
-      "uptime_30m": 99.92119779353821,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.07,
         "output": 0.49,
@@ -11413,7 +11413,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.41904047976013,
+      "uptime_30m": 99.51065509076558,
       "pricing": {
         "input": 0.09,
         "output": 0.36,
@@ -11451,7 +11451,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 94.4318549692457,
+      "uptime_30m": 95.9806823492756,
       "pricing": {
         "input": 0.09999999999999999,
         "output": 0.75,
@@ -11546,7 +11546,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 65536,
-      "uptime_30m": 98.4065135213725,
+      "uptime_30m": 99.93387015209865,
       "pricing": {
         "input": 0.15,
         "output": 0.6,
@@ -11584,7 +11584,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": null,
-      "uptime_30m": 86.9281045751634,
+      "uptime_30m": 93.1056293485136,
       "pricing": {
         "input": 0.029,
         "output": 0.14,
@@ -11603,7 +11603,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 99.25619834710744,
+      "uptime_30m": 99.7287113790505,
       "pricing": {
         "input": 0.03,
         "output": 0.13,
@@ -11622,7 +11622,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 32768,
-      "uptime_30m": 99.80916030534351,
+      "uptime_30m": 94.15011037527594,
       "pricing": {
         "input": 0.04,
         "output": 0.15,
@@ -11641,7 +11641,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 88.86363636363637,
+      "uptime_30m": 98.49130862577894,
       "pricing": {
         "input": 0.04,
         "output": 0.15,
@@ -11679,7 +11679,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 82.94930875576037,
+      "uptime_30m": 37.898089171974526,
       "pricing": {
         "input": 0.04,
         "output": 0.19999999999999998,
@@ -11736,7 +11736,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 32768,
-      "uptime_30m": 83.44155844155844,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.07,
         "output": 0.25,
@@ -11755,7 +11755,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": null,
-      "uptime_30m": 95.74123989218329,
+      "uptime_30m": 95.36954585930543,
       "pricing": {
         "input": 0.07,
         "output": 0.3,
@@ -11774,7 +11774,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 65536,
-      "uptime_30m": 98.5125260960334,
+      "uptime_30m": 99.98847527947447,
       "pricing": {
         "input": 0.075,
         "output": 0.3,
@@ -11849,7 +11849,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": null,
-      "uptime_30m": 100,
+      "uptime_30m": 99.89969909729187,
       "pricing": {
         "input": 0.3,
         "output": 0.8999999999999999,
@@ -11867,7 +11867,7 @@
       "discount": 0,
       "context_length": 160000,
       "max_completion_tokens": 32768,
-      "uptime_30m": 98.44961240310077,
+      "uptime_30m": 99.87244897959184,
       "pricing": {
         "input": 0.07,
         "output": 0.27,
@@ -11886,7 +11886,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.41520467836257,
+      "uptime_30m": 93.45955249569707,
       "pricing": {
         "input": 0.07,
         "output": 0.28,
@@ -11961,7 +11961,7 @@
       "discount": 0.55,
       "context_length": 128000,
       "max_completion_tokens": 32000,
-      "uptime_30m": 99.95025494341499,
+      "uptime_30m": 99.7799174690509,
       "pricing": {
         "input": 0.04815,
         "output": 0.19305,
@@ -11979,7 +11979,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 7.52212389380531,
+      "uptime_30m": 38.6144964720975,
       "pricing": {
         "input": 0.09,
         "output": 0.3,
@@ -11998,7 +11998,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": null,
-      "uptime_30m": 55.64102564102564,
+      "uptime_30m": 82.22222222222221,
       "pricing": {
         "input": 0.09999999999999999,
         "output": 0.3,
@@ -12017,7 +12017,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.73795312272529,
+      "uptime_30m": 83.54460093896714,
       "pricing": {
         "input": 0.09999999999999999,
         "output": 0.3,
@@ -12036,7 +12036,7 @@
       "discount": 0.35,
       "context_length": 131072,
       "max_completion_tokens": 32768,
-      "uptime_30m": 99.87600743955363,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.13,
         "output": 0.52,
@@ -12073,7 +12073,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 98304,
-      "uptime_30m": 99.01442307692308,
+      "uptime_30m": 99.07550077041603,
       "pricing": {
         "input": 0.13,
         "output": 0.85,
@@ -12111,7 +12111,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 98304,
-      "uptime_30m": 97.02806824435883,
+      "uptime_30m": 96.5137614678899,
       "pricing": {
         "input": 0.19999999999999998,
         "output": 1.1,
@@ -12130,7 +12130,7 @@
       "discount": 0.35,
       "context_length": 131072,
       "max_completion_tokens": null,
-      "uptime_30m": 100,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.14950000000000002,
         "output": 1.495,
@@ -12167,7 +12167,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": null,
+      "uptime_30m": 7.851239669421488,
       "pricing": {
         "input": 0.22,
         "output": 1.7999999999999998,
@@ -12186,7 +12186,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": 99.99266969652544,
+      "uptime_30m": 99.95285242809994,
       "pricing": {
         "input": 0.3,
         "output": 1,
@@ -12205,7 +12205,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": 65536,
-      "uptime_30m": null,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.35,
         "output": 1.5,
@@ -12224,7 +12224,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 65536,
-      "uptime_30m": null,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.38,
         "output": 1.55,
@@ -12299,7 +12299,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.78598333523571,
+      "uptime_30m": 99.7686906237092,
       "pricing": {
         "input": 0.09,
         "output": 0.09999999999999999,
@@ -12318,7 +12318,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 16384,
-      "uptime_30m": 98.95026801667659,
+      "uptime_30m": 97.75077559462254,
       "pricing": {
         "input": 0.09,
         "output": 0.58,
@@ -12337,7 +12337,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 100,
+      "uptime_30m": 99.75558659217877,
       "pricing": {
         "input": 0.14,
         "output": 0.7999999999999999,
@@ -12374,7 +12374,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.74358974358975,
+      "uptime_30m": 99.9211356466877,
       "pricing": {
         "input": 0.15,
         "output": 0.75,
@@ -12393,7 +12393,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": null,
-      "uptime_30m": 95.22292993630573,
+      "uptime_30m": 88.996138996139,
       "pricing": {
         "input": 0.19999999999999998,
         "output": 0.6,
@@ -12412,7 +12412,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 99.830220713073,
+      "uptime_30m": 99.92019154030328,
       "pricing": {
         "input": 0.19999999999999998,
         "output": 0.7999999999999999,
@@ -12430,7 +12430,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 97.80587579025661,
+      "uptime_30m": 99.27536231884058,
       "pricing": {
         "input": 0.19999999999999998,
         "output": 0.88,
@@ -12599,7 +12599,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.66054313099042,
+      "uptime_30m": 99.52727272727273,
       "pricing": {
         "input": 0.075,
         "output": 0.19999999999999998,
@@ -12618,7 +12618,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 32768,
-      "uptime_30m": 99.2353792105807,
+      "uptime_30m": 99.03647625602203,
       "pricing": {
         "input": 0.09,
         "output": 0.3,
@@ -12637,7 +12637,7 @@
       "discount": 0,
       "context_length": 256000,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.84139571768438,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.09375,
         "output": 0.25,
@@ -12656,7 +12656,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": null,
-      "uptime_30m": 99.99122883957547,
+      "uptime_30m": 99.97946190182789,
       "pricing": {
         "input": 0.09999999999999999,
         "output": 0.3,
@@ -12711,7 +12711,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 65535,
-      "uptime_30m": 99.71472585154334,
+      "uptime_30m": 99.2467043314501,
       "pricing": {
         "input": 0.3,
         "output": 2.5,
@@ -12730,7 +12730,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 65536,
-      "uptime_30m": 95.99170697995854,
+      "uptime_30m": 97.91936738397719,
       "pricing": {
         "input": 1.25,
         "output": 10,
@@ -12767,7 +12767,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 163840,
-      "uptime_30m": 97.70408163265306,
+      "uptime_30m": 99.8185117967332,
       "pricing": {
         "input": 0.5,
         "output": 2.1799999999999997,
@@ -12786,7 +12786,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 32000,
-      "uptime_30m": 99.54954954954955,
+      "uptime_30m": 85.59782608695652,
       "pricing": {
         "input": 0.5710000000000001,
         "output": 2.2859999999999996,
@@ -12992,7 +12992,7 @@
       "discount": 0,
       "context_length": 32768,
       "max_completion_tokens": 32768,
-      "uptime_30m": 100,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.14,
         "output": 0.55,
@@ -13029,7 +13029,7 @@
       "discount": 0,
       "context_length": 40960,
       "max_completion_tokens": 40960,
-      "uptime_30m": 100,
+      "uptime_30m": 76.80945347119645,
       "pricing": {
         "input": 0.09999999999999999,
         "output": 0.24,
@@ -13066,7 +13066,7 @@
       "discount": 0,
       "context_length": 40960,
       "max_completion_tokens": null,
-      "uptime_30m": 93.8689740420272,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.09999999999999999,
         "output": 0.3,
@@ -13085,7 +13085,7 @@
       "discount": 0.35,
       "context_length": 131072,
       "max_completion_tokens": 8192,
-      "uptime_30m": 100,
+      "uptime_30m": 99.94033412887828,
       "pricing": {
         "input": 0.10400000000000001,
         "output": 0.41600000000000004,
@@ -13103,7 +13103,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 89.41684665226782,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.14,
         "output": 0.5700000000000001,
@@ -13122,7 +13122,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 40960,
-      "uptime_30m": 98.15303430079155,
+      "uptime_30m": 99.81429897864437,
       "pricing": {
         "input": 0.29,
         "output": 0.59,
@@ -13177,7 +13177,7 @@
       "discount": 0,
       "context_length": 200000,
       "max_completion_tokens": 100000,
-      "uptime_30m": 100,
+      "uptime_30m": null,
       "pricing": {
         "input": 2,
         "output": 8,
@@ -13232,7 +13232,7 @@
       "discount": 0,
       "context_length": 1047576,
       "max_completion_tokens": 32768,
-      "uptime_30m": 99.03998055656822,
+      "uptime_30m": 99.87594827997519,
       "pricing": {
         "input": 2,
         "output": 8,
@@ -13250,7 +13250,7 @@
       "discount": 0,
       "context_length": 1047576,
       "max_completion_tokens": 32768,
-      "uptime_30m": 99.6970805887615,
+      "uptime_30m": 99.35847840103159,
       "pricing": {
         "input": 0.39999999999999997,
         "output": 1.5999999999999999,
@@ -13287,7 +13287,7 @@
       "discount": 0,
       "context_length": 1047576,
       "max_completion_tokens": 32768,
-      "uptime_30m": 97.96020210841495,
+      "uptime_30m": 99.09220496661415,
       "pricing": {
         "input": 0.09999999999999999,
         "output": 0.39999999999999997,
@@ -13324,7 +13324,7 @@
       "discount": 0,
       "context_length": 1048576,
       "max_completion_tokens": 16384,
-      "uptime_30m": 100,
+      "uptime_30m": 99.9949756318143,
       "pricing": {
         "input": 0.15,
         "output": 0.6,
@@ -13400,7 +13400,7 @@
       "discount": 0,
       "context_length": 524288,
       "max_completion_tokens": 8192,
-      "uptime_30m": 99.76303317535546,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.35,
         "output": 1.15,
@@ -13438,7 +13438,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 8192,
-      "uptime_30m": 99.07271839921913,
+      "uptime_30m": 99.81691688026363,
       "pricing": {
         "input": 0.11,
         "output": 0.33999999999999997,
@@ -13476,7 +13476,7 @@
       "discount": 0,
       "context_length": 1310720,
       "max_completion_tokens": 8192,
-      "uptime_30m": 99.84375,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.25,
         "output": 0.7,
@@ -13495,7 +13495,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.55631664980152,
+      "uptime_30m": 99.30429021036939,
       "pricing": {
         "input": 0.24,
         "output": 0.8999999999999999,
@@ -13514,7 +13514,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 163840,
-      "uptime_30m": 89.12040990606319,
+      "uptime_30m": 95.29683885890516,
       "pricing": {
         "input": 0.25,
         "output": 1,
@@ -13533,7 +13533,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 65536,
-      "uptime_30m": 99.81644640234948,
+      "uptime_30m": 99.73753280839895,
       "pricing": {
         "input": 0.27,
         "output": 1.12,
@@ -13552,7 +13552,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": null,
-      "uptime_30m": 99.80270574971814,
+      "uptime_30m": 99.68630184733357,
       "pricing": {
         "input": 0.29,
         "output": 1.1400000000000001,
@@ -13642,7 +13642,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 16384,
-      "uptime_30m": 100,
+      "uptime_30m": null,
       "pricing": {
         "input": 2.5,
         "output": 10,
@@ -13679,7 +13679,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 100,
+      "uptime_30m": 99.53437839515753,
       "pricing": {
         "input": 0.08,
         "output": 0.44999999999999996,
@@ -13698,7 +13698,7 @@
       "discount": 0,
       "context_length": 110000,
       "max_completion_tokens": null,
-      "uptime_30m": null,
+      "uptime_30m": 90.15814926153443,
       "pricing": {
         "input": 0.09999999999999999,
         "output": 0.3,
@@ -13717,7 +13717,7 @@
       "discount": 0,
       "context_length": 98304,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.97321548145172,
+      "uptime_30m": 94.28307123034227,
       "pricing": {
         "input": 0.119,
         "output": 0.19999999999999998,
@@ -13736,7 +13736,7 @@
       "discount": 0,
       "context_length": 262144,
       "max_completion_tokens": 262144,
-      "uptime_30m": 93.59550561797752,
+      "uptime_30m": 81.74418604651163,
       "pricing": {
         "input": 0.15,
         "output": 0.45999999999999996,
@@ -13755,7 +13755,7 @@
       "discount": 0,
       "context_length": 32768,
       "max_completion_tokens": 32768,
-      "uptime_30m": null,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.55,
         "output": 0.7999999999999999,
@@ -13958,7 +13958,7 @@
       "discount": 0,
       "context_length": 127072,
       "max_completion_tokens": null,
-      "uptime_30m": 99.97797356828194,
+      "uptime_30m": 99.97723132969034,
       "pricing": {
         "input": 1,
         "output": 1,
@@ -13996,7 +13996,7 @@
       "discount": 0,
       "context_length": 64000,
       "max_completion_tokens": 16000,
-      "uptime_30m": 98.58989424206815,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.7,
         "output": 2.5,
@@ -14015,7 +14015,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 4096,
-      "uptime_30m": 91.48936170212765,
+      "uptime_30m": 97.77777777777777,
       "pricing": {
         "input": 1.4849999999999999,
         "output": 5.9399999999999995,
@@ -14071,7 +14071,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 16000,
-      "uptime_30m": 99.92077743741417,
+      "uptime_30m": 99.90964762574038,
       "pricing": {
         "input": 0.20020000000000002,
         "output": 0.8000999999999999,
@@ -14089,7 +14089,7 @@
       "discount": 0,
       "context_length": 163840,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.8332602018429,
+      "uptime_30m": 99.90250560592766,
       "pricing": {
         "input": 0.32,
         "output": 0.8899999999999999,
@@ -14127,7 +14127,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.68304278922345,
+      "uptime_30m": 98.1638418079096,
       "pricing": {
         "input": 0.65,
         "output": 0.75,
@@ -14182,7 +14182,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 16384,
-      "uptime_30m": 98.25898953117887,
+      "uptime_30m": 94.89631663668213,
       "pricing": {
         "input": 0.09999999999999999,
         "output": 0.32,
@@ -14201,7 +14201,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": null,
-      "uptime_30m": 74.42143727161998,
+      "uptime_30m": 89.68501702610669,
       "pricing": {
         "input": 0.13,
         "output": 0.39999999999999997,
@@ -14220,7 +14220,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.07192575406032,
+      "uptime_30m": 97.59991651883544,
       "pricing": {
         "input": 0.13,
         "output": 0.39999999999999997,
@@ -14239,7 +14239,7 @@
       "discount": 0,
       "context_length": 6000,
       "max_completion_tokens": 120000,
-      "uptime_30m": 97.5661827497865,
+      "uptime_30m": 96.35330767821148,
       "pricing": {
         "input": 0.135,
         "output": 0.39999999999999997,
@@ -14258,7 +14258,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 16384,
-      "uptime_30m": 98.1,
+      "uptime_30m": 97.52042007001167,
       "pricing": {
         "input": 0.22,
         "output": 0.5,
@@ -14277,7 +14277,7 @@
       "discount": 0,
       "context_length": 24000,
       "max_completion_tokens": 24000,
-      "uptime_30m": 98.94366197183099,
+      "uptime_30m": 50.931677018633536,
       "pricing": {
         "input": 0.293,
         "output": 2.2529999999999997,
@@ -14295,7 +14295,7 @@
       "discount": 0.25,
       "context_length": 16000,
       "max_completion_tokens": 3072,
-      "uptime_30m": 98.54368932038835,
+      "uptime_30m": 98.79759519038076,
       "pricing": {
         "input": 0.44999999999999996,
         "output": 0.8999999999999999,
@@ -14314,7 +14314,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 32768,
-      "uptime_30m": 98.07073954983923,
+      "uptime_30m": 99.73880597014926,
       "pricing": {
         "input": 0.59,
         "output": 0.7899999999999999,
@@ -14333,7 +14333,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 128000,
-      "uptime_30m": 99.86431478968792,
+      "uptime_30m": 99.87224528904504,
       "pricing": {
         "input": 0.71,
         "output": 0.71,
@@ -14352,7 +14352,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": null,
-      "uptime_30m": 94.37086092715232,
+      "uptime_30m": 95.22388059701493,
       "pricing": {
         "input": 0.72,
         "output": 0.72,
@@ -14371,7 +14371,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 2048,
-      "uptime_30m": null,
+      "uptime_30m": 99.3975903614458,
       "pricing": {
         "input": 1.04,
         "output": 1.04,
@@ -14390,7 +14390,7 @@
       "discount": 0,
       "context_length": 300000,
       "max_completion_tokens": 5120,
-      "uptime_30m": 65.24417069951606,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.06,
         "output": 0.24,
@@ -14409,7 +14409,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 5120,
-      "uptime_30m": null,
+      "uptime_30m": 76.57348653747214,
       "pricing": {
         "input": 0.035,
         "output": 0.14,
@@ -14428,7 +14428,7 @@
       "discount": 0,
       "context_length": 300000,
       "max_completion_tokens": 5120,
-      "uptime_30m": null,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.7999999999999999,
         "output": 3.1999999999999997,
@@ -14539,7 +14539,7 @@
       "discount": 0,
       "context_length": 32768,
       "max_completion_tokens": 32768,
-      "uptime_30m": 100,
+      "uptime_30m": 99.9554367201426,
       "pricing": {
         "input": 0.04,
         "output": 0.09999999999999999,
@@ -14558,7 +14558,7 @@
       "discount": 0,
       "context_length": 32768,
       "max_completion_tokens": 2048,
-      "uptime_30m": 99.98382923673998,
+      "uptime_30m": 99.9028182701652,
       "pricing": {
         "input": 0.3,
         "output": 0.3,
@@ -14613,7 +14613,7 @@
       "discount": 0,
       "context_length": 32768,
       "max_completion_tokens": null,
-      "uptime_30m": 100,
+      "uptime_30m": 99.6742671009772,
       "pricing": {
         "input": 0.25,
         "output": 0.5,
@@ -14650,7 +14650,7 @@
       "discount": 0,
       "context_length": 60000,
       "max_completion_tokens": 60000,
-      "uptime_30m": null,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.027,
         "output": 0.201,
@@ -14668,7 +14668,7 @@
       "discount": 0,
       "context_length": 32768,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.69583528310716,
+      "uptime_30m": 99.92664588300019,
       "pricing": {
         "input": 0.36,
         "output": 0.39999999999999997,
@@ -14706,7 +14706,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 4000,
-      "uptime_30m": 96.92307692307692,
+      "uptime_30m": 99.88165680473374,
       "pricing": {
         "input": 0.15,
         "output": 0.6,
@@ -14742,7 +14742,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 16384,
-      "uptime_30m": 98.09523809523809,
+      "uptime_30m": null,
       "pricing": {
         "input": 0.85,
         "output": 0.85,
@@ -14818,7 +14818,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 16384,
-      "uptime_30m": 98.96507115135834,
+      "uptime_30m": 100,
       "pricing": {
         "input": 2.5,
         "output": 10,
@@ -14837,7 +14837,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.99922013304531,
+      "uptime_30m": 99.86187187425577,
       "pricing": {
         "input": 0.02,
         "output": 0.03,
@@ -14856,7 +14856,7 @@
       "discount": 0,
       "context_length": 16384,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.87532060416073,
+      "uptime_30m": 99.91099401879806,
       "pricing": {
         "input": 0.02,
         "output": 0.049999999999999996,
@@ -14875,7 +14875,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 131072,
-      "uptime_30m": 98.46530583890053,
+      "uptime_30m": 99.69459922846121,
       "pricing": {
         "input": 0.049999999999999996,
         "output": 0.08,
@@ -14894,7 +14894,7 @@
       "discount": 0,
       "context_length": 32000,
       "max_completion_tokens": 32000,
-      "uptime_30m": 99.91850040749797,
+      "uptime_30m": 99.88372093023256,
       "pricing": {
         "input": 0.15200000000000002,
         "output": 0.28700000000000003,
@@ -14931,7 +14931,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.88685954420559,
+      "uptime_30m": 99.98249606161387,
       "pricing": {
         "input": 0.39999999999999997,
         "output": 0.39999999999999997,
@@ -14988,7 +14988,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": null,
-      "uptime_30m": 87.8829633776132,
+      "uptime_30m": 91.64096564926088,
       "pricing": {
         "input": 0.02,
         "output": 0.03,
@@ -15007,7 +15007,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.72499525434289,
+      "uptime_30m": 99.73991788536462,
       "pricing": {
         "input": 0.02,
         "output": 0.04,
@@ -15026,7 +15026,7 @@
       "discount": 0,
       "context_length": 60288,
       "max_completion_tokens": 16000,
-      "uptime_30m": 87.02757916241062,
+      "uptime_30m": 69.61690885072656,
       "pricing": {
         "input": 0.04,
         "output": 0.16999999999999998,
@@ -15045,7 +15045,7 @@
       "discount": 0,
       "context_length": 131072,
       "max_completion_tokens": null,
-      "uptime_30m": 99.89717978848414,
+      "uptime_30m": 99.25964314799734,
       "pricing": {
         "input": 0.15,
         "output": 0.15,
@@ -15082,7 +15082,7 @@
       "discount": 0,
       "context_length": 128000,
       "max_completion_tokens": 16384,
-      "uptime_30m": 99.75528156029795,
+      "uptime_30m": 99.8241745431938,
       "pricing": {
         "input": 0.15,
         "output": 0.6,
@@ -15119,7 +15119,7 @@
       "discount": 0,
       "context_length": 8192,
       "max_completion_tokens": null,
-      "uptime_30m": 99.53161592505855,
+      "uptime_30m": 99.66386554621849,
       "pricing": {
         "input": 0.14,
         "output": 0.14,
@@ -15138,7 +15138,7 @@
       "discount": 0,
       "context_length": 65536,
       "max_completion_tokens": null,
-      "uptime_30m": 100,
+      "uptime_30m": null,
       "pricing": {
         "input": 2,
         "output": 6,
@@ -15323,7 +15323,7 @@
       "discount": 0,
       "context_length": 6144,
       "max_completion_tokens": 4096,
-      "uptime_30m": 99.34640522875817,
+      "uptime_30m": 95.23809523809523,
       "pricing": {
         "input": 0.44999999999999996,
         "output": 0.65,
@@ -15342,7 +15342,7 @@
       "discount": 0,
       "context_length": 6144,
       "max_completion_tokens": 2048,
-      "uptime_30m": null,
+      "uptime_30m": 100,
       "pricing": {
         "input": 0.5,
         "output": 0.75,
@@ -15361,7 +15361,7 @@
       "discount": 0,
       "context_length": 4096,
       "max_completion_tokens": 4096,
-      "uptime_30m": 100,
+      "uptime_30m": 99.92223950233281,
       "pricing": {
         "input": 0.06,
         "output": 0.06,
