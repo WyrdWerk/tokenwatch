@@ -12,6 +12,8 @@ const state = {
   sortBy: 'cost',
   sortDir: 'asc',
   computeBy: 'tokens',
+  compareSelection: [], // row objects ({ model, pricing, … }), not bare models
+  currentRows: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -34,6 +36,13 @@ const els = {
   countLabel: $('countLabel'),
   budgetLabel: $('budgetLabel'),
   costColumnHeader: $('costColumnHeader'),
+  compareTray: $('compareTray'),
+  compareCount: $('compareCount'),
+  compareBtn: $('compareBtn'),
+  compareClear: $('compareClear'),
+  compareModal: $('compareModal'),
+  compareClose: $('compareClose'),
+  compareBody: $('compareBody'),
 };
 
 const DEFAULTS = {
@@ -223,6 +232,36 @@ function sortRows(rows) {
   });
 }
 
+function rowCompareKey(r) {
+  // Key the pricing row — same model can have multiple variants/units
+  return `${r.model.id}\0${r.model.provider || ''}\0${r.variant || ''}\0${r.rawUnit || ''}`;
+}
+
+function syncCompareSelectionFromRows(rows) {
+  if (state.compareSelection.length === 0) return;
+  state.compareSelection = state.compareSelection.map((sel) => {
+    const key = rowCompareKey(sel);
+    return rows.find((r) => rowCompareKey(r) === key) || sel;
+  });
+}
+
+function renderModelRow(r, rank, rowIdx, isBest, budgetMode) {
+  const variantSuffix = r.variant ? ' @' + r.variant.toUpperCase() : '';
+  const unitLabel = r.unit + variantSuffix;
+  const costLabel = esc(els.costColumnHeader.textContent);
+  const costCell = budgetMode ? fmtAffordability(r.cost) : fmtCost(r.cost);
+  const isSelected = state.compareSelection.some((x) => rowCompareKey(x) === rowCompareKey(r));
+  const checkbox = `<input type="checkbox" class="compare-check" data-idx="${rowIdx}" ${isSelected ? 'checked' : ''}${state.compareSelection.length >= 4 && !isSelected ? ' disabled' : ''}>`;
+  return '<tr>' +
+    '<td class="rank" data-label="#">' + checkbox + ' ' + rank + (isBest ? ' \u{1F3C6}' : '') + '</td>' +
+    '<td data-label="Org"><span class="org-badge">' + esc(orgDisplay(r.model.org)) + '</span></td>' +
+    '<td data-label="Model">' + esc(r.model.name || r.model.id) + '</td>' +
+    '<td data-label="Unit">' + esc(unitLabel) + '</td>' +
+    '<td class="num" data-label="$/Unit">' + fmtPrice(r.costPerUnit) + '</td>' +
+    '<td class="num cost" data-label="' + costLabel + '">' + costCell + '</td>' +
+    '</tr>';
+}
+
 function globalBestValue(rows) {
   if (state.sortBy !== 'cost') return null;
   if (state.computeBy === 'budget') {
@@ -280,6 +319,9 @@ function computeAndRender() {
   updateLabelsAndHeaders();
   els.mobileSort.value = `${state.sortBy}:${state.sortDir}`;
 
+  state.currentRows = rows;
+  syncCompareSelectionFromRows(rows);
+
   if (rows.length === 0) {
     els.resultsBody.innerHTML = '<tr><td colspan="6" class="empty">No models match your criteria.</td></tr>';
     updateHash();
@@ -287,21 +329,9 @@ function computeAndRender() {
   }
 
   const best = globalBestValue(rows);
-  const costLabel = esc(els.costColumnHeader.textContent);
-  els.resultsBody.innerHTML = rows.map((r, i) => {
-    const isBest = best !== null && r.cost != null && r.cost === best;
-    const variantSuffix = r.variant ? ' @' + r.variant.toUpperCase() : '';
-    const unitLabel = r.unit + variantSuffix;
-    const costCell = budgetMode ? fmtAffordability(r.cost) : fmtCost(r.cost);
-    return '<tr>' +
-      '<td class="rank" data-label="#">' + (i + 1) + (isBest ? ' \u{1F3C6}' : '') + '</td>' +
-      '<td data-label="Org"><span class="org-badge">' + esc(orgDisplay(r.model.org)) + '</span></td>' +
-      '<td data-label="Model">' + esc(r.model.name || r.model.id) + '</td>' +
-      '<td data-label="Unit">' + esc(unitLabel) + '</td>' +
-      '<td class="num" data-label="$/Unit">' + fmtPrice(r.costPerUnit) + '</td>' +
-      '<td class="num cost" data-label="' + costLabel + '">' + costCell + '</td>' +
-      '</tr>';
-  }).join('');
+  els.resultsBody.innerHTML = rows.map((r, i) =>
+    renderModelRow(r, i + 1, i, best !== null && r.cost != null && r.cost === best, budgetMode)
+  ).join('');
 
   updateHash();
 }
@@ -370,6 +400,101 @@ function deserializeState(hash) {
   }
 }
 
+// Comparison UI (compare-tray, compare-modal)
+function toggleCompare(row) {
+  const key = rowCompareKey(row);
+  const idx = state.compareSelection.findIndex((r) => rowCompareKey(r) === key);
+  if (idx >= 0) {
+    state.compareSelection.splice(idx, 1);
+  } else {
+    if (state.compareSelection.length >= 4) return;
+    state.compareSelection.push(row);
+  }
+  updateCompareTray();
+  computeAndRender();
+}
+
+function updateCompareTray() {
+  const n = state.compareSelection.length;
+  els.compareTray.style.display = n > 0 ? '' : 'none';
+  els.compareCount.textContent = `${n} selected`;
+  els.compareBtn.disabled = n < 2;
+}
+
+function showCompareModal() {
+  if (state.compareSelection.length < 2) return;
+  const budgetMode = state.computeBy === 'budget';
+  const budgetVal = budgetMode ? Math.max(0, parseFloat(els.budgetInput?.value) || 0) : 0;
+  const imageCountEl = els.imageCount || document.getElementById('imageCount');
+  const imageCount = Math.max(1, parseInt(imageCountEl?.value, 10) || state.imageCount || 100);
+  const selected = state.compareSelection;
+
+  const headlineGet = (r) => budgetMode
+    ? affordabilityFor(r.pricing, budgetVal)
+    : costForImage(r.pricing, imageCount);
+  const headlineFmt = (v) => budgetMode ? fmtAffordability(v) : fmtCost(v);
+
+  const metricRows = [
+    { label: 'Org', getValue: (r) => esc(orgDisplay(r.model.org)) },
+    { label: 'Provider', getValue: (r) => esc(r.model.provider) },
+    { label: 'Model', getValue: (r) => esc(r.model.name || r.model.id) },
+    { label: 'Unit', getValue: (r) => {
+      const variantSuffix = r.variant ? ' @' + r.variant.toUpperCase() : '';
+      return esc(r.unit + variantSuffix);
+    }},
+    { label: '$/Unit', getValue: (r) => fmtPrice(r.costPerUnit), getRaw: (r) => r.pricing.unit === 'token' ? r.pricing.cost_per_million : r.pricing.cost_per_unit, isCost: true },
+    { label: els.costColumnHeader?.textContent || 'Total Cost', getValue: (r) => headlineFmt(headlineGet(r)), getRaw: headlineGet, isCost: true, isBudget: budgetMode },
+  ];
+
+  const snapshot = budgetMode
+    ? `<strong>Budget $${budgetVal.toLocaleString()}</strong>`
+    : `<strong>${imageCount.toLocaleString()} images</strong>`;
+  const snapshotHtml = `<div class="compare-snapshot"><span class="snapshot-label">Basis:</span> ${snapshot}</div>`;
+
+  let html = snapshotHtml + '<table class="compare-table"><thead><tr><th>Metric</th>';
+  for (const r of selected) {
+    const name = r.model.name || r.model.id;
+    const variantSuffix = r.variant ? ' @' + r.variant.toUpperCase() : '';
+    html += `<th>${esc(name + variantSuffix)}</th>`;
+  }
+  html += '</tr></thead><tbody>';
+
+  for (const row of metricRows) {
+    html += `<tr><td class="compare-label">${row.label}</td>`;
+    if (row.isCost && row.getRaw) {
+      const values = selected.map((r) => row.getRaw(r));
+      const nonNull = values.filter((v) => v != null && (row.isBudget ? v === Infinity || isFinite(v) : isFinite(v)));
+      const best = nonNull.length > 0
+        ? (row.isBudget ? Math.max(...nonNull) : Math.min(...nonNull))
+        : null;
+      for (const r of selected) {
+        const v = row.getRaw(r);
+        const isBest = best !== null && v !== null && v !== undefined && v === best;
+        html += `<td class="num${isBest ? ' compare-cheapest' : ''}">${row.getValue(r)}</td>`;
+      }
+    } else {
+      for (const r of selected) {
+        html += `<td>${row.getValue(r)}</td>`;
+      }
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+
+  els.compareBody.innerHTML = html;
+  els.compareModal.style.display = '';
+}
+
+function closeCompareModal() {
+  els.compareModal.style.display = 'none';
+}
+
+function clearCompare() {
+  state.compareSelection = [];
+  updateCompareTray();
+  computeAndRender();
+}
+
 // ── Event listeners ───────────────────────────────────────────────────────────
 function attachListeners() {
   els.providerSearch.addEventListener('input', () => computeAndRender());
@@ -394,6 +519,19 @@ function attachListeners() {
     state.sortDir = dir;
     computeAndRender();
   });
+  els.resultsBody.addEventListener('change', (e) => {
+    if (!e.target.classList.contains('compare-check')) return;
+    const idx = parseInt(e.target.dataset.idx, 10);
+    const row = state.currentRows?.[idx];
+    if (row) toggleCompare(row);
+  });
+  els.compareBtn.addEventListener('click', showCompareModal);
+  els.compareClose.addEventListener('click', closeCompareModal);
+  els.compareClear.addEventListener('click', clearCompare);
+  els.compareModal.addEventListener('click', (e) => {
+    if (e.target === els.compareModal) closeCompareModal();
+  });
+
   window.addEventListener('hashchange', () => { deserializeState(location.hash.slice(1)); computeAndRender(); });
 }
 

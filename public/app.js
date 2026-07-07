@@ -49,6 +49,7 @@ const els = {
   compareClear: $('compareClear'),
   compareModal: $('compareModal'),
   compareClose: $('compareClose'),
+  compareBody: $('compareBody'),
   cacheWriteTokens: $('cacheWriteTokens'),
   amortizeN: $('amortizeN'),
   mobileSort: $('mobileSort'),
@@ -480,7 +481,24 @@ function showCompareModal() {
     { label: els.costColumnHeader?.textContent || 'Total Cost', getValue: m => headlineFmt(headlineGet(m)), getRaw: headlineGet, isCost: true, isBudget: budgetMode },
   ];
 
-  let html = '<table class="compare-table"><thead><tr><th>Metric</th>';
+  // Snapshot: what's being compared (so users don't revert to the page to check basis)
+  const monthly = state.costMode === 'monthly';
+  const mixStr = `Input ${tokens.inputPct}% · Cached ${tokens.cacheReadPct}% · Output ${tokens.outputPct}%`;
+  let snapshot;
+  if (budgetMode) {
+    const period = monthly ? 'monthly' : 'per session';
+    const budgetLabel = monthly ? `Monthly budget $${budgetVal.toLocaleString()}` : `Budget $${budgetVal.toLocaleString()}`;
+    snapshot = `<strong>${budgetLabel}</strong> (${period}) · mix: ${mixStr}`;
+  } else {
+    const totalM = (tokens.total / 1e6);
+    const totalLabel = monthly ? `Daily ${totalM.toLocaleString()}M tokens` : `${totalM.toLocaleString()}M tokens`;
+    const cw = tokens.cacheWrite > 0 ? ` · cache-write ${(tokens.cacheWrite/1e6).toLocaleString()}M ÷ ${tokens.amortizeN}` : '';
+    const period = monthly ? ' (×30 monthly)' : '';
+    snapshot = `<strong>${totalLabel}</strong>${period} · mix: ${mixStr}${cw}`;
+  }
+  const snapshotHtml = `<div class="compare-snapshot"><span class="snapshot-label">Basis:</span> ${snapshot}</div>`;
+
+  let html = snapshotHtml + '<table class="compare-table"><thead><tr><th>Metric</th>';
   for (const m of models) {
     const name = m.name && m.name !== m.id ? m.name : m.id;
     html += `<th>${esc(name)}</th>`;

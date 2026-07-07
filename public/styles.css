@@ -512,6 +512,24 @@ footer {
   font-size: 1.2rem;
   cursor: pointer;
 }
+.compare-snapshot {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.4;
+}
+.compare-snapshot .snapshot-label {
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.75rem;
+  margin-right: 0.4rem;
+}
 .compare-table {
   border-collapse: collapse;
   width: 100%;

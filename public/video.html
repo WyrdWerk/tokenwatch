@@ -109,6 +109,11 @@
         </table>
       </div>
     </section>
+    <div class="compare-tray" id="compareTray" style="display:none;">
+      <span id="compareCount" class="compare-tray-info">0 selected</span>
+      <button id="compareBtn" type="button">Compare</button>
+      <button id="compareClear" type="button">Clear</button>
+    </div>
   </main>
 
   <footer>
@@ -120,6 +125,16 @@
       <a href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">Source</a>
     </p>
   </footer>
+
+  <div class="compare-modal" id="compareModal" style="display:none;">
+    <div class="compare-modal-content">
+      <div class="compare-modal-header">
+        <h2>Comparison</h2>
+        <button id="compareClose" type="button">✕</button>
+      </div>
+      <div id="compareBody"></div>
+    </div>
+  </div>
 
   <script src="video-app.js?v=20260707c"></script>
 </body>
