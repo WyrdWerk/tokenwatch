@@ -51,6 +51,7 @@ const els = {
   compareBody: $('compareBody'),
   cacheWriteTokens: $('cacheWriteTokens'),
   amortizeN: $('amortizeN'),
+  mobileSort: $('mobileSort'),
 };
 
 
@@ -332,6 +333,14 @@ function attachListeners() {
     });
   });
 
+  // Mobile sort dropdown
+  els.mobileSort.addEventListener('change', () => {
+    const [col, dir] = els.mobileSort.value.split(':');
+    state.sortBy = col;
+    state.sortDir = dir;
+    computeAndRender();
+  });
+
   // Comparison checkboxes (event delegation on tbody)
   els.resultsBody.addEventListener('change', (e) => {
     if (!e.target.classList.contains('compare-check')) return;
@@ -560,6 +569,9 @@ function computeAndRender() {
       th.classList.add(state.sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
     }
   });
+
+  // Sync mobile sort dropdown
+  els.mobileSort.value = `${state.sortBy}:${state.sortDir}`;
 
   state.currentRows = rows;
   renderTable(rows, tokens);

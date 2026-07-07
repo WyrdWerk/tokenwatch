@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260706d" />
+  <link rel="stylesheet" href="styles.css?v=20260707b" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>" />
 </head>
 <body>
@@ -20,17 +20,29 @@
       <a class="repo-link" href="https://www.linkedin.com/in/yash-jain-65295511b/" target="_blank" rel="noopener">LinkedIn</a>
       <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle dark/light mode"></button>
     </div>
+    <p class="subtitle">Compare video generation API pricing — per-second with resolution and audio options</p>
     <nav class="tab-nav">
       <a href="/" class="tab-link">Text</a>
       <a href="/image" class="tab-link">Image</a>
       <a href="/video" class="tab-link active">Video</a>
     </nav>
-    <p class="subtitle">Compare video generation API pricing — per-second with resolution and audio options</p>
   </header>
 
   <main>
     <section class="controls" id="controls">
       <span class="section-label">VIDEO GENERATION</span>
+      <div class="control-group">
+        <label for="providerSearch">Search by provider</label>
+        <input type="text" id="providerSearch" placeholder="Type a provider name…" list="orgList" autocomplete="off" />
+        <datalist id="orgList"></datalist>
+      </div>
+
+      <div class="control-group">
+        <label for="modelSearch">Search by model</label>
+        <input type="text" id="modelSearch" placeholder="Type a model name…" list="modelList" autocomplete="off" />
+        <datalist id="modelList"></datalist>
+      </div>
+
       <div class="control-group">
         <label for="videoSeconds">Video duration (seconds)</label>
         <input type="number" id="videoSeconds" value="60" min="1" step="1" />
@@ -54,6 +66,20 @@
 
     <section class="results">
       <h2 id="resultsTitle">All video generation models</h2>
+      <select class="mobile-sort" id="mobileSort" aria-label="Sort results">
+        <option value="cost:asc">Total Cost ↑</option>
+        <option value="cost:desc">Total Cost ↓</option>
+        <option value="org:asc">Org ↑</option>
+        <option value="org:desc">Org ↓</option>
+        <option value="model:asc">Model ↑</option>
+        <option value="model:desc">Model ↓</option>
+        <option value="resolution:asc">Resolution ↑</option>
+        <option value="resolution:desc">Resolution ↓</option>
+        <option value="audio:asc">Audio ↑</option>
+        <option value="audio:desc">Audio ↓</option>
+        <option value="cost_per_second:asc">$/Sec ↑</option>
+        <option value="cost_per_second:desc">$/Sec ↓</option>
+      </select>
       <div class="table-wrap">
         <table id="resultsTable">
           <thead>
@@ -85,6 +111,6 @@
     </p>
   </footer>
 
-  <script src="video-app.js?v=20260706d"></script>
+  <script src="video-app.js?v=20260707b"></script>
 </body>
 </html>

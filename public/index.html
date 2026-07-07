@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260706d" />
+  <link rel="stylesheet" href="styles.css?v=20260707b" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>" />
 </head>
 <body>
@@ -128,6 +128,26 @@
           <option value="provider">Provider</option>
         </select>
       </div>
+      <select class="mobile-sort" id="mobileSort" aria-label="Sort results">
+        <option value="cost:asc">Total Cost ↑</option>
+        <option value="cost:desc">Total Cost ↓</option>
+        <option value="org:asc">Org ↑</option>
+        <option value="org:desc">Org ↓</option>
+        <option value="provider:asc">Provider ↑</option>
+        <option value="provider:desc">Provider ↓</option>
+        <option value="model:asc">Model ↑</option>
+        <option value="model:desc">Model ↓</option>
+        <option value="input:asc">Input $/M ↑</option>
+        <option value="input:desc">Input $/M ↓</option>
+        <option value="output:asc">Output $/M ↑</option>
+        <option value="output:desc">Output $/M ↓</option>
+        <option value="cache_read:asc">Cache Read $/M ↑</option>
+        <option value="cache_read:desc">Cache Read $/M ↓</option>
+        <option value="cache_write:asc">Cache Write $/M ↑</option>
+        <option value="cache_write:desc">Cache Write $/M ↓</option>
+        <option value="context:asc">Context ↑</option>
+        <option value="context:desc">Context ↓</option>
+      </select>
       <div class="table-wrap">
         <table id="resultsTable">
           <thead>
@@ -179,6 +199,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20260706d"></script>
+  <script src="app.js?v=20260707b"></script>
 </body>
 </html>

@@ -3,6 +3,8 @@
 
 const state = {
   data: null,
+  providerSearch: '',
+  modelSearch: '',
   videoSeconds: 60,
   resolutionFilter: '',
   audioFilter: '',
@@ -12,11 +14,16 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 const els = {
+  providerSearch: $('providerSearch'),
+  modelSearch: $('modelSearch'),
+  orgList: $('orgList'),
+  modelList: $('modelList'),
   videoSeconds: $('videoSeconds'),
   resolutionFilter: $('resolutionFilter'),
   audioFilter: $('audioFilter'),
   resultsBody: $('resultsBody'),
   resultsTitle: $('resultsTitle'),
+  mobileSort: $('mobileSort'),
 };
 
 // ── Theme toggle ──────────────────────────────────────────────────────────────
@@ -71,8 +78,22 @@ function audioLabel(a) {
 // ── Data ──────────────────────────────────────────────────────────────────────
 function buildRows() {
   if (!state.data) return [];
+  const provSearch = state.providerSearch.toLowerCase();
+  const modSearch = state.modelSearch.toLowerCase();
+  const norm = (s) => s.toLowerCase().replace(/[\s-]+/g, ' ');
   const rows = [];
   for (const m of state.data.models) {
+    if (provSearch) {
+      const orgName = orgDisplay(m.org).toLowerCase();
+      if (!orgName.includes(provSearch) && !m.org.toLowerCase().includes(provSearch) &&
+          !(m.provider && m.provider.toLowerCase().includes(provSearch))) continue;
+    }
+    if (modSearch) {
+      const q = norm(modSearch);
+      const modDisplay = norm(m.name || m.id);
+      const rawId = norm(m.id.split('/').slice(-1)[0]);
+      if (!modDisplay.includes(q) && !rawId.includes(q)) continue;
+    }
     for (const p of m.pricing) {
       if (state.resolutionFilter && p.resolution !== state.resolutionFilter) continue;
       if (state.audioFilter !== '' && String(p.audio) !== state.audioFilter) continue;
@@ -106,6 +127,23 @@ function populateFilters() {
   // Audio filter already has static options in HTML, just show/hide
 }
 
+function populateDatalists() {
+  const orgCounts = {};
+  const modelNames = new Set();
+  for (const m of state.data.models) {
+    const name = orgDisplay(m.org);
+    orgCounts[name] = (orgCounts[name] || 0) + 1;
+    modelNames.add(m.name || m.id);
+  }
+  els.orgList.innerHTML = Object.keys(orgCounts)
+    .sort((a, b) => orgCounts[b] - orgCounts[a])
+    .map((name) => `<option value="${name}">${name} (${orgCounts[name]})</option>`)
+    .join('');
+  els.modelList.innerHTML = [...modelNames].sort()
+    .map((name) => `<option value="${name}">`)
+    .join('');
+}
+
 // ── Sorting ───────────────────────────────────────────────────────────────────
 function sortRows(rows) {
   const { sortBy, sortDir } = state;
@@ -132,6 +170,8 @@ function sortRows(rows) {
 // ── Rendering ─────────────────────────────────────────────────────────────────
 function computeAndRender() {
   if (!state.data) return;
+  state.providerSearch = els.providerSearch.value.trim();
+  state.modelSearch = els.modelSearch.value.trim();
   state.videoSeconds = Math.max(1, parseInt(els.videoSeconds.value, 10) || 60);
   state.resolutionFilter = els.resolutionFilter.value;
   state.audioFilter = els.audioFilter.value;
@@ -141,12 +181,14 @@ function computeAndRender() {
 
   // Update title
   const parts = [];
+  if (state.providerSearch) parts.push(`from '${state.providerSearch}'`);
+  if (state.modelSearch) parts.push(`matching '${state.modelSearch}'`);
   if (state.resolutionFilter) parts.push(state.resolutionFilter.toUpperCase());
   if (state.audioFilter === 'true') parts.push('with audio');
   if (state.audioFilter === 'false') parts.push('without audio');
   els.resultsTitle.textContent = parts.length > 0
-    ? `Video models (${parts.join(', ')}) — ${rows.length} results`
-    : `All video generation models — ${rows.length} results`;
+    ? `Video models (${parts.join(', ')}) \u2014 ${rows.length} results`
+    : `All video generation models \u2014 ${rows.length} results`;
 
   // Update sort indicators
   document.querySelectorAll('th.sortable').forEach(th => {
@@ -156,6 +198,8 @@ function computeAndRender() {
     }
   });
 
+  els.mobileSort.value = `${state.sortBy}:${state.sortDir}`;
+
   if (rows.length === 0) {
     els.resultsBody.innerHTML = '<tr><td colspan="7" class="empty">No models match your criteria.</td></tr>';
     return;
@@ -164,17 +208,14 @@ function computeAndRender() {
   const cheapest = rows.reduce((min, r) => (r.cost > 0 && r.cost < min) ? r.cost : min, Infinity);
   els.resultsBody.innerHTML = rows.map((r, i) => {
     const isCheapest = r.cost > 0 && r.cost === cheapest;
-    const dur = r.model.supported_durations.length > 0
-      ? r.model.supported_durations.map(d => d + 's').join(', ')
-      : '\u2014';
     return `<tr>
-      <td class="rank">${i + 1}${isCheapest ? ' \u{1F3C6}' : ''}</td>
-      <td><span class="org-badge">${esc(orgDisplay(r.model.org))}</span></td>
-      <td>${esc(r.model.name || r.model.id)}</td>
-      <td>${resLabel(r.resolution)}</td>
-      <td>${audioLabel(r.audio)}</td>
-      <td class="num">${fmtPrice(r.pricing.cost_per_second)}</td>
-      <td class="num cost">${fmtCost(r.cost)}</td>
+      <td class="rank" data-label="#">${i + 1}${isCheapest ? ' \u{1F3C6}' : ''}</td>
+      <td data-label="Org"><span class="org-badge">${esc(orgDisplay(r.model.org))}</span></td>
+      <td data-label="Model">${esc(r.model.name || r.model.id)}</td>
+      <td data-label="Resolution">${resLabel(r.resolution)}</td>
+      <td data-label="Audio">${audioLabel(r.audio)}</td>
+      <td class="num" data-label="$/Sec">${fmtPrice(r.pricing.cost_per_second)}</td>
+      <td class="num cost" data-label="Total Cost">${fmtCost(r.cost)}</td>
     </tr>`;
   }).join('');
 
@@ -184,6 +225,8 @@ function computeAndRender() {
 // ── URL hash state ────────────────────────────────────────────────────────────
 function updateHash() {
   const params = new URLSearchParams();
+  if (state.providerSearch) params.set('p', state.providerSearch);
+  if (state.modelSearch) params.set('m', state.modelSearch);
   if (state.videoSeconds !== 60) params.set('sec', state.videoSeconds);
   if (state.resolutionFilter) params.set('res', state.resolutionFilter);
   if (state.audioFilter !== '') params.set('audio', state.audioFilter);
@@ -194,6 +237,10 @@ function updateHash() {
 
 function deserializeState(hash) {
   const params = new URLSearchParams(hash);
+  const prov = params.get('p');
+  if (prov) { state.providerSearch = prov; els.providerSearch.value = prov; }
+  const mod = params.get('m');
+  if (mod) { state.modelSearch = mod; els.modelSearch.value = mod; }
   const sec = parseInt(params.get('sec'), 10);
   if (sec > 0) { state.videoSeconds = sec; els.videoSeconds.value = sec; }
   const res = params.get('res');
@@ -206,6 +253,8 @@ function deserializeState(hash) {
 
 // ── Event listeners ───────────────────────────────────────────────────────────
 function attachListeners() {
+  els.providerSearch.addEventListener('input', () => computeAndRender());
+  els.modelSearch.addEventListener('input', () => computeAndRender());
   els.videoSeconds.addEventListener('input', () => computeAndRender());
   els.resolutionFilter.addEventListener('change', () => computeAndRender());
   els.audioFilter.addEventListener('change', () => computeAndRender());
@@ -222,6 +271,12 @@ function attachListeners() {
       computeAndRender();
     });
   });
+  els.mobileSort.addEventListener('change', () => {
+    const [col, dir] = els.mobileSort.value.split(':');
+    state.sortBy = col;
+    state.sortDir = dir;
+    computeAndRender();
+  });
 
   window.addEventListener('hashchange', () => {
     deserializeState(location.hash.slice(1));
@@ -236,6 +291,7 @@ async function init() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     state.data = await res.json();
     populateFilters();
+    populateDatalists();
     deserializeState(location.hash.slice(1));
     els.resolutionFilter.value = state.resolutionFilter;
     els.audioFilter.value = state.audioFilter;

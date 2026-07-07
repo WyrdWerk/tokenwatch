@@ -174,7 +174,7 @@ h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }
 .control-group { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 160px; }
 .control-group label { font-size: 0.8rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
 
-select, input[type="text"] {
+select, input[type="text"], input[type="number"] {
   background: var(--surface-2);
   border: 1px solid var(--border);
   color: var(--text);
@@ -258,6 +258,7 @@ select:focus, input:focus { border-color: var(--accent); }
 }
 .token-field input[type="number"]:focus { border-color: var(--accent); }
 .token-field small { font-size: 0.75rem; color: var(--text-dim); }
+.hint { font-size: 0.75rem; color: var(--text-dim); }
 
 .presets { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 1rem; }
 .preset-label { font-size: 0.8rem; color: var(--text-dim); }
@@ -295,6 +296,22 @@ select:focus, input:focus { border-color: var(--accent); }
 
 .results-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; }
 .last-updated { font-size: 0.78rem; color: var(--text-dim); }
+.mobile-sort {
+  display: none;
+  width: 100%;
+  margin-bottom: 1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+.mobile-sort:focus { border-color: var(--accent); }
+
 
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
@@ -498,6 +515,9 @@ footer {
 @media (max-width: 640px) {
   .usage-grid { grid-template-columns: 1fr 1fr; }
   .total-field { grid-column: 1 / -1; }
+  .cache-write-grid { grid-template-columns: 1fr; }
+  .results h2 { word-wrap: break-word; overflow-wrap: break-word; }
+  .mobile-sort { display: block; }
 
   /* Mobile card layout */
   #resultsTable thead { display: none; }
@@ -530,8 +550,10 @@ footer {
   }
   #resultsTable td[data-label="Model"] { font-weight: 600; font-size: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 4px; }
   #resultsTable td[data-label="Org"], #resultsTable td[data-label="Provider"] { display: inline-block; width: auto; padding: 2px 6px; }
+  #resultsTable td[data-label="Unit"], #resultsTable td[data-label="Resolution"], #resultsTable td[data-label="Audio"] { display: inline-block; width: auto; padding: 2px 6px; font-size: 0.78rem; }
   #resultsTable td[data-label="#"] { display: none; }
-  #resultsTable td[data-label="Total Cost"] { font-size: 1.1rem; font-weight: 700; color: var(--accent); border-top: 1px solid var(--border); margin-top: 4px; padding-top: 8px; }
+  #resultsTable td[data-label="$/Unit"], #resultsTable td[data-label="$/Sec"], #resultsTable td[data-label="Total Cost"] { font-size: 1.1rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  #resultsTable td[data-label="Total Cost"] { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 8px; }
   #resultsTable tr.group-header { display: block; }
   #resultsTable tr.group-header td { display: block; width: 100%; border-bottom: 2px solid var(--border); }
   #resultsTable tr.group-header td::before { display: none; }

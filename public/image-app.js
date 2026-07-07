@@ -4,6 +4,8 @@
 
 const state = {
   data: null,
+  providerSearch: '',
+  modelSearch: '',
   imageCount: 100,
   variantFilter: '',
   flatOnly: false,
@@ -13,11 +15,16 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 const els = {
+  providerSearch: $('providerSearch'),
+  modelSearch: $('modelSearch'),
+  orgList: $('orgList'),
+  modelList: $('modelList'),
   imageCount: $('imageCount'),
   variantFilter: $('variantFilter'),
   flatOnly: $('flatOnly'),
   resultsBody: $('resultsBody'),
   resultsTitle: $('resultsTitle'),
+  mobileSort: $('mobileSort'),
 };
 
 // ── Theme toggle ──────────────────────────────────────────────────────────────
@@ -63,10 +70,27 @@ function fmtCost(c) {
 }
 
 // ── Data ──────────────────────────────────────────────────────────────────────
+function providerMatchesSearch(m, provSearch) {
+  const provName = orgDisplay(m.org).toLowerCase();
+  return provName.includes(provSearch) || m.org.toLowerCase().includes(provSearch) || m.provider.toLowerCase().includes(provSearch);
+}
+
+function modelMatchesSearch(m, modSearch) {
+  const norm = (s) => s.toLowerCase().replace(/[\s-]+/g, ' ');
+  const q = norm(modSearch);
+  const modDisplay = norm(m.name || m.id);
+  const rawId = norm(m.id.split('/').slice(-1)[0]);
+  return modDisplay.includes(q) || rawId.includes(q);
+}
+
 function buildRows() {
   if (!state.data) return [];
+  const provSearch = state.providerSearch.trim().toLowerCase();
+  const modSearch = state.modelSearch.trim().toLowerCase();
   const rows = [];
   for (const m of state.data.models) {
+    if (provSearch && !providerMatchesSearch(m, provSearch)) continue;
+    if (modSearch && !modelMatchesSearch(m, modSearch)) continue;
     for (const p of m.pricing) {
       if (state.variantFilter && p.variant !== state.variantFilter) continue;
       if (state.flatOnly && p.unit === 'token') continue;
@@ -86,6 +110,26 @@ function populateVariants() {
   }
   els.variantFilter.innerHTML = '<option value="">All variants</option>' +
     [...variants].sort().map(v => `<option value="${v}">${v.toUpperCase()}</option>`).join('');
+}
+
+function populateDatalists() {
+  const provCounts = {};
+  for (const m of state.data.models) {
+    const name = orgDisplay(m.org);
+    provCounts[name] = (provCounts[name] || 0) + 1;
+  }
+  els.orgList.innerHTML = Object.keys(provCounts)
+    .sort((a, b) => provCounts[b] - provCounts[a])
+    .map((name) => `<option value="${name}">${name} (${provCounts[name]})</option>`)
+    .join('');
+
+  const modelNames = new Set();
+  for (const m of state.data.models) {
+    modelNames.add(m.name || m.id);
+  }
+  els.modelList.innerHTML = [...modelNames].sort()
+    .map((name) => `<option value="${name}">`)
+    .join('');
 }
 
 // ── Sorting ───────────────────────────────────────────────────────────────────
@@ -115,6 +159,8 @@ function sortRows(rows) {
 // ── Rendering ─────────────────────────────────────────────────────────────────
 function computeAndRender() {
   if (!state.data) return;
+  state.providerSearch = els.providerSearch.value;
+  state.modelSearch = els.modelSearch.value;
   state.imageCount = Math.max(1, parseInt(els.imageCount.value, 10) || 100);
   state.variantFilter = els.variantFilter.value;
   state.flatOnly = els.flatOnly.checked;
@@ -123,6 +169,8 @@ function computeAndRender() {
   sortRows(rows);
 
   const parts = [];
+  if (state.providerSearch) parts.push(`from '${state.providerSearch}'`);
+  if (state.modelSearch) parts.push(`matching '${state.modelSearch}'`);
   if (state.flatOnly) parts.push('flat-priced only');
   if (state.variantFilter) parts.push(state.variantFilter.toUpperCase());
   els.resultsTitle.textContent = parts.length > 0
@@ -133,6 +181,8 @@ function computeAndRender() {
     th.classList.remove('sort-asc', 'sort-desc');
     if (th.dataset.sort === state.sortBy) th.classList.add(state.sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
   });
+
+  els.mobileSort.value = `${state.sortBy}:${state.sortDir}`;
 
   if (rows.length === 0) {
     els.resultsBody.innerHTML = '<tr><td colspan="6" class="empty">No models match your criteria.</td></tr>';
@@ -146,12 +196,12 @@ function computeAndRender() {
     const variantSuffix = r.variant ? ' @' + r.variant.toUpperCase() : '';
     const unitLabel = r.unit + variantSuffix;
     return '<tr>' +
-      '<td class="rank">' + (i + 1) + (isCheapest ? ' \u{1F3C6}' : '') + '</td>' +
-      '<td><span class="org-badge">' + esc(orgDisplay(r.model.org)) + '</span></td>' +
-      '<td>' + esc(r.model.name || r.model.id) + '</td>' +
-      '<td>' + esc(unitLabel) + '</td>' +
-      '<td class="num">' + fmtPrice(r.costPerUnit) + '</td>' +
-      '<td class="num cost">' + fmtCost(r.cost) + '</td>' +
+      '<td class="rank" data-label="#">' + (i + 1) + (isCheapest ? ' \u{1F3C6}' : '') + '</td>' +
+      '<td data-label="Org"><span class="org-badge">' + esc(orgDisplay(r.model.org)) + '</span></td>' +
+      '<td data-label="Model">' + esc(r.model.name || r.model.id) + '</td>' +
+      '<td data-label="Unit">' + esc(unitLabel) + '</td>' +
+      '<td class="num" data-label="$/Unit">' + fmtPrice(r.costPerUnit) + '</td>' +
+      '<td class="num cost" data-label="Total Cost">' + fmtCost(r.cost) + '</td>' +
       '</tr>';
   }).join('');
 
@@ -161,6 +211,10 @@ function computeAndRender() {
 // ── URL hash state ────────────────────────────────────────────────────────────
 function updateHash() {
   const params = new URLSearchParams();
+  const provider = state.providerSearch.trim();
+  const model = state.modelSearch.trim();
+  if (provider) params.set('p', provider);
+  if (model) params.set('m', model);
   if (state.imageCount !== 100) params.set('count', state.imageCount);
   if (state.variantFilter) params.set('variant', state.variantFilter);
   if (state.flatOnly) params.set('flat', '1');
@@ -171,6 +225,18 @@ function updateHash() {
 
 function deserializeState(hash) {
   const params = new URLSearchParams(hash);
+  state.providerSearch = '';
+  state.modelSearch = '';
+  els.providerSearch.value = '';
+  els.modelSearch.value = '';
+  if (params.has('p')) {
+    state.providerSearch = params.get('p');
+    els.providerSearch.value = state.providerSearch;
+  }
+  if (params.has('m')) {
+    state.modelSearch = params.get('m');
+    els.modelSearch.value = state.modelSearch;
+  }
   const count = parseInt(params.get('count'), 10);
   if (count > 0) { state.imageCount = count; els.imageCount.value = count; }
   const variant = params.get('variant');
@@ -182,6 +248,8 @@ function deserializeState(hash) {
 
 // ── Event listeners ───────────────────────────────────────────────────────────
 function attachListeners() {
+  els.providerSearch.addEventListener('input', () => computeAndRender());
+  els.modelSearch.addEventListener('input', () => computeAndRender());
   els.imageCount.addEventListener('input', () => computeAndRender());
   els.variantFilter.addEventListener('change', () => computeAndRender());
   els.flatOnly.addEventListener('change', () => computeAndRender());
@@ -193,6 +261,12 @@ function attachListeners() {
       computeAndRender();
     });
   });
+  els.mobileSort.addEventListener('change', () => {
+    const [col, dir] = els.mobileSort.value.split(':');
+    state.sortBy = col;
+    state.sortDir = dir;
+    computeAndRender();
+  });
   window.addEventListener('hashchange', () => { deserializeState(location.hash.slice(1)); computeAndRender(); });
 }
 
@@ -203,6 +277,7 @@ async function init() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     state.data = await res.json();
     populateVariants();
+    populateDatalists();
     deserializeState(location.hash.slice(1));
     els.variantFilter.value = state.variantFilter;
     els.flatOnly.checked = state.flatOnly;
