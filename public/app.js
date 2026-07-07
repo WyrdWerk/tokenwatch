@@ -669,6 +669,7 @@ function computeAndRender() {
     }
     if (zdrOnly && !m.zdr) return false;
     if (subscriptionOnly && !m.subscription) return false;
+    if (promoOnly && !(m.discount > 0)) return false;
     return true;
   });
 

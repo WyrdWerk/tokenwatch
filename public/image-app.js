@@ -532,7 +532,12 @@ function attachListeners() {
     if (e.target === els.compareModal) closeCompareModal();
   });
 
-  window.addEventListener('hashchange', () => { deserializeState(location.hash.slice(1)); computeAndRender(); });
+  window.addEventListener('hashchange', () => {
+    deserializeState(location.hash.slice(1));
+    els.variantFilter.value = state.variantFilter;
+    els.flatOnly.checked = state.flatOnly;
+    computeAndRender();
+  });
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────

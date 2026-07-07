@@ -20,11 +20,12 @@ Compare pay-as-you-go LLM inference pricing across inference providers. Enter yo
 - **Both together**: Use both search fields simultaneously (AND filter).
 - **Token input**: Enter total tokens (in millions) and set the percentage breakdown across input, cached input, and output. The calculator computes costs per offering and sorts cheapest-first.
 - **Cost mode**: Toggle between **"Per Session"** (enter total tokens, see per-session cost) and **"Monthly Volume"** (enter daily tokens, see monthly cost × 30 days).
+- **Budget mode**: Toggle "Compute by" to **Budget → Tokens** (text tab), **Budget → Count** (image), or **Budget → Seconds** (video) to invert the calculator — enter a $ budget and see how many tokens/images/seconds each provider offers. Results re-rank by affordability (most units for your budget).
 - **Group by**: Group results by Organization, Provider, or keep flat.
-- **Compare**: Checkboxes on each row let you select up to 4 models for side-by-side comparison in a modal.
+- **Compare**: Checkboxes on each row let you select up to 6 models for side-by-side comparison in a modal.
 - **Provider metadata**: HQ flag badges (🇺🇸🇸🇬🇨🇳) and links to privacy policy, ToS, and status pages appear next to provider names. Data policy fields (retains prompts, may train, retention days) are sourced from OpenRouter and provider policy review.
 - **ZDR badges**: Models from providers with Zero Data Retention show a green "ZDR" badge. Use the "ZDR only" filter to restrict results to ZDR-compliant offerings.
-- **Subscription badges**: Providers with coding plan subscriptions show a blue "Sub" badge. Use the "Sub only" filter to restrict results to subscription providers (13 providers, 141 models).
+- **Subscription badges**: Providers with coding plan subscriptions show a blue "Sub" badge. Use the "Sub only" filter to restrict results to subscription providers (13 providers, 142 models).
 - **Promo badges**: Discounted offerings show a "promo" badge with the discount percentage.
 - **Cache write**: An adjustable one-time cache-population cost with amortization over N requests, included in the Total Cost column.
 
@@ -32,7 +33,7 @@ Compare pay-as-you-go LLM inference pricing across inference providers. Enter yo
 - **Video tab**: Enter video duration in seconds, filter by resolution and audio. Search by provider or model using the typeahead inputs. All models show per-second pricing with computed total cost.
 - **Tab navigation**: Use the Text/Image/Video tabs at the top to switch between modalities.
 - **Mobile**: On screens ≤640px, tables transform into stacked cards with field labels. A sort dropdown appears for reordering results (column headers are hidden in card mode).
-- **Shareable URLs**: All state (search, tokens, mix, sort, mode, group, filters, ZDR, subscription) is encoded in the URL hash for sharing.
+- **Shareable URLs**: All state (search, tokens, mix, budget, sort, mode, group, filters, ZDR, subscription) is encoded in the URL hash for sharing.
 
 ### Token calculation
 
@@ -59,7 +60,7 @@ Presets: Agentic (2.5/97/0.5), Balanced (30/50/20), Heavy output (10/0/90), No c
 | Hardcoded | Tier 3 | OpenCode Go (16 models with user-provided pricing) |
 
 **3-tier precedence**: when the same (model, provider) appears in multiple tiers, the higher-authority tier wins — direct > OpenRouter > CSV/hardcoded. Quantization is not part of the dedup key — same model+provider at different quants collapses to one row.
-**Text models**: ~891 text-generation models across ~75 inference providers and 60+ underlying orgs. **634 models (71%) are ZDR-compliant**.
+**Text models**: ~910 text-generation models across ~75 inference providers and 60+ underlying orgs. **648 models (71%) are ZDR-compliant**.
 
 ## Image & Video Generation
 

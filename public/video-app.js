@@ -549,6 +549,8 @@ function attachListeners() {
 
   window.addEventListener('hashchange', () => {
     deserializeState(location.hash.slice(1));
+    els.resolutionFilter.value = state.resolutionFilter;
+    els.audioFilter.value = state.audioFilter;
     computeAndRender();
   });
 }

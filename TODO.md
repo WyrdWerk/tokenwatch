@@ -3,20 +3,16 @@
 ## Critical bugs
 
 ### STALE CACHE — column misalignment on returning visitors
-**Status**: ✅ FIXED. Cache-busting query strings added to `app.js` and `styles.css` in `index.html` (currently `?v=20260705c`). Update the version string on each deploy that changes CSS/JS.
+**Status**: ✅ FIXED. Cache-busting query strings added to `app.js` and `styles.css` in `index.html` (currently `?v=20260707e`). Update the version string on each deploy that changes CSS/JS.
 
-### MOBILE RESPONSIVE LAYOUT
-The 10-column table is too wide for mobile screens. Needs work:
-- Table is too wide for mobile screens
-- Horizontal scroll fallback is functional but not great
-- Consider card layout on mobile (≤640px)
-- Usage grid stacking needs testing
+### MOBILE RESPONSIVE LAYOUT — ✅ SHIPPED
+Card layout + mobile sort dropdown shipped at ≤640px across all 3 tabs. See README Usage > Mobile.
 
 
 ## Planned features
 
 ### ZDR (Zero Data Retention) — ✅ IMPLEMENTED
-**Status**: Implemented. 634 of 891 models (71%) tagged ZDR.
+**Status**: Implemented. 648 of 910 models (71%) tagged ZDR.
 
 **What's done**:
 - Pipeline: two-stage ZDR tagging via OpenRouter `/api/v1/endpoints/zdr` (endpoint-level) + `/api/frontend/all-providers` (provider-level fallback)
@@ -24,7 +20,7 @@ The 10-column table is too wide for mobile screens. Needs work:
 - `MANUAL_PROVIDER_META` enriched with `retains_prompts`, `may_train`, `retention_days`, `headquarters`, `datacenters`
 - Frontend: green ZDR badge on provider cells, "ZDR only" filter checkbox, ZDR row in compare modal, URL hash `#zdr=1`
 - API: `?zdr=true` filter on `/api/v1/models`, `zdr` field on `/api/v1/models/:id/providers` response
-- `providers_meta` includes `retains_prompts`, `may_train`, `retention_days` for 85 providers
+- `providers_meta` includes `retains_prompts`, `may_train`, `retention_days` for 102 providers
 
 **Remaining**:
 - EmberCloud ZDR status not yet determined (no policy URLs reviewed)
@@ -32,17 +28,27 @@ The 10-column table is too wide for mobile screens. Needs work:
 - Data retention info in comparison modal (ZDR badge shown, retention days not displayed)
 
 ### Subscription badges — ✅ IMPLEMENTED
-**Status**: Implemented. 141 models across 13 providers tagged.
+**Status**: Implemented. 142 models across 13 providers tagged.
 
 **What's done**:
 - Provider-level subscription tagging for coding plan providers: Hyper, Synthetic, Lilac, Makora, Opencode Go, Z.AI, Minimax, Xiaomi, Alibaba, Chutes, Moonshot, X AI, Xiaomimimo
 - `SUBSCRIPTION_PROVIDERS` Set in fetch-pricing.mjs for manual provider-level tagging
 - Frontend: blue "Sub" badge stacked with ZDR badge on provider cells, "Sub only" filter checkbox, Sub badge in compare modal ZDR row, URL hash `#sub=1`
 - API: `?sub=true` filter on `/api/v1/models`, `subscription` field on `/api/v1/models/:id/providers` response
-- Cache-bust version bumped to `?v=20260706b`
+- Cache-bust version bumped to `?v=20260707e`
 
 **Remaining**:
 - Subscription pricing details (monthly cost, token quotas) — would need data source like codingplans.cc or manual CSV maintenance
+
+### Budget mode — ✅ SHIPPED
+**Status**: Implemented on all 3 tabs. Inverse affordability calculator — enter a $ budget, see how many tokens/images/seconds each provider offers, ranked by affordability.
+
+**What's done**:
+- Text tab: Budget → Tokens (M), with token-mix percentages and cache-write amortization factored in
+- Image tab: Budget → Count (flat per-image units only; megapixel/token units show "varies")
+- Video tab: Budget → Seconds
+- Sort direction auto-flips when on cost column; exclusion filter symmetric with forward mode (drops offerings that can't serve the requested token mix)
+- URL hash persistence (`#by=budget`, `#budget=N`)
 
 ### Auth-gated direct providers (A1 — postponed)
 Cerebras, Groq, Together, SiliconFlow, Fireworks, Baseten, Hyperbolic, Replicate, Mistral all have auth-gated `/v1/models` endpoints. All are already covered as OpenRouter backends (Tier 2). Direct fetch would give Tier-1 precedence + fresher data, not new model coverage. Postponed until user has API keys.
