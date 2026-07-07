@@ -31,7 +31,7 @@ Static site comparing pay-as-you-go LLM API pricing across inference providers. 
   2. **Provider-level fallback**: models not tagged at endpoint level are checked against `providers_meta[provider].retains_prompts === false`.
   - `MANUAL_PROVIDER_META` includes `retains_prompts`, `may_train`, `retention_days` for 8 manual providers (crof, ember, hyper, lilac, makora, synthetic, opencode, xiaomimimo) based on privacy policy review.
 - **Provider metadata**: `fetchProviderMeta()` fetches 3 sources: (1) `MANUAL_PROVIDER_META` (manual, includes ZDR fields), (2) OpenRouter `/api/v1/providers` (policy URLs, HQ, datacenters — guarded to not overwrite manual entries), (3) `/api/frontend/all-providers` (undocumented, non-fatal enrichment for `dataPolicy.retainsPrompts`, `training`, `retentionDays`). Alias resolution via `PROVIDER_NAME_MAP` (e.g. `xiaomimimo` inherits `xiaomi` metadata).
-- **Frontend**: `public/` static site loads `pricing.json` client-side. Dual typeahead search (by inference provider and by model). Cost computation entirely in-browser. Features: group-by toggle (None/Org/Provider), comparison mode (side-by-side modal), cost mode toggle (Per Session / Monthly Volume with ×30 multiplier), URL hash state persistence, provider HQ flag badges, ZDR badges + "ZDR only" filter, privacy/ToS/status links, promo badges, cache-write cost amortization input.
+- **Frontend**: `public/` static site loads `pricing.json` client-side. Typeahead search (by inference provider and by model) on all three pages (text, image, video) via native HTML5 datalist. Cost computation entirely in-browser. Features: group-by toggle (None/Org/Provider), comparison mode (side-by-side modal), cost mode toggle (Per Session / Monthly Volume with ×30 multiplier), URL hash state persistence, provider HQ flag badges, ZDR badges + "ZDR only" filter, privacy/ToS/status links, promo badges, cache-write cost amortization input. Mobile: table→card layout at ≤640px via `td[data-label]` attributes on all pages; mobile sort dropdown (`<select class="mobile-sort">`) visible only at ≤640px with bidirectional sync to desktop column header clicks.
 - **API**: Cloudflare Pages Functions at `functions/api/v1/` serve queryable endpoints: `/api/v1/models` (with filters), `/api/v1/models/:id/providers`, `/api/v1/stats`, `/api/v1/providers`.
 - **Widget**: `public/widget/embed.js` — embeddable JS snippet using Shadow DOM, auto-detects `[data-tw-model]` elements, fetches the API, renders compact pricing cards.
 - **CI/CD**: `.github/workflows/refresh-pricing.yml` — daily cron at 00:00 UTC (fetch → commit → deploy) + push-to-main trigger (deploy-only, no fetch).
@@ -133,8 +133,8 @@ The pipeline includes unattended-operation safeguards:
 | `scripts/lib.mjs` | Shared utilities: org extraction, dedup, HTTP retry, coverage guard, dry-run — imported by all three fetchers |
 | `scripts/fetch-images.mjs` | Image pipeline: fetch `/images/models` + `/endpoints`, normalize flat/megapixel/token pricing → `public/image-pricing.json` |
 | `scripts/fetch-videos.mjs` | Video pipeline: fetch `/videos/models`, normalize cents→dollars, filter per-second → `public/video-pricing.json` |
-| `public/image.html` + `public/image-app.js` | Image pricing tab: calculator (count × $/unit), unit-adaptive table, variant filter |
-| `public/video.html` + `public/video-app.js` | Video pricing tab: calculator (seconds × $/sec), resolution + audio filters |
+| `public/image.html` + `public/image-app.js` | Image pricing tab: calculator (count × $/unit), provider + model typeahead search, unit-adaptive table, variant filter, mobile card layout, mobile sort dropdown |
+| `public/video.html` + `public/video-app.js` | Video pricing tab: calculator (seconds × $/sec), provider + model typeahead search, resolution + audio filters, mobile card layout, mobile sort dropdown |
 | `public/image-pricing.json` | Generated data — 34 image models with pricing arrays (image/megapixel/token units) |
 | `public/video-pricing.json` | Generated data — 13 video models with per-second pricing (resolution + audio variants) |
 
@@ -186,9 +186,9 @@ OpenRouter has dedicated APIs for image and video generation — separate from t
 - Writes `public/video-pricing.json` — per-second pricing with resolution + audio variants
 
 ### Frontend tabs
-- `public/image.html` + `public/image-app.js`: image calculator (count × $/image for flat-priced; varies for others), variant/resolution filter, sortable table with unit-adaptive columns
-- `public/video.html` + `public/video-app.js`: video calculator (seconds × $/sec), resolution + audio filters
-- Tab navigation bar (Text/Image/Video) on all three pages, shared `styles.css`
+- `public/image.html` + `public/image-app.js`: image calculator (count × $/image for flat-priced; varies for others), provider + model typeahead search, variant/resolution filter, sortable table with unit-adaptive columns, mobile card layout via data-label, mobile sort dropdown
+- `public/video.html` + `public/video-app.js`: video calculator (seconds × $/sec), provider + model typeahead search, resolution + audio filters, mobile card layout via data-label, mobile sort dropdown
+- Tab navigation bar (Text/Image/Video) on all three pages, shared `styles.css` (including responsive: 768px control stacking, 640px table→card transform, mobile-sort visibility)
 
 ### CI/CD
 - Daily cron runs all three: `fetch-pricing.mjs` → `fetch-images.mjs` → `fetch-videos.mjs`

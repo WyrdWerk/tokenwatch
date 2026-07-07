@@ -28,9 +28,10 @@ Compare pay-as-you-go LLM inference pricing across inference providers. Enter yo
 - **Promo badges**: Discounted offerings show a "promo" badge with the discount percentage.
 - **Cache write**: An adjustable one-time cache-population cost with amortization over N requests, included in the Total Cost column.
 
-- **Image tab**: Enter number of images, optionally filter by resolution variant. Flat per-image models show total cost; token-priced and megapixel-priced models show per-unit rates (cost varies by generation complexity).
-- **Video tab**: Enter video duration in seconds, filter by resolution and audio. All models show per-second pricing with computed total cost.
+- **Image tab**: Enter number of images, optionally filter by resolution variant. Search by provider or model using the typeahead inputs. Flat per-image models show total cost; token-priced and megapixel-priced models show per-unit rates (cost varies by generation complexity).
+- **Video tab**: Enter video duration in seconds, filter by resolution and audio. Search by provider or model using the typeahead inputs. All models show per-second pricing with computed total cost.
 - **Tab navigation**: Use the Text/Image/Video tabs at the top to switch between modalities.
+- **Mobile**: On screens ≤640px, tables transform into stacked cards with field labels. A sort dropdown appears for reordering results (column headers are hidden in card mode).
 - **Shareable URLs**: All state (search, tokens, mix, sort, mode, group, filters, ZDR, subscription) is encoded in the URL hash for sharing.
 
 ### Token calculation
@@ -120,10 +121,16 @@ scripts/
 data/
   manual-pricing.csv          # Static pricing for CSV-sourced providers
 public/
-  index.html                 # UI: dual search, usage inputs, 10-column results table, group-by, comparison modal
-  app.js                     # State, URL hash, search, cost computation, group-by, comparison, monthly mode, rendering
-  styles.css                 # Dark/light theme, all badges, group headers, comparison modal, mode toggle, responsive
+  index.html                 # UI: dual search, usage inputs, 10-column results table, group-by, comparison modal, mobile sort
+  app.js                     # State, URL hash, search, cost computation, group-by, comparison, monthly mode, mobile sort, rendering
+  styles.css                 # Dark/light theme, all badges, group headers, comparison modal, mode toggle, responsive (card layout, mobile sort)
+  image.html                 # Image tab: search, count input, variant filter, sortable table, mobile sort
+  image-app.js               # Image pricing calculator, typeahead search, unit-adaptive columns, mobile card layout
+  video.html                 # Video tab: search, duration input, resolution/audio filters, sortable table, mobile sort
+  video-app.js               # Video pricing calculator, typeahead search, resolution/audio filters, mobile card layout
   pricing.json               # Generated data (refreshed daily by CI)
+  image-pricing.json         # Generated image model data (refreshed daily)
+  video-pricing.json         # Generated video model data (refreshed daily)
   widget/
     embed.js                 # Embeddable widget (Shadow DOM, auto-detect, theme support)
     demo.html                # Widget demo page
