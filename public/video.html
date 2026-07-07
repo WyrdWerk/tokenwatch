@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260707b" />
+  <link rel="stylesheet" href="styles.css?v=20260707c" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>" />
 </head>
 <body>
@@ -44,9 +44,19 @@
       </div>
 
       <div class="control-group">
-        <label for="videoSeconds">Video duration (seconds)</label>
+        <div class="compute-by-toggle">
+          <span class="toggle-label">Compute by:</span>
+          <button class="compute-btn active" id="byTokens" type="button" title="Enter your duration, see what it costs">Seconds → Cost</button>
+          <button class="compute-btn" id="byBudget" type="button" title="Enter your budget, see how many seconds you can afford">Budget → Seconds</button>
+        </div>
+      </div>
+      <div class="control-group" id="countField">
+        <label for="videoSeconds" id="countLabel">Video duration (seconds)</label>
         <input type="number" id="videoSeconds" value="60" min="1" step="1" />
-        <span class="hint">e.g. 60 = 1 minute of video</span>
+      </div>
+      <div class="control-group" id="budgetField" style="display:none;">
+        <label for="budgetInput" id="budgetLabel">Budget</label>
+        <input type="number" id="budgetInput" value="20" min="0" step="1" />
       </div>
       <div class="control-group">
         <label for="resolutionFilter">Resolution</label>
@@ -90,7 +100,7 @@
               <th class="sortable" data-sort="resolution">Resolution</th>
               <th class="sortable" data-sort="audio">Audio</th>
               <th class="sortable" data-sort="cost_per_second">$/Sec</th>
-              <th class="sortable sort-asc" data-sort="cost">Total Cost</th>
+              <th class="sortable sort-asc" data-sort="cost" id="costColumnHeader">Total Cost</th>
             </tr>
           </thead>
           <tbody id="resultsBody">
@@ -111,6 +121,6 @@
     </p>
   </footer>
 
-  <script src="video-app.js?v=20260707b"></script>
+  <script src="video-app.js?v=20260707c"></script>
 </body>
 </html>

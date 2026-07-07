@@ -223,6 +223,47 @@ select:focus, input:focus { border-color: var(--accent); }
   color: var(--bg);
 }
 
+.compute-by-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.compute-by-toggle .toggle-label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.compute-by-toggle .compute-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.compute-by-toggle .compute-btn:hover {
+  background: var(--surface);
+}
+.compute-by-toggle .compute-btn.active {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
+/* On image/video tabs the compute-by-toggle lives inside .controls (flex-wrap).
+   Force its control-group to span a full row so the count/budget inputs below
+   align cleanly with the other single-input control-groups (provider/model/variant).
+   Without this the toggle's two-button height pushes siblings out of vertical alignment. */
+.control-group:has(> .compute-by-toggle) { flex-basis: 100%; min-width: 100%; }
+.control-group:has(> .compute-by-toggle) .compute-by-toggle { margin-bottom: 0; }
+
 .usage-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));

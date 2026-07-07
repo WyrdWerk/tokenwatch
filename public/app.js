@@ -12,6 +12,7 @@ const state = {
   sortBy: 'cost',         // current sort column key
   sortDir: 'asc',         // 'asc' or 'desc'
   costMode: 'perRequest', // 'perRequest' or 'monthly'
+  computeBy: 'tokens',   // 'tokens' (forward) or 'budget' (inverse)
   groupBy: 'none',
   compareSelection: [], // array of model objects (max 4)
   currentRows: null,
@@ -48,10 +49,16 @@ const els = {
   compareClear: $('compareClear'),
   compareModal: $('compareModal'),
   compareClose: $('compareClose'),
-  compareBody: $('compareBody'),
   cacheWriteTokens: $('cacheWriteTokens'),
   amortizeN: $('amortizeN'),
   mobileSort: $('mobileSort'),
+  byTokens: $('byTokens'),
+  byBudget: $('byBudget'),
+  budgetInput: $('budgetInput'),
+  budgetField: $('budgetField'),
+  totalTokensField: $('totalTokensField'),
+  budgetLabel: $('budgetLabel'),
+  budgetHint: $('budgetHint'),
 };
 
 
@@ -73,10 +80,11 @@ themeToggle.addEventListener('click', () => {
   applyTheme(current === 'dark' ? 'light' : 'dark');
 });
 
-
 // Default control values — used to keep shared URLs minimal when unchanged
 const DEFAULTS = {
   totalTokens: '1000',
+  budget: '20',
+  computeBy: 'tokens',
   inputPct: '2.5',
   cacheReadPct: '97',
   outputPct: '0.5',
@@ -124,6 +132,10 @@ function serializeState() {
 
   if (state.costMode === 'monthly') params.set('mode', 'monthly');
 
+  if (state.computeBy === 'budget') params.set('by', 'budget');
+  const budget = els.budgetInput?.value;
+  if (budget && budget !== DEFAULTS.budget) params.set('budget', budget);
+
   if (els.groupBy.value !== 'none') params.set('group', els.groupBy.value);
 
   const cacheWriteVal = parseFloat(document.getElementById('cacheWriteTokens').value) || 0;
@@ -133,10 +145,9 @@ function serializeState() {
 
   return params.toString();
 }
-
-/** Apply hash params to controls and sort state. Resets omitted keys to defaults. */
 function deserializeState(hash) {
   els.totalTokens.value = DEFAULTS.totalTokens;
+  els.budgetInput.value = DEFAULTS.budget;
   els.inputPct.value = DEFAULTS.inputPct;
   els.cacheReadPct.value = DEFAULTS.cacheReadPct;
   els.outputPct.value = DEFAULTS.outputPct;
@@ -147,11 +158,14 @@ function deserializeState(hash) {
   state.sortBy = DEFAULTS.sortBy;
   state.sortDir = DEFAULTS.sortDir;
   state.costMode = 'perRequest';
+  state.computeBy = 'tokens';
   els.modePerRequest.classList.toggle('active', true);
   els.modeMonthly.classList.toggle('active', false);
-  els.totalTokensLabel.textContent = 'Total tokens';
-  els.totalTokensHint.textContent = 'Million tokens (e.g. 1000 = 1B tokens)';
-  els.costColumnHeader.textContent = 'Total Cost';
+  els.byTokens?.classList.toggle('active', true);
+  els.byBudget?.classList.toggle('active', false);
+  els.totalTokensField.style.display = '';
+  els.budgetField.style.display = 'none';
+  updateLabelsAndHeaders();
   els.groupBy.value = DEFAULTS.groupBy;
   document.getElementById('cacheWriteTokens').value = '0';
   document.getElementById('amortizeN').value = '1';
@@ -185,6 +199,8 @@ function deserializeState(hash) {
   const group = params.get('group');
   if (group) els.groupBy.value = group;
   if (params.has('cw')) document.getElementById('cacheWriteTokens').value = params.get('cw');
+  if (params.has('budget')) els.budgetInput.value = params.get('budget');
+  if (params.get('by') === 'budget') setComputeBy('budget');
   if (params.has('cwn')) document.getElementById('amortizeN').value = params.get('cwn');
 }
 
@@ -277,21 +293,60 @@ function setCostMode(mode) {
   state.costMode = mode;
   els.modePerRequest.classList.toggle('active', mode === 'perRequest');
   els.modeMonthly.classList.toggle('active', mode === 'monthly');
-  if (mode === 'monthly') {
-    els.totalTokensLabel.textContent = 'Daily tokens';
-    els.totalTokensHint.textContent = 'Million tokens/day (e.g. 33 = 33M tokens/day)';
-    els.costColumnHeader.textContent = 'Monthly Cost (×30 days)';
-  } else {
-    els.totalTokensLabel.textContent = 'Total tokens';
-    els.totalTokensHint.textContent = 'Million tokens (e.g. 1000 = 1B tokens)';
-    els.costColumnHeader.textContent = 'Total Cost';
-  }
+  updateLabelsAndHeaders();
   computeAndRender();
+}
+
+function setComputeBy(mode) {
+  state.computeBy = mode;
+  els.byTokens?.classList.toggle('active', mode === 'tokens');
+  els.byBudget?.classList.toggle('active', mode === 'budget');
+  // Show/hide the appropriate input field (only one is visible at a time)
+  const showBudget = mode === 'budget';
+  els.totalTokensField.style.display = showBudget ? 'none' : '';
+  els.budgetField.style.display = showBudget ? '' : 'none';
+  // Convention: budget mode ranks highest-affordability first (desc).
+  // Only flip when currently on the cost/affordability column, so a
+  // user's explicit sort on (org/provider/model/price/context) is preserved.
+  if (state.sortBy === 'cost') {
+    state.sortDir = mode === 'budget' ? 'desc' : 'asc';
+  }
+  updateLabelsAndHeaders();
+  computeAndRender();
+}
+
+/** Update token-input labels, hints, and the cost/affordability column header
+ *  for the current (computeBy × costMode) combination. Called by both setters. */
+function updateLabelsAndHeaders() {
+  const monthly = state.costMode === 'monthly';
+  const budget = state.computeBy === 'budget';
+  if (budget) {
+    els.budgetLabel.textContent = monthly ? 'Monthly budget' : 'Budget';
+    els.budgetHint.textContent = monthly
+      ? 'USD per month (×30 days)'
+      : 'USD per session (e.g. 20 = $20/session)';
+    els.costColumnHeader.textContent = monthly
+      ? 'Monthly Affordable Tokens (×30 days)'
+      : 'Affordable Tokens (M)';
+  } else {
+    if (monthly) {
+      els.totalTokensLabel.textContent = 'Daily tokens';
+      els.totalTokensHint.textContent = 'Million tokens/day (e.g. 33 = 33M tokens/day)';
+      els.costColumnHeader.textContent = 'Monthly Cost (×30 days)';
+    } else {
+      els.totalTokensLabel.textContent = 'Total tokens';
+      els.totalTokensHint.textContent = 'Million tokens (e.g. 1000 = 1B tokens)';
+      els.costColumnHeader.textContent = 'Total Cost';
+    }
+  }
 }
 
 function attachListeners() {
   els.modePerRequest.addEventListener('click', () => setCostMode('perRequest'));
   els.modeMonthly.addEventListener('click', () => setCostMode('monthly'));
+  els.byTokens?.addEventListener('click', () => setComputeBy('tokens'));
+  els.byBudget?.addEventListener('click', () => setComputeBy('budget'));
+  els.budgetInput?.addEventListener('input', () => computeAndRender());
 
   els.providerSearch.addEventListener('input', () => computeAndRender());
   els.modelSearch.addEventListener('input', () => computeAndRender());
@@ -399,7 +454,15 @@ function showCompareModal() {
   if (state.compareSelection.length < 2) return;
   const tokens = getTokens();
   const modeMultiplier = state.costMode === 'monthly' ? 30 : 1;
+  const budgetMode = state.computeBy === 'budget';
+  const budgetVal = budgetMode ? Math.max(0, parseFloat(els.budgetInput?.value) || 0) : 0;
+  const perSessionBudget = budgetMode ? budgetVal / modeMultiplier : 0;
   const models = state.compareSelection;
+
+  const headlineGet = m => budgetMode
+    ? affordabilityFor(m.pricing, tokens, perSessionBudget) * modeMultiplier
+    : costFor(m.pricing, tokens) * modeMultiplier;
+  const headlineFmt = v => budgetMode ? fmtAffordability(v) : fmtCost(v);
 
   const rows = [
     { label: 'Org', getValue: m => esc(orgDisplay(m.org)) },
@@ -414,7 +477,7 @@ function showCompareModal() {
     { label: 'Max Output Tokens', getValue: m => m.max_completion_tokens ? m.max_completion_tokens.toLocaleString() : '<span class="missing">—</span>' },
     { label: 'Uptime (30m)', getValue: m => m.uptime_30m != null ? `${m.uptime_30m.toFixed(2)}%` : '<span class="missing">—</span>' },
     { label: 'Discount', getValue: m => m.discount > 0 ? `<span class="promo-badge">${(m.discount * 100).toFixed(0)}% off</span>` : '—' },
-    { label: els.costColumnHeader?.textContent || 'Total Cost', getValue: m => fmtCost(costFor(m.pricing, tokens) * modeMultiplier), getRaw: m => costFor(m.pricing, tokens) * modeMultiplier, isCost: true },
+    { label: els.costColumnHeader?.textContent || 'Total Cost', getValue: m => headlineFmt(headlineGet(m)), getRaw: headlineGet, isCost: true, isBudget: budgetMode },
   ];
 
   let html = '<table class="compare-table"><thead><tr><th>Metric</th>';
@@ -428,12 +491,14 @@ function showCompareModal() {
     html += `<tr><td class="compare-label">${row.label}</td>`;
     if (row.isCost && row.getRaw) {
       const values = models.map(m => row.getRaw(m));
-      const nonNull = values.filter(v => v !== null && v !== undefined);
-      const cheapest = nonNull.length > 0 ? Math.min(...nonNull) : null;
+      const nonNull = values.filter(v => v !== null && v !== undefined && (isFinite(v) || !row.isBudget));
+      const best = nonNull.length > 0
+        ? (row.isBudget ? Math.max(...nonNull) : Math.min(...nonNull))
+        : null;
       for (const m of models) {
         const v = row.getRaw(m);
-        const isCheapest = cheapest !== null && v !== null && v !== undefined && v === cheapest;
-        html += `<td class="num${isCheapest ? ' compare-cheapest' : ''}">${row.getValue(m)}</td>`;
+        const isBest = best !== null && v !== null && v !== undefined && v === best;
+        html += `<td class="num${isBest ? ' compare-cheapest' : ''}">${row.getValue(m)}</td>`;
       }
     } else {
       for (const m of models) {
@@ -492,6 +557,51 @@ function costFor(pricing, tokens) {
   return (inputCost || 0) + (outputCost || 0) + (cacheReadCost || 0) + (cacheWriteCost || 0);
 }
 
+/** Affordability: given a $ budget and the per-session token breakdown shape,
+ *  return how many MILLION tokens the budget buys on this offering.
+ *  Inverse of costFor: affordable_M = (budget - cwFixed) / effectiveRate
+ *  where effectiveRate = Sum(pct_i/100 × price_i) is $ per 1M total-session tokens,
+ *  and cwFixed = pricing.cache_write × cacheWriteTokens / amortizeN / 1e6 is the
+ *  per-session fixed cache-write charge. Returns Infinity when the per-M rate is 0
+ *  (a free offering), null when the offering can't serve the requested token mix,
+ *  and -Infinity (caller filters) when the fixed charge alone exceeds the budget. */
+function affordabilityFor(pricing, tokens, budget) {
+  // effectiveRate: $/1M total tokens. prices are $/M; pct fractions multiply.
+  const rate = (price, pct) => (price != null ? price * pct / 100 : null);
+  const inRate   = tokens.inputPct    > 0 ? rate(pricing.input,     tokens.inputPct)    : 0;
+  const outRate  = tokens.outputPct   > 0 ? rate(pricing.output,    tokens.outputPct)   : 0;
+  const crRate   = tokens.cacheReadPct> 0 ? rate(pricing.cache_read,tokens.cacheReadPct): 0;
+  if (tokens.inputPct    > 0 && inRate  === null) return null;
+  if (tokens.outputPct   > 0 && outRate === null) return null;
+  if (tokens.cacheReadPct> 0 && crRate  === null) return null;
+  // Cache-write: fixed per-session charge, amortized over N requests.
+  let cwFixed = 0;
+  if (tokens.cacheWrite > 0) {
+    const cwPrice = pricing.cache_write;
+    if (cwPrice == null) return null;
+    cwFixed = (cwPrice * (tokens.cacheWrite / (tokens.amortizeN || 1))) / 1e6;
+  }
+  const effectiveRate = (inRate || 0) + (outRate || 0) + (crRate || 0);
+  if (effectiveRate <= 0) {
+    // Free per-token offering. Affordable iff the budget covers the fixed charge.
+    return budget >= cwFixed ? Infinity : null;
+  }
+  if (budget <= cwFixed) return null; // can't even cover cache-write setup
+  return (budget - cwFixed) / effectiveRate;
+}
+
+/** Format affordable millions-of-tokens for display. Mirrors the token-input
+ *  convention: raw millions count with thousands separators, no suffixes.
+ *  Header "(M)" indicates the unit — same as totalTokens input field.
+ *  Infinity (free offering) → "∞" badge; null → "N/A". */
+function fmtAffordability(tokens_M) {
+  if (tokens_M === null || tokens_M === undefined) return `<span class="missing">N/A</span>`;
+  if (!isFinite(tokens_M)) return `<span class="cost-zero" title="Free offering — budget covers unlimited tokens">∞</span>`;
+  if (tokens_M === 0) return `<span class="cost-zero">0</span>`;
+  if (tokens_M < 1) return tokens_M.toFixed(1);
+  return Math.round(tokens_M).toLocaleString();
+}
+
 // ── Rendering ─────────────────────────────────────────────────────────────────
 
 function computeAndRender() {
@@ -500,9 +610,15 @@ function computeAndRender() {
   const provSearch = els.providerSearch.value.trim().toLowerCase();
   const modSearch = els.modelSearch.value.trim().toLowerCase();
 
-  // Update breakdown display
-  const fmtM = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : `${Math.round(n / 1e3)}K`;
-  els.tokenBreakdown.textContent = `Input: ${fmtM(tokens.input)} · Cached: ${fmtM(tokens.cacheRead)} · Output: ${fmtM(tokens.output)}`;
+  // Update breakdown display. In budget mode the total-token count is unknown
+  // (that's what we're solving for), so show only the percentage mix.
+  const budgetModeBreakdown = state.computeBy === 'budget';
+  if (budgetModeBreakdown) {
+    els.tokenBreakdown.textContent = `Input: ${tokens.inputPct}% · Cached: ${tokens.cacheReadPct}% · Output: ${tokens.outputPct}%`;
+  } else {
+    const fmtM = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : `${Math.round(n / 1e3)}K`;
+    els.tokenBreakdown.textContent = `Input: ${fmtM(tokens.input)} · Cached: ${fmtM(tokens.cacheRead)} · Output: ${fmtM(tokens.output)}`;
+  }
   const sumPct = tokens.sum;
   if (Math.abs(sumPct - 100) < 0.01) {
     els.pctSum.textContent = '100%';
@@ -552,11 +668,24 @@ function computeAndRender() {
   if (subscriptionOnly) title += ' (subscription only)';
   els.resultsTitle.textContent = title;
 
-  // Compute costs
+  // Compute the per-row headline value (cost $ in forward mode, affordable
+  // tokens in millions in budget mode). Both are positive; sort/comparator
+  // treats r.cost uniformly. Monthly mode scales by ×30 in BOTH directions:
+  //   forward  → cost is monthly cost = perSessionCost × 30
+  //   budget   → affordable tokens = afford(budget/30) × 30  (budget spans 30 sessions)
   const modeMultiplier = state.costMode === 'monthly' ? 30 : 1;
+  const budgetMode = state.computeBy === 'budget';
+  const budgetVal = budgetMode ? Math.max(0, parseFloat(els.budgetInput?.value) || 0) : 0;
+  // Per-session budget = monthly budget / 30 (modeMultiplier), or full budget in per-session mode.
+  const perSessionBudget = budgetMode ? budgetVal / modeMultiplier : 0;
   const rows = offerings
-    .map((m) => ({ model: m, cost: costFor(m.pricing, tokens) }))
-    .filter((r) => r.cost !== null)
+    .map((m) => ({
+      model: m,
+      cost: budgetMode
+        ? affordabilityFor(m.pricing, tokens, perSessionBudget)
+        : costFor(m.pricing, tokens),
+    }))
+    .filter((r) => r.cost !== null && r.cost !== undefined)
     .map((r) => ({ ...r, cost: r.cost * modeMultiplier }));
 
   // Sort by current sort column
@@ -697,8 +826,21 @@ function renderProviderCell(r) {
   return `<span class="provider-badge">${esc(name)}</span>${zdrBadge}${subBadge}${providerMetaHtml(r.model.provider)}`;
 }
 
-function globalCheapestCost(rows) {
-  if (state.sortBy !== 'cost' || state.sortDir !== 'asc') return null;
+function globalBestValue(rows) {
+  // Highlight the row that's currently "winning" on the cost/affordability column
+  // given the sort order: asc + forward → cheapest ($) = min; desc + budget →
+  // most-affordable (tokens) = max (Infinity ranks above any finite).
+  if (state.sortBy !== 'cost') return null;
+  if (state.computeBy === 'budget') {
+    if (state.sortDir !== 'desc') return null;
+    let best = null;
+    for (const r of rows) {
+      if (r.cost == null) continue;
+      if (best === null || r.cost > best) best = r.cost;
+    }
+    return best;
+  }
+  if (state.sortDir !== 'asc') return null;
   const hit = rows.find((r) => r.cost > 0);
   return hit ? hit.cost : null;
 }
@@ -725,22 +867,22 @@ function renderModelRow(r, rank, groupKey, cheapest) {
     <td class="num" data-label="Cache Read $/M">${fmtPrice(p.cache_read)}</td>
     <td class="num" data-label="Cache Write $/M">${fmtPrice(p.cache_write)}</td>
     <td class="num" data-label="Context">${fmtContext(r.model.context_length)}</td>
-    <td class="num cost" data-label="Total Cost">${fmtCost(r.cost)}</td>
+    <td class="num cost" data-label="${esc(els.costColumnHeader.textContent)}">${state.computeBy === 'budget' ? fmtAffordability(r.cost) : fmtCost(r.cost)}</td>
   </tr>`;
 }
 
 function renderFlatTable(rows, tokens) {
-  const cheapestCost = globalCheapestCost(rows);
+  const best = globalBestValue(rows);
   els.resultsBody.innerHTML = rows
     .map((r, i) => {
-      const cheapest = cheapestCost !== null && r.cost > 0 && r.cost === cheapestCost;
-      return renderModelRow(r, i + 1, undefined, cheapest);
+      const isBest = best !== null && r.cost != null && r.cost === best;
+      return renderModelRow(r, i + 1, undefined, isBest);
     })
     .join('');
 }
-
 function renderGroupedTable(rows, tokens, groupBy) {
-  const cheapestCost = globalCheapestCost(rows);
+  const best = globalBestValue(rows);
+  const budgetMode = state.computeBy === 'budget';
   const groups = new Map();
   for (const r of rows) {
     const key = groupBy === 'org' ? r.model.org : r.model.provider;
@@ -759,22 +901,27 @@ function renderGroupedTable(rows, tokens, groupBy) {
   for (const key of sortedKeys) {
     const groupRows = groups.get(key);
     const groupName = groupBy === 'org' ? orgDisplay(key) : providerName(key);
-    const groupCheapest = groupRows.reduce(
-      (min, r) => (r.cost > 0 && (min === null || r.cost < min) ? r.cost : min),
-      null,
-    );
+    // Per-group best: min($) forward, max(tokens) budget (Infinity ranks above finite)
+    const groupBest = groupRows.reduce((acc, r) => {
+      if (r.cost == null) return acc;
+      if (acc === null) return r.cost;
+      return budgetMode ? Math.max(acc, r.cost) : (r.cost > 0 ? Math.min(acc, r.cost) : acc);
+    }, null);
+    const bestLabel = groupBest !== null
+      ? (budgetMode ? `up to ${fmtAffordability(groupBest)}` : `from ${fmtCost(groupBest)}`)
+      : '';
     html += `<tr class="group-header" data-group="${esc(key)}">
       <td colspan="10">
         <span class="collapse-arrow">▼</span>
         ${esc(groupName)}
         <span class="group-count">${groupRows.length} model${groupRows.length === 1 ? '' : 's'}</span>
-        ${groupCheapest !== null ? `<span class="group-cheapest">from ${fmtCost(groupCheapest)}</span>` : ''}
+        ${bestLabel ? `<span class="group-cheapest">${bestLabel}</span>` : ''}
       </td>
     </tr>`;
     for (const r of groupRows) {
       rank += 1;
-      const cheapest = cheapestCost !== null && r.cost > 0 && r.cost === cheapestCost;
-      html += renderModelRow(r, rank, key, cheapest);
+      const isBest = best !== null && r.cost != null && r.cost === best;
+      html += renderModelRow(r, rank, key, isBest);
     }
   }
   els.resultsBody.innerHTML = html;

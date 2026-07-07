@@ -10,6 +10,7 @@ const state = {
   audioFilter: '',
   sortBy: 'cost',
   sortDir: 'asc',
+  computeBy: 'tokens',
 };
 
 const $ = (id) => document.getElementById(id);
@@ -24,6 +25,20 @@ const els = {
   resultsBody: $('resultsBody'),
   resultsTitle: $('resultsTitle'),
   mobileSort: $('mobileSort'),
+  byTokens: $('byTokens'),
+  byBudget: $('byBudget'),
+  budgetInput: $('budgetInput'),
+  budgetField: $('budgetField'),
+  countField: $('countField'),
+  countLabel: $('countLabel'),
+  budgetLabel: $('budgetLabel'),
+  costColumnHeader: $('costColumnHeader'),
+};
+
+const DEFAULTS = {
+  videoSeconds: 60,
+  budget: '20',
+  computeBy: 'tokens',
 };
 
 // ── Theme toggle ──────────────────────────────────────────────────────────────
@@ -68,6 +83,55 @@ function fmtCost(c) {
   return '$' + c.toFixed(2);
 }
 
+function fmtAffordability(n) {
+  if (n === null || n === undefined) return '<span class="missing">N/A</span>';
+  if (!isFinite(n)) return '<span class="cost-zero" title="Free offering — budget covers unlimited">∞</span>';
+  if (n === 0) return '<span class="cost-zero">0</span>';
+  if (n < 1) return n.toFixed(1);
+  return Math.round(n).toLocaleString();
+}
+
+function costFor(pricing, seconds) {
+  return seconds * pricing.cost_per_second;
+}
+
+function affordabilityFor(pricing, budget) {
+  const costPerSecond = pricing.cost_per_second;
+  if (costPerSecond === null || costPerSecond === undefined) return null;
+  if (budget <= 0) return null;
+  if (costPerSecond <= 0) return Infinity;
+  return budget / costPerSecond;
+}
+
+function setComputeBy(mode) {
+  state.computeBy = mode;
+  els.byTokens?.classList.toggle('active', mode === 'tokens');
+  els.byBudget?.classList.toggle('active', mode === 'budget');
+  const showBudget = mode === 'budget';
+  els.countField.style.display = showBudget ? 'none' : '';
+  els.budgetField.style.display = showBudget ? '' : 'none';
+  if (state.sortBy === 'cost') {
+    state.sortDir = mode === 'budget' ? 'desc' : 'asc';
+  }
+  updateLabelsAndHeaders();
+  computeAndRender();
+}
+
+function updateLabelsAndHeaders() {
+  const budget = state.computeBy === 'budget';
+  if (budget) {
+    els.budgetLabel.textContent = 'Budget';
+    els.costColumnHeader.textContent = 'Affordable Seconds';
+  } else {
+    els.countLabel.textContent = 'Video duration (seconds)';
+    els.costColumnHeader.textContent = 'Total Cost';
+  }
+  const costAscOpt = els.mobileSort.querySelector('option[value="cost:asc"]');
+  const costDescOpt = els.mobileSort.querySelector('option[value="cost:desc"]');
+  if (costAscOpt) costAscOpt.textContent = budget ? 'Affordable Seconds ↑' : 'Total Cost ↑';
+  if (costDescOpt) costDescOpt.textContent = budget ? 'Affordable Seconds ↓' : 'Total Cost ↓';
+}
+
 function resLabel(r) { return r ? r.toUpperCase() : '\u2014'; }
 function audioLabel(a) {
   if (a === true) return '\uD83D\uDD0A Yes';
@@ -97,11 +161,9 @@ function buildRows() {
     for (const p of m.pricing) {
       if (state.resolutionFilter && p.resolution !== state.resolutionFilter) continue;
       if (state.audioFilter !== '' && String(p.audio) !== state.audioFilter) continue;
-      const cost = state.videoSeconds * p.cost_per_second;
       rows.push({
         model: m,
         pricing: p,
-        cost,
         resolution: p.resolution,
         audio: p.audio,
       });
@@ -167,6 +229,22 @@ function sortRows(rows) {
   });
 }
 
+function globalBestValue(rows) {
+  if (state.sortBy !== 'cost') return null;
+  if (state.computeBy === 'budget') {
+    if (state.sortDir !== 'desc') return null;
+    let best = null;
+    for (const r of rows) {
+      if (r.cost == null) continue;
+      if (best === null || r.cost > best) best = r.cost;
+    }
+    return best;
+  }
+  if (state.sortDir !== 'asc') return null;
+  const hit = rows.find((r) => r.cost > 0);
+  return hit ? hit.cost : null;
+}
+
 // ── Rendering ─────────────────────────────────────────────────────────────────
 function computeAndRender() {
   if (!state.data) return;
@@ -176,10 +254,21 @@ function computeAndRender() {
   state.resolutionFilter = els.resolutionFilter.value;
   state.audioFilter = els.audioFilter.value;
 
-  const rows = buildRows();
+  const budgetMode = state.computeBy === 'budget';
+  const budgetVal = budgetMode ? Math.max(0, parseFloat(els.budgetInput?.value) || 0) : 0;
+
+  let rows = buildRows().map((r) => ({
+    ...r,
+    cost: budgetMode
+      ? affordabilityFor(r.pricing, budgetVal)
+      : costFor(r.pricing, state.videoSeconds),
+  }));
+  if (budgetMode) {
+    rows = rows.filter((r) => r.cost !== null && r.cost !== undefined);
+  }
+
   sortRows(rows);
 
-  // Update title
   const parts = [];
   if (state.providerSearch) parts.push(`from '${state.providerSearch}'`);
   if (state.modelSearch) parts.push(`matching '${state.modelSearch}'`);
@@ -190,7 +279,6 @@ function computeAndRender() {
     ? `Video models (${parts.join(', ')}) \u2014 ${rows.length} results`
     : `All video generation models \u2014 ${rows.length} results`;
 
-  // Update sort indicators
   document.querySelectorAll('th.sortable').forEach(th => {
     th.classList.remove('sort-asc', 'sort-desc');
     if (th.dataset.sort === state.sortBy) {
@@ -198,24 +286,28 @@ function computeAndRender() {
     }
   });
 
+  updateLabelsAndHeaders();
   els.mobileSort.value = `${state.sortBy}:${state.sortDir}`;
 
   if (rows.length === 0) {
     els.resultsBody.innerHTML = '<tr><td colspan="7" class="empty">No models match your criteria.</td></tr>';
+    updateHash();
     return;
   }
 
-  const cheapest = rows.reduce((min, r) => (r.cost > 0 && r.cost < min) ? r.cost : min, Infinity);
+  const best = globalBestValue(rows);
+  const costLabel = esc(els.costColumnHeader.textContent);
   els.resultsBody.innerHTML = rows.map((r, i) => {
-    const isCheapest = r.cost > 0 && r.cost === cheapest;
+    const isBest = best !== null && r.cost != null && r.cost === best;
+    const costCell = budgetMode ? fmtAffordability(r.cost) : fmtCost(r.cost);
     return `<tr>
-      <td class="rank" data-label="#">${i + 1}${isCheapest ? ' \u{1F3C6}' : ''}</td>
+      <td class="rank" data-label="#">${i + 1}${isBest ? ' \u{1F3C6}' : ''}</td>
       <td data-label="Org"><span class="org-badge">${esc(orgDisplay(r.model.org))}</span></td>
       <td data-label="Model">${esc(r.model.name || r.model.id)}</td>
       <td data-label="Resolution">${resLabel(r.resolution)}</td>
       <td data-label="Audio">${audioLabel(r.audio)}</td>
       <td class="num" data-label="$/Sec">${fmtPrice(r.pricing.cost_per_second)}</td>
-      <td class="num cost" data-label="Total Cost">${fmtCost(r.cost)}</td>
+      <td class="num cost" data-label="${costLabel}">${costCell}</td>
     </tr>`;
   }).join('');
 
@@ -227,16 +319,37 @@ function updateHash() {
   const params = new URLSearchParams();
   if (state.providerSearch) params.set('p', state.providerSearch);
   if (state.modelSearch) params.set('m', state.modelSearch);
-  if (state.videoSeconds !== 60) params.set('sec', state.videoSeconds);
+  if (state.videoSeconds !== DEFAULTS.videoSeconds) params.set('sec', state.videoSeconds);
   if (state.resolutionFilter) params.set('res', state.resolutionFilter);
   if (state.audioFilter !== '') params.set('audio', state.audioFilter);
   if (state.sortBy !== 'cost' || state.sortDir !== 'asc') params.set('sort', `${state.sortBy}:${state.sortDir}`);
+  if (state.computeBy === 'budget') params.set('by', 'budget');
+  const budget = els.budgetInput?.value;
+  if (budget && budget !== DEFAULTS.budget) params.set('budget', budget);
   const hash = params.toString();
   history.replaceState(null, '', hash ? '#' + hash : window.location.pathname);
 }
 
 function deserializeState(hash) {
   const params = new URLSearchParams(hash);
+  state.providerSearch = '';
+  state.modelSearch = '';
+  state.videoSeconds = DEFAULTS.videoSeconds;
+  state.resolutionFilter = '';
+  state.audioFilter = '';
+  state.sortBy = 'cost';
+  state.sortDir = 'asc';
+  state.computeBy = 'tokens';
+  els.providerSearch.value = '';
+  els.modelSearch.value = '';
+  els.videoSeconds.value = DEFAULTS.videoSeconds;
+  els.budgetInput.value = DEFAULTS.budget;
+  els.byTokens?.classList.toggle('active', true);
+  els.byBudget?.classList.toggle('active', false);
+  els.countField.style.display = '';
+  els.budgetField.style.display = 'none';
+  updateLabelsAndHeaders();
+
   const prov = params.get('p');
   if (prov) { state.providerSearch = prov; els.providerSearch.value = prov; }
   const mod = params.get('m');
@@ -244,11 +357,21 @@ function deserializeState(hash) {
   const sec = parseInt(params.get('sec'), 10);
   if (sec > 0) { state.videoSeconds = sec; els.videoSeconds.value = sec; }
   const res = params.get('res');
-  if (res) { state.resolutionFilter = res; els.resolutionFilter.value = res; }
+  if (res) { state.resolutionFilter = res; }
   const audio = params.get('audio');
-  if (audio === 'true' || audio === 'false') { state.audioFilter = audio; els.audioFilter.value = audio; }
+  if (audio === 'true' || audio === 'false') { state.audioFilter = audio; }
   const sort = params.get('sort');
   if (sort) { const [by, dir] = sort.split(':'); state.sortBy = by; state.sortDir = dir || 'asc'; }
+  if (params.has('budget')) els.budgetInput.value = params.get('budget');
+  if (params.get('by') === 'budget') {
+    state.computeBy = 'budget';
+    els.byTokens?.classList.toggle('active', false);
+    els.byBudget?.classList.toggle('active', true);
+    els.countField.style.display = 'none';
+    els.budgetField.style.display = '';
+    if (state.sortBy === 'cost') state.sortDir = 'desc';
+    updateLabelsAndHeaders();
+  }
 }
 
 // ── Event listeners ───────────────────────────────────────────────────────────
@@ -256,8 +379,11 @@ function attachListeners() {
   els.providerSearch.addEventListener('input', () => computeAndRender());
   els.modelSearch.addEventListener('input', () => computeAndRender());
   els.videoSeconds.addEventListener('input', () => computeAndRender());
+  els.budgetInput?.addEventListener('input', () => computeAndRender());
   els.resolutionFilter.addEventListener('change', () => computeAndRender());
   els.audioFilter.addEventListener('change', () => computeAndRender());
+  els.byTokens?.addEventListener('click', () => setComputeBy('tokens'));
+  els.byBudget?.addEventListener('click', () => setComputeBy('budget'));
 
   document.querySelectorAll('th.sortable').forEach(th => {
     th.addEventListener('click', () => {

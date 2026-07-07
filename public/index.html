@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260707b" />
+  <link rel="stylesheet" href="styles.css?v=20260707c" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>" />
 </head>
 <body>
@@ -61,19 +61,29 @@
       </div>
     </section>
 
-    <!-- ── Token inputs ─────────────────────────────────────────────────── -->
+:    <!-- ── Token inputs ─────────────────────────────────────────────────── -->
     <section class="token-inputs">
       <span class="section-label">USAGE</span>
       <h2>Your Usage</h2>
+      <div class="compute-by-toggle">
+        <span class="toggle-label">Compute by:</span>
+        <button class="compute-btn active" id="byTokens" type="button" title="Enter your token volume, see what it costs">Tokens → Cost</button>
+        <button class="compute-btn" id="byBudget" type="button" title="Enter your budget, see how many tokens you can afford">Budget → Tokens</button>
+      </div>
       <div class="cost-mode-toggle">
         <button class="mode-btn active" id="modePerRequest" type="button">Per Session</button>
         <button class="mode-btn" id="modeMonthly" type="button">Monthly Volume</button>
       </div>
       <div class="usage-grid">
-        <div class="token-field total-field">
+        <div class="token-field total-field" id="totalTokensField">
           <label for="totalTokens" id="totalTokensLabel">Total tokens</label>
           <input type="number" id="totalTokens" value="1000" min="0" step="1" />
           <small id="totalTokensHint">Million tokens (e.g. 1000 = 1B tokens)</small>
+        </div>
+        <div class="token-field total-field" id="budgetField" style="display:none;">
+          <label for="budgetInput" id="budgetLabel">Budget</label>
+          <input type="number" id="budgetInput" value="20" min="0" step="1" />
+          <small id="budgetHint">USD per session (e.g. 20 = $20/session)</small>
         </div>
         <div class="token-field">
           <label for="inputPct">Input %</label>
@@ -199,6 +209,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20260707b"></script>
+  <script src="app.js?v=20260707c"></script>
 </body>
 </html>
