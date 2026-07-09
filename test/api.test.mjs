@@ -160,6 +160,32 @@ test('?sort=<invalid> silently falls back to id (documented behavior)', async ()
   assert.deepEqual(ids, sorted);
 });
 
+test('?sort=intelligence orders by benchmark index desc (nulls last)', async () => {
+  const { body } = await getJson(makeContext('/api/v1/models', '?sort=intelligence&order=desc'));
+  // Claude Sonnet 5 (53.4) > Gemini 3.1 Pro (48.2) > unscored models (null, pushed last)
+  const scored = body.models.filter(m => m.benchmarks?.intelligence_index != null);
+  assert.equal(scored.length, 2, 'two fixture models have AA indices');
+  assert.equal(scored[0].id, 'anthropic/claude-sonnet-5');
+  assert.equal(scored[1].id, 'google/gemini-3.1-pro');
+});
+
+test('?sort=coding orders by coding index desc (nulls last)', async () => {
+  const { body } = await getJson(makeContext('/api/v1/models', '?sort=coding&order=desc'));
+  const scored = body.models.filter(m => m.benchmarks?.coding_index != null);
+  // Claude (72.4) > Gemini (60.1)
+  assert.equal(scored[0].id, 'anthropic/claude-sonnet-5');
+  assert.equal(scored[1].id, 'google/gemini-3.1-pro');
+});
+
+test('?benchmarked=true filters to scored models only', async () => {
+  const { body } = await getJson(makeContext('/api/v1/models', '?benchmarked=true'));
+  // Only gemini-3.1-pro and claude-sonnet-5 have benchmarks blocks in the fixture
+  assert.equal(body.models.length, 2);
+  for (const m of body.models) {
+    assert.ok(m.benchmarks, `model ${m.id} should have benchmarks block`);
+  }
+});
+
 test('?limit=2 paginates results', async () => {
   const { body } = await getJson(makeContext('/api/v1/models', '?limit=2'));
   assert.equal(body.total, 5);

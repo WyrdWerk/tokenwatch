@@ -48,7 +48,13 @@
         "cache_read": 0.31,
         "cache_write": null
       },
-      "zdr": true
+      "zdr": true,
+      "benchmarks": {
+        "intelligence_index": 48.2,
+        "coding_index": 60.1,
+        "agentic_index": 41.5,
+        "design_arena_best": null
+      }
     },
     {
       "id": "google/gemini-3.1-pro-preview",
@@ -98,7 +104,18 @@
         "cache_read": 0.3,
         "cache_write": 3.75
       },
-      "zdr": true
+      "zdr": true,
+      "benchmarks": {
+        "intelligence_index": 53.4,
+        "coding_index": 72.4,
+        "agentic_index": 45.7,
+        "design_arena_best": {
+          "category": "codecategories",
+          "elo": 1329,
+          "win_rate": 58,
+          "rank": 5
+        }
+      }
     },
     {
       "id": "openai/gpt-4:free",

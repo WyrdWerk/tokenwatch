@@ -241,6 +241,8 @@ export async function onRequestGet(context) {
     if (zdr === 'true') models = models.filter(m => m.zdr === true);
     const sub = params.get('sub');
     if (sub === 'true') models = models.filter(m => m.subscription === true);
+    const benchmarked = params.get('benchmarked');
+    if (benchmarked === 'true') models = models.filter(m => !!m.benchmarks);
 
     const search = params.get('search');
     if (search) {
@@ -255,7 +257,7 @@ export async function onRequestGet(context) {
 
     // Sorting
     const sort = params.get('sort') || 'id';
-    const validSorts = ['id', 'input', 'output', 'cache_read', 'cache_write', 'context', 'max_output', 'uptime', 'discount'];
+    const validSorts = ['id', 'input', 'output', 'cache_read', 'cache_write', 'context', 'max_output', 'uptime', 'discount', 'intelligence', 'coding', 'agentic'];
     const sortKey = validSorts.includes(sort) ? sort : 'id';
     const order = params.get('order') === 'desc' ? -1 : 1;
     models = [...models].sort((a, b) => {
@@ -264,6 +266,9 @@ export async function onRequestGet(context) {
       else if (sortKey === 'context') { va = a.context_length; vb = b.context_length; }
       else if (sortKey === 'max_output') { va = a.max_completion_tokens; vb = b.max_completion_tokens; }
       else if (sortKey === 'uptime') { va = a.uptime_30m; vb = b.uptime_30m; }
+      else if (sortKey === 'intelligence') { va = a.benchmarks?.intelligence_index; vb = b.benchmarks?.intelligence_index; }
+      else if (sortKey === 'coding') { va = a.benchmarks?.coding_index; vb = b.benchmarks?.coding_index; }
+      else if (sortKey === 'agentic') { va = a.benchmarks?.agentic_index; vb = b.benchmarks?.agentic_index; }
       else { va = a.pricing[sortKey]; vb = b.pricing[sortKey]; }
       if (va === null || va === undefined) return 1;
       if (vb === null || vb === undefined) return -1;
