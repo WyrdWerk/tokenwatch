@@ -40,7 +40,9 @@ import {
   normalizeProvider, dedupKey, dedupModels,
   fetchJson, fetchJsonWithRetry,
   checkCoverageDrop,
+  applyEnrichment,
 } from './lib.mjs';
+import { fetchModelsDevEnrichment } from './fetch-modelsdev.mjs';
 
 // ── direct providers config ───────────────────────────────────────────────────
 
@@ -822,6 +824,33 @@ async function main() {
     }
   }
   if (subCount > 0) console.log(`  Subscription-tagged ${subCount} of ${out.models.length} models (${SUBSCRIPTION_PROVIDERS.size} providers)`);
+
+  // ── models.dev enrichment (sidecar) ──
+  // Attaches base_url, native model_id, capability metadata, and fills
+  // cache/context nulls. Never overwrites existing values. Non-fatal.
+  const mdIndex = await fetchModelsDevEnrichment();
+  if (mdIndex.size > 0) {
+    const disagreements = [];
+    applyEnrichment(out.models, mdIndex, disagreements);
+    const enriched = out.models.filter((m) => m.modelsdev).length;
+    const tierA = out.models.filter((m) => m.modelsdev?.confidence === 'high').length;
+    const tierB = out.models.filter((m) => m.modelsdev?.confidence === 'medium').length;
+    console.log(`  models.dev enrichment: ${enriched}/${out.models.length} (Tier A: ${tierA}, Tier B: ${tierB})`);
+    if (disagreements.length > 0) {
+      console.log(`  models.dev disagreements (TW value kept): ${disagreements.length}`);
+      for (const d of disagreements.slice(0, 5)) console.log(`    ${d}`);
+      if (disagreements.length > 5) console.log(`    ... ${disagreements.length - 5} more`);
+    }
+    // Unmatched-by-provider breakdown for future normalizer tuning.
+    const unmatchedByProvider = {};
+    for (const m of out.models) {
+      if (!m.modelsdev) unmatchedByProvider[m.provider] = (unmatchedByProvider[m.provider] || 0) + 1;
+    }
+    const topUnmatched = Object.entries(unmatchedByProvider).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    if (topUnmatched.length > 0) {
+      console.log('  Unmatched by provider (top 5): ' + topUnmatched.map(([p, c]) => `${p}=${c}`).join(', '));
+    }
+  }
 
   if (dryRun) {
     console.log('\n── Summary ──');
