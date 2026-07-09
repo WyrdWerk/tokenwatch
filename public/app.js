@@ -481,6 +481,11 @@ function closeDetailModal() {
 }
 
 function copyToClipboard(text, btn) {
+  if (!navigator.clipboard) {
+    btn.textContent = '✗';
+    setTimeout(() => { btn.textContent = '📋'; }, 1200);
+    return;
+  }
   navigator.clipboard.writeText(text).then(
     () => { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '📋'; }, 1200); },
     () => { btn.textContent = '✗'; setTimeout(() => { btn.textContent = '📋'; }, 1200); }
