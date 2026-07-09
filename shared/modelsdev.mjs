@@ -163,7 +163,11 @@ function tokenize(id) {
  * Rules:
  *  - Same-provider only (caller passes only that provider's keys).
  *  - 2-token floor on both sides.
- *  - Strict subset: shorter token set must be fully contained in longer.
+ *  - Directional subset: the NEEDLE (TW id) must be a subset of the CANDIDATE
+ *    (MD id). This captures the intended case (TW base model → MD suffixed SKU
+ *    like kimi-k2.7-code → kimi-k2.7-code-fast) but rejects the wrong case
+ *    (TW suffixed SKU → MD base model like o4-mini-high → o4-mini, which would
+ *    surface the wrong model_id on the card).
  *  - Single-candidate: if more than one key matches, refuse (ambiguity).
  */
 function boundedFuzzyMatch(needle, haystack) {
@@ -173,11 +177,12 @@ function boundedFuzzyMatch(needle, haystack) {
   for (const candidate of haystack) {
     const candTokens = tokenize(candidate);
     if (candTokens.length < 2) continue;
-    const [shorter, longer] = needleTokens.length <= candTokens.length
-      ? [needleTokens, candTokens]
-      : [candTokens, needleTokens];
-    const longerSet = new Set(longer);
-    const isSubset = shorter.every((t) => longerSet.has(t));
+    // Directional: needle (TW) must be the subset of candidate (MD).
+    // This captures the intended case (TW base model → MD suffixed SKU)
+    // but rejects the wrong case (TW suffixed SKU → MD base model).
+    if (needleTokens.length > candTokens.length) continue;
+    const candSet = new Set(candTokens);
+    const isSubset = needleTokens.every((t) => candSet.has(t));
     if (isSubset) candidates.push(candidate);
   }
   return candidates.length === 1 ? candidates[0] : null;

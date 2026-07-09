@@ -105,3 +105,14 @@ test('models.dev base_url is null or a valid https URL', async () => {
     );
   }
 });
+
+test('models.dev base_url contains no unresolved template variables', async () => {
+  const data = JSON.parse(await readFile(PRICING_JSON, 'utf-8'));
+  for (const m of data.models) {
+    if (!m.modelsdev?.base_url) continue;
+    assert.ok(
+      !/\$\{/.test(m.modelsdev.base_url),
+      `${m.provider}/${m.id} has unresolved template variable in base_url: ${m.modelsdev.base_url}`
+    );
+  }
+});

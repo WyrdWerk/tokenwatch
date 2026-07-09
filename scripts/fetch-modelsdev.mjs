@@ -47,7 +47,7 @@ export function buildIndexFromApi(apiData) {
       const cost = m.cost || {};
       const limit = m.limit || {};
       index.get(twKey).set(normalized, {
-        base_url: p.api || null,
+        base_url: (p.api && !p.api.includes('${')) ? p.api : null,
         model_id: mdMid,
         doc_url: p.doc || null,
         cache_read: cost.cache_read ?? null,
