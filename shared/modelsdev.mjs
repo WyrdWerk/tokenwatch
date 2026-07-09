@@ -205,6 +205,71 @@ export function findEnrichment(twProvider, twModelId, providerIndex) {
   return null;
 }
 
+/**
+ * Apply models.dev enrichment to a list of TW models (mutates in place).
+ *
+ * Merge rule (NEVER overwrite):
+ *   - pricing.cache_read, pricing.cache_write, context_length, max_output
+ *     are filled from MD ONLY when the TW value is null/undefined.
+ *   - When both are non-null and differ, the TW value is kept and a warning
+ *     string is pushed to `log`.
+ *   - The `modelsdev` block is attached whenever any match (Tier A or B)
+ *     is found, regardless of whether cache fields were filled.
+ *
+ * `providerIndex` is the Map<twProviderKey, Map<normalizedId, record>> from
+ * the fetcher. `log` is an array that collects disagreement warnings.
+ */
+export function applyEnrichment(models, providerIndex, log = []) {
+  for (const m of models) {
+    const hit = findEnrichment(m.provider, m.id, providerIndex);
+    if (!hit) continue;
+
+    // Cache + context fills (never overwrite).
+    if (!m.pricing) m.pricing = {};
+    for (const [twField, mdField] of [
+      ['cache_read', 'cache_read'],
+      ['cache_write', 'cache_write'],
+    ]) {
+      const mdVal = hit[mdField];
+      if (mdVal === null || mdVal === undefined) continue;
+      if (m.pricing[twField] === null || m.pricing[twField] === undefined) {
+        m.pricing[twField] = mdVal;
+      } else if (m.pricing[twField] !== mdVal) {
+        log.push(`${m.provider}/${m.id} ${twField} disagreement: TW=${m.pricing[twField]} MD=${mdVal} (kept TW)`);
+      }
+    }
+    if (hit.context_length != null) {
+      if (m.context_length === null || m.context_length === undefined) {
+        m.context_length = hit.context_length;
+      } else if (m.context_length !== hit.context_length) {
+        log.push(`${m.provider}/${m.id} context_length disagreement: TW=${m.context_length} MD=${hit.context_length} (kept TW)`);
+      }
+    }
+    if (hit.max_output != null) {
+      if (m.max_completion_tokens === null || m.max_completion_tokens === undefined) {
+        m.max_completion_tokens = hit.max_output;
+      } else if (m.max_completion_tokens !== hit.max_output) {
+        log.push(`${m.provider}/${m.id} max_output disagreement: TW=${m.max_completion_tokens} MD=${hit.max_output} (kept TW)`);
+      }
+    }
+
+    // Attach the modelsdev metadata block.
+    m.modelsdev = {
+      base_url: hit.base_url,
+      model_id: hit.model_id,
+      doc_url: hit.doc_url ?? null,
+      confidence: hit.confidence,
+      source: 'models.dev',
+      release_date: hit.release_date ?? null,
+      knowledge_cutoff: hit.knowledge_cutoff ?? null,
+      description: hit.description ?? null,
+      capabilities: hit.capabilities ?? null,
+      modalities: hit.modalities ?? null,
+      open_weights: hit.open_weights ?? null,
+    };
+  }
+}
+
 const PROVIDER_NORMALIZERS = {
   cloudflare: (id) => canonicalId(id.replace(/^@cf\//, '')),
   amazon: normalizeAmazon,
