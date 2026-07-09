@@ -496,6 +496,7 @@ function showDetailModal(idx) {
   const r = state.currentRows?.[idx]?.model;
   if (!r) return;
   const md = r.modelsdev;
+  const mdModel = r.modelsdev_model;
   const parts = [];
 
   // Header
@@ -503,70 +504,85 @@ function showDetailModal(idx) {
     (md && md.confidence === 'medium' ? ' <span class="approx-badge" title="Matched by fuzzy logic against models.dev — verify before configuring">⚠ approx</span>' : '') +
     `</div>`);
 
-  // Section: Connect (only if enrichment exists)
+  // Section: Connect (only if provider-specific enrichment exists)
   if (md) {
     parts.push('<div class="detail-section"><div class="detail-section-title">Connect</div>');
+    const baseUrl = md.base_url;
     parts.push(`<div class="detail-field"><span class="detail-field-label">Base URL</span>` +
-      `<span class="detail-field-value">${esc(md.base_url || '—')} <button class="copy-btn" data-copy="${esc(md.base_url || '')}">📋</button></span></div>`);
+      `<span class="detail-field-value">${baseUrl ? esc(baseUrl) + ' <button class="copy-btn" data-copy="' + esc(baseUrl) + '">📋</button>' : '<span class="detail-no-url">Provider uses its own SDK package — no generic base URL</span>'}</span></div>`);
     parts.push(`<div class="detail-field"><span class="detail-field-label">Model ID</span>` +
       `<span class="detail-field-value">${esc(md.model_id || '—')} <button class="copy-btn" data-copy="${esc(md.model_id || '')}">📋</button></span></div>`);
     if (md.doc_url) {
       parts.push(`<div class="detail-field"><span class="detail-field-label">Docs</span>` +
-        `<span class="detail-field-value"><a href="${esc(md.doc_url)}" target="_blank" rel="noopener">${esc(md.doc_url)} ↗</a></span></div>`);
+        `<span class="detail-field-value"><a href="${esc(md.doc_url)}">${esc(md.doc_url)} ↗</a></span></div>`);
     }
     parts.push('</div>');
   } else {
-    parts.push('<div class="detail-section"><div class="detail-no-enrich">Direct configuration not available for this provider — use OpenRouter.</div></div>');
+    parts.push('<div class="detail-section"><div class="detail-no-enrich">Direct configuration not available for this provider.</div></div>');
   }
 
   // Section: Pricing
   const p = r.pricing || {};
   parts.push('<div class="detail-section"><div class="detail-section-title">Pricing ($/M tokens)</div>');
   parts.push('<div class="detail-pricing-grid">');
-  parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Input</div><div class="detail-pricing-cell-value">${p.input != null ? '$' + p.input : '—'}</div></div>`);
-  parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Output</div><div class="detail-pricing-cell-value">${p.output != null ? '$' + p.output : '—'}</div></div>`);
-  parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Cache read</div><div class="detail-pricing-cell-value">${p.cache_read != null ? '$' + p.cache_read : '—'}</div></div>`);
-  parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Cache write</div><div class="detail-pricing-cell-value">${p.cache_write != null ? '$' + p.cache_write : '—'}</div></div>`);
+  parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Input</div><div class="detail-pricing-cell-value">${p.input != null ? fmtPrice(p.input) : '—'}</div></div>`);
+  parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Output</div><div class="detail-pricing-cell-value">${p.output != null ? fmtPrice(p.output) : '—'}</div></div>`);
+  parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Cache read</div><div class="detail-pricing-cell-value">${p.cache_read != null ? fmtPrice(p.cache_read) : '—'}</div></div>`);
+  parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Cache write</div><div class="detail-pricing-cell-value">${p.cache_write != null ? fmtPrice(p.cache_write) : '—'}</div></div>`);
   parts.push('</div></div>');
 
-  // Section: Capabilities (only if enrichment exists)
-  if (md && md.capabilities) {
-    const caps = md.capabilities;
-    const trueCaps = [];
-    if (caps.reasoning) trueCaps.push('Reasoning');
-    if (caps.tool_call) trueCaps.push('Tool call');
-    if (caps.structured_output) trueCaps.push('Structured output');
-    if (caps.attachment) trueCaps.push('Attachment');
-    if (caps.temperature) trueCaps.push('Temperature');
-    parts.push('<div class="detail-section"><div class="detail-section-title">Capabilities</div>');
-    if (trueCaps.length > 0) {
-      parts.push('<div class="detail-capabilities">' + trueCaps.map((c) => `<span class="detail-capability">✓ ${esc(c)}</span>`).join('') + '</div>');
+  // Section: Capabilities + About (from provider-specific OR model-level fallback)
+  // Prefer md (provider-specific); fall back to md_model (model-level from any provider).
+  const meta = md || mdModel;
+  if (meta && (meta.capabilities || meta.description || meta.modalities || meta.release_date)) {
+    const usingFallback = !md && !!mdModel;
+
+    // Section: Capabilities
+    if (meta.capabilities || meta.modalities) {
+      parts.push('<div class="detail-section"><div class="detail-section-title">Capabilities</div>');
+      if (meta.capabilities) {
+        const caps = meta.capabilities;
+        const trueCaps = [];
+        if (caps.reasoning) trueCaps.push('Reasoning');
+        if (caps.tool_call) trueCaps.push('Tool call');
+        if (caps.structured_output) trueCaps.push('Structured output');
+        if (caps.attachment) trueCaps.push('Attachment');
+        if (caps.temperature) trueCaps.push('Temperature');
+        if (trueCaps.length > 0) {
+          parts.push('<div class="detail-capabilities">' + trueCaps.map((c) => `<span class="detail-capability">✓ ${esc(c)}</span>`).join('') + '</div>');
+        }
+      }
+      if (meta.modalities) {
+        const inp = (meta.modalities.input || []).join(', ');
+        const outp = (meta.modalities.output || []).join(', ');
+        parts.push(`<div class="detail-modalality-line">Input: ${esc(inp)} → Output: ${esc(outp)}</div>`);
+      }
+      parts.push('</div>');
     }
-    if (md.modalities) {
-      const inp = (md.modalities.input || []).join(', ');
-      const out = (md.modalities.output || []).join(', ');
-      parts.push(`<div class="detail-modalality-line">Input: ${esc(inp)} → Output: ${esc(out)}</div>`);
-    }
-    parts.push('</div>');
 
     // Section: About
     parts.push('<div class="detail-section"><div class="detail-section-title">About</div>');
-    if (md.description) {
-      const desc = md.description.length > 200 ? md.description.slice(0, 200) + '…' : md.description;
-      parts.push(`<div class="detail-description" title="${esc(md.description)}">${esc(desc)}</div>`);
+    if (meta.description) {
+      const desc = meta.description.length > 200 ? meta.description.slice(0, 200) + '…' : meta.description;
+      parts.push(`<div class="detail-description" title="${esc(meta.description)}">${esc(desc)}</div>`);
     }
     const provBits = [];
-    if (md.release_date) provBits.push('Released ' + esc(md.release_date));
-    if (md.knowledge_cutoff) provBits.push('Knowledge cutoff ' + esc(md.knowledge_cutoff));
-    if (md.open_weights === true) provBits.push('Open weights ✓');
+    if (meta.release_date) provBits.push('Released ' + esc(meta.release_date));
+    if (meta.knowledge_cutoff) provBits.push('Knowledge cutoff ' + esc(meta.knowledge_cutoff));
+    if (meta.open_weights === true) provBits.push('Open weights ✓');
     if (provBits.length > 0) parts.push(`<div class="detail-provenance">${provBits.join(' · ')}</div>`);
+    if (meta.doc_url) {
+      parts.push(`<div class="detail-provenance"><a href="${esc(meta.doc_url)}">Provider docs ↗</a></div>`);
+    }
+    if (usingFallback) {
+      parts.push('<div class="detail-disclaimer">⚠ Model details sourced from models.dev (different provider). Configuration above is not available for this provider — verify on the provider\'s site.</div>');
+    }
     parts.push('</div>');
   }
 
   // Footer actions
   parts.push('<div class="detail-actions">');
   parts.push(`<button type="button" id="detailAddCompare">Add to compare</button>`);
-  parts.push(`<a href="https://openrouter.ai/model/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">Open in OpenRouter ↗</a>`);
   parts.push('</div>');
 
   els.detailTitle.textContent = r.name || r.id;
@@ -886,19 +902,21 @@ function providerName(key, display) {
   return display || state.data.providers.find((p) => p.key === key)?.name || key;
 }
 
+// Round to 3 decimals — kills IEEE 754 float noise (0.030000000000000002 → 0.03,
+// 0.024999999999999998 → 0.025). Per-unit pricing only; aggregate cost uses fmtCost.
+function round3(n) { return Math.round((n + Number.EPSILON) * 1000) / 1000; }
+
 function fmtPrice(p) {
   if (p === null || p === undefined) return `<span class="missing">—</span>`;
   if (p === 0) return `<span class="cost-zero">Free</span>`;
-  if (p < 0.01) return `$${p.toFixed(4)}`;
-  return `$${p.toFixed(2)}`;
+  const r = round3(p);
+  return `$${r}`;
 }
 
 function fmtCost(c) {
   if (c === null) return `<span class="missing">N/A</span>`;
   if (c === 0) return `<span class="cost-zero">$0.00</span>`;
-  if (c < 0.01) return `$${c.toFixed(4)}`;
-  if (c < 1) return `$${c.toFixed(4)}`;
-  return `$${c.toFixed(2)}`;
+  return `$${round3(c)}`;
 }
 
 function esc(s) {

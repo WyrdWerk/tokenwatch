@@ -218,61 +218,100 @@ export function findEnrichment(twProvider, twModelId, providerIndex) {
  *     are filled from MD ONLY when the TW value is null/undefined.
  *   - When both are non-null and differ, the TW value is kept and a warning
  *     string is pushed to `log`.
- *   - The `modelsdev` block is attached whenever any match (Tier A or B)
- *     is found, regardless of whether cache fields were filled.
+ *   - The `modelsdev` block is attached whenever any provider-specific match
+ *     (Tier A or B) is found, regardless of whether cache fields were filled.
+ *   - If NO provider-specific match exists, a `modelsdev_model` block is
+ *     attached instead — model-level metadata (description, capabilities,
+ *     modalities) from ANY provider hosting the same canonical model. Never
+ *     carries base_url or model_id (those are provider-specific and can't be
+ *     safely borrowed). The frontend shows these with a disclaimer.
  *
  * `providerIndex` is the Map<twProviderKey, Map<normalizedId, record>> from
  * the fetcher. `log` is an array that collects disagreement warnings.
  */
 export function applyEnrichment(models, providerIndex, log = []) {
+  // Build a model-level fallback index: canonicalId → first record seen.
+  // Used when no provider-specific match exists, to still surface model
+  // metadata (description, capabilities) from any hosting provider.
+  const modelIndex = new Map();
+  for (const inner of providerIndex.values()) {
+    for (const [normId, rec] of inner) {
+      // normId is already canonicalId-ified per the TW provider's normalizer.
+      // For the model-level index we need a provider-agnostic canonical key;
+      // normId serves that purpose well enough (normalizers mostly just strip
+      // prefixes, the underlying model name is preserved).
+      if (!modelIndex.has(normId)) modelIndex.set(normId, rec);
+    }
+  }
+
+  let modelFallbackCount = 0;
   for (const m of models) {
     const hit = findEnrichment(m.provider, m.id, providerIndex);
-    if (!hit) continue;
 
-    // Cache + context fills (never overwrite).
-    if (!m.pricing) m.pricing = {};
-    for (const [twField, mdField] of [
-      ['cache_read', 'cache_read'],
-      ['cache_write', 'cache_write'],
-    ]) {
-      const mdVal = hit[mdField];
-      if (mdVal === null || mdVal === undefined) continue;
-      if (m.pricing[twField] === null || m.pricing[twField] === undefined) {
-        m.pricing[twField] = mdVal;
-      } else if (m.pricing[twField] !== mdVal) {
-        log.push(`${m.provider}/${m.id} ${twField} disagreement: TW=${m.pricing[twField]} MD=${mdVal} (kept TW)`);
+    if (hit) {
+      // Provider-specific match — full enrichment (existing behavior).
+      if (!m.pricing) m.pricing = {};
+      for (const [twField, mdField] of [
+        ['cache_read', 'cache_read'],
+        ['cache_write', 'cache_write'],
+      ]) {
+        const mdVal = hit[mdField];
+        if (mdVal === null || mdVal === undefined) continue;
+        if (m.pricing[twField] === null || m.pricing[twField] === undefined) {
+          m.pricing[twField] = mdVal;
+        } else if (m.pricing[twField] !== mdVal) {
+          log.push(`${m.provider}/${m.id} ${twField} disagreement: TW=${m.pricing[twField]} MD=${mdVal} (kept TW)`);
+        }
       }
-    }
-    if (hit.context_length != null) {
-      if (m.context_length === null || m.context_length === undefined) {
-        m.context_length = hit.context_length;
-      } else if (m.context_length !== hit.context_length) {
-        log.push(`${m.provider}/${m.id} context_length disagreement: TW=${m.context_length} MD=${hit.context_length} (kept TW)`);
+      if (hit.context_length != null) {
+        if (m.context_length === null || m.context_length === undefined) {
+          m.context_length = hit.context_length;
+        } else if (m.context_length !== hit.context_length) {
+          log.push(`${m.provider}/${m.id} context_length disagreement: TW=${m.context_length} MD=${hit.context_length} (kept TW)`);
+        }
       }
-    }
-    if (hit.max_output != null) {
-      if (m.max_completion_tokens === null || m.max_completion_tokens === undefined) {
-        m.max_completion_tokens = hit.max_output;
-      } else if (m.max_completion_tokens !== hit.max_output) {
-        log.push(`${m.provider}/${m.id} max_output disagreement: TW=${m.max_completion_tokens} MD=${hit.max_output} (kept TW)`);
+      if (hit.max_output != null) {
+        if (m.max_completion_tokens === null || m.max_completion_tokens === undefined) {
+          m.max_completion_tokens = hit.max_output;
+        } else if (m.max_completion_tokens !== hit.max_output) {
+          log.push(`${m.provider}/${m.id} max_output disagreement: TW=${m.max_completion_tokens} MD=${hit.max_output} (kept TW)`);
+        }
       }
+
+      m.modelsdev = {
+        base_url: hit.base_url,
+        model_id: hit.model_id,
+        doc_url: hit.doc_url ?? null,
+        confidence: hit.confidence,
+        source: 'models.dev',
+        release_date: hit.release_date ?? null,
+        knowledge_cutoff: hit.knowledge_cutoff ?? null,
+        description: hit.description ?? null,
+        capabilities: hit.capabilities ?? null,
+        modalities: hit.modalities ?? null,
+        open_weights: hit.open_weights ?? null,
+      };
+      continue;
     }
 
-    // Attach the modelsdev metadata block.
-    m.modelsdev = {
-      base_url: hit.base_url,
-      model_id: hit.model_id,
-      doc_url: hit.doc_url ?? null,
-      confidence: hit.confidence,
-      source: 'models.dev',
-      release_date: hit.release_date ?? null,
-      knowledge_cutoff: hit.knowledge_cutoff ?? null,
-      description: hit.description ?? null,
-      capabilities: hit.capabilities ?? null,
-      modalities: hit.modalities ?? null,
-      open_weights: hit.open_weights ?? null,
-    };
+    // No provider-specific match — try model-level fallback.
+    const normId = normalizeForMatch(m.provider, m.id);
+    const modelHit = modelIndex.get(normId);
+    if (modelHit) {
+      m.modelsdev_model = {
+        source: 'models.dev (model-level fallback)',
+        release_date: modelHit.release_date ?? null,
+        knowledge_cutoff: modelHit.knowledge_cutoff ?? null,
+        description: modelHit.description ?? null,
+        capabilities: modelHit.capabilities ?? null,
+        modalities: modelHit.modalities ?? null,
+        open_weights: modelHit.open_weights ?? null,
+        doc_url: modelHit.doc_url ?? null,
+      };
+      modelFallbackCount++;
+    }
   }
+  return { modelFallbackCount };
 }
 
 const PROVIDER_NORMALIZERS = {

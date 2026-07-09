@@ -650,6 +650,15 @@ footer {
   font-size: 0.85rem; color: var(--text-dim, #888); font-style: italic;
   padding: 0.5rem 0;
 }
+.detail-no-url {
+  font-style: italic; color: var(--text-dim, #888); font-size: 0.78rem;
+}
+.detail-disclaimer {
+  font-size: 0.75rem; color: var(--text-dim, #888); font-style: italic;
+  margin-top: 0.6rem; padding: 0.5rem; border-left: 2px solid var(--yellow, #e8a838);
+  background: color-mix(in srgb, var(--yellow, #e8a838) 8%, transparent);
+  line-height: 1.4;
+}
 .approx-badge {
   display: inline-block; font-size: 0.65rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.03em;

@@ -831,20 +831,21 @@ async function main() {
   const mdIndex = await fetchModelsDevEnrichment();
   if (mdIndex.size > 0) {
     const disagreements = [];
-    applyEnrichment(out.models, mdIndex, disagreements);
+    const { modelFallbackCount } = applyEnrichment(out.models, mdIndex, disagreements);
     const enriched = out.models.filter((m) => m.modelsdev).length;
     const tierA = out.models.filter((m) => m.modelsdev?.confidence === 'high').length;
     const tierB = out.models.filter((m) => m.modelsdev?.confidence === 'medium').length;
-    console.log(`  models.dev enrichment: ${enriched}/${out.models.length} (Tier A: ${tierA}, Tier B: ${tierB})`);
+    const modelFallback = out.models.filter((m) => m.modelsdev_model).length;
+    console.log(`  models.dev enrichment: ${enriched}/${out.models.length} (Tier A: ${tierA}, Tier B: ${tierB}), +${modelFallback} model-level fallback`);
     if (disagreements.length > 0) {
       console.log(`  models.dev disagreements (TW value kept): ${disagreements.length}`);
       for (const d of disagreements.slice(0, 5)) console.log(`    ${d}`);
       if (disagreements.length > 5) console.log(`    ... ${disagreements.length - 5} more`);
     }
-    // Unmatched-by-provider breakdown for future normalizer tuning.
+    // Unmatched-by-provider breakdown (models with neither modelsdev nor modelsdev_model).
     const unmatchedByProvider = {};
     for (const m of out.models) {
-      if (!m.modelsdev) unmatchedByProvider[m.provider] = (unmatchedByProvider[m.provider] || 0) + 1;
+      if (!m.modelsdev && !m.modelsdev_model) unmatchedByProvider[m.provider] = (unmatchedByProvider[m.provider] || 0) + 1;
     }
     const topUnmatched = Object.entries(unmatchedByProvider).sort((a, b) => b[1] - a[1]).slice(0, 5);
     if (topUnmatched.length > 0) {

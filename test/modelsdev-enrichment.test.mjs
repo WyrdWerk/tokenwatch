@@ -80,3 +80,42 @@ test('applyEnrichment: cache_write=0 from MD is a real value, filled into TW nul
   applyEnrichment(models, idx, []);
   assert.equal(models[0].pricing.cache_write, 0, '0 filled (distinct from null)');
 });
+
+// ── model-level fallback (no provider match, but model exists under another provider) ──
+
+test('applyEnrichment: model-level fallback attaches modelsdev_model when no provider match', () => {
+  // TW model is on 'hyper' (no provider match on MD), but 'deepseek' hosts the same model.
+  const models = [{ id: 'deepseek-v4-flash', provider: 'hyper', pricing: { input: 0.14, output: 0.28, cache_read: null, cache_write: null } }];
+  const idx = buildIdx([
+    ['deepseek', 'deepseek-v4-flash', { base_url: 'https://api.deepseek.com', model_id: 'deepseek-v4-flash', cache_read: 0.0028, cache_write: null, context_length: 1000000, max_output: null, description: 'Fast DeepSeek model', capabilities: { reasoning: true }, modalities: { input: ['text'], output: ['text'] }, open_weights: true, release_date: '2026-01-01' }],
+  ]);
+  const result = applyEnrichment(models, idx, []);
+  assert.equal(models[0].modelsdev, undefined, 'no provider-specific match');
+  assert.ok(models[0].modelsdev_model, 'model-level fallback attached');
+  assert.equal(models[0].modelsdev_model.description, 'Fast DeepSeek model');
+  assert.equal(models[0].modelsdev_model.capabilities.reasoning, true);
+  assert.equal(models[0].modelsdev_model.base_url, undefined, 'fallback never carries base_url');
+  assert.equal(models[0].modelsdev_model.model_id, undefined, 'fallback never carries model_id');
+  assert.equal(result.modelFallbackCount, 1);
+});
+
+test('applyEnrichment: model-level fallback does NOT fill pricing (provider-specific only)', () => {
+  const models = [{ id: 'deepseek-v4-flash', provider: 'hyper', pricing: { input: 0.14, output: 0.28, cache_read: null, cache_write: null } }];
+  const idx = buildIdx([
+    ['deepseek', 'deepseek-v4-flash', { base_url: 'https://api.deepseek.com', model_id: 'deepseek-v4-flash', cache_read: 0.0028, cache_write: 0.05, context_length: 1000000, max_output: 384000 }],
+  ]);
+  applyEnrichment(models, idx, []);
+  assert.equal(models[0].pricing.cache_read, null, 'fallback does not fill cache_read');
+  assert.equal(models[0].pricing.cache_write, null, 'fallback does not fill cache_write');
+});
+
+test('applyEnrichment: provider-specific match wins over model-level fallback', () => {
+  const models = [{ id: 'deepseek/deepseek-v4-flash', provider: 'deepseek', pricing: { input: 0.14, output: 0.28, cache_read: null, cache_write: null } }];
+  const idx = buildIdx([
+    ['deepseek', 'deepseek-v4-flash', { base_url: 'https://api.deepseek.com', model_id: 'deepseek-v4-flash', cache_read: 0.0028, cache_write: null, context_length: null, max_output: null, description: 'Direct' }],
+  ]);
+  applyEnrichment(models, idx, []);
+  assert.ok(models[0].modelsdev, 'provider-specific match attached');
+  assert.equal(models[0].modelsdev_model, undefined, 'no fallback when provider match exists');
+  assert.equal(models[0].modelsdev.description, 'Direct');
+});
