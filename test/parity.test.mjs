@@ -116,3 +116,32 @@ test('models.dev base_url contains no unresolved template variables', async () =
     );
   }
 });
+
+// ── Benchmark enrichment regression guards ───────────────────────────────────
+
+test('benchmark enrichment coverage floor (≥65% of catalog)', async () => {
+  const data = JSON.parse(await readFile(PRICING_JSON, 'utf-8'));
+  const scored = data.models.filter((m) => m.benchmarks).length;
+  const pct = scored / data.models.length;
+  assert.ok(pct >= 0.65,
+    `benchmark coverage ${(pct * 100).toFixed(1)}% below 65% floor — a matcher may have regressed`);
+});
+
+test('benchmark AA indices coverage floor (≥48% of catalog)', async () => {
+  const data = JSON.parse(await readFile(PRICING_JSON, 'utf-8'));
+  const aaScored = data.models.filter((m) => m.benchmarks?.intelligence_index !== null && m.benchmarks?.intelligence_index !== undefined).length;
+  const pct = aaScored / data.models.length;
+  assert.ok(pct >= 0.48,
+    `AA-index coverage ${(pct * 100).toFixed(1)}% below 48% floor — conservativeBase may have regressed`);
+});
+
+test('benchmarks field structure is correct when present', async () => {
+  const data = JSON.parse(await readFile(PRICING_JSON, 'utf-8'));
+  const withBench = data.models.filter((m) => m.benchmarks);
+  assert.ok(withBench.length > 0, 'at least one model should have benchmarks');
+  for (const m of withBench.slice(0, 50)) {
+    const b = m.benchmarks;
+    assert.ok(['intelligence_index', 'coding_index', 'agentic_index', 'design_arena_best'].every(k => k in b),
+      `${m.id} benchmarks block missing expected keys`);
+  }
+});
