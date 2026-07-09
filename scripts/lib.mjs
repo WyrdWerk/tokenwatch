@@ -74,6 +74,11 @@ export function orgFromName(name) {
 export { canonicalId, orgLookupKey } from '../shared/normalize.mjs';
 import { canonicalId, orgLookupKey } from '../shared/normalize.mjs';
 
+// models.dev reconciliation helpers live in shared/modelsdev.mjs (pure, no
+// node: imports) so they could in principle be bundled into the Worker too.
+// Re-exported here for fetch-modelsdev.mjs to consume.
+export { PROVIDER_MAP, normalizeForMatch, findEnrichment, applyEnrichment } from '../shared/modelsdev.mjs';
+
 // ── provider-name normalization ───────────────────────────────────────────────
 
 export const PROVIDER_NAME_MAP = {
