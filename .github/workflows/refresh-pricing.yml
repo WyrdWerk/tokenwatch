@@ -43,9 +43,13 @@ jobs:
         run: node scripts/fetch-pricing.mjs
 
       - name: Fetch & normalize image pricing
+        env:
+          FAL_API_KEY: ${{ secrets.FAL_API_KEY }}
         run: node scripts/fetch-images.mjs
 
       - name: Fetch & normalize video pricing
+        env:
+          FAL_API_KEY: ${{ secrets.FAL_API_KEY }}
         run: node scripts/fetch-videos.mjs
 
       - name: Commit pricing data

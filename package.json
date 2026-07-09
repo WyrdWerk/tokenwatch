@@ -4,6 +4,7 @@
   "description": "TokenWatch — compare pay-as-you-go LLM inference pricing across providers",
   "scripts": {
     "fetch": "node scripts/fetch-pricing.mjs",
+    "fetch:fal": "node scripts/fetch-fal.mjs",
     "fetch:images": "node scripts/fetch-images.mjs",
     "fetch:videos": "node scripts/fetch-videos.mjs",
     "fetch:all": "node scripts/fetch-pricing.mjs && node scripts/fetch-images.mjs && node scripts/fetch-videos.mjs",
