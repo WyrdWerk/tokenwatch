@@ -41,6 +41,8 @@ import {
   fetchJson, fetchJsonWithRetry,
   checkCoverageDrop,
   applyEnrichment,
+  applyBenchmarkEnrichment,
+  buildBenchmarkIndex,
 } from './lib.mjs';
 import { fetchModelsDevEnrichment } from './fetch-modelsdev.mjs';
 
@@ -451,7 +453,7 @@ async function fetchOpenRouter() {
   );
 
   console.log(`  OpenRouter: ${priced.length} backend rows from ${textModels.length - failed}/${textModels.length} models (${failed} failed)`);
-  return { models: priced, modelCount: textModels.length, failed };
+  return { models: priced, modelCount: textModels.length, failed, orModels: allModels };
 }
 
 /**
@@ -728,8 +730,10 @@ async function main() {
   }
 
   // ── Tier 2: OpenRouter de-aggregated ──
+  let orRawModels = []; // hoisted for benchmark enrichment (sidecar pass below)
   try {
     const or = await fetchOpenRouter();
+    orRawModels = or.orModels || [];
     out.providers.push({ key: 'openrouter', name: 'OpenRouter (de-aggregated)', model_count: or.models.length, status: 'ok' });
     tieredModels.push(...or.models);
     console.log(`✓ OpenRouter: ${or.models.length} backend rows`);
@@ -850,6 +854,19 @@ async function main() {
     const topUnmatched = Object.entries(unmatchedByProvider).sort((a, b) => b[1] - a[1]).slice(0, 5);
     if (topUnmatched.length > 0) {
       console.log('  Unmatched by provider (top 5): ' + topUnmatched.map(([p, c]) => `${p}=${c}`).join(', '));
+    }
+  }
+
+  // ── Benchmark enrichment (sidecar) ──
+  // Attaches Artificial Analysis indices (intelligence/coding/agentic) and
+  // design_arena Elo from OpenRouter's /models benchmarks field. Conservative
+  // variant matching — quant/SKU suffix strip only. Non-fatal.
+  if (orRawModels.length > 0) {
+    const benchIndex = buildBenchmarkIndex(orRawModels);
+    if (benchIndex.size > 0) {
+      const { matchedCount, aaCount, arenaCount } = applyBenchmarkEnrichment(out.models, benchIndex);
+      const total = out.models.length;
+      console.log(`  Benchmark enrichment: ${matchedCount}/${total} matched (${aaCount} AA indices, ${arenaCount} design_arena only, ${total - matchedCount} unscored)`);
     }
   }
 
