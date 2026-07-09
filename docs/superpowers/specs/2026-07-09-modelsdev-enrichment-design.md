@@ -371,7 +371,7 @@ Gives continuous visibility into match-rate health. If an MD schema change drops
 The design supports incremental delivery:
 
 **Phase 1 — Pipeline foundation (no UI):**
-- `shared/modelsdev.mjs` (provider map + 5 normalizers + 2-tier matcher)
+- `shared/modelsdev.mjs` (provider map + normalizers for the 4 non-default ID-format patterns: cloudflare, amazon-bedrock, fireworks, minimax + 2-tier matcher; ~28 matched providers use default `canonicalId` and need no bespoke normalizer)
 - `scripts/fetch-modelsdev.mjs` (single fetch + index + enrich)
 - Pipeline integration in `fetch-pricing.mjs`
 - `test/modelsdev-normalizers.test.mjs` + `test/modelsdev-enrichment.test.mjs` + `test/fixtures/modelsdev-api.json`
