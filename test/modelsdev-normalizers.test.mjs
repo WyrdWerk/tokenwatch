@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { PROVIDER_MAP, REVERSE_PROVIDER_MAP, normalizeForMatch } from '../shared/modelsdev.mjs';
+import { PROVIDER_MAP, REVERSE_PROVIDER_MAP, normalizeForMatch, findEnrichment } from '../shared/modelsdev.mjs';
 
 // ── PROVIDER_MAP ──────────────────────────────────────────────────────────────
 
@@ -117,4 +117,78 @@ test('normalizeForMatch fireworks: PRESERVES -fast SKU suffix (regression)', () 
 test('normalizeForMatch minimax: strips duplicated brand prefix', () => {
   assert.equal(normalizeForMatch('minimax', 'MiniMax-M2.1'), 'm2.1');
   assert.equal(normalizeForMatch('minimax', 'MiniMax-M2.5-highspeed'), 'm2.5-highspeed');
+});
+
+// ── findEnrichment: two-tier matcher ─────────────────────────────────────────
+
+function buildIdx(entries) {
+  // entries: [[twProvider, normalizedId, record], ...]
+  const idx = new Map();
+  for (const [prov, nid, rec] of entries) {
+    if (!idx.has(prov)) idx.set(prov, new Map());
+    idx.get(prov).set(nid, rec);
+  }
+  return idx;
+}
+
+test('findEnrichment Tier A: exact normalized match returns confidence high', () => {
+  const idx = buildIdx([
+    ['moonshot', 'kimi-k2.7-code', { base_url: 'https://a', model_id: 'kimi-k2.7-code' }],
+  ]);
+  const r = findEnrichment('moonshot', 'moonshotai/kimi-k2.7-code', idx);
+  assert.equal(r.confidence, 'high');
+  assert.equal(r.base_url, 'https://a');
+});
+
+test('findEnrichment Tier A: no provider in index returns null', () => {
+  const idx = buildIdx([]);
+  const r = findEnrichment('moonshot', 'moonshotai/kimi-k2.7-code', idx);
+  assert.equal(r, null);
+});
+
+test('findEnrichment Tier B: fuzzy subset match returns confidence medium', () => {
+  // TW 'kimi-k2.7-code' tokens [kimi, k2.7, code] ⊂ MD 'kimi-k2.7-code-fast' tokens
+  const idx = buildIdx([
+    ['fireworks', 'kimi-k2.7-code-fast', { base_url: 'https://fw', model_id: 'acc/fw/routers/kimi-k2p7-code-fast' }],
+  ]);
+  const r = findEnrichment('fireworks', 'kimi-k2.7-code', idx);
+  assert.equal(r.confidence, 'medium');
+  assert.equal(r.base_url, 'https://fw');
+});
+
+test('findEnrichment Tier B: refuses if needle has fewer than 2 tokens (length floor)', () => {
+  const idx = buildIdx([
+    ['openai', 'o3-mini', { base_url: 'https://o' }],
+  ]);
+  // 'openai/o3' → normalized 'o3' → 1 token → refuse fuzzy
+  const r = findEnrichment('openai', 'o3', idx);
+  assert.equal(r, null);
+});
+
+test('findEnrichment Tier B: refuses on ambiguity (2 candidates)', () => {
+  const idx = buildIdx([
+    ['fireworks', 'kimi-k2.7-code-fast', { base_url: 'https://a' }],
+    ['fireworks', 'kimi-k2.7-code-turbo', { base_url: 'https://b' }],
+  ]);
+  // 'kimi-k2.7-code' is subset of both → ambiguous → refuse
+  const r = findEnrichment('fireworks', 'kimi-k2.7-code', idx);
+  assert.equal(r, null);
+});
+
+test('findEnrichment Tier B: refuses on non-subset (different tokens)', () => {
+  const idx = buildIdx([
+    ['openai', 'gpt-5.5', { base_url: 'https://o' }],
+  ]);
+  // 'gpt-5' tokens [gpt, 5] vs 'gpt-5.5' tokens [gpt, 5.5] — NOT a subset
+  const r = findEnrichment('openai', 'gpt-5', idx);
+  assert.equal(r, null);
+});
+
+test('findEnrichment never crosses providers', () => {
+  // TW 'fireworks' needle should NOT match 'togetherai' haystack entries
+  const idx = buildIdx([
+    ['together', 'kimi-k2.7-code', { base_url: 'https://together' }],
+  ]);
+  const r = findEnrichment('fireworks', 'kimi-k2.7-code', idx);
+  assert.equal(r, null);
 });

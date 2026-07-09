@@ -144,6 +144,67 @@ function normalizeMinimax(id) {
   return canonicalId(noBrand);
 }
 
+/**
+ * Tokenize an ID for fuzzy matching. Splits on / - _ and drops empty segments.
+ *
+ * NOTE: '.' is intentionally NOT a delimiter. Version subnumbers (e.g. '5.5',
+ * 'k2.7') must survive as single tokens so that 'gpt-5' does not falsely
+ * subset-match 'gpt-5.5' (a classic wrong-URL hazard). Splitting on '.' would
+ * turn 'gpt-5.5' into [gpt, 5, 5], making 'gpt-5' ([gpt, 5]) a spurious subset.
+ */
+function tokenize(id) {
+  return id.split(/[\/\-_]/).filter(Boolean);
+}
+
+/**
+ * Bounded fuzzy fallback. Returns a single matching key from the haystack, or
+ * null if no safe match exists.
+ *
+ * Rules:
+ *  - Same-provider only (caller passes only that provider's keys).
+ *  - 2-token floor on both sides.
+ *  - Strict subset: shorter token set must be fully contained in longer.
+ *  - Single-candidate: if more than one key matches, refuse (ambiguity).
+ */
+function boundedFuzzyMatch(needle, haystack) {
+  const needleTokens = tokenize(needle);
+  if (needleTokens.length < 2) return null;
+  const candidates = [];
+  for (const candidate of haystack) {
+    const candTokens = tokenize(candidate);
+    if (candTokens.length < 2) continue;
+    const [shorter, longer] = needleTokens.length <= candTokens.length
+      ? [needleTokens, candTokens]
+      : [candTokens, needleTokens];
+    const longerSet = new Set(longer);
+    const isSubset = shorter.every((t) => longerSet.has(t));
+    if (isSubset) candidates.push(candidate);
+  }
+  return candidates.length === 1 ? candidates[0] : null;
+}
+
+/**
+ * Two-tier matcher. Returns the enrichment record with a `confidence` field
+ * ('high' for exact normalized, 'medium' for bounded fuzzy), or null if no match.
+ *
+ * `providerIndex` is a Map<twProviderKey, Map<normalizedId, enrichmentRecord>>,
+ * built by the fetcher script. Cross-provider matching is impossible by
+ * construction (each provider has its own inner Map).
+ */
+export function findEnrichment(twProvider, twModelId, providerIndex) {
+  const providerMap = providerIndex.get(twProvider);
+  if (!providerMap) return null;
+  const exactNorm = normalizeForMatch(twProvider, twModelId);
+  if (providerMap.has(exactNorm)) {
+    return { ...providerMap.get(exactNorm), confidence: 'high' };
+  }
+  const fuzzy = boundedFuzzyMatch(exactNorm, [...providerMap.keys()]);
+  if (fuzzy) {
+    return { ...providerMap.get(fuzzy), confidence: 'medium' };
+  }
+  return null;
+}
+
 const PROVIDER_NORMALIZERS = {
   cloudflare: (id) => canonicalId(id.replace(/^@cf\//, '')),
   amazon: normalizeAmazon,
