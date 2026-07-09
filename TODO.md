@@ -106,3 +106,17 @@ The **Advanced: cache write** collapsible section allows cache-population tokens
 **E2E tested**: all 9 endpoints verified locally via `wrangler pages dev` — 34 test cases covering list/detail/filter/sort/404/CORS for text, image, and video catalogs.
 
 **Docs updated**: README.md, AGENTS.md, TODO.md all reflect the new API surface.
+
+### models.dev enrichment — ✅ IMPLEMENTED
+**Status**: Implemented. ~385 of 920 text models (42%) enriched with base URL, native model ID, capability metadata, and cache-pricing null-fills. The sub-60% yield is expected — DeepInfra (112 models) and ~26 smaller OR-exclusive providers are structurally absent from models.dev, so they can never match. This is documented in the design spec.
+
+**What's done**:
+- `shared/modelsdev.mjs`: provider map (48 entries), 4 bespoke ID normalizers (cloudflare, amazon-bedrock, fireworks, minimax), two-tier matcher (exact + bounded fuzzy)
+- `scripts/fetch-modelsdev.mjs`: sidecar fetcher, non-fatal on failure
+- Pipeline integration in `fetch-pricing.mjs` (runs after subscription tagging)
+- Frontend detail modal: whole-row clickable, 4 conditional sections (connect/pricing/capabilities/about), copy-to-clipboard, ⚠ pill for Tier B matches
+- Test suite: `test/modelsdev-normalizers.test.mjs`, `test/modelsdev-enrichment.test.mjs`, 3 new parity regression tests
+
+**Remaining**:
+- Image/video tab detail cards (deferred — models.dev has no image/video pricing)
+- Tuning normalizers for providers with high unmatched counts (DeepInfra has 0 models on MD; others may need format-specific normalizers as miss patterns emerge from logs)

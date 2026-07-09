@@ -26,6 +26,7 @@ Static site comparing pay-as-you-go LLM API pricing across inference providers. 
   - **Tier 3 — CSV/hardcoded**: Hyper, Makora, Xiaomimimo (CSV), OpenCode Go (hardcoded)
   - **3-tier precedence**: `(canonical_model, normalized_provider)` — direct wins over OpenRouter, which wins over CSV/hardcoded. Quantization is NOT part of the dedup key — same model+provider at different quants collapses to one row (first-seen/highest-tier wins).
   - Writes `public/pricing.json` with ~910 text-generation models across ~75 inference providers. **648 models (71%) are ZDR-tagged.**
+- **models.dev enrichment**: after the 3-tier fetch + dedup, `fetch-pricing.mjs` calls `fetchModelsDevEnrichment()` (sidecar, non-fatal) which pulls `https://models.dev/api.json` and builds a `(provider, normalizedModelId)` index. `applyEnrichment()` decorates each model with a `modelsdev` block (base URL, native model ID, capability metadata) and fills `null` cache_read/cache_write/context_length/max_output values. Never overwrites existing values. Two-tier matching: Tier A (exact normalized, confidence `'high'`) + Tier B (bounded fuzzy subset, confidence `'medium'`, surfaces a ⚠ pill in the UI).
 - **ZDR (Zero Data Retention)**: Two-stage tagging in `main()`:
   1. **Endpoint-level**: `fetchZdrEndpoints()` fetches `/api/v1/endpoints/zdr` (documented, no auth) and builds a Set of `dedupKey()` strings. Models matching the set get `zdr: true`.
   2. **Provider-level fallback**: models not tagged at endpoint level are checked against `providers_meta[provider].retains_prompts === false`.
@@ -123,7 +124,9 @@ The pipeline includes unattended-operation safeguards:
 | File | Purpose |
 |---|---|
 | `shared/normalize.mjs` | Pure canonicalization helpers (`canonicalId`, `orgLookupKey`) — imported by both the Node pipeline and the Cloudflare Pages Function. No `node:` imports so it bundles cleanly into the Worker. |
+| `shared/modelsdev.mjs` | Pure reconciliation helpers for the models.dev enrichment source — provider map, per-provider ID normalizers (cloudflare/amazon/fireworks/minimax), two-tier matcher (exact + bounded fuzzy). Imported by the pipeline via `scripts/lib.mjs`. |
 | `scripts/fetch-pricing.mjs` | 3-tier fetch, OpenRouter de-aggregation, ZDR tagging (endpoint + provider level), provider metadata + data policy enrichment, org extraction, dedup, pricing normalization, dry-run mode — imports shared utils from `scripts/lib.mjs` |
+| `scripts/fetch-modelsdev.mjs` | Sidecar fetcher for models.dev enrichment — pulls `https://models.dev/api.json` (single call, non-fatal), builds the `(twProvider → normalizedId → record)` index. Called by `fetch-pricing.mjs` after subscription tagging. |
 | `public/app.js` | Frontend state, URL hash persistence, search, cost computation (per-request + monthly ×30), group-by, comparison mode, ZDR filter/badge, HQ badges, meta links, rendering |
 | `public/index.html` | UI layout: controls, usage-grid with mode toggle, 10-column results table, ZDR + promo filters, group-by, comparison tray + modal |
 | `public/styles.css` | Dark/light theme, all badges (org, provider, promo, ZDR, HQ, meta-link), group headers, comparison modal/tray, mode toggle, responsive |
