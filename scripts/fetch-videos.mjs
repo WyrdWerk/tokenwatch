@@ -23,8 +23,9 @@
 import { writeFile, mkdir } from 'node:fs/promises';
 import {
   orgFromId, orgFromName, canonicalId, orgLookupKey, ORG_ALIASES,
-  num, fetchJsonWithRetry, checkCoverageDrop, parseArgs,
+  num, fetchJsonWithRetry, checkCoverageDrop, parseArgs, dedupModels,
 } from './lib.mjs';
+import { fetchFalVideoModels } from './fetch-fal.mjs';
 
 const VIDEOS_MODELS_URL = 'https://openrouter.ai/api/v1/videos/models';
 const OUTPUT_PATH = 'public/video-pricing.json';
@@ -137,19 +138,25 @@ async function main() {
 
   console.log(`  ${models.length} models with pricing`);
 
+  // ── Merge fal.ai video models (Tier 1 — first-seen wins over OpenRouter) ──
+  const falVideoModels = await fetchFalVideoModels();
+  const tieredModels = [...falVideoModels, ...models];
+  const dedupedModels = dedupModels(tieredModels);
+  console.log(`  Video models: ${models.length} OpenRouter + ${falVideoModels.length} fal → ${dedupedModels.length} after dedup`);
+
   // Coverage drop check
-  const prevCount = await checkCoverageDrop(OUTPUT_PATH, models.length);
+  const prevCount = await checkCoverageDrop(OUTPUT_PATH, dedupedModels.length);
 
   // Org enrichment
   const canonToOrg = {};
-  for (const m of models) {
+  for (const m of dedupedModels) {
     if (m.org) {
       canonToOrg[canonicalId(m.id)] = m.org;
       canonToOrg[orgLookupKey(m.id)] = m.org;
     }
   }
   let unresolved = 0;
-  for (const m of models) {
+  for (const m of dedupedModels) {
     if (!m.org || m.org === m.id.split('/')[0]) {
       const resolved = canonToOrg[orgLookupKey(m.id)] || canonToOrg[canonicalId(m.id)];
       if (resolved && resolved !== m.org) m.org = resolved;
@@ -161,18 +168,18 @@ async function main() {
   // Dry run
   const out = {
     generated_at: new Date().toISOString(),
-    models,
+    models: dedupedModels,
   };
 
   if (dryRun) {
     console.log('\n── Summary ──');
-    console.log(`  Models: ${models.length}`);
-    for (const m of models) {
+    console.log(`  Models: ${dedupedModels.length}`);
+    for (const m of dedupedModels) {
       const cheapest = m.pricing.reduce((min, p) => p.cost_per_second < min ? p.cost_per_second : min, Infinity);
       console.log(`    ${m.name}: ${m.pricing.length} SKUs, from $${cheapest.toFixed(4)}/sec`);
     }
     if (prevCount !== null) {
-      console.log(`  Coverage delta: ${models.length - prevCount} (${prevCount} → ${models.length})`);
+      console.log(`  Coverage delta: ${dedupedModels.length - prevCount} (${prevCount} → ${dedupedModels.length})`);
     }
     console.log(`\n→ Dry run — video-pricing.json not written`);
     return;
@@ -180,7 +187,7 @@ async function main() {
 
   await mkdir('public', { recursive: true });
   await writeFile(OUTPUT_PATH, JSON.stringify(out, null, 2));
-  console.log(`\n→ Wrote ${OUTPUT_PATH} (${models.length} models)`);
+  console.log(`\n→ Wrote ${OUTPUT_PATH} (${dedupedModels.length} models)`);
 }
 
 main().catch((err) => { console.error('Fatal:', err); process.exit(1); });
