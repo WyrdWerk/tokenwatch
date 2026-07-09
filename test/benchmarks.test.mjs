@@ -168,3 +168,38 @@ test('applyBenchmarkEnrichment counts design_arena-only matches in arenaCount', 
   assert.ok(models[0].benchmarks.design_arena_best);
   assert.equal(models[0].benchmarks.intelligence_index, null);
 });
+
+// ── Org-prefix doubling fallback (Nemotron / Meta-Llama case) ──
+
+test('applyBenchmarkEnrichment falls back to org-prefix strip for nvidia-nemotron doubling', () => {
+  // Our canonical keeps 'nvidia-' prefix when model name repeats the org;
+  // OR's canonical strips it. The fallback resolves the mismatch.
+  const models = [{ id: 'nvidia/NVIDIA-Nemotron-3-Super-120B-A12B', provider: 'nvidia', pricing: { input: 1, output: 2 } }];
+  const idx = buildBenchmarkIndex([
+    { id: 'nvidia/nemotron-3-super-120b-a12b', benchmarks: { artificial_analysis: { intelligence_index: 42, coding_index: 55, agentic_index: 30 } } },
+  ]);
+  applyBenchmarkEnrichment(models, idx);
+  assert.ok(models[0].benchmarks, 'nvidia-nemotron doubling resolved via prefix-strip fallback');
+  assert.equal(models[0].benchmarks.intelligence_index, 42);
+});
+
+test('applyBenchmarkEnrichment falls back for meta-llama doubling (Meta-Llama)', () => {
+  const models = [{ id: 'meta-llama/Meta-Llama-3.1-8B-Instruct', provider: 'meta', pricing: { input: 1, output: 2 } }];
+  const idx = buildBenchmarkIndex([
+    { id: 'meta-llama/llama-3.1-8b-instruct', benchmarks: { artificial_analysis: { intelligence_index: 25, coding_index: 30, agentic_index: 20 } } },
+  ]);
+  applyBenchmarkEnrichment(models, idx);
+  assert.ok(models[0].benchmarks, 'meta-llama doubling resolved via prefix-strip fallback');
+  assert.equal(models[0].benchmarks.intelligence_index, 25);
+});
+
+test('org-prefix fallback does NOT fire when stripped key is not in index (no false match)', () => {
+  // Stripping 'nvidia' from 'nvidia-some-unknown-model' yields 'some-unknown-model'
+  // which is NOT in the index — must NOT match anything.
+  const models = [{ id: 'nvidia/nvidia-some-unknown-model', provider: 'nvidia', pricing: { input: 1, output: 2 } }];
+  const idx = buildBenchmarkIndex([
+    { id: 'totally/different-model', benchmarks: { artificial_analysis: { intelligence_index: 50, coding_index: 60, agentic_index: 40 } } },
+  ]);
+  applyBenchmarkEnrichment(models, idx);
+  assert.equal(models[0].benchmarks, undefined, 'fallback must not fire when stripped key absent from index');
+});

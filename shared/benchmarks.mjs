@@ -107,9 +107,41 @@ export function buildBenchmarkIndex(orModels) {
 }
 
 /**
+ * Try to resolve a benchmark match, with a safe org-prefix fallback.
+ *
+ * Primary: conservativeBase(model.id).
+ * Fallback: if the primary key doesn't hit, try stripping one leading token
+ * (the org-name doubling case). E.g. canonicalId keeps 'nvidia-nemotron-...'
+ * when the model name repeats the org, but OR's canonical is just 'nemotron-...'.
+ *
+ * The fallback ONLY fires when the stripped key exists in the index — so there
+ * is zero misattribution risk (the match is always confirmed against real data).
+ *
+ * @param {string} modelId - our model id
+ * @param {Map<string, object>} index - from buildBenchmarkIndex()
+ * @returns {object|null} the flattened benchmark block, or null if no match
+ */
+function resolveBenchmark(modelId, index) {
+  const primary = conservativeBase(modelId);
+  const direct = index.get(primary);
+  if (direct) return direct;
+  // Fallback: strip one leading token if the remainder hits the index.
+  // Covers org-name doubling: 'nvidia-nemotron-3-super-120b-a12b' → 'nemotron-3-super-120b-a12b',
+  // 'meta-llama-3.1-8b-instruct' → 'llama-3.1-8b-instruct'.
+  const dashIdx = primary.indexOf('-');
+  if (dashIdx > 0) {
+    const stripped = primary.slice(dashIdx + 1);
+    const fallback = index.get(stripped);
+    if (fallback) return fallback;
+  }
+  return null;
+}
+
+/**
  * Apply benchmark enrichment to our text models (in-place mutation).
  *
- * For each model, look up the benchmark index by conservativeBase(model.id).
+ * For each model, look up the benchmark index by conservativeBase(model.id),
+ * with a safe org-prefix-stripping fallback for doubled org names.
  * If matched, attach a `benchmarks` block with the flattened fields.
  * Unmatched models are left untouched (no `benchmarks` field added).
  *
@@ -122,8 +154,7 @@ export function applyBenchmarkEnrichment(models, index) {
   let aaCount = 0;
   let arenaCount = 0;
   for (const m of models) {
-    const key = conservativeBase(m.id);
-    const bench = index.get(key);
+    const bench = resolveBenchmark(m.id, index);
     if (!bench) continue;
     m.benchmarks = {
       intelligence_index: bench.intelligence_index,
