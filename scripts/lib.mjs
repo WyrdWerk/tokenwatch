@@ -303,8 +303,24 @@ export async function fetchJsonWithRetry(url, retries = 1, delayMs = 2000, opts 
 // ── resilience ────────────────────────────────────────────────────────────────
 
 /**
- * Check coverage drop vs previous JSON file. Throws if drop exceeds threshold.
- * Returns previous model count (null if no previous file).
+ * Thrown by checkCoverageDrop when model count drops beyond the threshold.
+ * Image/video pipelines catch this to exit 0 (preserving last-good data)
+ * without sending GitHub Actions failure emails. Text pricing (fetch-pricing.mjs)
+ * keeps it fatal — a text-model coverage drop signals a serious upstream issue.
+ */
+export class CoverageDropError extends Error {
+  constructor(message, { currentCount, prevCount, threshold }) {
+    super(message);
+    this.name = 'CoverageDropError';
+    this.currentCount = currentCount;
+    this.prevCount = prevCount;
+    this.threshold = threshold;
+  }
+}
+
+/**
+ * Check coverage drop vs previous JSON file. Throws CoverageDropError if drop
+ * exceeds threshold. Returns previous model count (null if no previous file).
  */
 export async function checkCoverageDrop(outputPath, currentCount, threshold = 0.15) {
   let prevCount = null;
@@ -313,9 +329,10 @@ export async function checkCoverageDrop(outputPath, currentCount, threshold = 0.
     prevCount = prev.models?.length || 0;
     const drop = prevCount > 0 ? (prevCount - currentCount) / prevCount : 0;
     if (prevCount > 0 && drop > threshold) {
-      throw new Error(
+      throw new CoverageDropError(
         `Coverage drop: ${currentCount} models vs previous ${prevCount} ` +
-        `(${(drop * 100).toFixed(1)}% drop) exceeds ${(threshold * 100).toFixed(0)}% threshold — aborting to preserve last-good data`
+        `(${(drop * 100).toFixed(1)}% drop) exceeds ${(threshold * 100).toFixed(0)}% threshold — aborting to preserve last-good data`,
+        { currentCount, prevCount, threshold }
       );
     }
     console.log(`  Previous: ${prevCount} models | Current: ${currentCount} models`);
@@ -323,7 +340,7 @@ export async function checkCoverageDrop(outputPath, currentCount, threshold = 0.
     if (err.code === 'ENOENT') {
       // No previous file — first run, proceed
     } else {
-      throw err; // re-throw coverage-drop or read errors
+      throw err; // re-throw CoverageDropError or read errors
     }
   }
   return prevCount;

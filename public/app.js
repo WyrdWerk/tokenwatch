@@ -43,6 +43,8 @@ const els = {
   totalTokensLabel: $('totalTokensLabel'),
   totalTokensHint: $('totalTokensHint'),
   costColumnHeader: $('costColumnHeader'),
+  speedColumnHeader: $('speedColumnHeader'),
+  showOrg: $('showOrg'),
   groupBy: $('groupBy'),
   compareTray: $('compareTray'),
   compareCount: $('compareCount'),
@@ -144,6 +146,7 @@ function serializeState() {
   if (budget && budget !== DEFAULTS.budget) params.set('budget', budget);
 
   if (els.groupBy.value !== 'none') params.set('group', els.groupBy.value);
+  if (els.showOrg?.checked) params.set('orgcol', '1');
 
   const cacheWriteVal = parseFloat(document.getElementById('cacheWriteTokens').value) || 0;
   const amortizeVal = parseInt(document.getElementById('amortizeN').value, 10) || 100;
@@ -162,6 +165,8 @@ function deserializeState(hash) {
   if (els.zdrOnly) els.zdrOnly.checked = DEFAULTS.zdrOnly;
   els.modelSearch.value = DEFAULTS.modelSearch;
   els.promoOnly.checked = DEFAULTS.promoOnly;
+  if (els.subscriptionOnly) els.subscriptionOnly.checked = DEFAULTS.subscriptionOnly;
+  if (els.showOrg) { els.showOrg.checked = false; document.getElementById('resultsTable').classList.add('hide-org'); }
   state.sortBy = DEFAULTS.sortBy;
   state.sortDir = DEFAULTS.sortDir;
   state.costMode = 'perRequest';
@@ -205,6 +210,7 @@ function deserializeState(hash) {
 
   const group = params.get('group');
   if (group) els.groupBy.value = group;
+  if (params.has('orgcol') && els.showOrg) { els.showOrg.checked = params.get('orgcol') === '1'; document.getElementById('resultsTable').classList.toggle('hide-org', !els.showOrg.checked); }
   if (params.has('cw')) document.getElementById('cacheWriteTokens').value = params.get('cw');
   if (params.has('budget')) els.budgetInput.value = params.get('budget');
   if (params.get('by') === 'budget') setComputeBy('budget');
@@ -227,7 +233,7 @@ async function init() {
     const res = await fetch('pricing.json');
     state.data = await res.json();
   } catch (err) {
-    els.resultsBody.innerHTML = `<tr><td colspan="10" class="empty">Could not load pricing.json. Run <code>node scripts/fetch-pricing.mjs</code> first.</td></tr>`;
+    els.resultsBody.innerHTML = `<tr><td colspan="${els.showOrg?.checked ? 10 : 9}" class="empty">Could not load pricing.json. Run <code>node scripts/fetch-pricing.mjs</code> first.</td></tr>`;
     return;
   }
 
@@ -367,6 +373,10 @@ function attachListeners() {
   if (els.zdrOnly) els.zdrOnly.addEventListener('change', () => computeAndRender());
   if (els.subscriptionOnly) els.subscriptionOnly.addEventListener('change', () => computeAndRender());
   els.groupBy.addEventListener('change', () => computeAndRender());
+  els.showOrg?.addEventListener('change', () => {
+    document.getElementById('resultsTable').classList.toggle('hide-org', !els.showOrg.checked);
+    computeAndRender();
+  });
 
   els.resultsBody.addEventListener('click', (e) => {
     // Compare checkbox — handled by change event, ignore here.
@@ -608,6 +618,34 @@ function showDetailModal(idx) {
       parts.push('<div class="detail-disclaimer">⚠ Model details sourced from models.dev (different provider). Configuration above is not available for this provider — verify on the provider\'s site.</div>');
     }
     parts.push('</div>');
+  }
+
+  // Section: Performance (latency + throughput from performance.json)
+  // Outside the meta block — perf data is independent of modelsdev enrichment.
+  if (state.perfData) {
+    const perfKey = canonicalModelId(r.id) + '|' + r.provider;
+    const perf = state.perfData[perfKey];
+    if (perf && (perf.latency || perf.throughput)) {
+      parts.push('<div class="detail-section"><div class="detail-section-title">Performance</div>');
+      if (perf.latency) {
+        const l = perf.latency;
+        parts.push('<div class="detail-pricing-grid">');
+        parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Latency p50</div><div class="detail-pricing-cell-value">${l.p50 != null ? Math.round(l.p50 * 100) / 100 : '—'} ms</div></div>`);
+        parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Latency p90</div><div class="detail-pricing-cell-value">${l.p90 != null ? Math.round(l.p90 * 100) / 100 : '—'} ms</div></div>`);
+        parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Latency p99</div><div class="detail-pricing-cell-value">${l.p99 != null ? Math.round(l.p99 * 100) / 100 : '—'} ms</div></div>`);
+        parts.push('</div>');
+      }
+      if (perf.throughput) {
+        const t = perf.throughput;
+        parts.push('<div class="detail-pricing-grid">');
+        parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Throughput p50</div><div class="detail-pricing-cell-value">${t.p50 != null ? Math.round(t.p50 * 100) / 100 : '—'} tps</div></div>`);
+        parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Throughput p90</div><div class="detail-pricing-cell-value">${t.p90 != null ? Math.round(t.p90 * 100) / 100 : '—'} tps</div></div>`);
+        parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Throughput p99</div><div class="detail-pricing-cell-value">${t.p99 != null ? Math.round(t.p99 * 100) / 100 : '—'} tps</div></div>`);
+        parts.push('</div>');
+      }
+      parts.push('<div class="detail-quality-source">Source: OpenRouter endpoint metrics (30m window)</div>');
+      parts.push('</div>');
+    }
   }
 
   // Footer actions
@@ -1022,8 +1060,8 @@ function sortRows(rows) {
       case 'input':     va = a.model.pricing.input; vb = b.model.pricing.input; break;
       case 'output':    va = a.model.pricing.output; vb = b.model.pricing.output; break;
       case 'cache_read':va = a.model.pricing.cache_read; vb = b.model.pricing.cache_read; break;
-      case 'cache_write': va = a.model.pricing.cache_write; vb = b.model.pricing.cache_write; break;
       case 'context':   va = a.model.context_length; vb = b.model.context_length; break;
+      case 'speed':     va = getPerfData(a)?.throughput?.p50 ?? null; vb = getPerfData(b)?.throughput?.p50 ?? null; break;
       case 'cost':
       default:          va = a.cost; vb = b.cost; break;
     }
@@ -1071,32 +1109,31 @@ function providerMetaHtml(providerKey) {
   return html;
 }
 
+/** Shared perf-data lookup — used by renderSpeedCell and sortRows. */
+function getPerfData(r) {
+  if (!state.perfData) return null;
+  const key = canonicalModelId(r.model.id) + '|' + r.model.provider;
+  return state.perfData[key] || null;
+}
+
 function renderProviderCell(r) {
     const name = providerName(r.model.provider, r.model.provider_display);
     const zdrBadge = r.model.zdr ? ' <span class="zdr-badge" title="Zero Data Retention — provider does not store prompts">ZDR</span>' : '';
     const subBadge = r.model.subscription ? ' <span class="subscription-badge" title="This provider offers subscription/coding plans">Sub</span>' : '';
-    // Performance pill — lookup by dedup key
-    let perfPill = '';
-    if (state.perfData) {
-      const key = canonicalModelId(r.model.id) + '|' + r.model.provider;
-      const perf = state.perfData[key];
-      if (perf && (perf.latency || perf.throughput)) {
-        const parts = [];
-        if (perf.latency) parts.push(perf.latency.p50 + 'ms');
-        if (perf.throughput) parts.push(perf.throughput.p50 + 'tps');
-        const titleBits = [];
-        if (perf.latency) {
-          const l = perf.latency;
-          titleBits.push('Latency p50/p75/p90/p99: ' + l.p50 + '/' + l.p75 + '/' + l.p90 + '/' + l.p99 + ' ms');
-        }
-        if (perf.throughput) {
-          const t = perf.throughput;
-          titleBits.push('Throughput p50/p75/p90/p99: ' + t.p50 + '/' + t.p75 + '/' + t.p90 + '/' + t.p99 + ' tps');
-        }
-        perfPill = ' <span class="perf-pill" title="' + esc(titleBits.join('\n')) + '">⚡' + parts.join(' · ') + '</span>';
-      }
-    }
-    return '<span class="provider-badge">' + esc(name) + '</span>' + perfPill + zdrBadge + subBadge + providerMetaHtml(r.model.provider);
+    return '<span class="provider-badge">' + esc(name) + '</span>' + zdrBadge + subBadge + providerMetaHtml(r.model.provider);
+  }
+
+/** Render the Speed column cell — throughput only (higher = faster).
+ *  Latency (ms, lower = better) is shown in the detail modal, not the table,
+ *  to avoid mixing opposite-direction metrics in one column. */
+function renderSpeedCell(r) {
+    const perf = getPerfData(r);
+    const tps = perf?.throughput?.p50;
+    if (tps == null) return '<span class="missing">—</span>';
+    const t = perf.throughput;
+    const r1 = (v) => v != null ? Math.round(v * 10) / 10 : '—';
+    const title = `Throughput p50/p75/p90/p99: ${r1(t.p50)}/${r1(t.p75)}/${r1(t.p90)}/${r1(t.p99)} tps`;
+    return '<span class="perf-pill" title="' + esc(title) + '">⚡' + esc(String(r1(tps))) + 'tps</span>';
   }
 
 function globalBestValue(rows) {
@@ -1137,9 +1174,9 @@ function renderModelRow(r, rank, groupKey, cheapest) {
     <td data-label="Model">${esc(modelDisplay)}${promo}</td>
     <td class="num" data-label="Input $/M">${fmtPrice(p.input)}</td>
     <td class="num" data-label="Output $/M">${fmtPrice(p.output)}</td>
-    <td class="num" data-label="Cache Read $/M">${fmtPrice(p.cache_read)}</td>
-    <td class="num" data-label="Cache Write $/M">${fmtPrice(p.cache_write)}</td>
+    <td class="num" data-label="Cache $/M">${fmtPrice(p.cache_read)} / ${fmtPrice(p.cache_write)}</td>
     <td class="num" data-label="Context">${fmtContext(r.model.context_length)}</td>
+    <td class="num speed-cell" data-label="Speed">${renderSpeedCell(r)}</td>
     <td class="num cost" data-label="${esc(els.costColumnHeader.textContent)}">${state.computeBy === 'budget' ? fmtAffordability(r.cost) : fmtCost(r.cost)}</td>
   </tr>`;
 }
@@ -1183,8 +1220,9 @@ function renderGroupedTable(rows, tokens, groupBy) {
     const bestLabel = groupBest !== null
       ? (budgetMode ? `up to ${fmtAffordability(groupBest)}` : `from ${fmtCost(groupBest)}`)
       : '';
+    const colCount = els.showOrg?.checked ? 10 : 9;
     html += `<tr class="group-header" data-group="${esc(key)}">
-      <td colspan="10">
+      <td colspan="${colCount}">
         <span class="collapse-arrow">▼</span>
         ${esc(groupName)}
         <span class="group-count">${groupRows.length} model${groupRows.length === 1 ? '' : 's'}</span>
@@ -1202,7 +1240,8 @@ function renderGroupedTable(rows, tokens, groupBy) {
 
 function renderTable(rows, tokens) {
   if (rows.length === 0) {
-    els.resultsBody.innerHTML = `<tr><td colspan="10" class="empty">No offerings match your criteria. Some providers may not support the token types you entered.</td></tr>`;
+    const colCount = els.showOrg?.checked ? 10 : 9;
+    els.resultsBody.innerHTML = `<tr><td colspan="${colCount}" class="empty">No offerings match your criteria. Some providers may not support the token types you entered.</td></tr>`;
     return;
   }
   const groupBy = els.groupBy?.value || 'none';

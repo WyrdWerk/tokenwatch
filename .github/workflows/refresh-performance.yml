@@ -1,0 +1,61 @@
+name: Refresh Performance
+
+concurrency:
+  group: repo-refresh
+  cancel-in-progress: false
+
+on:
+  schedule:
+    # every 2 hours at minute 30 (offset from pricing refresh at 00:00)
+    - cron: '30 */2 * * *'
+  workflow_dispatch: {} # manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run tests
+        run: node --test test/*.test.mjs
+
+      - name: Fetch performance data
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: node scripts/fetch-performance.mjs
+
+      - name: Commit performance data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/performance.json
+          if git diff --cached --quiet; then
+            echo "No performance changes — skipping commit and deploy."
+          else
+            git commit -m "chore: refresh performance data ($(date -u +%Y-%m-%dT%H:%M) UTC)"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+        id: commit
+
+      - name: Bust cache (content-hash ?v= tokens)
+        if: steps.commit.outputs.changed == 'true'
+        run: node scripts/bust-cache.mjs
+
+      - name: Deploy to Cloudflare Pages
+        if: steps.commit.outputs.changed == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy public --project-name payg-inference-calculator --branch main
+
+      # Deploy is explicit (not relying on push-triggered refresh-pricing.yml deploy)
+      # because GITHUB_TOKEN pushes do not trigger downstream workflow runs.

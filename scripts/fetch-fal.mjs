@@ -11,6 +11,16 @@
  *
  * Auth: Authorization: Key ${FAL_API_KEY} header. Key from env (GitHub secret
  * in CI; set FAL_API_KEY locally to test).
+ *
+ * Cache contract (avoids double-fetching the fal catalog in CI):
+ * - CI runs `node scripts/fetch-fal.mjs` as a prefetch step, writing
+ *   /tmp/fal-image.json + /tmp/fal-video.json atomically.
+ * - When FAL_CACHE_ONLY=1 (set in CI), callers read cached arrays or return []
+ *   (never live-fetch). If fal is down, coverage guard aborts safely,
+ *   preserving last-good data.
+ * - Without FAL_CACHE_ONLY (local dev), callers live-fetch with module-level
+ *   memoization — fetchFalModels() runs at most once per process even if both
+ *   fetchFalImageModels() and fetchFalVideoModels() are called.
  */
 
 import { falCanonicalId, FAL_ORG_MAP } from './lib.mjs';
@@ -52,19 +62,25 @@ async function fetchAllFalModels() {
 }
 
 /** Fetch pricing for a list of endpoint IDs (batched 50 per call). Returns Map<endpoint_id, price>.
- *  Retries on 429 with exponential backoff (up to 3 retries). */
+ *  Retries on 429 honoring Retry-After header (up to 5 retries). Non-429 errors skip the batch. */
 async function fetchPricingBatched(endpointIds, headers) {
   const priceMap = new Map();
+  const MAX_RETRIES = 5;
   for (let i = 0; i < endpointIds.length; i += PRICING_BATCH_SIZE) {
     const batch = endpointIds.slice(i, i + PRICING_BATCH_SIZE);
     const url = FAL_PRICING_URL + '?endpoint_id=' + batch.map(encodeURIComponent).join(',');
     let r;
     let lastErr;
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       r = await fetch(url, { headers });
       if (r.ok) break;
       if (r.status === 429) {
-        await new Promise(res => setTimeout(res, 1000 * (attempt + 1))); // 1s, 2s, 3s
+        // Honor Retry-After header (seconds), fall back to exponential backoff
+        const retryAfter = r.headers.get('Retry-After');
+        const delayMs = retryAfter
+          ? Math.min(parseInt(retryAfter, 10) * 1000, 30000) // cap at 30s
+          : Math.min(1000 * Math.pow(2, attempt), 16000);    // 1s, 2s, 4s, 8s, 16s
+        await new Promise(res => setTimeout(res, delayMs));
         continue;
       }
       lastErr = r.status;
@@ -154,8 +170,22 @@ function buildVideoModel(m, price) {
   };
 }
 
-/** Core fetch+filter+map. Returns { imageModels, videoModels }. */
+// ── module-level memoization + cache support ─────────────────────────────────
+
+let _falPromise = null;
+
+const FAL_IMAGE_CACHE = '/tmp/fal-image.json';
+const FAL_VIDEO_CACHE = '/tmp/fal-video.json';
+
+/** Core fetch+filter+map. Returns { imageModels, videoModels }. Memoized per-process. */
 async function fetchFalModels() {
+  if (!_falPromise) {
+    _falPromise = _fetchFalModelsUncached();
+  }
+  return _falPromise;
+}
+
+async function _fetchFalModelsUncached() {
   const t0 = Date.now();
   const all = await fetchAllFalModels();
   if (!all.length) return { imageModels: [], videoModels: [] };
@@ -190,8 +220,38 @@ async function fetchFalModels() {
   return { imageModels: [...imageById.values()], videoModels: [...videoById.values()] };
 }
 
-/** Public: fetch fal image models. Returns [] on failure. */
+/** Try to read a cache file. Returns parsed array or null. */
+async function readCache(path) {
+  try {
+    const { readFile } = await import('node:fs/promises');
+    const raw = await readFile(path, 'utf-8');
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Write a cache file atomically (write to .tmp then rename). */
+async function writeCache(path, data) {
+  const { writeFile, rename } = await import('node:fs/promises');
+  const tmp = path + '.tmp';
+  await writeFile(tmp, JSON.stringify(data, null, 2));
+  await rename(tmp, path);
+}
+
+/** Public: fetch fal image models. Returns [] on failure.
+ *  When FAL_CACHE_ONLY=1, reads from /tmp/fal-image.json (never live-fetches). */
 export async function fetchFalImageModels() {
+  if (process.env.FAL_CACHE_ONLY === '1') {
+    const cached = await readCache(FAL_IMAGE_CACHE);
+    if (cached) {
+      console.log(`  fal.ai: using cached image models (${cached.length}) from ${FAL_IMAGE_CACHE}`);
+      return cached;
+    }
+    console.warn('⚠ fal.ai: FAL_CACHE_ONLY=1 but no image cache — returning []');
+    return [];
+  }
   try {
     const { imageModels } = await fetchFalModels();
     return imageModels;
@@ -201,8 +261,18 @@ export async function fetchFalImageModels() {
   }
 }
 
-/** Public: fetch fal video models. Returns [] on failure. */
+/** Public: fetch fal video models. Returns [] on failure.
+ *  When FAL_CACHE_ONLY=1, reads from /tmp/fal-video.json (never live-fetches). */
 export async function fetchFalVideoModels() {
+  if (process.env.FAL_CACHE_ONLY === '1') {
+    const cached = await readCache(FAL_VIDEO_CACHE);
+    if (cached) {
+      console.log(`  fal.ai: using cached video models (${cached.length}) from ${FAL_VIDEO_CACHE}`);
+      return cached;
+    }
+    console.warn('⚠ fal.ai: FAL_CACHE_ONLY=1 but no video cache — returning []');
+    return [];
+  }
   try {
     const { videoModels } = await fetchFalModels();
     return videoModels;
@@ -212,14 +282,24 @@ export async function fetchFalVideoModels() {
   }
 }
 
-// Allow `node scripts/fetch-fal.mjs` to run standalone for testing.
-// Writes sidecar /tmp/fal-image.json + /tmp/fal-video.json for inspection.
+// Allow `node scripts/fetch-fal.mjs` to run standalone (CI prefetch step).
+// Writes /tmp/fal-image.json + /tmp/fal-video.json atomically.
+// Never crashes: on failure, writes empty arrays so callers (FAL_CACHE_ONLY=1)
+// get a definitive "cache present but empty" signal.
 import { fileURLToPath } from 'node:url';
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 if (isMain) {
-  const { imageModels, videoModels } = await fetchFalModels();
-  const { writeFile } = await import('node:fs/promises');
-  await writeFile('/tmp/fal-image.json', JSON.stringify(imageModels, null, 2));
-  await writeFile('/tmp/fal-video.json', JSON.stringify(videoModels, null, 2));
-  console.log(`  wrote /tmp/fal-image.json (${imageModels.length}) + /tmp/fal-video.json (${videoModels.length})`);
+  let imageModels = [];
+  let videoModels = [];
+  try {
+    const result = await fetchFalModels();
+    imageModels = result.imageModels;
+    videoModels = result.videoModels;
+  } catch (err) {
+    console.error(`✗ fal.ai prefetch failed: ${err.message}`);
+    console.error('  Writing empty cache files — image/video pipelines will continue without fal data.');
+  }
+  await writeCache(FAL_IMAGE_CACHE, imageModels);
+  await writeCache(FAL_VIDEO_CACHE, videoModels);
+  console.log(`  wrote ${FAL_IMAGE_CACHE} (${imageModels.length}) + ${FAL_VIDEO_CACHE} (${videoModels.length})`);
 }

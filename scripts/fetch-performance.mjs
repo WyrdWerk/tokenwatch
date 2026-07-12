@@ -12,8 +12,8 @@
  * The frontend loads this file alongside pricing.json and renders inline
  * latency/throughput pills in the provider cell.
  *
- * Non-fatal: if OPENROUTER_API_KEY is missing, writes an empty JSON object
- * and the frontend degrades gracefully.  Metadata calls are free.
+ * Non-fatal: if OPENROUTER_API_KEY is missing, skips the fetch entirely
+ * and preserves the existing public/performance.json. Metadata calls are free.
  *
  * Usage:
  *   node scripts/fetch-performance.mjs [--dry-run]
@@ -56,13 +56,7 @@ async function main() {
     : { Accept: 'application/json' };
 
   if (!apiKey) {
-    console.warn('⚠ OPENROUTER_API_KEY not set — writing empty performance.json');
-    const out = {};
-    if (!dryRun) {
-      await mkdir('public', { recursive: true });
-      await writeFile(OUTPUT_PATH, JSON.stringify(out));
-    }
-    console.log('→ Wrote empty ' + OUTPUT_PATH);
+    console.warn('⚠ OPENROUTER_API_KEY not set — skipping performance fetch (existing performance.json preserved)');
     return;
   }
 

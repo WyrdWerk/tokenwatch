@@ -23,7 +23,7 @@
 import { writeFile, mkdir } from 'node:fs/promises';
 import {
   orgFromId, orgFromName, canonicalId, orgLookupKey, ORG_ALIASES,
-  num, fetchJsonWithRetry, checkCoverageDrop, parseArgs, dedupModels,
+  num, fetchJsonWithRetry, checkCoverageDrop, CoverageDropError, parseArgs, dedupModels,
 } from './lib.mjs';
 import { fetchFalVideoModels } from './fetch-fal.mjs';
 
@@ -190,4 +190,12 @@ async function main() {
   console.log(`\n→ Wrote ${OUTPUT_PATH} (${dedupedModels.length} models)`);
 }
 
-main().catch((err) => { console.error('Fatal:', err); process.exit(1); });
+main().catch((err) => {
+  if (err instanceof CoverageDropError) {
+    console.error(`⚠ ${err.message}`);
+    console.error('  Last-good video-pricing.json preserved — exiting 0 (not a failure).');
+    process.exit(0);
+  }
+  console.error('Fatal:', err);
+  process.exit(1);
+});
