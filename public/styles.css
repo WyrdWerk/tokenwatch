@@ -425,6 +425,47 @@ tbody tr:hover { background: var(--surface-2); }
   font-size: 0.82rem;
 }
 
+/* Org toggle */
+.org-toggle { font-size: 0.8rem; color: var(--text-dim); font-weight: 600; display: flex; align-items: center; gap: 0.3rem; cursor: pointer; }
+.org-toggle input { width: auto; }
+
+/* Speed column */
+.speed-cell { min-width: 5rem; }
+.speed-cell .perf-pill { margin-left: 0; }
+
+/* Collapsible Org column — desktop only (mobile always shows Org badge inline) */
+@media (min-width: 641px) {
+  #resultsTable.hide-org th[data-sort="org"],
+  #resultsTable.hide-org td[data-label="Org"] { display: none; }
+}
+
+/* Sticky Total Cost column — desktop only (mobile uses card layout, no horizontal scroll) */
+@media (min-width: 641px) {
+  #resultsTable th:last-child,
+  #resultsTable td:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    background: var(--surface);
+    box-shadow: -2px 0 4px color-mix(in srgb, var(--border) 50%, transparent);
+  }
+  /* Hover state must be opaque to cover scrolled content */
+  #resultsTable tbody tr:hover td:last-child {
+    background: var(--surface-2);
+  }
+  /* Group header sticky — spans full width */
+  #resultsTable tr.group-header td {
+    position: sticky;
+    right: 0;
+    background: var(--surface-2);
+  }
+}
+
+/* Hide org toggle on mobile — Org badge always shows inline there */
+@media (max-width: 640px) {
+  .org-toggle { display: none; }
+}
+
 /* Group header rows */
 .group-header { background: var(--surface-2); font-weight: 700; cursor: pointer; }
 .group-header td { padding: 0.6rem 0.55rem; border-bottom: 2px solid var(--border); }

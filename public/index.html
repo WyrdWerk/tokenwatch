@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=47cf892e" />
+  <link rel="stylesheet" href="styles.css?v=e971f3ee" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>" />
 </head>
 <body>
@@ -139,6 +139,7 @@
           <option value="org">Organization</option>
           <option value="provider">Provider</option>
         </select>
+        <label class="org-toggle"><input type="checkbox" id="showOrg"> Show Org</label>
       </div>
       <select class="mobile-sort" id="mobileSort" aria-label="Sort results">
         <option value="cost:asc">Total Cost ↑</option>
@@ -153,15 +154,15 @@
         <option value="input:desc">Input $/M ↓</option>
         <option value="output:asc">Output $/M ↑</option>
         <option value="output:desc">Output $/M ↓</option>
-        <option value="cache_read:asc">Cache Read $/M ↑</option>
-        <option value="cache_read:desc">Cache Read $/M ↓</option>
-        <option value="cache_write:asc">Cache Write $/M ↑</option>
-        <option value="cache_write:desc">Cache Write $/M ↓</option>
+        <option value="cache_read:asc">Cache $/M ↑</option>
+        <option value="cache_read:desc">Cache $/M ↓</option>
         <option value="context:asc">Context ↑</option>
         <option value="context:desc">Context ↓</option>
+        <option value="speed:asc">Speed ↑</option>
+        <option value="speed:desc">Speed ↓</option>
       </select>
       <div class="table-wrap">
-        <table id="resultsTable">
+        <table id="resultsTable" class="hide-org">
           <thead>
             <tr>
               <th>#</th>
@@ -170,14 +171,14 @@
               <th class="sortable" data-sort="model">Model</th>
               <th class="sortable num" data-sort="input">Input $/M</th>
               <th class="sortable num" data-sort="output">Output $/M</th>
-              <th class="sortable num" data-sort="cache_read">Cache Read $/M</th>
-              <th class="sortable num" data-sort="cache_write">Cache Write $/M</th>
+              <th class="sortable num" data-sort="cache_read">Cache $/M</th>
               <th class="sortable num" data-sort="context">Context</th>
+              <th class="sortable num" data-sort="speed" id="speedColumnHeader">Speed</th>
               <th class="sortable num" data-sort="cost" id="costColumnHeader">Total Cost</th>
             </tr>
           </thead>
           <tbody id="resultsBody">
-            <tr><td colspan="10" class="empty">Select a model or provider to see pricing.</td></tr>
+            <tr><td colspan="9" class="empty">Select a model or provider to see pricing.</td></tr>
           </tbody>
         </table>
       </div>
@@ -223,6 +224,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=89b93908"></script>
+  <script src="app.js?v=0241a7ae"></script>
 </body>
 </html>
