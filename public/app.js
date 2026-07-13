@@ -3,6 +3,10 @@
 // model name, enter token volumes as total + percentage breakdown, and computes
 // per-offering cost.
 
+// Shared helpers live in shared-ui.js (window.TW), loaded before this script.
+const { esc, median, fmtIST, debounce } = window.TW;
+const { fmtPrice, fmtCost } = window.TW.makeFormatters({ style: 'round3', missingCost: 'N/A' });
+
 const state = {
   data: null,             // { generated_at, providers, models }
   providerSearch: '',     // provider name filter text
@@ -24,15 +28,6 @@ const state = {
 // data-idx is resolved via findIndex against the full state.currentRows, so a
 // head slice keeps detail-modal/compare indices correct for visible rows.
 const ROW_CAP = 250;
-
-/** Trailing-edge debounce. Delays fn until `wait`ms after the last call. */
-function debounce(fn, wait = 120) {
-  let t;
-  return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), wait);
-  };
-}
 
 // ── DOM ───────────────────────────────────────────────────────────────────────
 const $ = (id) => document.getElementById(id);
@@ -87,23 +82,8 @@ const els = {
 };
 
 
-// Theme toggle
-const themeToggle = document.getElementById('themeToggle');
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('tw-theme', theme);
-  themeToggle.textContent = theme === 'dark' ? '☀' : '☾';
-}
-const savedTheme = localStorage.getItem('tw-theme');
-if (savedTheme) {
-  applyTheme(savedTheme);
-} else {
-  applyTheme('light');
-}
-themeToggle.addEventListener('click', () => {
-  const current = document.documentElement.getAttribute('data-theme');
-  applyTheme(current === 'dark' ? 'light' : 'dark');
-});
+// Theme toggle — shared init (applies saved/default theme, wires the button).
+TW.initTheme();
 
 // Default control values — used to keep shared URLs minimal when unchanged
 const DEFAULTS = {
@@ -243,11 +223,6 @@ function updateHash() {
 }
 
 /** Format an ISO timestamp as IST (Asia/Kolkata). Returns — on invalid input. */
-function fmtIST(iso) {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return '—';
-  return d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-}
 
 
 // ── Init ───────────────────────────────────────────────────────────────────────
@@ -922,13 +897,6 @@ function fmtAffordability(tokens_M) {
 }
 
 /** Median of a numeric array. Returns null for empty input. */
-function median(arr) {
-  if (!arr.length) return null;
-  const s = [...arr].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-}
-
 /** Benchmark bar — dynamic median/mean/range/free strip over the current result
  *  cohort. Recomputed on every render from state.currentRows, so it reflects
  *  whatever the current search/filter/budget selection is. */
@@ -1104,24 +1072,6 @@ function providerName(key, display) {
 
 // Round to 3 decimals — kills IEEE 754 float noise (0.030000000000000002 → 0.03,
 // 0.024999999999999998 → 0.025). Per-unit pricing only; aggregate cost uses fmtCost.
-function round3(n) { return Math.round((n + Number.EPSILON) * 1000) / 1000; }
-
-function fmtPrice(p) {
-  if (p === null || p === undefined) return `<span class="missing">—</span>`;
-  if (p === 0) return `<span class="cost-zero">Free</span>`;
-  const r = round3(p);
-  return `$${r}`;
-}
-
-function fmtCost(c) {
-  if (c === null) return `<span class="missing">N/A</span>`;
-  if (c === 0) return `<span class="cost-zero">$0.00</span>`;
-  return `$${round3(c)}`;
-}
-
-function esc(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
 
 
 /** Sort rows by the current sort column/direction. Null values always sort to END. */

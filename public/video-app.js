@@ -1,6 +1,10 @@
 // TokenWatch — video-app.js
 // Loads video-pricing.json, computes per-second costs, renders sortable table.
 
+// Shared helpers live in shared-ui.js (window.TW), loaded before this script.
+const { esc, median, debounce } = window.TW;
+const { fmtPrice, fmtCost } = window.TW.makeFormatters({ style: 'tiered', missingCost: '—' });
+
 const state = {
   data: null,
   providerSearch: '',
@@ -52,22 +56,9 @@ const DEFAULTS = {
 };
 
 // ── Theme toggle ──────────────────────────────────────────────────────────────
-const themeToggle = document.getElementById('themeToggle');
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('tw-theme', theme);
-  themeToggle.textContent = theme === 'dark' ? '\u2600' : '\u263E';
-}
-const savedTheme = localStorage.getItem('tw-theme');
-applyTheme(savedTheme || 'light');
-themeToggle.addEventListener('click', () => {
-  const current = document.documentElement.getAttribute('data-theme');
-  applyTheme(current === 'dark' ? 'light' : 'dark');
-});
+TW.initTheme();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-
 function orgDisplay(org) {
   const known = { 'z-ai':'Z.ai', 'openai':'OpenAI', 'deepseek':'DeepSeek', 'meta':'Meta', 'google':'Google',
     'anthropic':'Anthropic', 'mistral':'Mistral', 'moonshot':'Moonshot', 'minimax':'MiniMax', 'nvidia':'NVIDIA',
@@ -75,22 +66,6 @@ function orgDisplay(org) {
     'black-forest-labs':'Black Forest Labs', 'kling':'Kling', 'sourceful':'Sourceful', 'recraft':'Recraft',
     'xai':'xAI', 'alibaba':'Alibaba', 'microsoft':'Microsoft' };
   return known[org] || org.charAt(0).toUpperCase() + org.slice(1);
-}
-
-function fmtPrice(p) {
-  if (p === null || p === undefined) return '<span class="missing">\u2014</span>';
-  if (p === 0) return '<span class="cost-zero">Free</span>';
-  if (p < 0.01) return '$' + p.toFixed(4);
-  if (p < 1) return '$' + p.toFixed(4);
-  return '$' + p.toFixed(2);
-}
-
-function fmtCost(c) {
-  if (c === null) return '<span class="missing">\u2014</span>';
-  if (c === 0) return '<span class="cost-zero">$0.00</span>';
-  if (c < 0.01) return '$' + c.toFixed(4);
-  if (c < 1) return '$' + c.toFixed(4);
-  return '$' + c.toFixed(2);
 }
 
 function fmtAffordability(n) {
@@ -101,13 +76,6 @@ function fmtAffordability(n) {
   return Math.round(n).toLocaleString();
 }
 
-/** Median of a numeric array. Returns null for empty input. */
-function median(arr) {
-  if (!arr.length) return null;
-  const s = [...arr].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-}
 
 /** Benchmark bar — dynamic median/mean/range/free strip over the current result
  *  cohort. Recomputed on every render from state.currentRows, so it reflects
@@ -557,10 +525,11 @@ function deserializeState(hash) {
 
 // ── Event listeners ───────────────────────────────────────────────────────────
 function attachListeners() {
-  els.providerSearch.addEventListener('input', () => computeAndRender());
-  els.modelSearch.addEventListener('input', () => computeAndRender());
-  els.videoSeconds.addEventListener('input', () => computeAndRender());
-  els.budgetInput?.addEventListener('input', () => computeAndRender());
+  const debouncedRender = debounce(() => computeAndRender());
+  els.providerSearch.addEventListener('input', debouncedRender);
+  els.modelSearch.addEventListener('input', debouncedRender);
+  els.videoSeconds.addEventListener('input', debouncedRender);
+  els.budgetInput?.addEventListener('input', debouncedRender);
   els.resolutionFilter.addEventListener('change', () => computeAndRender());
   els.audioFilter.addEventListener('change', () => computeAndRender());
   els.byTokens?.addEventListener('click', () => setComputeBy('tokens'));
