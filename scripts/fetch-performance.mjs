@@ -189,8 +189,8 @@ async function main() {
       if (!ttft && !tps) continue;
       const key = perfKey(modelId, 'Umans AI');
       perfData[key] = {
-        latency: ttft !== null ? { p50: ttft, p75: null, p90: null, p99: null } : null,
-        throughput: tps !== null ? { p50: tps, p75: null, p90: null, p99: null } : null,
+        latency: ttft != null ? { p50: ttft, p75: null, p90: null, p99: null } : null,
+        throughput: tps != null ? { p50: tps, p75: null, p90: null, p99: null } : null,
       };
       umansCount++;
     }
@@ -201,7 +201,7 @@ async function main() {
 
   const ms = Date.now() - t0;
   const total = Object.keys(perfData).length;
-  console.log(`  Performance data: ${total} total records in ${ms}ms (${failed} model fetches failed)`);
+  console.log(`  Performance data: ${total} total records (${epCount} endpoints) in ${ms}ms (${failed} model fetches failed)`);
 
   // ── Dry run ──
   if (dryRun) {
@@ -213,9 +213,67 @@ async function main() {
     return;
   }
 
+  // ── Guard: don't overwrite with degraded data ──
+  // If OpenRouter returned zero catalog matches (API outage, key revoked),
+  // perfData only has direct-provider records (Lilac/Umans). Never overwrite
+  // 700+ OR records with ~9 direct-only records — preserve last-good.
+  if (catalogCanonicalIds.size > 0 && modelSlugs.size === 0) {
+    console.log('\n→ OpenRouter returned zero catalog matches — preserving existing performance.json');
+    return;
+  }
+  // If no records at all were collected (all sources empty), preserve existing.
+  if (Object.keys(perfData).length === 0) {
+    console.log('\n→ No performance records fetched — preserving existing performance.json');
+    return;
+  }
+  // If new record count dropped >15% vs existing, preserve last-good.
+  // Catches truncated /models responses that pass the 20% endpoint-failure check
+  // but yield far fewer matches than the prior run. Same 15% threshold as fetch-pricing.mjs.
+  try {
+    const existing = JSON.parse(await readFile(OUTPUT_PATH, 'utf-8'));
+    const { _meta: _m, ...existingData } = existing;
+    const existingCount = Object.keys(existingData).length;
+    const newCount = Object.keys(perfData).length;
+    if (existingCount > 0 && newCount < existingCount * 0.85) {
+      console.log(`\n→ Performance record count dropped ${Math.round((1 - newCount / existingCount) * 100)}% (${newCount} vs ${existingCount}) — preserving existing performance.json`);
+      return;
+    }
+  } catch {
+    // No existing file — first run, allow write
+  }
+
+  // ── Write (only if data changed) ──
+  // Compare against existing file to avoid unconditional churn — the CI
+  // commit step skips when git diff is quiet, so identical data = no commit,
+  // no bust-cache, no deploy. Keys are sorted before comparison so insertion
+  // order changes from the API don't create false diffs.
+  const canonicalData = obj => Object.fromEntries(Object.keys(obj).sort().map(k => [k, obj[k]]));
+
+  const newDataStr = JSON.stringify(canonicalData(perfData)); // perfData has no _meta yet
+  let existingDataStr = null;
+  let hasMeta = false;
+  try {
+    const existingParsed = JSON.parse(await readFile(OUTPUT_PATH, 'utf-8'));
+    hasMeta = !!existingParsed._meta;
+    const { _meta: _existingMeta, ...existingData } = existingParsed;
+    existingDataStr = JSON.stringify(canonicalData(existingData));
+  } catch {
+    // File doesn't exist or is invalid — treat as new data
+  }
+
+  // Skip write only when data is unchanged AND the file already has _meta.
+  // A bare legacy file (no _meta) gets migrated even if data matches.
+  if (existingDataStr === newDataStr && hasMeta) {
+    console.log(`\n→ No performance data changes — skipping write (${Object.keys(perfData).length} records unchanged)`);
+    console.log(`  (CI commit step will detect no diff and skip deploy)`);
+    return;
+  }
+
+  perfData._meta = { generated_at: new Date().toISOString() };
   await mkdir('public', { recursive: true });
   await writeFile(OUTPUT_PATH, JSON.stringify(perfData));
-  console.log(`\n→ Wrote ${OUTPUT_PATH} (${Object.keys(perfData).length} total records)`);
+  const recordCount = Object.keys(perfData).length - 1; // exclude _meta
+  console.log(`\n→ Wrote ${OUTPUT_PATH} (${recordCount} records, updated ${perfData._meta.generated_at})`);
 }
 
 main().catch((err) => { console.error('Fatal:', err); process.exit(1); });

@@ -35,6 +35,7 @@ const els = {
   resultsBody: $('resultsBody'),
   resultsTitle: $('resultsTitle'),
   lastUpdated: $('lastUpdated'),
+  perfUpdated: $('perfUpdated'),
   promoOnly: $('promoOnly'),
   zdrOnly: $('zdrOnly'),
   subscriptionOnly: $('subscriptionOnly'),
@@ -226,29 +227,61 @@ function updateHash() {
   history.replaceState(null, '', url);
 }
 
+/** Format an ISO timestamp as IST (Asia/Kolkata). Returns — on invalid input. */
+function fmtIST(iso) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+}
+
 
 // ── Init ───────────────────────────────────────────────────────────────────────
 async function init() {
   try {
-    const res = await fetch('pricing.json');
+    const res = await fetch('pricing.json', { cache: 'no-store' });
     state.data = await res.json();
   } catch (err) {
     els.resultsBody.innerHTML = `<tr><td colspan="${els.showOrg?.checked ? 10 : 9}" class="empty">Could not load pricing.json. Run <code>node scripts/fetch-pricing.mjs</code> first.</td></tr>`;
     return;
   }
 
-  els.lastUpdated.textContent = `Data updated: ${new Date(state.data.generated_at).toLocaleString()}`;
+  els.lastUpdated.textContent = `Pricing (IST): ${fmtIST(state.data.generated_at)}`;
   populateDatalists();
   deserializeState(location.hash.slice(1));
   attachListeners();
   updateCompareTray();
+  await refreshPerfData(true);
+  computeAndRender();
+}
+
+/** Fetch performance.json. Fail-soft: on initial load sets {}, on refresh keeps last-good data. */
+let _perfInFlight = false;
+let _lastPerfFetch = 0;
+const PERF_COOLDOWN_MS = 60_000; // min 60s between refreshes
+
+async function refreshPerfData(isInitial = false) {
+  const now = Date.now();
+  if (_perfInFlight) return;
+  if (!isInitial && now - _lastPerfFetch < PERF_COOLDOWN_MS) return;
+  _perfInFlight = true;
+  _lastPerfFetch = now;
   try {
-    const perfRes = await fetch('performance.json');
-      state.perfData = perfRes.ok ? await perfRes.json() : {};
-    } catch (_) {
+    const perfRes = await fetch('performance.json', { cache: 'no-store' });
+    if (perfRes.ok) {
+      state.perfData = await perfRes.json();
+      const ts = state.perfData?._meta?.generated_at;
+      if (els.perfUpdated) els.perfUpdated.textContent = ts
+        ? `Performance (IST): ${fmtIST(ts)}`
+        : 'Performance (IST): (no timestamp)';
+    } else if (isInitial) {
       state.perfData = {};
     }
-    computeAndRender();
+  } catch (err) {
+    if (isInitial) state.perfData = {};
+    // On refresh failure: retain last-good state.perfData and timestamp
+  } finally {
+    _perfInFlight = false;
+  }
 }
 
 /** Build a canonical model key for cross-provider matching.
@@ -457,6 +490,17 @@ function attachListeners() {
   window.addEventListener('hashchange', () => {
     deserializeState(location.hash.slice(1));
     computeAndRender();
+  });
+
+  // ── Performance data auto-refresh ──
+  // Re-fetch performance.json every 2h (while tab is visible) and on tab resume.
+  // refreshPerfData has an in-flight guard + 60s cooldown to prevent overlap.
+  const PERF_REFRESH_MS = 2 * 60 * 60 * 1000; // 2 hours
+  setInterval(() => {
+    if (document.visibilityState === 'visible') refreshPerfData().then(() => computeAndRender());
+  }, PERF_REFRESH_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshPerfData().then(() => computeAndRender());
   });
 }
 
