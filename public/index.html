@@ -3,11 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#F8F5F0" />
+  <script>
+    // Pre-paint: set data-theme before first paint to avoid a theme flash.
+    (function () {
+      try {
+        var t = localStorage.getItem('tw-theme')
+          || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', t);
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute('content', t === 'dark' ? '#1a1612' : '#F8F5F0');
+      } catch (e) {}
+    })();
+  </script>
   <title>TokenWatch — Compare LLM API Costs</title>
   <meta name="description" content="Compare pay-as-you-go LLM inference pricing across providers. Enter your token volumes and find the cheapest option." />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="TokenWatch — Compare LLM API Costs" />
+  <meta property="og:description" content="Compare pay-as-you-go LLM inference pricing across providers. Enter your token volumes and find the cheapest option." />
+  <meta property="og:url" content="https://tokenwatch.wyrdwerk.com/" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="TokenWatch — Compare LLM API Costs" />
+  <meta name="twitter:description" content="Compare pay-as-you-go LLM inference pricing across providers." />
   <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/space-grotesk-600.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=b2f79458" />
+  <link rel="stylesheet" href="styles.css?v=8d3ff50f" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>" />
 </head>
 <body>
@@ -60,7 +80,7 @@
       </div>
     </section>
 
-:    <!-- ── Token inputs ─────────────────────────────────────────────────── -->
+    <!-- ── Token inputs ─────────────────────────────────────────────────── -->
     <section class="token-inputs">
       <span class="section-label">USAGE</span>
       <h2>Your Usage</h2>
@@ -231,7 +251,7 @@
     </div>
   </div>
 
-  <script src="shared-ui.js?v=b038696d" defer></script>
+  <script src="shared-ui.js?v=e560844f" defer></script>
   <script src="app.js?v=dc32ab47" defer></script>
 </body>
 </html>

@@ -66,23 +66,32 @@
 
   const THEME_COLOR = { light: '#F8F5F0', dark: '#1a1612' };
 
-  function applyTheme(theme) {
+  /** Apply a theme. Persists to localStorage only when `persist` (explicit choice). */
+  function applyTheme(theme, persist = true) {
     document.documentElement.setAttribute('data-theme', theme);
-    try { localStorage.setItem('tw-theme', theme); } catch (e) { /* private mode */ }
+    if (persist) { try { localStorage.setItem('tw-theme', theme); } catch (e) { /* private mode */ } }
     const btn = document.getElementById('themeToggle');
     if (btn) btn.textContent = theme === 'dark' ? '☀' : '☾';
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', THEME_COLOR[theme] || THEME_COLOR.light);
   }
 
-  /** Apply the saved/default theme and wire the toggle button. */
+  /**
+   * Reconcile with the pre-paint inline script and wire the toggle. A saved
+   * choice wins and stays persisted; otherwise we follow the value the
+   * pre-paint script derived (localStorage/OS) WITHOUT persisting, so the page
+   * keeps tracking the OS until the user makes an explicit choice.
+   */
   function initTheme() {
     const saved = localStorage.getItem('tw-theme');
-    applyTheme(saved || 'light');
+    const current = saved
+      || document.documentElement.getAttribute('data-theme')
+      || (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(current, !!saved);
     const btn = document.getElementById('themeToggle');
     if (btn) btn.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme');
-      applyTheme(current === 'dark' ? 'light' : 'dark');
+      const now = document.documentElement.getAttribute('data-theme');
+      applyTheme(now === 'dark' ? 'light' : 'dark', true); // explicit → persist
     });
   }
 
