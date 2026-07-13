@@ -231,7 +231,11 @@ async function init() {
     const res = await fetch('pricing.json');
     state.data = await res.json();
   } catch (err) {
-    els.resultsBody.innerHTML = `<tr><td colspan="${els.showOrg?.checked ? 10 : 9}" class="empty">Could not load pricing.json. Run <code>node scripts/fetch-pricing.mjs</code> first.</td></tr>`;
+    els.resultsBody.innerHTML = `<tr><td colspan="${els.showOrg?.checked ? 10 : 9}" class="empty error-state">
+      <p>Could not load pricing data.</p>
+      <p class="error-hint">Run <code>node scripts/fetch-pricing.mjs</code> if you're developing locally.</p>
+      <button type="button" class="retry-btn" onclick="location.reload()">Retry</button>
+    </td></tr>`;
     return;
   }
 

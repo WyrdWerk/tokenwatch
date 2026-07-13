@@ -27,7 +27,7 @@
   <meta name="twitter:description" content="Compare image generation API pricing across providers." />
   <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/space-grotesk-600.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=8d3ff50f" />
+  <link rel="stylesheet" href="styles.css?v=21a2232b" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>" />
 </head>
 <body>
@@ -151,10 +151,10 @@
     </p>
   </footer>
 
-  <div class="compare-modal" id="compareModal" style="display:none;">
+  <div class="compare-modal" id="compareModal" role="dialog" aria-modal="true" aria-labelledby="compareModalTitle" style="display:none;">
     <div class="compare-modal-content">
       <div class="compare-modal-header">
-        <h2>Comparison</h2>
+        <h2 id="compareModalTitle">Comparison</h2>
         <button id="compareClose" type="button">✕</button>
       </div>
       <div id="compareBody"></div>
@@ -162,6 +162,6 @@
   </div>
 
   <script src="shared-ui.js?v=e560844f" defer></script>
-  <script src="image-app.js?v=932f5a45" defer></script>
+  <script src="image-app.js?v=c4060380" defer></script>
 </body>
 </html>

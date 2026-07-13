@@ -349,11 +349,18 @@ function showCompareModal() {
   html += '</tbody></table>';
 
   els.compareBody.innerHTML = html;
-  els.compareModal.style.display = '';
+  compareModalCtl().open();
+}
+
+// Lazily build the shared modal controller (Escape / backdrop / focus restore).
+let _compareModalCtl = null;
+function compareModalCtl() {
+  if (!_compareModalCtl) _compareModalCtl = window.TW.modal(els.compareModal);
+  return _compareModalCtl;
 }
 
 function closeCompareModal() {
-  els.compareModal.style.display = 'none';
+  compareModalCtl().close();
 }
 
 function clearCompare() {
@@ -572,9 +579,7 @@ function attachListeners() {
   els.compareBtn.addEventListener('click', showCompareModal);
   els.compareClose.addEventListener('click', closeCompareModal);
   els.compareClear.addEventListener('click', clearCompare);
-  els.compareModal.addEventListener('click', (e) => {
-    if (e.target === els.compareModal) closeCompareModal();
-  });
+  // Backdrop + Escape + focus restore handled by TW.modal.
 
   window.addEventListener('hashchange', () => {
     deserializeState(location.hash.slice(1));
@@ -598,7 +603,11 @@ async function init() {
     attachListeners();
     computeAndRender();
   } catch (err) {
-    els.resultsBody.innerHTML = `<tr><td colspan="7" class="empty">Failed to load pricing data: ${esc(err.message)}</td></tr>`;
+    els.resultsBody.innerHTML = `<tr><td colspan="7" class="empty error-state">
+      <p>Could not load video pricing data.</p>
+      <p class="error-hint">${esc(err.message)}</p>
+      <button type="button" class="retry-btn" onclick="location.reload()">Retry</button>
+    </td></tr>`;
   }
 }
 

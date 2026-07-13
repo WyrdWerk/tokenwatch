@@ -429,6 +429,23 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 tbody tr:hover { background: var(--surface-2); }
 .empty { text-align: center; color: var(--text-dim); padding: 2rem; }
 
+/* ── Error state ────────────────────────────────────────────────────── */
+.error-state { padding: 2.5rem 1.5rem; }
+.error-state p { margin: 0 0 0.4rem; }
+.error-state .error-hint { font-size: 0.85rem; color: var(--text-dim); }
+.retry-btn {
+  margin-top: 0.9rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 1.4rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.retry-btn:hover { background: var(--accent-hover); }
+
 .show-all-row td { text-align: center; padding: 1rem; }
 .show-all-row button {
   background: var(--surface);
