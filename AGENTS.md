@@ -119,6 +119,7 @@ The pipeline includes unattended-operation safeguards:
 - **Abort on >20% failure rate**: if >20% of OpenRouter `/endpoints` calls fail, the entire refresh aborts (prevents shipping a half-missing catalog)
 - **Coverage-drop check**: if model count drops >15% vs previous `pricing.json`, the refresh aborts to preserve last-good data
 - **Dry-run mode**: `node scripts/fetch-pricing.mjs --dry-run` runs the full pipeline without writing pricing.json
+- **Performance preservation**: `fetch-performance.mjs` won't overwrite a 1000-record OR-backed `performance.json` with ~30 direct-only records (85% threshold guard)
 
 ## Files to know
 
@@ -136,7 +137,7 @@ The pipeline includes unattended-operation safeguards:
 | `functions/api/v1/[[route]].js` | Cloudflare Pages Functions API — imports `canonicalId` from `shared/normalize.mjs`. /models (with filters: org, provider, min_context, min_output, quantization, cache_read, cache_write, promo, zdr, sub, search, sort), /models/:id/providers (mix-aware cost sort), /stats (org/zdr/sub/quantization breakdowns), /orgs, /providers (?zdr=true), /images, /images/:id, /videos, /videos/:id, CORS |
 | `public/widget/embed.js` | Embeddable widget — Shadow DOM, auto-detects [data-tw-model], fetches API, renders pricing card |
 | `public/widget/demo.html` | Widget demo page |
-| `.github/workflows/refresh-pricing.yml` | Three jobs: `test` (push/PR, runs `node --test`), `refresh` (daily cron: test→fetch→commit JSON→bust-cache→deploy), `deploy` (push: test→bust-cache→deploy). Cache-busting rewrites `?v=` tokens to content hashes before deploy (not committed). |
+| `.github/workflows/refresh-pricing.yml` | Three jobs: `test` (push/PR, runs `node --test`), `refresh` (every 2h cron: test→fetch all pipelines→fetch-performance→commit JSON→bust-cache→deploy), `deploy` (push: test→bust-cache→deploy). Performance data (latency/throughput) sourced from OR (primary, requires key) + Crof/Lilac/Umans (direct). Cache-busting rewrites `?v=` tokens before deploy (not committed). |
 | `data/manual-pricing.csv` | Static pricing for CSV-sourced providers (Hyper, Makora, Xiaomimimo) |
 | `scripts/lib.mjs` | Shared utilities: org extraction, dedup, HTTP retry, coverage guard, dry-run — imported by all three fetchers. Re-exports `canonicalId`/`orgLookupKey` from `shared/normalize.mjs`. |
 | `scripts/bust-cache.mjs` | Rewrites `?v=` cache-bust tokens in `public/*.html` to 8-char SHA-1 content hashes of the referenced assets. Run before deploy in CI (deploy + refresh jobs) and locally via `npm run bust:cache`. |
@@ -169,7 +170,7 @@ Cloudflare Pages project: `payg-inference-calculator`
 - Production branch: `main`
 - Build output: `public/`
 - GitHub secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
-- Auto-deploy on push to main (deploy-only) + daily cron (fetch+commit+deploy)
+- Auto-deploy on push to main (deploy-only) + 2-hourly cron (fetch+commit+deploy)
 
 Manual deploy: `npx wrangler pages deploy public --project-name payg-inference-calculator --branch main --commit-dirty true`
 

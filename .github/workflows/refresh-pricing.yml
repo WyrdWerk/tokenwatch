@@ -6,8 +6,8 @@ concurrency:
 
 on:
   schedule:
-    # daily at 00:00 UTC
-    - cron: '0 0 * * *'
+    # every 2 hours
+    - cron: '0 */2 * * *'
   workflow_dispatch: {} # manual trigger
   push:
     branches:
@@ -63,11 +63,16 @@ jobs:
           FAL_CACHE_ONLY: '1'
         run: node scripts/fetch-videos.mjs
 
-      - name: Commit pricing data
+      - name: Fetch performance data (latency/tput every 2h)
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: node scripts/fetch-performance.mjs
+
+      - name: Commit pricing + performance data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/pricing.json public/image-pricing.json public/video-pricing.json
+          git add public/pricing.json public/image-pricing.json public/video-pricing.json public/performance.json
           if git diff --cached --quiet; then
             echo "No pricing changes — skipping commit."
           else

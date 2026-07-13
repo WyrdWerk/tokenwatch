@@ -1,19 +1,20 @@
 #!/usr/bin/env node
 /**
- * fetch-performance.mjs
+ * Sidecar script — fetches per-endpoint latency and throughput data:
  *
- * Sidecar script — fetches per-endpoint latency and throughput data from
- * OpenRouter's authenticated /v1/models/:slug/endpoints API.  Writes a
- * compact lookup table to public/performance.json, keyed by the same
- * dedup key the main pipeline uses:
+ *   - Primary source: OpenRouter `/endpoints` API (requires OPENROUTER_API_KEY)
+ *     → ~1000+ records with full latency + throughput percentiles
+ *   - Supplementary: Crof, Lilac, Umans (direct providers, no key needed)
+ *     → Crof: speed (tokens/sec) from `/v1/models` API
+ *     → Lilac/Umans: latency + throughput from their status APIs
  *
- *   canonicalId(model_id)|normalizeProvider(provider_name)
+ * Writes a compact lookup table to public/performance.json, keyed by the same
+ * dedup key the main pipeline uses: canonicalId|normalizedProvider
  *
- * The frontend loads this file alongside pricing.json and renders inline
- * latency/throughput pills in the provider cell.
- *
- * Non-fatal: if OPENROUTER_API_KEY is missing, skips the fetch entirely
- * and preserves the existing public/performance.json. Metadata calls are free.
+ * Graceful degradation WITHOUT an OPENROUTER_API_KEY:
+ *   - OR portion is skipped (no data loss — OR records are preserved)
+ *   - Crof/Lilac/Umans are still fetched
+ *   - 85% threshold guard prevents overwriting OR-heavy data with direct-only
  *
  * Usage:
  *   node scripts/fetch-performance.mjs [--dry-run]
@@ -51,16 +52,11 @@ async function main() {
   if (help) return;
 
   const apiKey = process.env.OPENROUTER_API_KEY;
-  const headers = apiKey
-    ? { Authorization: `Bearer ${apiKey}`, Accept: 'application/json' }
-    : { Accept: 'application/json' };
+  const hasKey = !!apiKey;
 
-  if (!apiKey) {
-    console.warn('⚠ OPENROUTER_API_KEY not set — skipping performance fetch (existing performance.json preserved)');
-    return;
+  if (!hasKey) {
+    console.warn('⚠ OPENROUTER_API_KEY not set — skipping OpenRouter portion (direct providers will still be fetched)');
   }
-
-  console.log('Fetching performance data from OpenRouter...');
 
   // ── Step 1: Read our catalog to know which models we track ──
   let catalogCanonicalIds;
@@ -74,78 +70,80 @@ async function main() {
   }
 
   // ── Step 2: Fetch OR model listing to get canonical_slugs ──
-  const t0 = Date.now();
-  const listData = await fetchJsonWithRetry(OR_MODELS_URL, 1, 2000, { apiKey });
-  const allORModels = (listData.data || []).filter(m => !m.id.endsWith(':free'));
-
-  // Build canonicalId → slug map, only for models we track
-  const modelSlugs = new Map();
-  for (const m of allORModels) {
-    const cid = canonicalId(m.id);
-    if (catalogCanonicalIds.has(cid) && m.canonical_slug) {
-      // First-seen wins (first slug per canonical id)
-      if (!modelSlugs.has(cid)) modelSlugs.set(cid, m.canonical_slug);
-    }
-  }
-  console.log(`  OR models: ${allORModels.length} total → ${modelSlugs.size} match our catalog`);
-
-  // ── Step 3: Fetch endpoints for each matched model ──
-  const slugs = [...modelSlugs.values()];
-  const results = [];
-  let failed = 0;
-
-  for (let i = 0; i < slugs.length; i += CONCURRENCY) {
-    const batch = slugs.slice(i, i + CONCURRENCY);
-    const batchResults = await Promise.allSettled(
-      batch.map(async (slug) => {
-        const url = `${OR_ENDPOINT_BASE}/${slug}/endpoints`;
-        return fetchJsonWithRetry(url, 1, 2000, { apiKey });
-      })
-    );
-    for (let j = 0; j < batchResults.length; j++) {
-      const r = batchResults[j];
-      if (r.status === 'fulfilled') {
-        results.push(r.value);
-      } else {
-        failed++;
-        if (failed <= 5) console.error(`    ✗ ${batch[j]}: ${r.reason?.message || r.reason}`);
-      }
-    }
-    if (i % (CONCURRENCY * 4) === 0 && i > 0) {
-      console.log(`    ... ${Math.min(i + CONCURRENCY, slugs.length)}/${slugs.length} models fetched`);
-    }
-  }
-
-  // Abort on high failure rate
-  const failureRate = slugs.length > 0 ? failed / slugs.length : 0;
-  if (failureRate > 0.20) {
-    throw new Error(
-      `Performance fetch failure rate ${(failureRate * 100).toFixed(1)}% ` +
-      `(${failed}/${slugs.length}) exceeds 20% threshold — aborting`
-    );
-  }
-
-  // ── Step 4: Build performance lookup table ──
+  // Only if we have an API key. Without a key we skip the OR portion
+  // entirely and build performance data from direct providers only.
   const perfData = {};
   let epCount = 0;
+  const modelSlugs = new Map();
+  let failed = 0;
+  const t0 = Date.now();
 
-  for (const data of results) {
-    const eps = data.data?.endpoints || [];
-    // model_id lives on each endpoint object, not on data.data
-    const modelId = eps[0]?.model_id;
-    if (!modelId) continue;
+  if (hasKey) {
+    const listData = await fetchJsonWithRetry(OR_MODELS_URL, 1, 2000, { apiKey });
+    const allORModels = (listData.data || []).filter(m => !m.id.endsWith(':free'));
 
-    for (const ep of eps) {
-      const lat = ep.latency_last_30m;
-      const tput = ep.throughput_last_30m;
-      if (!lat && !tput) continue;
+    for (const m of allORModels) {
+      const cid = canonicalId(m.id);
+      if (catalogCanonicalIds.has(cid) && m.canonical_slug) {
+        if (!modelSlugs.has(cid)) modelSlugs.set(cid, m.canonical_slug);
+      }
+    }
+    console.log(`  OR models: ${allORModels.length} total → ${modelSlugs.size} match our catalog`);
 
-      const key = perfKey(modelId, ep.provider_name);
-      perfData[key] = {
-        latency: lat ? { p50: lat.p50, p75: lat.p75, p90: lat.p90, p99: lat.p99 } : null,
-        throughput: tput ? { p50: tput.p50, p75: tput.p75, p90: tput.p90, p99: tput.p99 } : null,
-      };
-      epCount++;
+    // ── Step 3: Fetch endpoints for each matched model ──
+    const slugs = [...modelSlugs.values()];
+    const results = [];
+    failed = 0;  // reset for endpoint batch (reuses outer `let failed` from line 77)
+
+    for (let i = 0; i < slugs.length; i += CONCURRENCY) {
+      const batch = slugs.slice(i, i + CONCURRENCY);
+      const batchResults = await Promise.allSettled(
+        batch.map(async (slug) => {
+          const url = `${OR_ENDPOINT_BASE}/${slug}/endpoints`;
+          return fetchJsonWithRetry(url, 1, 2000, { apiKey });
+        })
+      );
+      for (let j = 0; j < batchResults.length; j++) {
+        const r = batchResults[j];
+        if (r.status === 'fulfilled') {
+          results.push(r.value);
+        } else {
+          failed++;
+          if (failed <= 5) console.error(`    ✗ ${batch[j]}: ${r.reason?.message || r.reason}`);
+        }
+      }
+      if (i % (CONCURRENCY * 4) === 0 && i > 0) {
+        console.log(`    ... ${Math.min(i + CONCURRENCY, slugs.length)}/${slugs.length} models fetched`);
+      }
+    }
+
+    // Abort on high failure rate
+    const failureRate = slugs.length > 0 ? failed / slugs.length : 0;
+    if (failureRate > 0.20) {
+      throw new Error(
+        `Performance fetch failure rate ${(failureRate * 100).toFixed(1)}% ` +
+        `(${failed}/${slugs.length}) exceeds 20% threshold — aborting`
+      );
+    }
+
+    // ── Step 4: Build performance lookup table from OR results ──
+    for (const data of results) {
+      const eps = data.data?.endpoints || [];
+      const modelId = eps[0]?.model_id;
+      if (!modelId) continue;
+
+      for (const ep of eps) {
+        const lat = ep.latency_last_30m;
+        const tput = ep.throughput_last_30m;
+        if (!lat && !tput) continue;
+
+        const key = perfKey(modelId, ep.provider_name);
+        perfData[key] = {
+          latency: lat ? { p50: lat.p50, p75: lat.p75, p90: lat.p90, p99: lat.p99 } : null,
+          throughput: tput ? { p50: tput.p50, p75: tput.p75, p90: tput.p90, p99: tput.p99 } : null,
+        };
+        epCount++;
+      }
     }
   }
 
@@ -199,6 +197,31 @@ async function main() {
     console.warn(`    ⚠ Umans status fetch failed: ${err.message} — continuing without Umans perf data`);
   }
 
+  // ── Crof (direct provider) performance data ────────────────────────────────
+  // Crof exposes speed (tokens/sec) on their public /v1/models API — the same
+  // endpoint fetch-pricing.mjs already uses for pricing. No auth required.
+  // Speed is a scalar (tokens/second), wrapped as p50 for shape consistency
+  // with the OR endpoint data lat/tput percentiles.
+  const CROF_MODELS_URL = 'https://crof.ai/v1/models';
+  console.log('  Fetching Crof performance data...');
+  try {
+    const crofData = await fetchJson(CROF_MODELS_URL);
+    const crofModels = crofData.data || [];
+    let crofCount = 0;
+    for (const m of crofModels) {
+      if (!m.id || typeof m.speed !== 'number') continue;
+      const key = perfKey(m.id, 'Crof');
+      perfData[key] = {
+        latency: null,
+        throughput: { p50: m.speed, p75: null, p90: null, p99: null },
+      };
+      crofCount++;
+    }
+    console.log(`    Crof: ${crofCount} models indexed`);
+  } catch (err) {
+    console.warn(`    ⚠ Crof models fetch failed: ${err.message} — continuing without Crof perf data`);
+  }
+
   const ms = Date.now() - t0;
   const total = Object.keys(perfData).length;
   console.log(`  Performance data: ${total} total records (${epCount} endpoints) in ${ms}ms (${failed} model fetches failed)`);
@@ -214,10 +237,12 @@ async function main() {
   }
 
   // ── Guard: don't overwrite with degraded data ──
-  // If OpenRouter returned zero catalog matches (API outage, key revoked),
-  // perfData only has direct-provider records (Lilac/Umans). Never overwrite
-  // 700+ OR records with ~9 direct-only records — preserve last-good.
-  if (catalogCanonicalIds.size > 0 && modelSlugs.size === 0) {
+  // If we fetched from OR and got zero catalog matches (API outage,
+  // key revoked), perfData only has direct-provider records
+  // (Lilac/Umans/Crof). Never overwrite 700+ OR records with ~9
+  // direct-only records — preserve last-good.
+  // Only relevant when we actually attempted the OR fetch.
+  if (hasKey && catalogCanonicalIds.size > 0 && modelSlugs.size === 0) {
     console.log('\n→ OpenRouter returned zero catalog matches — preserving existing performance.json');
     return;
   }
