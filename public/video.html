@@ -5,10 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TokenWatch — Video Generation Pricing</title>
   <meta name="description" content="Compare video generation API pricing across providers. Per-second pricing with resolution and audio variants." />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3b5ee13a" />
+  <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/space-grotesk-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=b2f79458" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>" />
 </head>
 <body>
@@ -106,7 +105,14 @@
             </tr>
           </thead>
           <tbody id="resultsBody">
-            <tr><td colspan="7" class="empty">Loading pricing data…</td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="7"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="7"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="7"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="7"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="7"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="7"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="7"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="7"><span class="skeleton-bar"></span></td></tr>
           </tbody>
         </table>
       </div>
@@ -140,6 +146,6 @@
   </div>
 
   <script src="shared-ui.js?v=b038696d" defer></script>
-  <script src="video-app.js?v=0f14848a" defer></script>
+  <script src="video-app.js?v=22d8cfb4" defer></script>
 </body>
 </html>
