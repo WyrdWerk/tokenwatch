@@ -216,7 +216,7 @@ OpenRouter has dedicated APIs for image and video generation — separate from t
 - Rate limiting: 500ms delay between pricing batches + exponential-backoff retry on 429 (up to 3 retries)
 - Merge: fal rows prepended to OpenRouter arrays → `dedupModels` gives Tier-1 precedence (first-seen wins). First model-level dedup in fetch-images/fetch-videos.
 - Auth: `FAL_API_KEY` GitHub secret, injected as env var on the image + video fetch CI steps
-- Coverage: ~270 image + ~145 video models from 1,398 endpoints (770 unpriced, 312 excluded unit)
+- Coverage: raw fal.ai endpoint scan historically ~270 image + ~145 video includable endpoints from ~1,398 listed (many free/excluded units). **Emitted catalogs after OR+fal merge + dedup: ~165 image, ~105 video** in `public/image-pricing.json` / `public/video-pricing.json`.
 
 ### Frontend tabs
 - `public/image.html` + `public/image-app.js`: image calculator (count × $/image for flat-priced; varies for others), provider + model typeahead search, variant/resolution filter, sortable table with unit-adaptive columns, mobile card layout via data-label, mobile sort dropdown
