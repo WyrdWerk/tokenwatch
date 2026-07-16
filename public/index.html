@@ -160,6 +160,7 @@
           <option value="provider">Provider</option>
         </select>
         <label class="org-toggle"><input type="checkbox" id="showOrg"> Show Org</label>
+        <button type="button" id="exportCsvBtn" class="export-csv-btn">Export CSV</button>
       </div>
       <select class="mobile-sort" id="mobileSort" aria-label="Sort results">
         <option value="cost:asc">Total Cost ↑</option>
@@ -180,6 +181,8 @@
         <option value="context:desc">Context ↓</option>
         <option value="speed:asc">Speed ↑</option>
         <option value="speed:desc">Speed ↓</option>
+        <option value="blended:asc">Blended $/M ↑</option>
+        <option value="blended:desc">Blended $/M ↓</option>
       </select>
       <div class="table-wrap">
         <table id="resultsTable" class="hide-org">
@@ -194,18 +197,19 @@
               <th class="sortable num" data-sort="cache_read">Cache $/M</th>
               <th class="sortable num" data-sort="context">Context</th>
               <th class="sortable num" data-sort="speed" id="speedColumnHeader">Speed</th>
+              <th class="sortable num" data-sort="blended">Blended $/M</th>
               <th class="sortable num" data-sort="cost" id="costColumnHeader">Total Cost</th>
             </tr>
           </thead>
           <tbody id="resultsBody">
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="9"><span class="skeleton-bar"></span></td></tr>
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="9"><span class="skeleton-bar"></span></td></tr>
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="9"><span class="skeleton-bar"></span></td></tr>
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="9"><span class="skeleton-bar"></span></td></tr>
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="9"><span class="skeleton-bar"></span></td></tr>
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="9"><span class="skeleton-bar"></span></td></tr>
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="9"><span class="skeleton-bar"></span></td></tr>
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="9"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="10"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="10"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="10"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="10"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="10"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="10"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="10"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="10"><span class="skeleton-bar"></span></td></tr>
           </tbody>
         </table>
       </div>

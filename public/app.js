@@ -57,6 +57,7 @@ const els = {
   speedColumnHeader: $('speedColumnHeader'),
   showOrg: $('showOrg'),
   groupBy: $('groupBy'),
+  exportCsvBtn: $('exportCsvBtn'),
   compareTray: $('compareTray'),
   compareCount: $('compareCount'),
   compareBtn: $('compareBtn'),
@@ -231,7 +232,7 @@ async function init() {
     const res = await fetch('pricing.json');
     state.data = await res.json();
   } catch (err) {
-    els.resultsBody.innerHTML = `<tr><td colspan="${els.showOrg?.checked ? 10 : 9}" class="empty error-state">
+    els.resultsBody.innerHTML = `<tr><td colspan="${els.showOrg?.checked ? 11 : 10}" class="empty error-state">
       <p>Could not load pricing data.</p>
       <p class="error-hint">Run <code>node scripts/fetch-pricing.mjs</code> if you're developing locally.</p>
       <button type="button" class="retry-btn" onclick="location.reload()">Retry</button>
@@ -491,6 +492,9 @@ function attachListeners() {
     state.sortDir = dir;
     computeAndRender();
   });
+
+  // Export current results to CSV
+  els.exportCsvBtn?.addEventListener('click', exportCsv);
 
   // Comparison checkboxes (event delegation on tbody)
   els.resultsBody.addEventListener('change', (e) => {
@@ -765,6 +769,16 @@ function showCompareModal() {
     { label: 'Max Output Tokens', getValue: m => m.max_completion_tokens ? m.max_completion_tokens.toLocaleString() : '<span class="missing">—</span>' },
     { label: 'Uptime (30m)', getValue: m => m.uptime_30m != null ? `${m.uptime_30m.toFixed(2)}%` : '<span class="missing">—</span>' },
     { label: 'Discount', getValue: m => m.discount > 0 ? `<span class="promo-badge">${(m.discount * 100).toFixed(0)}% off</span>` : '—' },
+    { label: 'Speed', getValue: m => {
+        const perf = getPerfData({ model: m });
+        const tps = perf?.throughput?.p50;
+        if (tps == null) return '<span class="missing">—</span>';
+        return `⚡${Math.round(tps * 10) / 10}tps`;
+      }, getRaw: m => getPerfData({ model: m })?.throughput?.p50 ?? null, bestHigh: true },
+    { label: 'Blended $/M', getValue: m => {
+        const b = blendedCostFor(m.pricing, tokens);
+        return b != null ? fmtPrice(b) : '<span class="missing">—</span>';
+      }, getRaw: m => blendedCostFor(m.pricing, tokens), isCost: true },
     { label: els.costColumnHeader?.textContent || 'Total Cost', getValue: m => headlineFmt(headlineGet(m)), getRaw: headlineGet, isCost: true, isBudget: budgetMode },
   ];
 
@@ -794,11 +808,11 @@ function showCompareModal() {
 
   for (const row of rows) {
     html += `<tr><td class="compare-label">${row.label}</td>`;
-    if (row.isCost && row.getRaw) {
+    if ((row.isCost || row.bestHigh) && row.getRaw) {
       const values = models.map(m => row.getRaw(m));
       const nonNull = values.filter(v => v !== null && v !== undefined && (isFinite(v) || !row.isBudget));
       const best = nonNull.length > 0
-        ? (row.isBudget ? Math.max(...nonNull) : Math.min(...nonNull))
+        ? ((row.isBudget || row.bestHigh) ? Math.max(...nonNull) : Math.min(...nonNull))
         : null;
       for (const m of models) {
         const v = row.getRaw(m);
@@ -869,6 +883,20 @@ function costFor(pricing, tokens) {
   if (tokens.input > 0 && inputCost === null) return null;
   if (tokens.output > 0 && outputCost === null) return null;
   return (inputCost || 0) + (outputCost || 0) + (cacheReadCost || 0) + cacheWriteCost;
+}
+
+/** Blended $/M: the effective per-million-token rate at the current input/cache/output mix.
+ *  Deliberately excludes cache_write and monthly multiplier — it's a pure
+ *  comparison metric so users can see where models stand per 1M tokens.
+ *  Uses the same null-price semantics as costFor (cache_read null → input rate). */
+function blendedCostFor(pricing, tokens) {
+  const inRate   = pricing.input != null ? pricing.input * tokens.inputPct / 100 : null;
+  const outRate  = pricing.output != null ? pricing.output * tokens.outputPct / 100 : null;
+  const crPrice  = pricing.cache_read != null ? pricing.cache_read : pricing.input;
+  const crRate   = crPrice != null ? crPrice * tokens.cacheReadPct / 100 : null;
+  if (tokens.inputPct > 0 && inRate === null) return null;
+  if (tokens.outputPct > 0 && outRate === null) return null;
+  return (inRate || 0) + (outRate || 0) + (crRate || 0);
 }
 
 /** Affordability: given a $ budget and the per-session token breakdown shape,
@@ -1034,6 +1062,7 @@ function computeAndRender() {
   const rows = offerings
     .map((m) => ({
       model: m,
+      blended: blendedCostFor(m.pricing, tokens),
       cost: budgetMode
         ? affordabilityFor(m.pricing, tokens, perSessionBudget)
         : costFor(m.pricing, tokens),
@@ -1113,6 +1142,7 @@ function sortRows(rows) {
       case 'cache_read':va = a.model.pricing.cache_read; vb = b.model.pricing.cache_read; break;
       case 'context':   va = a.model.context_length; vb = b.model.context_length; break;
       case 'speed':     va = getPerfData(a)?.throughput?.p50 ?? null; vb = getPerfData(b)?.throughput?.p50 ?? null; break;
+      case 'blended':   va = a.blended; vb = b.blended; break;
       case 'cost':
       default:          va = a.cost; vb = b.cost; break;
     }
@@ -1228,6 +1258,7 @@ function renderModelRow(r, rank, groupKey, cheapest) {
     <td class="num" data-label="Cache $/M">${fmtPrice(p.cache_read)} / ${fmtPrice(p.cache_write)}</td>
     <td class="num" data-label="Context">${fmtContext(r.model.context_length)}</td>
     <td class="num speed-cell" data-label="Speed">${renderSpeedCell(r)}</td>
+    <td class="num" data-label="Blended $/M">${r.blended != null ? fmtPrice(r.blended) : '<span class="missing">—</span>'}</td>
     <td class="num cost" data-label="${esc(els.costColumnHeader.textContent)}">${state.computeBy === 'budget' ? fmtAffordability(r.cost) : fmtCost(r.cost)}</td>
   </tr>`;
 }
@@ -1245,7 +1276,7 @@ function renderFlatTable(rows, tokens) {
     })
     .join('');
   if (capped) {
-    const colCount = els.showOrg?.checked ? 10 : 9;
+    const colCount = els.showOrg?.checked ? 11 : 10;
     html += `<tr class="show-all-row"><td colspan="${colCount}">
       <button type="button" id="showAllRows">Show all ${rows.length} models</button>
     </td></tr>`;
@@ -1282,7 +1313,7 @@ function renderGroupedTable(rows, tokens, groupBy) {
     const bestLabel = groupBest !== null
       ? (budgetMode ? `up to ${fmtAffordability(groupBest)}` : `from ${fmtCost(groupBest)}`)
       : '';
-    const colCount = els.showOrg?.checked ? 10 : 9;
+    const colCount = els.showOrg?.checked ? 11 : 10;
     html += `<tr class="group-header" data-group="${esc(key)}">
       <td colspan="${colCount}">
         <span class="collapse-arrow">▼</span>
@@ -1302,7 +1333,7 @@ function renderGroupedTable(rows, tokens, groupBy) {
 
 function renderTable(rows, tokens) {
   if (rows.length === 0) {
-    const colCount = els.showOrg?.checked ? 10 : 9;
+    const colCount = els.showOrg?.checked ? 11 : 10;
     els.resultsBody.innerHTML = `<tr><td colspan="${colCount}" class="empty">No offerings match your criteria. Some providers may not support the token types you entered.</td></tr>`;
     return;
   }
@@ -1313,6 +1344,66 @@ function renderTable(rows, tokens) {
   } else {
     renderGroupedTable(rows, tokens, groupBy);
   }
+}
+
+/** Export current results table to CSV and trigger download. */
+function exportCsv() {
+  const rows = state.currentRows;
+  if (!rows || rows.length === 0) return;
+
+  const headers = [
+    'Rank', 'Org', 'Provider', 'Model', 'Input $/M', 'Output $/M',
+    'Cache Read $/M', 'Cache Write $/M', 'Context', 'Speed (tps p50)',
+    'Blended $/M', state.computeBy === 'budget' ? 'Affordable (M tokens)' : 'Total Cost',
+    'ZDR', 'Subscription', 'Discount',
+  ];
+
+  const escapeCsv = (v) => {
+    if (v == null) return '';
+    let s = String(v);
+    // Prevent formula injection when opened in spreadsheet apps
+    if (/^[=+\-@]/.test(s)) s = "'" + s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const lines = [headers.join(',')];
+  rows.forEach((r, i) => {
+    const m = r.model;
+    const p = m.pricing;
+    const tps = getPerfData(r)?.throughput?.p50;
+    const headline = r.cost == null ? ''
+      : (state.computeBy === 'budget'
+          ? (r.cost === Infinity ? 'Infinity' : r.cost)
+          : r.cost);
+    lines.push([
+      i + 1,
+      orgDisplay(m.org),
+      providerName(m.provider, m.provider_display),
+      (m.name && m.name !== m.id) ? m.name : m.id,
+      p.input ?? '',
+      p.output ?? '',
+      p.cache_read ?? '',
+      p.cache_write ?? '',
+      m.context_length ?? '',
+      tps ?? '',
+      r.blended ?? '',
+      headline,
+      m.zdr ? 'yes' : 'no',
+      m.subscription ? 'yes' : 'no',
+      m.discount > 0 ? m.discount : '',
+    ].map(escapeCsv).join(','));
+  });
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `tokenwatch-${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────────

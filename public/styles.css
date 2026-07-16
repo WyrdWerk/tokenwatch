@@ -459,6 +459,20 @@ tbody tr:hover { background: var(--surface-2); }
   cursor: pointer;
 }
 .show-all-row button:hover { background: var(--accent); color: #fff; }
+.export-csv-btn {
+  background: var(--surface);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm, 6px);
+  padding: 0.35rem 0.9rem;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-left: auto;
+}
+.export-csv-btn:hover { background: var(--accent); color: #fff; }
 
 .rank { color: var(--text-dim); font-weight: 600; width: 2rem; }
 .provider-badge {
