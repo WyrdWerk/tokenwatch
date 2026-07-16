@@ -21,9 +21,9 @@ Static site comparing pay-as-you-go LLM API pricing across inference providers. 
 ## Architecture
 
 - **Data pipeline**: `scripts/fetch-pricing.mjs` fetches pricing from 3 tiers:
-  - **Tier 1 — Direct providers** (authoritative): DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac, SambaNova — fetched via their own `/v1/models` endpoints
-  - **Tier 2 — OpenRouter de-aggregated**: `/v1/models` lists models, then `/endpoints` per model returns per-backend pricing. Each backend (Fireworks, Together, Novita, SiliconFlow, etc.) becomes its own row — NOT "OpenRouter"
-  - **Tier 3 — CSV/hardcoded**: Hyper, Makora, Xiaomimimo (CSV), OpenCode Go (hardcoded)
+- **Tier 1 — Direct providers** (authoritative): DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac, SambaNova, Hyper — fetched via their own `/v1/models` endpoints
+- **Tier 2 — OpenRouter de-aggregated**: `/v1/models` lists models, then `/endpoints` per model returns per-backend pricing. Each backend (Fireworks, Together, Novita, SiliconFlow, etc.) becomes its own row — NOT "OpenRouter"
+- **Tier 3 — CSV/hardcoded**: Makora, Xiaomimimo (CSV), OpenCode Go (hardcoded)
   - **3-tier precedence**: `(canonical_model, normalized_provider)` — direct wins over OpenRouter, which wins over CSV/hardcoded. Quantization is NOT part of the dedup key — same model+provider at different quants collapses to one row (first-seen/highest-tier wins).
   - Writes `public/pricing.json` with ~910 text-generation models across ~75 inference providers. **648 models (71%) are ZDR-tagged.**
 - **models.dev enrichment**: after the 3-tier fetch + dedup, `fetch-pricing.mjs` calls `fetchModelsDevEnrichment()` (sidecar, non-fatal) which pulls `https://models.dev/api.json` and builds a `(provider, normalizedModelId)` index. `applyEnrichment()` decorates each model with a `modelsdev` block (base URL, native model ID, capability metadata) and fills `null` cache_read/cache_write/context_length/max_output values. Never overwrites existing values. Two-tier matching: Tier A (exact normalized, confidence `'high'`) + Tier B (bounded fuzzy subset, confidence `'medium'`, surfaces a ⚠ pill in the UI).
@@ -138,7 +138,7 @@ The pipeline includes unattended-operation safeguards:
 | `public/widget/embed.js` | Embeddable widget — Shadow DOM, auto-detects [data-tw-model], fetches API, renders pricing card |
 | `public/widget/demo.html` | Widget demo page |
 | `.github/workflows/refresh-pricing.yml` | Three jobs: `test` (push/PR, runs `node --test`), `refresh` (every 2h cron: test→fetch all pipelines→fetch-performance→commit JSON→bust-cache→deploy), `deploy` (push: test→bust-cache→deploy). Performance data (latency/throughput) sourced from OR (primary, requires key) + Crof/Lilac/Umans (direct). Cache-busting rewrites `?v=` tokens before deploy (not committed). |
-| `data/manual-pricing.csv` | Static pricing for CSV-sourced providers (Hyper, Makora, Xiaomimimo) |
+| `data/manual-pricing.csv` | Static pricing for CSV-sourced providers (Makora, Xiaomimimo) |
 | `scripts/lib.mjs` | Shared utilities: org extraction, dedup, HTTP retry, coverage guard, dry-run — imported by all three fetchers. Re-exports `canonicalId`/`orgLookupKey` from `shared/normalize.mjs`. |
 | `scripts/bust-cache.mjs` | Rewrites `?v=` cache-bust tokens in `public/*.html` to 8-char SHA-1 content hashes of the referenced assets. Run before deploy in CI (deploy + refresh jobs) and locally via `npm run bust:cache`. |
 | `scripts/fetch-images.mjs` | Image pipeline: fetch `/images/models` + `/endpoints`, normalize flat/megapixel/token pricing → `public/image-pricing.json`. Merges fal.ai image models (Tier-1 precedence) + runs `dedupModels`. |
@@ -235,7 +235,7 @@ All three JSON files (`pricing.json`, `image-pricing.json`, `video-pricing.json`
 
 1. **Subscription pricing details**: Show subscription plan pricing (monthly cost, token quotas) for the 13 subscription providers. Would need integration with codingplans.cc or manual CSV maintenance.
 2. **Auth-gated providers**: Cerebras, Groq, Together, SiliconFlow, Fireworks, Baseten, Hyperbolic, Replicate, Mistral have auth-gated `/v1/models` endpoints. Would need API keys as GitHub Actions secrets. All are already covered via OpenRouter `/endpoints` backends — direct fetch would give Tier-1 precedence + fresher data, not new coverage.
-3. **CSV maintenance**: `data/manual-pricing.csv` needs periodic manual updates for Hyper/Makora/Xiaomimimo pricing. If these models appear in OpenRouter backends, the CSV could be dropped.
+3. **CSV maintenance**: `data/manual-pricing.csv` needs periodic manual updates for Makora/Xiaomimimo pricing. If these models appear in OpenRouter backends, the CSV could be dropped.
 4. **Turbo/preview grouping**: Currently turbo and preview variants are kept separate. Could add UI to group them with their base model.
 5. **Historical price tracking**: Store daily snapshots to surface price-drop alerts or trend charts.
 6. **EmberCloud provider metadata**: `MANUAL_PROVIDER_META` for ember has URLs filled but no HQ/datacenters — update if available.

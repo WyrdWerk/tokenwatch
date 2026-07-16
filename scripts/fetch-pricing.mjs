@@ -5,11 +5,11 @@
  * Fetches pricing from direct providers + OpenRouter (de-aggregated per backend
  * inference provider), normalizes to $/M tokens, and writes public/pricing.json.
  *
- * Tier 1 — Direct providers: DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac
- *          (authoritative source for their own offerings)
+ * Tier 1 — Direct providers: DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac,
+ *          Hyper (authoritative source for their own offerings)
  * Tier 2 — OpenRouter /endpoints: de-aggregated per-backend pricing
  *          (each backend like Fireworks, Together, Novita becomes its own row)
- * Tier 3 — CSV-sourced: Hyper, Makora, Xiaomimimo (manual-pricing.csv)
+ * Tier 3 — CSV-sourced: Makora, Xiaomimimo (manual-pricing.csv)
  *          OpenCode Go (hardcoded)
  *
  * Precedence: (canonical_model, normalized_provider) — direct wins over
@@ -90,6 +90,12 @@ const DIRECT_PROVIDERS = [
     name: 'SambaNova',
     url: 'https://api.sambanova.ai/v1/models',
     parse: parseSambaNova,
+  },
+  {
+    key: 'hyper',
+    name: 'Hyper',
+    url: 'https://hyper.charm.land/v1/models',
+    parse: parseHyper,
   },
   ];
 
@@ -217,6 +223,25 @@ const SUBSCRIPTION_PROVIDERS = new Set([
 
 // ── direct provider parsers ───────────────────────────────────────────────────
 
+function parseHyper(data) {
+  const dataArray = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+  return dataArray
+    .filter((m) => m.pricing && (m.pricing.input != null || m.pricing.output != null))
+    .map((m) => ({
+      id: m.id,
+      name: m.display_name || m.id,
+      provider: 'hyper',
+      quantization: null,
+      discount: 0,
+      context_length: m.context_window ?? null,
+      pricing: {
+        input: passthrough(m.pricing?.input),
+        output: passthrough(m.pricing?.output),
+        cache_read: passthrough(m.pricing?.cache_hit),
+        cache_write: passthrough(m.pricing?.cache_create),
+      },
+    }));
+}
 function parseDeepInfra(data) {
   return (data.data || [])
     .filter((m) => {
@@ -397,6 +422,7 @@ function parseUmans(data) {
 }
 
 // ── OpenRouter de-aggregation ─────────────────────────────────────────────────
+// ── OpenRouter de-aggregation ─────────────────────────────────────────────────
 
 /** Fetch /endpoints for a single model, return per-backend rows. */
 async function fetchModelEndpoints(model) {
@@ -574,43 +600,18 @@ async function fetchProviderMeta() {
   return meta;
 }
 
-// ── CSV-sourced providers (Hyper, Makora, Xiaomimimo) ───────────────────────────
+// ── CSV-sourced providers (Makora, Xiaomimimo) ────────────────────────────
 
 const CSV_PROVIDER_SECTIONS = {
-  'https://hyper.charm.land/v1': 'hyper',
   'https://inference.makora.com/v1': 'makora',
   'https://api.xiaomimimo.com/v1': 'xiaomimimo',
 };
 
 const CSV_PROVIDER_NAMES = {
-  hyper: 'Hyper',
   makora: 'Makora',
   xiaomimimo: 'Xiaomimimo',
 };
 
-// Context lengths for CSV-sourced providers (manually maintained — update when providers add models)
-const HYPER_CONTEXT_LENGTHS = {
-  'deepseek-v4-flash': 1000000,
-  'deepseek-v4-pro': 1000000,
-  'gemma-4-26b-a4b': 262144,
-  'glm-5': 202000,
-  'glm-5.1': 202000,
-  'glm-5.2': 1048576,
-  'gpt-oss-120b': 131072,
-  'kimi-k2.5': 262000,
-  'kimi-k2.6': 262000,
-  'kimi-k2.7-code': 262000,
-  'llama-3.3-70b-instruct': 128000,
-  'llama-4-maverick-17b-128e-instruct-fp8': 430000,
-  'minimax-m2.7': 204000,
-  'qwen3.6-flash': 1000000,
-  'qwen3.6-max': 256000,
-  'qwen3.6-plus': 1000000,
-  'qwen3.7-max': 1000000,
-  'qwen3.7-plus': 1000000,
-  'qwen3-coder-480b-a35b-instruct-int4-mixed-ar': 106000,
-  'qwen3-next-80b-a3b-instruct': 262000,
-};
 
 const XIAOMIMIMO_CONTEXT_LENGTHS = {
   'mimo-v2.5': 1000000,
@@ -661,8 +662,7 @@ function parseCsvProviders(csvText) {
           const cacheRead = parts[3] ? parseFloat(parts[3]) : null;
           if (input !== null || output !== null) {
             const id = name.toLowerCase().replace(/\s+/g, '-');
-            const ctxMap = currentProvider === 'hyper' ? HYPER_CONTEXT_LENGTHS
-              : currentProvider === 'xiaomimimo' ? XIAOMIMIMO_CONTEXT_LENGTHS
+            const ctxMap = currentProvider === 'xiaomimimo' ? XIAOMIMIMO_CONTEXT_LENGTHS
               : MAKORA_CONTEXT_LENGTHS;
             const ctxLen = ctxMap[id] || null;
             providers[providers.length - 1].models.push({

@@ -12,9 +12,9 @@
  * dedup key the main pipeline uses: canonicalId|normalizedProvider
  *
  * Graceful degradation WITHOUT an OPENROUTER_API_KEY:
- *   - OR portion is skipped (no data loss — OR records are preserved)
- *   - Crof/Lilac/Umans are still fetched
- *   - 85% threshold guard prevents overwriting OR-heavy data with direct-only
+ *   - OR portion is skipped — existing OR records are preserved via merge
+ *   - Crof/Lilac/Umans are still fetched and merged into existing data
+ *   - 85% threshold guard protects against degraded datasets after the direct merge
  *
  * Usage:
  *   node scripts/fetch-performance.mjs [--dry-run]
@@ -28,6 +28,8 @@ import {
   fetchJsonWithRetry,
     parseArgs,
 } from './lib.mjs';
+import { extractUmansSnapshot } from '../shared/umans-status.mjs';
+import { mergeDirectIntoExisting } from '../shared/performance.mjs';
 
 const OR_MODELS_URL = 'https://openrouter.ai/api/v1/models';
 const OR_ENDPOINT_BASE = 'https://openrouter.ai/api/v1/models';
@@ -172,13 +174,19 @@ async function main() {
   }
 
   // ── Umans AI (direct provider) performance data ────────────────────────────
-  // Proxied through our own Cloudflare Pages Function to keep the API key off-box.
-  const UMANS_STATUS_URL = process.env.UMANS_STATUS_URL || 'https://tokenwatch.wyrdwerk.com/api/umans-status';
-  console.log('  Fetching Umans AI performance data...');
+  // Direct scrape from status.umans.ai SSR page — no auth, no proxy needed.
+  console.log('  Fetching Umans AI performance data from status.umans.ai...');
   try {
-    const umansRes = await fetchJson(UMANS_STATUS_URL);
-    // Umans status API returns { models: { "umans-glm-5.2": { latency: { ttft_ms: { p50 } }, output_tokens_per_second: { p50 } } } }
-    const umansModels = umansRes.models || {};
+    const umansHtml = await fetch('https://status.umans.ai/', {
+      headers: { Accept: 'text/html' },
+      signal: AbortSignal.timeout(45_000),
+    }).then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.text();
+    });
+    const snapshot = extractUmansSnapshot(umansHtml);
+    if (!snapshot) throw new Error('Could not extract Umans status snapshot from status.umans.ai');
+    const umansModels = snapshot.models || {};
     let umansCount = 0;
     for (const [modelId, metrics] of Object.entries(umansModels)) {
       if (!metrics) continue;
@@ -250,6 +258,24 @@ async function main() {
   if (Object.keys(perfData).length === 0) {
     console.log('\n→ No performance records fetched — preserving existing performance.json');
     return;
+  }
+  // ── Merge: when running direct-only (no OR key), fold fresh direct-provider
+  // records into the existing file's data so OR records are preserved while
+  // direct-provider keys get updated with current values. Without this, the
+  // 15% guard below would see 30 records vs 780 existing and bail, leaving
+  // stale Umans/Lilac/Crof data forever.
+  if (!hasKey) {
+    try {
+      const existing = JSON.parse(await readFile(OUTPUT_PATH, 'utf-8'));
+      const { merged, updatedCount } = mergeDirectIntoExisting(perfData, existing);
+      // Replace perfData contents with merged result (preserves OR, updates direct)
+      for (const k of Object.keys(perfData)) delete perfData[k];
+      Object.assign(perfData, merged);
+      const existingDataCount = Object.keys(existing).filter(k => k !== '_meta').length;
+      console.log(`  Merged ${updatedCount} direct-provider records into existing ${existingDataCount} (total: ${Object.keys(perfData).length})`);
+    } catch {
+      // No existing file — first run, perfData stays as-is
+    }
   }
   // If new record count dropped >15% vs existing, preserve last-good.
   // Catches truncated /models responses that pass the 20% endpoint-failure check
