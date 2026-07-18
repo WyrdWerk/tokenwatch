@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-18T07:27:03.858Z",
+  "generated_at": "2026-07-18T09:16:02.279Z",
   "models": [
     {
       "id": "flux-schnell",
@@ -326,24 +326,6 @@
       ]
     },
     {
-      "id": "reve-2.1-text-to-image",
-      "name": "Reve 2.1",
-      "org": "reve",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "image",
-          "variant": null,
-          "cost_per_unit": 0.25,
-          "cost_per_million": null
-        }
-      ]
-    },
-    {
       "id": "gemini-25-flash-image",
       "name": "Gemini 2.5 Flash Image",
       "org": "google",
@@ -376,6 +358,24 @@
           "variant": null,
           "cost_per_unit": 0.003,
           "cost_per_million": 0.003
+        }
+      ]
+    },
+    {
+      "id": "reve-2.1-text-to-image",
+      "name": "Reve 2.1",
+      "org": "reve",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.25,
+          "cost_per_million": null
         }
       ]
     },
@@ -416,9 +416,9 @@
       ]
     },
     {
-      "id": "recraft-v4-text-to-image",
-      "name": "Recraft V4",
-      "org": "recraft",
+      "id": "flux-pro-kontext-text-to-image",
+      "name": "FLUX.1 Kontext [pro]",
+      "org": "black-forest-labs",
       "provider": "fal",
       "output_modalities": [
         "image"
@@ -434,9 +434,9 @@
       ]
     },
     {
-      "id": "flux-pro-kontext-text-to-image",
-      "name": "FLUX.1 Kontext [pro]",
-      "org": "black-forest-labs",
+      "id": "recraft-v4-text-to-image",
+      "name": "Recraft V4",
+      "org": "recraft",
       "provider": "fal",
       "output_modalities": [
         "image"
@@ -524,24 +524,6 @@
       ]
     },
     {
-      "id": "bytedance-seedream-v5-lite-text-to-image",
-      "name": "Seedream",
-      "org": "bytedance",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "image",
-          "variant": null,
-          "cost_per_unit": 0.035,
-          "cost_per_million": null
-        }
-      ]
-    },
-    {
       "id": "krea-2-turbo-lora",
       "name": "Krea 2 Text to Image Turbo LoRA",
       "org": "krea",
@@ -556,6 +538,24 @@
           "variant": null,
           "cost_per_unit": 0.01,
           "cost_per_million": 0.01
+        }
+      ]
+    },
+    {
+      "id": "bytedance-seedream-v5-lite-text-to-image",
+      "name": "Seedream",
+      "org": "bytedance",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.035,
+          "cost_per_million": null
         }
       ]
     },
@@ -704,24 +704,6 @@
       ]
     },
     {
-      "id": "qwen-image-2512",
-      "name": "Qwen Image 2512",
-      "org": "alibaba",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "megapixel",
-          "variant": null,
-          "cost_per_unit": 0.02,
-          "cost_per_million": 0.02
-        }
-      ]
-    },
-    {
       "id": "flux-pro-kontext-max-text-to-image",
       "name": "FLUX.1 Kontext [max]",
       "org": "black-forest-labs",
@@ -740,6 +722,24 @@
       ]
     },
     {
+      "id": "qwen-image-2512",
+      "name": "Qwen Image 2512",
+      "org": "alibaba",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.02,
+          "cost_per_million": 0.02
+        }
+      ]
+    },
+    {
       "id": "wan-v2.7-text-to-image",
       "name": "Wan",
       "org": "alibaba",
@@ -753,6 +753,24 @@
           "unit": "image",
           "variant": null,
           "cost_per_unit": 0.03,
+          "cost_per_million": null
+        }
+      ]
+    },
+    {
+      "id": "qwen-image-2-pro-text-to-image",
+      "name": "Qwen Image 2",
+      "org": "alibaba",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.075,
           "cost_per_million": null
         }
       ]
@@ -790,24 +808,6 @@
           "variant": null,
           "cost_per_unit": 0.01,
           "cost_per_million": 0.01
-        }
-      ]
-    },
-    {
-      "id": "qwen-image-2-pro-text-to-image",
-      "name": "Qwen Image 2",
-      "org": "alibaba",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "image",
-          "variant": null,
-          "cost_per_unit": 0.075,
-          "cost_per_million": null
         }
       ]
     },
@@ -902,9 +902,9 @@
       ]
     },
     {
-      "id": "z-image-base",
-      "name": "Z Image Base",
-      "org": "z-ai",
+      "id": "sana",
+      "name": "Sana",
+      "org": "fal",
       "provider": "fal",
       "output_modalities": [
         "image"
@@ -914,8 +914,8 @@
         {
           "unit": "megapixel",
           "variant": null,
-          "cost_per_unit": 0.01,
-          "cost_per_million": 0.01
+          "cost_per_unit": 0.001,
+          "cost_per_million": 0.001
         }
       ]
     },
@@ -938,6 +938,24 @@
       ]
     },
     {
+      "id": "z-image-base",
+      "name": "Z Image Base",
+      "org": "z-ai",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.01,
+          "cost_per_million": 0.01
+        }
+      ]
+    },
+    {
       "id": "hunyuan-image-v3-text-to-image",
       "name": "Hunyuan Image",
       "org": "fal",
@@ -952,24 +970,6 @@
           "variant": null,
           "cost_per_unit": 0.1,
           "cost_per_million": 0.1
-        }
-      ]
-    },
-    {
-      "id": "sana",
-      "name": "Sana",
-      "org": "fal",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "megapixel",
-          "variant": null,
-          "cost_per_unit": 0.001,
-          "cost_per_million": 0.001
         }
       ]
     },
@@ -1064,24 +1064,6 @@
       ]
     },
     {
-      "id": "luma-agent-uni-1-v1-text-to-image",
-      "name": "Luma Uni-1 Text to Image",
-      "org": "luma-labs",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "image",
-          "variant": null,
-          "cost_per_unit": 0.003,
-          "cost_per_million": null
-        }
-      ]
-    },
-    {
       "id": "stable-diffusion-v3-medium",
       "name": "Stable Diffusion V3",
       "org": "fal",
@@ -1100,9 +1082,9 @@
       ]
     },
     {
-      "id": "recraft-v4.1-pro-text-to-vector",
-      "name": "Recraft V4.1 Text to Vector Pro",
-      "org": "recraft",
+      "id": "luma-agent-uni-1-v1-text-to-image",
+      "name": "Luma Uni-1 Text to Image",
+      "org": "luma-labs",
       "provider": "fal",
       "output_modalities": [
         "image"
@@ -1112,7 +1094,7 @@
         {
           "unit": "image",
           "variant": null,
-          "cost_per_unit": 0.3,
+          "cost_per_unit": 0.003,
           "cost_per_million": null
         }
       ]
@@ -1154,6 +1136,24 @@
       ]
     },
     {
+      "id": "recraft-v4.1-pro-text-to-vector",
+      "name": "Recraft V4.1 Text to Vector Pro",
+      "org": "recraft",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.3,
+          "cost_per_million": null
+        }
+      ]
+    },
+    {
       "id": "flux-control-lora-depth",
       "name": "FLUX.1 [dev] Control LoRA Depth",
       "org": "black-forest-labs",
@@ -1190,9 +1190,9 @@
       ]
     },
     {
-      "id": "bytedance-dreamina-v3.1-text-to-image",
-      "name": "Bytedance Dreamina V3.1 Text To Image",
-      "org": "bytedance",
+      "id": "hidream-i1-full",
+      "name": "Hidream I1 Full",
+      "org": "samsung",
       "provider": "fal",
       "output_modalities": [
         "image"
@@ -1200,10 +1200,10 @@
       "supported_parameters": null,
       "pricing": [
         {
-          "unit": "image",
+          "unit": "megapixel",
           "variant": null,
-          "cost_per_unit": 0.03,
-          "cost_per_million": null
+          "cost_per_unit": 0.05,
+          "cost_per_million": 0.05
         }
       ]
     },
@@ -1226,9 +1226,9 @@
       ]
     },
     {
-      "id": "hidream-i1-full",
-      "name": "Hidream I1 Full",
-      "org": "samsung",
+      "id": "bytedance-dreamina-v3.1-text-to-image",
+      "name": "Bytedance Dreamina V3.1 Text To Image",
+      "org": "bytedance",
       "provider": "fal",
       "output_modalities": [
         "image"
@@ -1236,10 +1236,10 @@
       "supported_parameters": null,
       "pricing": [
         {
-          "unit": "megapixel",
+          "unit": "image",
           "variant": null,
-          "cost_per_unit": 0.05,
-          "cost_per_million": 0.05
+          "cost_per_unit": 0.03,
+          "cost_per_million": null
         }
       ]
     },
@@ -1280,24 +1280,6 @@
       ]
     },
     {
-      "id": "luma-photon",
-      "name": "Luma Photon",
-      "org": "luma-labs",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "megapixel",
-          "variant": null,
-          "cost_per_unit": 0.019,
-          "cost_per_million": 0.019
-        }
-      ]
-    },
-    {
       "id": "flux-1-krea",
       "name": "FLUX.1 Krea [dev]",
       "org": "black-forest-labs",
@@ -1312,6 +1294,24 @@
           "variant": null,
           "cost_per_unit": 0.025,
           "cost_per_million": 0.025
+        }
+      ]
+    },
+    {
+      "id": "luma-photon",
+      "name": "Luma Photon",
+      "org": "luma-labs",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.019,
+          "cost_per_million": 0.019
         }
       ]
     },
@@ -1370,6 +1370,24 @@
       ]
     },
     {
+      "id": "recraft-20b",
+      "name": "Recraft 20b",
+      "org": "recraft",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.0219,
+          "cost_per_million": null
+        }
+      ]
+    },
+    {
       "id": "luma-agent-uni-1-v1-max",
       "name": "Luma Uni-1 Text to Image Max",
       "org": "luma-labs",
@@ -1388,9 +1406,9 @@
       ]
     },
     {
-      "id": "recraft-20b",
-      "name": "Recraft 20b",
-      "org": "recraft",
+      "id": "bria-fibo-generate",
+      "name": "Fibo",
+      "org": "bria-ai",
       "provider": "fal",
       "output_modalities": [
         "image"
@@ -1400,7 +1418,7 @@
         {
           "unit": "image",
           "variant": null,
-          "cost_per_unit": 0.0219,
+          "cost_per_unit": 0.04,
           "cost_per_million": null
         }
       ]
@@ -1420,24 +1438,6 @@
           "variant": null,
           "cost_per_unit": 0.03,
           "cost_per_million": 0.03
-        }
-      ]
-    },
-    {
-      "id": "bria-fibo-generate",
-      "name": "Fibo",
-      "org": "bria-ai",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "image",
-          "variant": null,
-          "cost_per_unit": 0.04,
-          "cost_per_million": null
         }
       ]
     },
@@ -1496,24 +1496,6 @@
       ]
     },
     {
-      "id": "hidream-i1-dev",
-      "name": "Hidream I1 Dev",
-      "org": "samsung",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "megapixel",
-          "variant": null,
-          "cost_per_unit": 0.03,
-          "cost_per_million": 0.03
-        }
-      ]
-    },
-    {
       "id": "flux-srpo",
       "name": "FLUX.1 SRPO [dev]",
       "org": "black-forest-labs",
@@ -1528,6 +1510,24 @@
           "variant": null,
           "cost_per_unit": 0.025,
           "cost_per_million": 0.025
+        }
+      ]
+    },
+    {
+      "id": "hidream-i1-dev",
+      "name": "Hidream I1 Dev",
+      "org": "samsung",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.03,
+          "cost_per_million": 0.03
         }
       ]
     },
@@ -1568,24 +1568,6 @@
       ]
     },
     {
-      "id": "nvidia-cosmos-3-super-text-to-image",
-      "name": "Cosmos 3 Super",
-      "org": "nvidia",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "image",
-          "variant": null,
-          "cost_per_unit": 0.04,
-          "cost_per_million": null
-        }
-      ]
-    },
-    {
       "id": "recraft-v4.1-utility-pro-text-to-image",
       "name": "Recraft V4.1 Utility Text to Image",
       "org": "recraft",
@@ -1599,6 +1581,24 @@
           "unit": "image",
           "variant": null,
           "cost_per_unit": 0.21,
+          "cost_per_million": null
+        }
+      ]
+    },
+    {
+      "id": "nvidia-cosmos-3-super-text-to-image",
+      "name": "Cosmos 3 Super",
+      "org": "nvidia",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.04,
           "cost_per_million": null
         }
       ]
@@ -1622,9 +1622,9 @@
       ]
     },
     {
-      "id": "longcat-image",
-      "name": "Longcat Image",
-      "org": "anthropic",
+      "id": "luma-photon-flash",
+      "name": "Luma Photon Flash",
+      "org": "luma-labs",
       "provider": "fal",
       "output_modalities": [
         "image"
@@ -1634,8 +1634,8 @@
         {
           "unit": "megapixel",
           "variant": null,
-          "cost_per_unit": 0.13,
-          "cost_per_million": 0.13
+          "cost_per_unit": 0.005,
+          "cost_per_million": 0.005
         }
       ]
     },
@@ -1658,6 +1658,24 @@
       ]
     },
     {
+      "id": "longcat-image",
+      "name": "Longcat Image",
+      "org": "anthropic",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.13,
+          "cost_per_million": 0.13
+        }
+      ]
+    },
+    {
       "id": "wan-v2.2-a14b-text-to-image",
       "name": "Wan",
       "org": "alibaba",
@@ -1672,24 +1690,6 @@
           "variant": null,
           "cost_per_unit": 0.025,
           "cost_per_million": null
-        }
-      ]
-    },
-    {
-      "id": "hidream-o1-image-dev",
-      "name": "Hidream O1 Image",
-      "org": "samsung",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "megapixel",
-          "variant": null,
-          "cost_per_unit": 0.005,
-          "cost_per_million": 0.005
         }
       ]
     },
@@ -1712,9 +1712,9 @@
       ]
     },
     {
-      "id": "luma-photon-flash",
-      "name": "Luma Photon Flash",
-      "org": "luma-labs",
+      "id": "hidream-o1-image-dev",
+      "name": "Hidream O1 Image",
+      "org": "samsung",
       "provider": "fal",
       "output_modalities": [
         "image"
@@ -1726,24 +1726,6 @@
           "variant": null,
           "cost_per_unit": 0.005,
           "cost_per_million": 0.005
-        }
-      ]
-    },
-    {
-      "id": "lumina-image-v2",
-      "name": "Lumina Image 2",
-      "org": "fal",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "megapixel",
-          "variant": null,
-          "cost_per_unit": 0.075,
-          "cost_per_million": 0.075
         }
       ]
     },
@@ -1766,8 +1748,8 @@
       ]
     },
     {
-      "id": "cogview4",
-      "name": "CogView",
+      "id": "lumina-image-v2",
+      "name": "Lumina Image 2",
       "org": "fal",
       "provider": "fal",
       "output_modalities": [
@@ -1778,8 +1760,8 @@
         {
           "unit": "megapixel",
           "variant": null,
-          "cost_per_unit": 0.1,
-          "cost_per_million": 0.1
+          "cost_per_unit": 0.075,
+          "cost_per_million": 0.075
         }
       ]
     },
@@ -1802,6 +1784,24 @@
       ]
     },
     {
+      "id": "bagel",
+      "name": "Bagel",
+      "org": "fal",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.1,
+          "cost_per_million": null
+        }
+      ]
+    },
+    {
       "id": "wan-v2.2-a14b-text-to-image-lora",
       "name": "Wan v2.2 A14B Text-to-Image A14B with LoRAs",
       "org": "alibaba",
@@ -1820,8 +1820,8 @@
       ]
     },
     {
-      "id": "bagel",
-      "name": "Bagel",
+      "id": "cogview4",
+      "name": "CogView",
       "org": "fal",
       "provider": "fal",
       "output_modalities": [
@@ -1830,10 +1830,10 @@
       "supported_parameters": null,
       "pricing": [
         {
-          "unit": "image",
+          "unit": "megapixel",
           "variant": null,
           "cost_per_unit": 0.1,
-          "cost_per_million": null
+          "cost_per_million": 0.1
         }
       ]
     },
@@ -1892,24 +1892,6 @@
       ]
     },
     {
-      "id": "flux-1-srpo",
-      "name": "FLUX.1 SRPO [dev]",
-      "org": "black-forest-labs",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "megapixel",
-          "variant": null,
-          "cost_per_unit": 0.025,
-          "cost_per_million": 0.025
-        }
-      ]
-    },
-    {
       "id": "pony-v7",
       "name": "Pony V7",
       "org": "fal",
@@ -1924,6 +1906,24 @@
           "variant": null,
           "cost_per_unit": 0.03,
           "cost_per_million": 0.03
+        }
+      ]
+    },
+    {
+      "id": "flux-1-srpo",
+      "name": "FLUX.1 SRPO [dev]",
+      "org": "black-forest-labs",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.025,
+          "cost_per_million": 0.025
         }
       ]
     },
@@ -2018,9 +2018,9 @@
       ]
     },
     {
-      "id": "vecglypher",
-      "name": "Vecglypher",
-      "org": "fal",
+      "id": "flux-pro-v1.1-ultra-finetuned",
+      "name": "FLUX1.1 [pro] ultra Fine-tuned",
+      "org": "black-forest-labs",
       "provider": "fal",
       "output_modalities": [
         "image"
@@ -2030,25 +2030,7 @@
         {
           "unit": "image",
           "variant": null,
-          "cost_per_unit": 0.005,
-          "cost_per_million": null
-        }
-      ]
-    },
-    {
-      "id": "sensenova-u1-infographic",
-      "name": "Sensenova U1 Infographic",
-      "org": "fal",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "image",
-          "variant": null,
-          "cost_per_unit": 0.05,
+          "cost_per_unit": 0.07,
           "cost_per_million": null
         }
       ]
@@ -2090,9 +2072,9 @@
       ]
     },
     {
-      "id": "flux-pro-v1.1-ultra-finetuned",
-      "name": "FLUX1.1 [pro] ultra Fine-tuned",
-      "org": "black-forest-labs",
+      "id": "vecglypher",
+      "name": "Vecglypher",
+      "org": "fal",
       "provider": "fal",
       "output_modalities": [
         "image"
@@ -2102,15 +2084,15 @@
         {
           "unit": "image",
           "variant": null,
-          "cost_per_unit": 0.07,
+          "cost_per_unit": 0.005,
           "cost_per_million": null
         }
       ]
     },
     {
-      "id": "flux-2-lora-gallery-sepia-vintage",
-      "name": "Flux 2 Lora Gallery",
-      "org": "black-forest-labs",
+      "id": "sensenova-u1-infographic",
+      "name": "Sensenova U1 Infographic",
+      "org": "fal",
       "provider": "fal",
       "output_modalities": [
         "image"
@@ -2118,15 +2100,15 @@
       "supported_parameters": null,
       "pricing": [
         {
-          "unit": "megapixel",
+          "unit": "image",
           "variant": null,
-          "cost_per_unit": 0.021,
-          "cost_per_million": 0.021
+          "cost_per_unit": 0.05,
+          "cost_per_million": null
         }
       ]
     },
     {
-      "id": "flux-2-lora-gallery-satellite-view-style",
+      "id": "flux-2-lora-gallery-sepia-vintage",
       "name": "Flux 2 Lora Gallery",
       "org": "black-forest-labs",
       "provider": "fal",
@@ -2180,6 +2162,24 @@
       ]
     },
     {
+      "id": "flux-2-lora-gallery-satellite-view-style",
+      "name": "Flux 2 Lora Gallery",
+      "org": "black-forest-labs",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.021,
+          "cost_per_million": 0.021
+        }
+      ]
+    },
+    {
       "id": "vidu-q2-text-to-image",
       "name": "Vidu",
       "org": "shengshu",
@@ -2193,24 +2193,6 @@
           "unit": "image",
           "variant": null,
           "cost_per_unit": 0.05,
-          "cost_per_million": null
-        }
-      ]
-    },
-    {
-      "id": "wan-v2.2-5b-text-to-image",
-      "name": "Wan",
-      "org": "alibaba",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "image",
-          "variant": null,
-          "cost_per_unit": 0.016,
           "cost_per_million": null
         }
       ]
@@ -2234,6 +2216,42 @@
       ]
     },
     {
+      "id": "wan-v2.2-5b-text-to-image",
+      "name": "Wan",
+      "org": "alibaba",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.016,
+          "cost_per_million": null
+        }
+      ]
+    },
+    {
+      "id": "bria-fibo-lite-generate",
+      "name": "Fibo Lite",
+      "org": "bria-ai",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.036,
+          "cost_per_million": null
+        }
+      ]
+    },
+    {
       "id": "ernie-image-lora-turbo",
       "name": "Ernie Image Lora Turbo",
       "org": "fal",
@@ -2252,9 +2270,9 @@
       ]
     },
     {
-      "id": "emu-3.5-image-text-to-image",
-      "name": "Emu 3.5 Image",
-      "org": "fal",
+      "id": "ideogram-custom-models-generate",
+      "name": "Ideogram",
+      "org": "ideogram",
       "provider": "fal",
       "output_modalities": [
         "image"
@@ -2264,44 +2282,8 @@
         {
           "unit": "image",
           "variant": null,
-          "cost_per_unit": 0.15,
+          "cost_per_unit": 0.03,
           "cost_per_million": null
-        }
-      ]
-    },
-    {
-      "id": "flux-krea-lora-stream",
-      "name": "Flux Krea Lora",
-      "org": "black-forest-labs",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "megapixel",
-          "variant": null,
-          "cost_per_unit": 0.035,
-          "cost_per_million": 0.035
-        }
-      ]
-    },
-    {
-      "id": "flux-lora-stream",
-      "name": "Flux Lora",
-      "org": "black-forest-labs",
-      "provider": "fal",
-      "output_modalities": [
-        "image"
-      ],
-      "supported_parameters": null,
-      "pricing": [
-        {
-          "unit": "megapixel",
-          "variant": null,
-          "cost_per_unit": 0.035,
-          "cost_per_million": 0.035
         }
       ]
     },
