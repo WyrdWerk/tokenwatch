@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-20T12:09:03.899Z",
+  "generated_at": "2026-07-20T15:45:03.119Z",
   "models": [
     {
       "id": "kling-video-v3-pro",
@@ -1228,6 +1228,51 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.005
+        }
+      ]
+    },
+    {
+      "id": "x-ai/grok-imagine-video-1.5",
+      "name": "xAI: Grok Imagine Video 1.5",
+      "org": "xai",
+      "provider": "xai",
+      "supported_durations": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "supported_resolutions": [
+        "480p",
+        "720p",
+        "1080p"
+      ],
+      "pricing": [
+        {
+          "resolution": "480p",
+          "audio": null,
+          "cost_per_second": 0.08
+        },
+        {
+          "resolution": "720p",
+          "audio": null,
+          "cost_per_second": 0.14
+        },
+        {
+          "resolution": "1080p",
+          "audio": null,
+          "cost_per_second": 0.25
         }
       ]
     },
