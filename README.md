@@ -7,8 +7,8 @@ Compare pay-as-you-go LLM inference pricing across inference providers. Enter yo
 ## How it works
 
 1. **`scripts/fetch-pricing.mjs`** fetches text-generation pricing from 3 tiers: direct `/v1/models` providers (DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac, SambaNova, Hyper), OpenRouter de-aggregated `/endpoints` (Fireworks, Together, Novita, SiliconFlow, etc.), plus CSV/hardcoded (Makora, Xiaomimimo, OpenCode Go) and manually maintained Umans pricing (`UMANS_MODELS` in the fetcher). Also fetches provider metadata, ZDR data, models.dev enrichment, and quality benchmarks. Normalizes all pricing to $/M tokens and writes `public/pricing.json`.
-2. **`scripts/fetch-images.mjs`** fetches image generation models from OpenRouter plus fal.ai (Tier-1 precedence). Handles flat per-image, per-megapixel, and per-token pricing. Writes `public/image-pricing.json` (~165 models).
-3. **`scripts/fetch-videos.mjs`** fetches video generation models from OpenRouter plus fal.ai (Tier-1 precedence). Normalizes per-second pricing with resolution and audio variants. Writes `public/video-pricing.json` (~105 models).
+2. **`scripts/fetch-images.mjs`** fetches image generation models from OpenRouter plus fal.ai (Tier-1 precedence). Handles flat per-image, per-megapixel, and per-token pricing. Writes `public/image-pricing.json` (~160 models).
+3. **`scripts/fetch-videos.mjs`** fetches video generation models from OpenRouter plus fal.ai (Tier-1 precedence). Normalizes per-second pricing with resolution and audio variants. Writes `public/video-pricing.json` (~100 models).
 4. **`public/`** is a zero-dependency static site (HTML/CSS/JS) with three tabs (Text/Image/Video), each loading its own pricing JSON and computing costs in-browser.
 5. **`functions/api/v1/`** provides a queryable API via Cloudflare Pages Functions for all three catalogs (text, image, video).
 6. **GitHub Actions** refreshes pricing + performance on a 2-hourly cron, commits updated JSON, and deploys to Cloudflare Pages.
@@ -62,9 +62,9 @@ Presets: Agentic (2.5/97/0.5), Balanced (30/50/20), Heavy output (10/0/90), No c
 | CSV-sourced | Tier 3 | Makora, Xiaomimimo (from `data/manual-pricing.csv`) |
 | Hardcoded | Tier 3 | OpenCode Go + Umans (`UMANS_MODELS` manual table in fetcher; status.umans.ai SSR is for performance data only) |
 
-**3-tier precedence**: when the same (model, provider) appears in multiple tiers, the higher-authority tier wins — direct > OpenRouter > CSV/hardcoded. Quantization is not part of the dedup key — same model+provider at different quants collapses to one row.
-**Text models**: ~937 text-generation models across ~75 inference providers and 60+ underlying orgs. **~606 models (~65%) are ZDR-compliant**.
-**Sidecar enrichments** (non-fatal): models.dev metadata (~42% coverage), Artificial Analysis quality benchmarks (~73% coverage), fal.ai image/video (Tier-1 merge).
+**3-tier precedence**: when the same (model, provider) appears in multiple tiers, the higher-authority tier wins — direct > OpenRouter > CSV/hardcoded. Quantization IS part of the dedup key — `canonicalId()` preserves quant suffixes, so different quants of the same model+provider stay distinct rows.
+**Text models**: ~940 text-generation models across ~75 inference providers and ~55 underlying orgs. **~65% are ZDR-compliant**.
+**Sidecar enrichments** (non-fatal): models.dev metadata (~40% coverage), Artificial Analysis quality benchmarks (~75% coverage), fal.ai image/video (Tier-1 merge).
 
 ## Image & Video Generation
 
@@ -72,8 +72,8 @@ TokenWatch also tracks dedicated image and video generation models from OpenRout
 
 | Modality | Source | Models | Pricing |
 |---|---|---|---|
-| **Image** | OpenRouter `/images` + fal.ai | ~165 | Flat per-image, per-megapixel, or per-token |
-| **Video** | OpenRouter `/videos` + fal.ai | ~105 | Per-second with resolution/audio variants |
+| **Image** | OpenRouter `/images` + fal.ai | ~160 | Flat per-image, per-megapixel, or per-token |
+| **Video** | OpenRouter `/videos` + fal.ai | ~100 | Per-second with resolution/audio variants |
 
 Image and video models have their own tabs (see navigation bar). Pricing units vary by model — flat per-image costs are directly computable; token-priced and megapixel-priced models show per-unit rates since total cost depends on generation complexity.
 
@@ -132,6 +132,10 @@ Requires Node ≥18 (uses native `fetch`). No dependencies.
 
 ## Project structure
 
+ARCHITECTURE.md               # Pipeline diagram (3 pipelines: text / image / video → enrichments → outputs → API)
+docs/
+  canonicalization-edge-cases.md  # 10 canonicalization traps + frontend parity guard
+  adr/                           # Architecture Decision Records (settled + proposed design choices)
 ```
 scripts/
   fetch-pricing.mjs          # 3-tier fetch + OR de-aggregation + provider metadata + org extraction + dedup

@@ -52,7 +52,7 @@ test('every model produces a non-empty canonical key', async () => {
 
 // app.js carries its own canonicalModelId() — must stay identical to shared/normalize.mjs.
 // This test catches drift: if someone adds a suffix rule to shared/ but forgets app.js,
-// this fires. The function below is a verbatim copy of public/app.js:247-260.
+// this fires. The function below is a verbatim copy of public/app.js's canonicalModelId() (defined near line 300). Cite the function name, not the line — line numbers drift.
 test('app.js canonicalModelId() matches shared canonicalId() for key inputs', () => {
   function appCanonicalId(id) {
     let k = id.includes('/') ? id.split('/').slice(-1)[0] : id;

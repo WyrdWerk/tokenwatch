@@ -18,16 +18,19 @@ Rules: Investigation = delegate. Editing/deciding = inline. Never both.
 
 Static site comparing pay-as-you-go LLM API pricing across inference providers. Uses OpenRouter's `/endpoints` API to de-aggregate per-backend pricing (each backend like DeepInfra, Fireworks, Together becomes its own row). Zero dependencies, pure Node ESM. Deployed to Cloudflare Pages with 2-hourly CI/CD refresh + auto-deploy on push.
 
+> **Diagram:** [ARCHITECTURE.md](ARCHITECTURE.md) — three-pipeline flowchart (text / image / video).
+> **Canonicalization traps:** [docs/canonicalization-edge-cases.md](docs/canonicalization-edge-cases.md) — read before touching `shared/normalize.mjs` or `public/app.js`.
+> **Decisions:** [docs/adr/](docs/adr/) — why the pipeline is shaped this way.
 ## Architecture
 
 - **Data pipeline**: `scripts/fetch-pricing.mjs` fetches pricing from 3 tiers:
 - **Tier 1 — Direct providers** (authoritative): DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac, SambaNova, Hyper — fetched via their own `/v1/models` endpoints
 - **Tier 2 — OpenRouter de-aggregated**: `/v1/models` lists models, then `/endpoints` per model returns per-backend pricing. Each backend (Fireworks, Together, Novita, SiliconFlow, etc.) becomes its own row — NOT "OpenRouter"
 - **Tier 3 — CSV/hardcoded**: Makora, Xiaomimimo (CSV), OpenCode Go (hardcoded), Umans (manually maintained `UMANS_MODELS` / `parseUmansHardcoded()` — not a live `/v1/models` fetch; status.umans.ai SSR is for performance data only)
-  - **3-tier precedence**: `(canonical_model, normalized_provider)` — direct wins over OpenRouter, which wins over CSV/hardcoded. Quantization is NOT part of the dedup key — same model+provider at different quants collapses to one row (first-seen/highest-tier wins).
-  - Writes `public/pricing.json` with ~937 text-generation models across ~75 inference providers. **~606 models (~65%) are ZDR-tagged.**
+  - **3-tier precedence**: dedup key is `canonicalId(m.id) | normalized_provider` (`scripts/lib.mjs:162`). Direct wins over OpenRouter, which wins over CSV/hardcoded; first-seen/highest-tier wins among identical keys. **Quantization IS part of the dedup key** — `canonicalId()` preserves quant suffixes (`shared/normalize.mjs:30-32`), so different quants of the same model+provider produce distinct keys and stay distinct rows (`test/canonicalization.test.mjs:88-97`). (Note: `orgLookupKey` strips quant for org resolution only — `normalize.mjs:52` — and is NOT the dedup key; see `docs/canonicalization-edge-cases.md` §2.)
+  - Writes `public/pricing.json` with ~940 text-generation models across ~75 inference providers. **~65% are ZDR-tagged.**
 - **models.dev enrichment**: after the 3-tier fetch + dedup, `fetch-pricing.mjs` calls `fetchModelsDevEnrichment()` (sidecar, non-fatal) which pulls `https://models.dev/api.json` and builds a `(provider, normalizedModelId)` index. `applyEnrichment()` decorates each model with a `modelsdev` block (base URL, native model ID, capability metadata) and fills `null` cache_read/cache_write/context_length/max_output values. Never overwrites existing values. Two-tier matching: Tier A (exact normalized, confidence `'high'`) + Tier B (bounded fuzzy subset, confidence `'medium'`, surfaces a ⚠ pill in the UI).
-- **Benchmark enrichment (sidecar)**: after models.dev enrichment, `applyBenchmarkEnrichment()` attaches Artificial Analysis quality indices (`intelligence_index`, `coding_index`, `agentic_index`, 0–100 scale) and `design_arena_best` Elo from OpenRouter's `/models` `benchmarks` field. Conservative variant matching (`shared/benchmarks.mjs`) — strips only trailing quant (`-fp8`, `-nvfp4`, `-int4`) and SKU (`-turbo`, `-fast`, `-highspeed`) suffixes; never size tokens or version bits (which would misattribute — `Qwen3-30B-A3B` must not collapse to `qwen3`). Coverage: ~73% of text models have some benchmark data; ~53% have AA indices specifically. Surfaced in the detail modal (not a table column) plus footer source links. No value-per-dollar in v1 — raw `intelligence/price` makes cheap-weak models rank above flagships.
+- **Benchmark enrichment (sidecar)**: after models.dev enrichment, `applyBenchmarkEnrichment()` attaches Artificial Analysis quality indices (`intelligence_index`, `coding_index`, `agentic_index`, 0–100 scale) and `design_arena_best` Elo from OpenRouter's `/models` `benchmarks` field. Conservative variant matching (`shared/benchmarks.mjs`) — strips only trailing quant (`-fp8`, `-nvfp4`, `-int4`) and SKU (`-turbo`, `-fast`, `-highspeed`) suffixes; never size tokens or version bits (which would misattribute — `Qwen3-30B-A3B` must not collapse to `qwen3`). Coverage: ~75% of text models have some benchmark data; ~60% have AA indices specifically. Surfaced in the detail modal (not a table column) plus footer source links. No value-per-dollar in v1 — raw `intelligence/price` makes cheap-weak models rank above flagships.
 - **ZDR (Zero Data Retention)**: Two-stage tagging in `main()`:
   1. **Endpoint-level**: `fetchZdrEndpoints()` fetches `/api/v1/endpoints/zdr` (documented, no auth) and builds a Set of `dedupKey()` strings. Models matching the set get `zdr: true`.
   2. **Provider-level fallback**: models not tagged at endpoint level are checked against `providers_meta[provider].retains_prompts === false`.
@@ -51,7 +54,7 @@ All prices are stored as **USD per million tokens ($/M)**. Conversion by source:
 
 ### Endpoint fields captured from OpenRouter
 
-- `pricing.prompt`, `pricing.completion`, `pricing.input_cache_read`, `pricing.input_cache_write` → all converted to $/M
+- `pricing.prompt` (→ `input`), `pricing.completion` (→ `output`), `pricing.input_cache_read` (→ `cache_read`), `pricing.input_cache_write` (→ `cache_write`) → all converted to $/M. (Some direct providers use `pricing.cache_read`/`pricing.cache_write` instead of the `input_cache_*` variants; the pipeline handles both.)
 - `pricing.discount` (0 = structural, >0 = promo fraction)
 - `context_length`, `max_completion_tokens`, `uptime_last_30m`
 - `quantization`, `provider_name`
@@ -100,6 +103,8 @@ Org aliases: `deepseek-ai`→`deepseek`, `zai-org`→`z-ai`, `meta-llama`→`met
 
 ### Canonical model ID
 
+
+> **Edge cases & parity guard:** [docs/canonicalization-edge-cases.md](docs/canonicalization-edge-cases.md) — 10 known traps incl. the `-preview-customtools` collision and the frontend `canonicalModelId` parity guard at `test/parity.test.mjs:56-89`.
 Used for cross-provider matching and dedup: strips provider prefix, removes suffixes (`:free`, date suffixes, `-preview`, `:thinking`), lowercases. Turbo variants kept separate. Quantization suffixes baked into the model ID (e.g. `glm-5.2-fp8`, `glm-5.2-nvfp4`) are left as-is — they are distinct entries, not collapsed. Example: `z-ai/glm-5.2`, `zai-org/GLM-5.2`, `GLM-5.2` (Wafer) all canonicalize to `glm-5.2`.
 
 **Single source of truth:** `canonicalId` and `orgLookupKey` live in `shared/normalize.mjs` — a pure (no `node:` imports) module imported by both the Node pipeline (via `scripts/lib.mjs` re-export) and the Cloudflare Pages Function (`functions/api/v1/[[route]].js`). The API's former local `normalizeId` was retired — it had a greedy `-preview-.*$` catch-all that over-stripped `-preview-customtools` and caused distinct models to collide in `/models/:id/providers`. Unknown `-preview-<foo>` suffixes are now preserved as distinct entries.
@@ -146,8 +151,8 @@ The pipeline includes unattended-operation safeguards:
 | `scripts/fetch-fal.mjs` | Sidecar fetcher for fal.ai image + video pricing — paginated `/v1/models` + batched `/v1/models/pricing`, filters to active priced endpoints, maps to schema. Exports `fetchFalImageModels()` / `fetchFalVideoModels()`. Auth: `FAL_API_KEY` env. |
 | `public/image.html` + `public/image-app.js` | Image pricing tab: calculator (count × $/unit), provider + model typeahead search, unit-adaptive table, variant filter, mobile card layout, mobile sort dropdown |
 | `public/video.html` + `public/video-app.js` | Video pricing tab: calculator (seconds × $/sec), provider + model typeahead search, resolution + audio filters, mobile card layout, mobile sort dropdown |
-| `public/image-pricing.json` | Generated data — ~165 image models with pricing arrays (image/megapixel/token units); includes fal.ai merge |
-| `public/video-pricing.json` | Generated data — ~105 video models with per-second pricing (resolution + audio variants); includes fal.ai merge |
+| `public/image-pricing.json` | Generated data — ~160 image models with pricing arrays (image/megapixel/token units); includes fal.ai merge |
+| `public/video-pricing.json` | Generated data — ~100 video models with per-second pricing (resolution + audio variants); includes fal.ai merge |
 | `test/` | Automated test suite (`node --test`): `canonicalization.test.mjs` (canonicalId/orgLookupKey behavior), `parity.test.mjs` (regression guard against real pricing.json), `api.test.mjs` (API routing/filters/sort with mocked env.ASSETS), `video-audio.test.mjs` (audio filter regression). Fixtures in `test/fixtures/`. |
 
 ## Development
@@ -155,8 +160,8 @@ The pipeline includes unattended-operation safeguards:
 ```bash
 npm run fetch           # Fetch text pricing (~317 API calls, ~15-20s)
 npm run fetch:images    # Fetch image pricing (~40 API calls, ~12s)
-npm run fetch:videos    # Fetch video pricing (1 API call, ~2s)
-npm run fetch:fal       # Fetch fal.ai image+video pricing standalone (writes /tmp/fal-*.json)
+npm run fetch:videos    # Fetch video pricing (fetches video models list, ~2s)
+npm run fetch:fal       # Fetch fal.ai image+video pricing standalone (writes /tmp/fal-image.json and /tmp/fal-video.json)
 npm run fetch:all       # Run all three fetchers
 npm run serve           # Serve public/ on localhost:3000
 npm test                # Run the test suite (node --test, zero-dep)
@@ -193,7 +198,7 @@ OpenRouter has dedicated APIs for image and video generation — separate from t
 
 ### Image pipeline (`scripts/fetch-images.mjs`)
 - Source: `GET /api/v1/images/models` → `GET /api/v1/images/models/:id/endpoints` per model
-- 34 models, pricing from endpoint `pricing[]` array with `billable: "output_image"`
+- OpenRouter image models (list fetched dynamically from `/api/v1/images/models`, auto-router excluded), pricing from endpoint `pricing[]` array with `billable: "output_image"`. Final catalog ~160 after fal.ai merge + dedup.
 - 3 unit types: `image` (flat per-image, computable), `megapixel` (per-MP, varies), `token` (per-image-token, varies)
 - Model creator = provider (no de-aggregation; each model has one endpoint)
 - Shared lib (`scripts/lib.mjs`) for org extraction, dedup, HTTP retry, coverage guard, `--dry-run`
@@ -201,7 +206,7 @@ OpenRouter has dedicated APIs for image and video generation — separate from t
 
 ### Video pipeline (`scripts/fetch-videos.mjs`)
 - Source: `GET /api/v1/videos/models` — pricing_skus on model level (no endpoint fetch)
-- 16 models listed, 13 with per-second pricing (3 Seedance models excluded — per-token only)
+- OpenRouter video models (list fetched dynamically from `/api/v1/videos/models`, auto-router excluded); `pricing_skus` parsed at model level (no endpoint fetch). Models without parsable per-second pricing are skipped. Final catalog ~100 after fal.ai merge + dedup.
 - Normalization: cent-denominated keys (`cents_*`) → dollars; non-per-second keys (`video_tokens`) filtered out
 - Writes `public/video-pricing.json` — per-second pricing with resolution + audio variants
 
@@ -216,7 +221,7 @@ OpenRouter has dedicated APIs for image and video generation — separate from t
 - Rate limiting: 500ms delay between pricing batches + exponential-backoff retry on 429 (up to 3 retries)
 - Merge: fal rows prepended to OpenRouter arrays → `dedupModels` gives Tier-1 precedence (first-seen wins). First model-level dedup in fetch-images/fetch-videos.
 - Auth: `FAL_API_KEY` GitHub secret, injected as env var on the image + video fetch CI steps
-- Coverage: raw fal.ai endpoint scan historically ~270 image + ~145 video includable endpoints from ~1,398 listed (many free/excluded units). **Emitted catalogs after OR+fal merge + dedup: ~165 image, ~105 video** in `public/image-pricing.json` / `public/video-pricing.json`.
+- Coverage: raw fal.ai endpoint scan historically ~270 image + ~145 video includable endpoints from ~1,398 listed (many free/excluded units). **Emitted catalogs after OR+fal merge + dedup: ~160 image, ~100 video** in `public/image-pricing.json` / `public/video-pricing.json`.
 
 ### Frontend tabs
 - `public/image.html` + `public/image-app.js`: image calculator (count × $/image for flat-priced; varies for others), provider + model typeahead search, variant/resolution filter, sortable table with unit-adaptive columns, mobile card layout via data-label, mobile sort dropdown

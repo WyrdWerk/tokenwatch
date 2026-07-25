@@ -27,10 +27,10 @@ Card layout + mobile sort dropdown shipped at ≤640px across all 3 tabs. See RE
 **Status**: Migrated off CSV. `parseHyper()` via `https://hyper.charm.land/v1/models`. CSV is Makora + Xiaomimimo only.
 
 ### fal.ai / quality benchmarks / models.dev — ✅ SHIPPED
-See `docs/superpowers/plans/` (historical). Live: `scripts/fetch-fal.mjs`, `shared/benchmarks.mjs`, `shared/modelsdev.mjs` + tests. Catalog sizes after fal merge: image ~165, video ~105.
+See `docs/superpowers/plans/` (historical). Live: `scripts/fetch-fal.mjs`, `shared/benchmarks.mjs`, `shared/modelsdev.mjs` + tests. Catalog sizes after fal merge: image ~160, video ~100.
 
 ### ZDR (Zero Data Retention) — ✅ IMPLEMENTED
-**Status**: Implemented. ~606 of ~937 models (~65%) tagged ZDR.
+**Status**: Implemented. ~65% of text models tagged ZDR.
 
 **What's done**:
 - Pipeline: two-stage ZDR tagging via OpenRouter `/api/v1/endpoints/zdr` (endpoint-level) + `/api/frontend/all-providers` (provider-level fallback)
@@ -38,7 +38,7 @@ See `docs/superpowers/plans/` (historical). Live: `scripts/fetch-fal.mjs`, `shar
 - `MANUAL_PROVIDER_META` enriched with `retains_prompts`, `may_train`, `retention_days`, `headquarters`, `datacenters`
 - Frontend: green ZDR badge on provider cells, "ZDR only" filter checkbox, ZDR row in compare modal, URL hash `#zdr=1`
 - API: `?zdr=true` filter on `/api/v1/models`, `zdr` field on `/api/v1/models/:id/providers` response
-- `providers_meta` includes `retains_prompts`, `may_train`, `retention_days` for 102 providers
+- `providers_meta` includes `retains_prompts`, `may_train`, `retention_days` for ~110 providers
 
 **Remaining**:
 - EmberCloud ZDR status not yet determined (no policy URLs reviewed)
@@ -78,12 +78,12 @@ Store daily pricing.json snapshots to enable price-drop alerts, trend charts, an
 `MANUAL_PROVIDER_META` for ember has privacy/ToS URLs filled but no HQ/datacenters — update if available.
 
 ### Image & Video Generation Tabs — ✅ IMPLEMENTED
-**Status**: Implemented. ~165 image models, ~105 video models across separate tabs (OpenRouter + fal.ai merge).
+**Status**: Implemented. ~160 image models, ~100 video models across separate tabs (OpenRouter + fal.ai merge).
 
 **What's done**:
 - `scripts/lib.mjs`: shared utilities extracted from fetch-pricing.mjs (org extraction, dedup, HTTP retry, coverage guard, --dry-run)
-- `scripts/fetch-images.mjs`: fetches image models from OpenRouter `/api/v1/images/models` + `/endpoints` and merges fal.ai (Tier-1), handles 3 unit types (image/megapixel/token), writes `public/image-pricing.json` (~165 models)
-- `scripts/fetch-videos.mjs`: fetches video models from `/api/v1/videos/models` and merges fal.ai (Tier-1), normalizes cents→dollars, filters per-second only, writes `public/video-pricing.json` (~105 models)
+- `scripts/fetch-images.mjs`: fetches image models from OpenRouter `/api/v1/images/models` + `/endpoints` and merges fal.ai (Tier-1), handles 3 unit types (image/megapixel/token), writes `public/image-pricing.json` (~160 models)
+- `scripts/fetch-videos.mjs`: fetches video models from `/api/v1/videos/models` and merges fal.ai (Tier-1), normalizes cents→dollars, filters per-second only, writes `public/video-pricing.json` (~100 models)
 - `public/image.html` + `image-app.js`: image calculator (count × $/unit), unit-adaptive table, variant filter
 - `public/video.html` + `video-app.js`: video calculator (seconds × $/sec), resolution + audio filters
 - Tab navigation (Text/Image/Video) on all pages, shared from `styles.css`
@@ -103,16 +103,16 @@ The **Advanced: cache write** collapsible section allows cache-population tokens
 **Status**: Implemented. Extended the Cloudflare Pages Functions API to serve all three catalogs (text/image/video) with new filters, sort keys, and endpoints — all backed by existing data.
 
 **New endpoints**:
-- `GET /api/v1/orgs` — all orgs with model counts (53 orgs)
-- `GET /api/v1/images` — list image models (34 models) with org/provider/search/sort filters
+- `GET /api/v1/orgs` — all orgs with model counts (~55 orgs)
+- `GET /api/v1/images` — list image models (~160 models) with org/provider/search/sort filters
 - `GET /api/v1/images/:id` — single image model with pricing variants (accepts bare canonical or full `org/model` ID)
-- `GET /api/v1/videos` — list video models (13 models) with org/provider/search/sort filters
+- `GET /api/v1/videos` — list video models (~100 models) with org/provider/search/sort filters
 - `GET /api/v1/videos/:id` — single video model with pricing variants
 
 **New filters on `/api/v1/models`**:
 - `?quantization=` — filter by quantization type (fp8, fp4, fp16, bf16, int4, unknown)
-- `?cache_read=true` — only models that support cache read (565 models)
-- `?cache_write=true` — only models that support cache write (61 models)
+- `?cache_read=true` — only models that support cache read
+- `?cache_write=true` — only models that support cache write
 - `?min_output=N` — filter by max_completion_tokens ≥ N
 
 **New sort keys**: `cache_write`, `max_output`, `uptime` (in addition to existing `id`, `input`, `output`, `cache_read`, `context`, `discount`)
@@ -121,12 +121,12 @@ The **Advanced: cache write** collapsible section allows cache-population tokens
 
 **Enhanced providers** (`/api/v1/providers`): optional `?zdr=true` filter to list only ZDR-compliant providers
 
-**E2E tested**: all 9 endpoints verified locally via `wrangler pages dev` — 34 test cases covering list/detail/filter/sort/404/CORS for text, image, and video catalogs.
+**E2E tested**: all 9 endpoints verified locally via `wrangler pages dev` — covering list/detail/filter/sort/404/CORS for text, image, and video catalogs.
 
 **Docs updated**: README.md, AGENTS.md, TODO.md all reflect the new API surface.
 
 ### models.dev enrichment — ✅ IMPLEMENTED
-**Status**: Implemented. ~385 of 920 text models (42%) enriched with base URL, native model ID, capability metadata, and cache-pricing null-fills. The sub-60% yield is expected — DeepInfra (112 models) and ~26 smaller OR-exclusive providers are structurally absent from models.dev, so they can never match. This is documented in the design spec.
+**Status**: Implemented. ~40% of text models enriched with base URL, native model ID, capability metadata, and cache-pricing null-fills. The sub-60% yield is expected — DeepInfra (112 models) and ~26 smaller OR-exclusive providers are structurally absent from models.dev, so they can never match. This is documented in the design spec.
 
 **What's done**:
 - `shared/modelsdev.mjs`: provider map (48 entries), 4 bespoke ID normalizers (cloudflare, amazon-bedrock, fireworks, minimax), two-tier matcher (exact + bounded fuzzy)
