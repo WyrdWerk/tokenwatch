@@ -6,7 +6,7 @@
  * inference provider), normalizes to $/M tokens, and writes public/pricing.json.
  *
  * Tier 1 — Direct providers: DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac,
- *          Hyper (authoritative source for their own offerings)
+ *          SambaNova, Hyper, Sference (authoritative source for their own offerings)
  * Tier 2 — OpenRouter /endpoints: de-aggregated per-backend pricing
  *          (each backend like Fireworks, Together, Novita becomes its own row)
  * Tier 3 — CSV-sourced: Makora, Xiaomimimo (manual-pricing.csv)
@@ -98,6 +98,12 @@ const DIRECT_PROVIDERS = [
     name: 'Hyper',
     url: 'https://hyper.charm.land/v1/models',
     parse: parseHyper,
+  },
+  {
+    key: 'sference',
+    name: 'Sference',
+    url: 'https://api.sference.com/v1/models',
+    parse: parseSference,
   },
   ];
 
@@ -194,6 +200,14 @@ const MANUAL_PROVIDER_META = {
     may_train: false,         // "Xiaomi will not use the content you provide for model training"
     retention_days: null,
   },
+  sference: {
+    privacy_policy_url: 'https://sference.com/privacy',
+    terms_of_service_url: 'https://sference.com/terms',
+    status_page_url: null,
+    headquarters: null,
+    datacenters: null,
+    // ZDR status not determined — policy not reviewed
+  },
     umans: {
     privacy_policy_url: 'https://app.umans.ai/offers/code/legal/privacy-policy',
       terms_of_service_url: 'https://app.umans.ai/offers/code/legal/terms-of-use',
@@ -224,6 +238,25 @@ const SUBSCRIPTION_PROVIDERS = new Set([
   ]);
 
 // ── direct provider parsers ───────────────────────────────────────────────────
+
+function parseSference(data) {
+  return (data.data || [])
+    .filter((m) => m.modality === 'text_generation')
+    .map((m) => ({
+      id: m.id,
+      name: m.display_name || m.id,
+      provider: 'sference',
+      quantization: null,
+      discount: 0,
+      context_length: m.context_tokens ?? null,
+      pricing: {
+        input: passthrough(m.pricing?.input_per_million_usd),
+        output: passthrough(m.pricing?.output_per_million_usd),
+        cache_read: passthrough(m.pricing?.cached_input_per_million_usd),
+        cache_write: null,
+      },
+    }));
+}
 
 function parseHyper(data) {
   const dataArray = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
