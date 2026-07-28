@@ -1,26 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
-// Inline parseSference for testing (mirrors the implementation in fetch-pricing.mjs)
-function parseSference(data) {
-  const passthrough = (val) => (val != null ? Number(val) : null);
-  return (data.data || [])
-    .filter((m) => m.modality === 'text_generation')
-    .map((m) => ({
-      id: m.id,
-      name: m.display_name || m.id,
-      provider: 'sference',
-      quantization: null,
-      discount: 0,
-      context_length: m.context_tokens ?? null,
-      pricing: {
-        input: passthrough(m.pricing?.input_per_million_usd),
-        output: passthrough(m.pricing?.output_per_million_usd),
-        cache_read: passthrough(m.pricing?.cached_input_per_million_usd),
-        cache_write: null,
-      },
-    }));
-}
+// Exercises the PRODUCTION parser (scripts/lib.mjs), not an inline copy.
+import { parseSference } from '../scripts/lib.mjs';
 
 const GLM = {
   id: 'zai-org/GLM-5.2',
@@ -78,4 +61,15 @@ test('parseSference maps missing pricing fields to null', () => {
   assert.equal(result[0].pricing.input, null);
   assert.equal(result[0].pricing.output, null);
   assert.equal(result[0].pricing.cache_read, null);
+});
+
+test('sference provider is present in generated pricing.json', async () => {
+  const raw = await readFile(new URL('../public/pricing.json', import.meta.url), 'utf8');
+  const pricing = JSON.parse(raw);
+  const rows = pricing.models.filter((m) => m.provider === 'sference');
+  assert.ok(rows.length >= 1, `expected sference rows in pricing.json, found ${rows.length}`);
+  for (const m of rows) {
+    assert.ok(m.pricing.input > 0 && m.pricing.output > 0, `${m.id} has positive pricing`);
+  }
+  assert.ok(pricing.providers_meta?.sference, 'providers_meta includes sference entry');
 });

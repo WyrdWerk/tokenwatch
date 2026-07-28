@@ -32,7 +32,7 @@
 
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import {
-  num, perTokToPerM, centsToDollars, passthrough,
+  num, perTokToPerM, centsToDollars, passthrough, parseSference,
   NON_TEXT_ID, isTextModel,
   ORG_ALIASES, PROVIDER_NAME_MAP,
   orgFromId, orgFromName,
@@ -238,25 +238,6 @@ const SUBSCRIPTION_PROVIDERS = new Set([
   ]);
 
 // ── direct provider parsers ───────────────────────────────────────────────────
-
-function parseSference(data) {
-  return (data.data || [])
-    .filter((m) => m.modality === 'text_generation')
-    .map((m) => ({
-      id: m.id,
-      name: m.display_name || m.id,
-      provider: 'sference',
-      quantization: null,
-      discount: 0,
-      context_length: m.context_tokens ?? null,
-      pricing: {
-        input: passthrough(m.pricing?.input_per_million_usd),
-        output: passthrough(m.pricing?.output_per_million_usd),
-        cache_read: passthrough(m.pricing?.cached_input_per_million_usd),
-        cache_write: null,
-      },
-    }));
-}
 
 function parseHyper(data) {
   const dataArray = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);

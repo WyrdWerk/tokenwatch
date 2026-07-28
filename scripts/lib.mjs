@@ -21,6 +21,28 @@ export const perTokToPerM = (v) => { const n = num(v); return n === null ? null 
 export const centsToDollars = (v) => { const n = num(v); return n === null ? null : n / 100; };
 export const passthrough = (v) => num(v);
 
+// ── direct provider parsers ───────────────────────────────────────────────────
+
+/** Sference https://api.sference.com/v1/models → model records (prices already $/M). */
+export function parseSference(data) {
+  return (data.data || [])
+    .filter((m) => m.modality === 'text_generation')
+    .map((m) => ({
+      id: m.id,
+      name: m.display_name || m.id,
+      provider: 'sference',
+      quantization: null,
+      discount: 0,
+      context_length: m.context_tokens ?? null,
+      pricing: {
+        input: passthrough(m.pricing?.input_per_million_usd),
+        output: passthrough(m.pricing?.output_per_million_usd),
+        cache_read: passthrough(m.pricing?.cached_input_per_million_usd),
+        cache_write: null,
+      },
+    }));
+}
+
 /** Filter out non-text models by ID pattern. */
 export const NON_TEXT_ID = /(?:^|[-/])(embed|embedding|embeddinggemma|clip|bge|tts|bark|parler|kokoro|openvoice)(?:[-/]|$)/i;
 export function isTextModel(id) {
