@@ -55,6 +55,27 @@ test('applyEnrichment: attaches modelsdev block on Tier A match', () => {
   assert.equal(models[0].modelsdev.source, 'models.dev');
 });
 
+test('applyEnrichment: :batch inherits base model metadata, row identity preserved', () => {
+  const models = [{ id: 'gpt-5.1:batch', provider: 'openai', context_length: null, pricing: { input: 0.6, output: 0.3, cache_read: null, cache_write: null } }];
+  const idx = buildIdx([
+    ['openai', 'gpt-5.1', { base_url: 'https://api.openai.com/v1', model_id: 'gpt-5.1', cache_read: null, cache_write: null, context_length: 400000, max_output: 128000, description: 'desc', capabilities: { reasoning: true }, modalities: { input: ['text'], output: ['text'] } }],
+  ]);
+  applyEnrichment(models, idx, []);
+  assert.equal(models[0].id, 'gpt-5.1:batch', 'row identity keeps :batch');
+  assert.equal(models[0].modelsdev.confidence, 'medium', 'batch variant is not an exactNative match');
+  assert.equal(models[0].modelsdev.model_id, 'gpt-5.1');
+  assert.equal(models[0].context_length, 400000, 'null ctx filled from base model');
+});
+
+test('applyEnrichment: :batch with no base model in index stays unenriched', () => {
+  const models = [{ id: 'gpt-9.9:batch', provider: 'openai', context_length: null, pricing: { input: 1, output: 2, cache_read: null, cache_write: null } }];
+  const idx = buildIdx([
+    ['openai', 'gpt-5.1', { base_url: 'https://api.openai.com/v1', model_id: 'gpt-5.1', cache_read: null, cache_write: null, context_length: 400000, max_output: 128000 }],
+  ]);
+  applyEnrichment(models, idx, []);
+  assert.equal(models[0].modelsdev, undefined, 'no borrowed metadata without base match');
+});
+
 test('applyEnrichment: confidence medium on Tier B match', () => {
   const models = [{ id: 'fireworks/moonshotai/kimi-k2.7-code', provider: 'fireworks', pricing: { input: 0.95, output: 4.0, cache_read: null, cache_write: null } }];
   // Note: 'fireworks/moonshotai/kimi-k2.7-code' canonicalizes via the fireworks

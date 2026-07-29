@@ -207,6 +207,16 @@ export function findEnrichment(twProvider, twModelId, providerIndex) {
   if (fuzzy) {
     return { ...providerMap.get(fuzzy), confidence: 'medium' };
   }
+  // Metadata-only fallback: ':batch' billing variants (azure/openai/google/…)
+  // share the base model's metadata. Row identity and dedup are untouched —
+  // twModelId/canonicalId keep ':batch'; only enrichment borrows the base record.
+  if (twModelId.endsWith(':batch')) {
+    const batchNorm = normalizeForMatch(twProvider, twModelId.slice(0, -':batch'.length));
+    if (providerMap.has(batchNorm)) {
+      // 'medium' (⚠ pill) — variant match: batch SKU borrows base model metadata.
+      return { ...providerMap.get(batchNorm), confidence: 'medium' };
+    }
+  }
   return null;
 }
 
