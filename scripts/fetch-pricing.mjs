@@ -635,18 +635,15 @@ const XIAOMIMIMO_CONTEXT_LENGTHS = {
   'mimo-v2.5-pro-ultraspeed': 1000000,
 };
 
-// Makora context lengths (fetched from authenticated API on 2026-07-04, hardcoded to avoid
-// embedding API keys — manually update if Makora adds models)
+// Makora context lengths (verified against live /v1/models 2026-07-29 — endpoint confirmed
+// working with auth; no pricing fields returned, so prices stay CSV-sourced)
 const MAKORA_CONTEXT_LENGTHS = {
   'deepseek-v4-flash': 1000000,
   'deepseek-v4-pro': 1000000,
   'gemma-4-26b-a4b': 262144,
   'glm-5.2-fp8': 980000,
   'glm-5.2-nvfp4': 980000,
-  'kimi-k2.7-code': 262144,
-  'llama-3.3-70b-instruct-fp8': 128000,
-  'qwen3.6-27b-nvfp4': 260000,
-  'qwen3.6-35b-a3b-nvfp4': 260000,
+  // kimi-k3: unknown — not in /v1/models yet, no ctx published; leave null until live
 };
 
 function parseCsvProviders(csvText) {
