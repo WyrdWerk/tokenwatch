@@ -1,3 +1,4 @@
+// deploy-fix: stale cache bypass
 // deploy: 2026-07-30 neuralwatt
 // TokenWatch — app.js
 // Loads pricing.json, lets the user search by provider (inference host) and/or
