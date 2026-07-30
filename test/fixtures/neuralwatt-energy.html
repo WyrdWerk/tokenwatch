@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Neuralwatt Energy Pricing</title></head>
+<body>
+  <h1>Energy Pricing</h1>
+  <p>Neuralwatt currently charges <strong>$10.00/kWh</strong> on pay-as-you-go.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>0–256</th>
+        <th>256–1k</th>
+        <th>1k–4k</th>
+        <th>4k–16k</th>
+        <th>16k–64k</th>
+        <th>64k–256k</th>
+        <th>256k–1M</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>GLM-5.2</td>
+        <td title="GLM-5.2 at 0–256: 92% cache-hit rate at this request size">
+          175.07 mWh<br>39.9% of reqs
+        </td>
+        <td title="GLM-5.2 at 256–1k: 88% cache-hit rate at this request size">
+          312.45 mWh<br>25.3% of reqs
+        </td>
+        <td title="GLM-5.2 at 1k–4k: 82% cache-hit rate at this request size">
+          1.23 Wh<br>18.1% of reqs
+        </td>
+        <td title="GLM-5.2 at 4k–16k: 75% cache-hit rate at this request size">
+          3.45 Wh<br>10.2% of reqs
+        </td>
+        <td title="GLM-5.2 at 16k–64k: 68% cache-hit rate at this request size">
+          8.92 Wh<br>4.8% of reqs
+        </td>
+        <td title="GLM-5.2 at 64k–256k: 62% cache-hit rate at this request size">
+          22.1 Wh<br>1.5% of reqs
+        </td>
+        <td title="GLM-5.2 at 256k–1M: 55% cache-hit rate at this request size">
+          68.4 Wh<br>0.2% of reqs
+        </td>
+      </tr>
+      <tr>
+        <td>DeepSeek V4 Flash</td>
+        <td title="DeepSeek V4 Flash at 0–256: 95% cache-hit rate at this request size">
+          89.34 mWh<br>45.2% of reqs
+        </td>
+        <td title="DeepSeek V4 Flash at 256–1k: 91% cache-hit rate at this request size">
+          156.78 mWh<br>30.1% of reqs
+        </td>
+        <td title="DeepSeek V4 Flash at 1k–4k: 86% cache-hit rate at this request size">
+          678.9 mWh<br>15.4% of reqs
+        </td>
+        <td title="DeepSeek V4 Flash at 4k–16k: 78% cache-hit rate at this request size">
+          1.89 Wh<br>6.8% of reqs
+        </td>
+        <td title="DeepSeek V4 Flash at 16k–64k: 70% cache-hit rate at this request size">
+          5.67 Wh<br>2.2% of reqs
+        </td>
+        <td title="DeepSeek V4 Flash at 64k–256k: 64% cache-hit rate at this request size">
+          14.5 Wh<br>0.3% of reqs
+        </td>
+        <td title="DeepSeek V4 Flash at 256k–1M: 58% cache-hit rate at this request size">
+          42.3 Wh<br>0.0% of reqs
+        </td>
+      </tr>
+      <tr>
+        <td>Kimi K2.7 Code Fast</td>
+        <td>Gathering data</td>
+        <td>Gathering data</td>
+        <td>Gathering data</td>
+        <td>Gathering data</td>
+        <td>Gathering data</td>
+        <td>Gathering data</td>
+        <td>Gathering data</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="rounded-2xl">
+    <div title="GLM-5.2">
+      <span class="text-3xl font-bold">~1.23 Wh</span>
+      <span>at a 1k–4k-token request</span>
+      <span>▲ 66% above 7-day avg</span>
+      <p>measured at a 85% avg cache-hit rate</p>
+    </div>
+  </div>
+
+  <div class="rounded-2xl">
+    <div title="DeepSeek V4 Flash">
+      <span class="text-3xl font-bold">~0.68 Wh</span>
+      <span>at a 1k–4k-token request</span>
+      <span>▼ 12% below 7-day avg</span>
+      <p>measured at a 91% avg cache-hit rate</p>
+    </div>
+  </div>
+
+  <p style="color: gray;">Status data is fresh — updated 8m ago</p>
+</body>
+</html>

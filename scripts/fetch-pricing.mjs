@@ -32,7 +32,7 @@
 
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import {
-  num, perTokToPerM, centsToDollars, passthrough, parseSference,
+  num, perTokToPerM, centsToDollars, passthrough, parseSference, parseNeuralwatt,
   NON_TEXT_ID, isTextModel,
   ORG_ALIASES, PROVIDER_NAME_MAP,
   orgFromId, orgFromName,
@@ -47,6 +47,7 @@ import {
 } from './lib.mjs';
 import { fetchModelsDevEnrichment } from './fetch-modelsdev.mjs';
 import { fetchAABenchmarks } from './fetch-aa.mjs';
+import { fetchNeuralwattEnergy } from './fetch-neuralwatt-energy.mjs';
 
 // ── direct providers config ───────────────────────────────────────────────────
 
@@ -104,6 +105,12 @@ const DIRECT_PROVIDERS = [
     name: 'Sference',
     url: 'https://api.sference.com/v1/models',
     parse: parseSference,
+  },
+  {
+    key: 'neuralwatt',
+    name: 'Neuralwatt',
+    url: 'https://api.neuralwatt.com/v1/models',
+    parse: parseNeuralwatt,
   },
   ];
 
@@ -208,7 +215,7 @@ const MANUAL_PROVIDER_META = {
     datacenters: null,
     // ZDR status not determined — policy not reviewed
   },
-    umans: {
+  umans: {
     privacy_policy_url: 'https://app.umans.ai/offers/code/legal/privacy-policy',
       terms_of_service_url: 'https://app.umans.ai/offers/code/legal/terms-of-use',
     status_page_url: 'https://status.umans.ai/status',
@@ -217,6 +224,14 @@ const MANUAL_PROVIDER_META = {
     retains_prompts: false,  // ZDR: "By default, we do not store request payloads"
     may_train: false,         // "do not use to train or improve our models"
     retention_days: null,
+  },
+  neuralwatt: {
+    privacy_policy_url: 'https://portal.neuralwatt.com/privacy',
+    terms_of_service_url: 'https://portal.neuralwatt.com/terms',
+    status_page_url: 'https://neuralwatt.betteruptime.com',
+    headquarters: null,
+    datacenters: null,
+    // ZDR status not determined — policy not reviewed
   },
 };
 
@@ -948,6 +963,28 @@ async function main() {
   if (aaIndex && aaIndex.size > 0) {
     const { filledCount, totalAttempts } = applyAAEnrichment(out.models, aaIndex);
     console.log(`  Artificial Analysis: filled ${filledCount}/${totalAttempts} null indices`);
+  }
+  // ── Neuralwatt energy enrichment (sidecar, non-fatal) ──
+  // Attaches m.energy (Wh/request by prompt-size band, cache-hit %, trend) from
+  // Neuralwatt's live /energy-pricing grid. Energy mode is workload-dependent
+  // (NOT a flat $/M) — stored separately from m.pricing. Only Neuralwatt models.
+  // Rate is the canonical config in the sidecar; the page's stated rate is
+  // observation-only (disagreement logs a warning, never overrides).
+  try {
+    const nwEnergy = await fetchNeuralwattEnergy(console);
+    if (nwEnergy && nwEnergy.size > 0) {
+      let energyCount = 0;
+      for (const m of out.models) {
+        // Energy data is Neuralwatt-specific (their hardware + grid) — never attach
+        // to other providers' rows that merely share the same canonical model id.
+        if (m.provider !== 'neuralwatt') continue;
+        const block = nwEnergy.get(canonicalId(m.id));
+        if (block) { m.energy = block; energyCount++; }
+      }
+      console.log(`  Neuralwatt energy: ${energyCount}/${nwEnergy.size} models matched`);
+    }
+  } catch (err) {
+    console.warn(`  Neuralwatt energy enrichment failed (non-fatal): ${err.message}`);
   }
 
   if (dryRun) {

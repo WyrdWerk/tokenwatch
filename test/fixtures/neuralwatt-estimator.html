@@ -1,0 +1,14 @@
+<script>
+// Minimal fixture mirroring the live /pricing page's inline billEstimator() script.
+// The models array + the "// Fleet-wide" comment after it are what the parser anchors on.
+function billEstimator() {
+    return {
+        models: [{"cached_energy_fraction": 0.3, "cached_input_price_per_1k": null, "completion_price_per_1k": 0.000207, "id": "deepseek-v4-flash", "measured_cached_input_share": 0.9154332033102548, "measured_output_share": 0.0067565035962697875, "name": "DeepSeek V4 Flash", "own_usage": null, "prompt_price_per_1k": 0.000104, "wh_per_mtok": 3.1424428382690093, "wh_per_mtok_overridden": false}, {"cached_energy_fraction": 0.3, "cached_input_price_per_1k": null, "completion_price_per_1k": 0.0045, "id": "glm-5.2", "measured_cached_input_share": 0.9644157701930618, "measured_output_share": 0.004840209312408336, "name": "GLM-5.2", "own_usage": null, "prompt_price_per_1k": 0.00145, "wh_per_mtok": 10.99540005329029, "wh_per_mtok_overridden": false}, {"cached_energy_fraction": 0.58, "cached_input_price_per_1k": null, "completion_price_per_1k": 0.00322, "id": "kimi-k2.6", "measured_cached_input_share": 0.870008233517041, "measured_output_share": 0.031304895664220594, "name": "Kimi K2.6", "own_usage": null, "prompt_price_per_1k": 0.00069, "wh_per_mtok": 27.5, "wh_per_mtok_overridden": true}],
+        // Fleet-wide measured mix: the fallback when the selected model's
+        // profile lacks a piece of the mix (values may be null pre-publish).
+        fleetMix: {"cached_input_share": 0.85},
+        baseRate: 10.0,
+        flexMultiplier: 0.65,
+    };
+}
+</script>
