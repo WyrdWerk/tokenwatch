@@ -155,11 +155,22 @@ export async function onRequestGet(context) {
 
   // ── Route: /api/v1/models[/:canonicalId/providers] ──
   if (path === 'models' || path.startsWith('models/')) {
-    const subPath = path.replace(/^models\//, '');
+    // 'models' → '' (list); 'models/<rest>' → '<rest>'
+    const subPath = path === 'models' ? '' : path.replace(/^models\//, '');
 
-    // /api/v1/models/:canonicalId/providers
-    if (subPath.includes('/providers')) {
-      const requestedId = decodeURIComponent(subPath.replace(/\/providers$/, ''));
+    // /api/v1/models/:canonicalId/providers — id may itself contain slashes (org/model).
+    // Only a non-empty suffix ending exactly in `/providers` is the detail route;
+    // anything else (models/foo, models/foo/bar, models/providers) is NOT a valid
+    // shape and must 404 rather than fall through to the list handler.
+    if (subPath !== '' && subPath.endsWith('/providers')) {
+      const rawId = subPath.slice(0, -'/providers'.length);
+      if (!rawId) return json({ error: 'Not found', path }, 404); // "models/providers" (empty id)
+      let requestedId;
+      try {
+        requestedId = decodeURIComponent(rawId);
+      } catch {
+        return json({ error: 'Invalid model id encoding' }, 400); // malformed %-encoding
+      }
       const target = canonicalId(requestedId);
       const matches = pricing.models.filter(m => canonicalId(m.id) === target);
 
@@ -216,6 +227,11 @@ export async function onRequestGet(context) {
         })),
       });
     }
+
+    // List route: only an empty subPath (`models` or `models/`). Reject every other
+    // non-empty shape not handled by the detail route above — covers models/foo,
+    // models/foo/bar, models/providers, and models/models.
+    if (subPath !== '') return json({ error: 'Not found', path }, 404);
 
     // /api/v1/models — list with filters
     let models = pricing.models;

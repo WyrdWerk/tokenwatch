@@ -68,39 +68,42 @@ function headers_get(res, name) {
 
 // ── Cost computation (mix-aware sort on /models/:id/providers) ─────────────────
 
-test('/api/v1/models/:id/providers with mix-aware cost sort', async () => {
-  // gemini-3.1-pro matches two fixture models:
-  //   google/gemini-3.1-pro (provider=deepinfra) and
-  //   google/gemini-3.1-pro-preview (provider=google, -preview stripped).
+test('/api/v1/models/:id/providers orders by mix-aware cost (inversion proves mix is applied)', async () => {
+  // Fixture rows matching canonical gemini-3.1-pro:
+  //   deepinfra (google/gemini-3.1-pro):        input=1.25, output=5,   cache_read=0.31
+  //   google    (google/gemini-3.1-pro-preview): input=0.10, output=7,   cache_read=0.10  (-preview stripped)
+  // Default (input+output) ranking: deepinfra 6.25 < google 7.10  → deepinfra first.
+  // 30/50/20 mix ranking INVERTS it:
+  //   deepinfra = (1.25*300)+(0.31*500)+(5*200)   = 375+155+1000 = 1530
+  //   google    = (0.10*300)+(0.10*500)+(7*200)   = 30+50+1400   = 1480  → google first.
+  // Asserting google-then-deepinfra proves the handler actually applied the mix weighting
+  // (a default-cost or no-op sort would put deepinfra first and fail here).
   const { status, body } = await getJson(makeContext(
     '/api/v1/models/gemini-3.1-pro/providers?tokens=1000&mix=30,50,20'
   ));
   assert.equal(status, 200);
-  assert.ok(Array.isArray(body.providers), 'providers should be an array');
-  assert.ok(body.providers.length >= 2, `expected ≥2 providers, got ${body.providers.length}`);
-  // Independently recompute expected cost for first provider, assert it's present.
-  // Pricing for both providers in the fixture: input=1.25, output=5, cache_read=0.31.
-  // tokens=1000M, mix=30% input, 50% cache, 20% output:
-  //   total=1e9 tokens; input=3e8, cache=5e8, output=2e8.
-  //   cost = (1.25*300) + (0.31*500) + (5*200) = 375 + 155 + 1000 = 1530.
-  const first = body.providers[0];
-  const p = first.pricing;
+  assert.equal(body.model_count, 2);
+  assert.deepEqual(body.providers.map(p => p.provider), ['google', 'deepinfra'],
+    'mix-aware sort must rank google (1480) before deepinfra (1530)');
+});
+
+test('/api/v1/models/:id/providers mix-aware cost formula (formula-data coverage, not sort)', async () => {
+  // Pins the documented hand-computed cost for the deepinfra row. This validates the
+  // cost FORMULA against known pricing — it does NOT exercise ordering (see the test above).
+  const { body } = await getJson(makeContext(
+    '/api/v1/models/gemini-3.1-pro/providers?tokens=1000&mix=30,50,20'
+  ));
+  const deepinfra = body.providers.find(p => p.provider === 'deepinfra');
+  assert.ok(deepinfra, 'deepinfra row should be present');
+  const p = deepinfra.pricing;
   const total = 1000 * 1e6;
   let expected = 0;
   if (p.input != null) expected += (p.input * total * 0.30) / 1e6;
   const crPrice = p.cache_read != null ? p.cache_read : p.input;
   if (crPrice != null) expected += (crPrice * total * 0.50) / 1e6;
   if (p.output != null) expected += (p.output * total * 0.20) / 1e6;
-  assert.ok(expected > 0, `expected positive cost, got ${expected}`);
-  // Verify providers are sorted ascending (nulls would sort to end, but none here).
-  for (let i = 1; i < body.providers.length; i++) {
-    const prev = body.providers[i - 1].pricing;
-    const curr = body.providers[i].pricing;
-    const prevCost = ((prev.input||0)+(prev.output||0));
-    const currCost = ((curr.input||0)+(curr.output||0));
-    assert.ok(prevCost <= currCost + 0.001,
-      `providers not sorted: ${prevCost} > ${currCost} at index ${i}`);
-  }
+  // input=1.25, cache_read=0.31, output=5 → 375 + 155 + 1000 = 1530.
+  assert.equal(Math.round(expected), 1530, `expected mix-aware cost 1530, got ${expected}`);
 });
 
 // ── /api/v1/ (root) ───────────────────────────────────────────────────────────
@@ -311,16 +314,61 @@ test('/models/anthropic/claude-sonnet-5/providers accepts full org/model ID', as
 test('/models/:id/providers with ?tokens=&mix= does mix-aware cost sort', async () => {
   const { body } = await getJson(makeContext('/api/v1/models/gemini-3.1-pro/providers', '?tokens=100&mix=50,0,50'));
   assert.equal(body.model_count, 2);
-  // Cheapest first (ascending by mix-aware cost)
-  // deepinfra: input=1.25, output=5.0 → 100M × (50% input + 50% output) = 62.5 + 250 = 312.5
-  // google: same prices → same cost. Sort is stable; order may vary but both present.
+  // 50/0/50 mix (no cache): cost = 0.5*input + 0.5*output (per-token halves of input+output).
+  //   deepinfra = (1.25*50)+(5*50)   = 62.5+250 = 312.5
+  //   google    = (0.10*50)+(7*50)   = 5+350    = 355.0
+  // Ranking matches default input+output order here (deepinfra first) — unlike the 30/50/20
+  // cache-heavy mix above, which inverts it. Both providers present; deepinfra is cheapest.
   assert.equal(body.providers.length, 2);
+  assert.equal(body.providers[0].provider, 'deepinfra', 'deepinfra (312.5) should outrank google (355) at 50/0/50');
 });
 
 test('/models/nonexistent/providers returns 404', async () => {
   const { status, body } = await getJson(makeContext('/api/v1/models/nonexistent/providers'));
   assert.equal(status, 404);
   assert.equal(body.error, 'Model not found');
+});
+
+// ── /api/v1/models routing contract (shape gate) ──────────────────────────────
+
+test('/api/v1/models and /api/v1/models/ both return the list', async () => {
+  const a = await getJson(makeContext('/api/v1/models'));
+  const b = await getJson(makeContext('/api/v1/models/'));
+  assert.equal(a.status, 200);
+  assert.equal(b.status, 200);
+  assert.equal(a.body.total, b.body.total);
+});
+
+test('/models/:id with a non-providers suffix returns 404 (not the list)', async () => {
+  const { status, body } = await getJson(makeContext('/api/v1/models/foo'));
+  assert.equal(status, 404);
+  assert.equal(body.error, 'Not found');
+});
+
+test('/models/:id/sub (extra segment, no providers) returns 404', async () => {
+  const { status, body } = await getJson(makeContext('/api/v1/models/foo/bar'));
+  assert.equal(status, 404);
+  assert.equal(body.error, 'Not found');
+});
+
+test('/models/providers (empty id) returns 404', async () => {
+  const { status, body } = await getJson(makeContext('/api/v1/models/providers'));
+  assert.equal(status, 404);
+  assert.equal(body.error, 'Not found');
+});
+
+test('/models/models returns 404 (bare models path must not masquerade as list)', async () => {
+  const { status, body } = await getJson(makeContext('/api/v1/models/models'));
+  assert.equal(status, 404);
+  assert.equal(body.error, 'Not found');
+});
+
+test('/models/:id/providers with malformed %-encoding returns 400 JSON, not an uncaught URIError', async () => {
+  const res = await onRequestGet(makeContext('/api/v1/models/%E0%A4%A/providers'));
+  assert.equal(res.status, 400);
+  assert.equal(res.headers.get('Content-Type'), 'application/json');
+  const body = await res.json();
+  assert.equal(body.error, 'Invalid model id encoding');
 });
 
 // ── /api/v1/orgs ──────────────────────────────────────────────────────────────

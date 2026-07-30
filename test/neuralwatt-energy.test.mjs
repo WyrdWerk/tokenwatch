@@ -12,14 +12,17 @@ let fixture;
 try {
   fixture = await readFile(fixturePath, 'utf8');
 } catch {
-  // If fixture is missing (shouldn't happen), skip all tests
   fixture = null;
 }
+
+// Fail loudly at setup if the fixture is missing — the tests below are meaningless
+// without real HTML, and an empty-Map fallback would surface as confusing downstream
+// assertion failures (e.g. size === 3) far from the actual cause.
+assert.ok(fixture, `neuralwatt-energy.html fixture missing or unreadable at ${fixturePath}`);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function parse(html) {
-  if (!fixture) return new Map(); // fixture missing → skip
   return parseNeuralwattEnergyHtml(html);
 }
 
