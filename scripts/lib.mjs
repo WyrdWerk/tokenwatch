@@ -286,7 +286,7 @@ export const FAL_ORG_MAP = {
 
 /** Fetch JSON with no retry (for simple endpoints). */
 export async function fetchJson(url, opts = {}) {
-  const headers = { Accept: 'application/json' };
+  const headers = { Accept: 'application/json', ...(opts.headers || {}) };
   if (opts.apiKey) headers.Authorization = `Bearer ${opts.apiKey}`;
   const res = await fetch(url, {
     headers,
