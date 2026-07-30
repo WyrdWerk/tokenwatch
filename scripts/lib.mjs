@@ -298,12 +298,12 @@ export async function fetchJson(url, opts = {}) {
 
 /** Fetch JSON with retry on 429/5xx. */
 export async function fetchJsonWithRetry(url, retries = 1, delayMs = 2000, opts = {}) {
+  const baseHeaders = { Accept: 'application/json', ...(opts.headers || {}) };
+  if (opts.apiKey) baseHeaders.Authorization = `Bearer ${opts.apiKey}`;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const headers = { Accept: 'application/json' };
-      if (opts.apiKey) headers.Authorization = `Bearer ${opts.apiKey}`;
       const res = await fetch(url, {
-        headers,
+        headers: baseHeaders,
         signal: AbortSignal.timeout(45_000),
       });
       if (res.ok) return res.json();
