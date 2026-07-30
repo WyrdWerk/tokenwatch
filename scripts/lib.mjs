@@ -65,6 +65,44 @@ export function parseNeuralwatt(data) {
     });
 }
 
+/** Merius https://api.merius.ai/v1/models → model records (prices $/token → $/M). */
+export function parseMerius(data) {
+  return (data.data || [])
+    .filter((m) => {
+      if (m.is_ready === false) return false;
+      if (m.is_free === true) return false;
+      const p = m.pricing?.[0] || {};
+      const input = perTokToPerM(p.prompt);
+      const output = perTokToPerM(p.completion);
+      const cacheRead = perTokToPerM(p.input_cache_read);
+      // Skip if both input and output are zero
+      if (input === 0 && output === 0) return false;
+      // Output modalities must be exactly ['text']
+      if (!Array.isArray(m.output_modalities) || m.output_modalities.length !== 1 || m.output_modalities[0] !== 'text') return false;
+      // Input modalities must include 'text' (allows text+image→text)
+      if (!Array.isArray(m.input_modalities) || !m.input_modalities.includes('text')) return false;
+      return true;
+    })
+    .map((m) => {
+      const p = m.pricing?.[0] || {};
+      return {
+        id: m.id,
+        name: m.name || m.id,
+        provider: 'merius',
+        quantization: null,
+        discount: passthrough(m.discount_to_user) ?? 0,
+        context_length: m.context_length ?? null,
+        max_output_length: m.max_output_length ?? null,
+        pricing: {
+          input: perTokToPerM(p.prompt),
+          output: perTokToPerM(p.completion),
+          cache_read: perTokToPerM(p.input_cache_read),
+          cache_write: null,
+        },
+      };
+    });
+}
+
 /** Filter out non-text models by ID pattern. */
 export const NON_TEXT_ID = /(?:^|[-/])(embed|embedding|embeddinggemma|clip|bge|tts|bark|parler|kokoro|openvoice)(?:[-/]|$)/i;
 export function isTextModel(id) {
@@ -93,6 +131,7 @@ export const ORG_ALIASES = {
   'recraft': 'recraft',
   'x-ai': 'xai',
   'alibaba': 'alibaba',
+  'merius': 'merius',
 };
 
 /** Extract org from a model ID with a slash prefix. */

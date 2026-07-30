@@ -6,7 +6,7 @@
  * inference provider), normalizes to $/M tokens, and writes public/pricing.json.
  *
  * Tier 1 — Direct providers: DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac,
- *          SambaNova, Hyper, Sference (authoritative source for their own offerings)
+ *          SambaNova, HyperCharm, Sference (authoritative source for their own offerings)
  * Tier 2 — OpenRouter /endpoints: de-aggregated per-backend pricing
  *          (each backend like Fireworks, Together, Novita becomes its own row)
  * Tier 3 — CSV-sourced: Makora, Xiaomimimo (manual-pricing.csv)
@@ -32,7 +32,7 @@
 
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import {
-  num, perTokToPerM, centsToDollars, passthrough, parseSference, parseNeuralwatt,
+  num, perTokToPerM, centsToDollars, passthrough, parseSference, parseNeuralwatt, parseMerius,
   NON_TEXT_ID, isTextModel,
   ORG_ALIASES, PROVIDER_NAME_MAP,
   orgFromId, orgFromName,
@@ -96,7 +96,7 @@ const DIRECT_PROVIDERS = [
   },
   {
     key: 'hyper',
-    name: 'Hyper',
+    name: 'HyperCharm',
     url: 'https://hyper.charm.land/v1/models',
     parse: parseHyper,
   },
@@ -111,6 +111,12 @@ const DIRECT_PROVIDERS = [
     name: 'Neuralwatt',
     url: 'https://api.neuralwatt.com/v1/models',
     parse: parseNeuralwatt,
+  },
+  {
+    key: 'merius',
+    name: 'Merius',
+    url: 'https://api.merius.ai/v1/models',
+    parse: parseMerius,
   },
   ];
 
@@ -153,9 +159,9 @@ const MANUAL_PROVIDER_META = {
     status_page_url: null,
     headquarters: 'US',
     datacenters: ['US'],
-    retains_prompts: true,   // "not retained by default" but may retain up to 30 days
+    retains_prompts: false,  // ZDR-by-default (owner-directed classification): "not stored by default" — conditional retention only
     may_train: false,         // "Your prompts and outputs are never used to train AI models"
-    retention_days: 30,
+    retention_days: 30,       // Caveat preserved: may retain up to 30 days for debugging/abuse/legal (privacy §4, §7)
   },
   lilac: {
     privacy_policy_url: 'https://getlilac.com/privacy',
@@ -213,7 +219,9 @@ const MANUAL_PROVIDER_META = {
     status_page_url: null,
     headquarters: null,
     datacenters: null,
-    // ZDR status not determined — policy not reviewed
+    retains_prompts: false,  // ZDR (DPA https://sference.com/legal/dpa): Annex 1 "transient, only as long as operationally necessary"; Annex 2 Point 10 excluded from backups
+    may_train: false,         // DPA Clause 2.6: "Sference shall not use Customer Content to train..."
+    retention_days: null,
   },
   umans: {
     privacy_policy_url: 'https://app.umans.ai/offers/code/legal/privacy-policy',
@@ -225,13 +233,25 @@ const MANUAL_PROVIDER_META = {
     may_train: false,         // "do not use to train or improve our models"
     retention_days: null,
   },
+  merius: {
+    privacy_policy_url: 'https://merius.ai/privacy',
+    terms_of_service_url: 'https://merius.ai/terms',
+    status_page_url: 'https://status.merius.ai',
+    headquarters: null,
+    datacenters: null,
+    retains_prompts: false,  // ZDR: "Zero data retention on inference. By default, we do not log or store the content of your prompts or the generated outputs beyond the moment needed to process your request and return the result."
+    may_train: false,         // "We never use your prompts, inputs, or the outputs we generate for you to train or improve our models without your explicit, opt-in consent."
+    retention_days: null,
+  },
   neuralwatt: {
     privacy_policy_url: 'https://portal.neuralwatt.com/privacy',
     terms_of_service_url: 'https://portal.neuralwatt.com/terms',
     status_page_url: 'https://neuralwatt.betteruptime.com',
     headquarters: null,
     datacenters: null,
-    // ZDR status not determined — policy not reviewed
+    retains_prompts: false,  // ZDR: "Processed transiently to deliver inference results but not permanently stored. Conversation context may be held in volatile memory for up to 24 hours... automatically purged"
+    may_train: false,         // "We do not use your API inputs or outputs to train, fine-tune, or improve any machine learning models"
+    retention_days: 1,        // 24h volatile purge; anonymized semantic representations retained for cache (non-reconstructive per policy)
   },
 };
 
