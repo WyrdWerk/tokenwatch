@@ -42,6 +42,28 @@ export function parseSference(data) {
       },
     }));
 }
+/** Neuralwatt https://api.neuralwatt.com/v1/models → model records (prices already $/M). */
+export function parseNeuralwatt(data) {
+  return (data.data || [])
+    .filter((m) => !m.metadata?.deprecated)
+    .map((m) => {
+      const p = m.metadata?.pricing || {};
+      return {
+        id: m.id,
+        name: m.metadata?.display_name || m.id,
+        provider: 'neuralwatt',
+        quantization: null,
+        discount: 0,
+        context_length: m.metadata?.limits?.max_context_length ?? null,
+        pricing: {
+          input: passthrough(p.input_per_million),
+          output: passthrough(p.output_per_million),
+          cache_read: passthrough(p.cached_input_per_million),
+          cache_write: null,
+        },
+      };
+    });
+}
 
 /** Filter out non-text models by ID pattern. */
 export const NON_TEXT_ID = /(?:^|[-/])(embed|embedding|embeddinggemma|clip|bge|tts|bark|parler|kokoro|openvoice)(?:[-/]|$)/i;
@@ -149,6 +171,7 @@ export const PROVIDER_NAME_MAP = {
   'moonshot ai': 'moonshot',
   'sakana ai': 'sakana',
   'arcee ai': 'arcee',
+  'neuralwatt': 'neuralwatt',
   'inception': 'inception',
   'infermatic': 'infermatic',
   'mara': 'mara',

@@ -705,6 +705,57 @@ function showDetailModal(idx) {
       parts.push('</div>');
     }
   }
+  // Section: Energy (Neuralwatt energy data)
+  // Independent data source — only rendered when model has energy metadata.
+  const energy = r.energy;
+  if (energy && energy.bands) {
+    parts.push('<div class="detail-section"><div class="detail-section-title">Energy (Neuralwatt)</div>');
+    // Bands table
+    const BAND_ORDER = ['0\u2013256', '256\u20131k', '1k\u20134k', '4k\u201316k', '16k\u201364k', '64k\u2013256k', '256k\u20131M'];
+    const rate = energy.rate_usd_per_kwh || 0;
+    let tbl = '<table class="detail-bands-table"><thead><tr><th>Band</th><th>Avg energy</th><th>$/request</th><th>Share</th></tr></thead><tbody>';
+    for (const band of BAND_ORDER) {
+      const b = energy.bands[band];
+      if (!b || b.wh == null) continue;
+      const cost = (b.wh / 1000) * rate;
+      tbl += '<tr><td>' + esc(band) + '</td>';
+      tbl += '<td>' + b.wh.toLocaleString() + ' Wh</td>';
+      tbl += '<td>$' + cost.toFixed(4) + '</td>';
+      tbl += '<td>' + (b.share != null ? b.share.toFixed(1) + '%' : '\u2014') + '</td></tr>';
+    }
+    tbl += '</tbody></table>';
+    parts.push(tbl);
+    // $/Mtok energy (from estimator wh_per_mtok) — the headline comparison figure
+    if (energy.wh_per_mtok != null) {
+      const usdPerMtok = (energy.wh_per_mtok * rate / 1000).toFixed(4);
+      const whStr = energy.wh_per_mtok < 1 ? energy.wh_per_mtok.toFixed(3) : energy.wh_per_mtok.toFixed(1);
+      parts.push('<div class="detail-quality-row"><span class="detail-quality-label">Energy cost (est.)</span><span class="detail-quality-value">' + whStr + ' Wh/Mtok \u2248 $' + usdPerMtok + '/Mtok at $' + rate + '/kWh</span></div>');
+      parts.push('<div class="detail-quality-source">Blended rate at model\u2019s measured traffic mix. For comparison vs token pricing only \u2014 actual cost varies with workload.</div>');
+      if (energy.estimator_source === 'stale-cache') {
+        parts.push('<div class="detail-quality-source">\u26A0 Estimator data from stale cache (fetched ' + esc(energy.estimator_fetched_at || 'unknown') + ')</div>');
+      } else if (energy.estimator_fetched_at) {
+        parts.push('<div class="detail-quality-source">Estimator updated: ' + esc(energy.estimator_fetched_at) + '</div>');
+      }
+    }
+    // Below-table metadata
+    if (energy.avg_cache_hit_pct != null) {
+      parts.push('<div class="detail-quality-row"><span class="detail-quality-label">Avg cache-hit rate</span><span class="detail-quality-value">' + energy.avg_cache_hit_pct + '%</span></div>');
+    }
+    if (energy.trend_48h_vs_7d_pct != null) {
+      const pct = energy.trend_48h_vs_7d_pct;
+      const arrow = pct < 0 ? '\u25BC' : pct > 0 ? '\u25B2' : '\u25CF';
+      const word = pct < 0 ? 'cheaper' : pct > 0 ? 'pricier' : 'same';
+      parts.push('<div class="detail-quality-row"><span class="detail-quality-label">48h trend</span><span class="detail-quality-value">' + arrow + ' ' + Math.abs(pct).toFixed(1) + '% ' + word + ' than 7-day avg</span></div>');
+    }
+    parts.push('<div class="detail-quality-source">Measured from live traffic (7-day avg, workload-dependent)</div>');
+    if (energy.updated_ago) {
+      parts.push('<div class="detail-quality-source">Updated ' + esc(energy.updated_ago) + '</div>');
+    }
+    if (energy.source) {
+      parts.push('<div class="detail-quality-source"><a href="' + esc(energy.source) + '">Energy status \u2197</a></div>');
+    }
+    parts.push('</div>');
+  }
 
   // Section: Performance (latency + throughput from performance.json)
   // Outside the meta block — perf data is independent of modelsdev enrichment.
