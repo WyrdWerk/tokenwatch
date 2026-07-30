@@ -105,7 +105,7 @@ function renderBenchmarkBox(rows) {
   const min = Math.min(...finite);
   const max = Math.max(...vals); // budget mode: Infinity included → renders "∞"
   const fmt = budget ? fmtAffordability : fmtCost;
-  const unit = budget ? ' images' : '/image';
+  const unit = budget ? ' images' : '';
 
   let html = `<strong>Median ${fmt(med)}${unit}</strong>` +
     ` <span class="bench-sep">·</span> mean ${fmt(mean)}` +
