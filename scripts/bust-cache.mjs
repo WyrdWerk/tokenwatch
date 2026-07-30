@@ -11,6 +11,13 @@
  * script rewrites them for deploy only — hashed files under public/h/ are
  * generated, not committed. CI: run before wrangler pages deploy.
  *
+ * DEPLOY GOTCHA (learned 2026-07-30): wrangler pages deploy respects
+ * .gitignore. If public/h/ is gitignored, the generated hashed files are NOT
+ * uploaded — Cloudflare's SPA fallback serves index.html (text/html) for JS
+ * requests, and the _headers immutable rule caches that broken response for
+ * 1 year. FIX: public/h/ must NOT be in .gitignore. The files are generated
+ * locally/CI before deploy and must be present in the upload set.
+ *
  * Idempotent: safe to run twice. Existing h/<name>.<hash>.<ext> refs are
  * normalized back to <name>.<ext> before re-hashing.
  *
