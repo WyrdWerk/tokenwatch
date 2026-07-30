@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   test:
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    if: (github.event_name == 'push' || github.event_name == 'pull_request') && github.actor != 'tokenwatch-data-bot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +35,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Mint data-bot token
+        id: token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.DATA_BOT_APP_ID }}
+          private-key: ${{ secrets.DATA_BOT_PRIVATE_KEY }}
+
+      - name: Configure push remote
+        run: git remote set-url origin "https://x-access-token:${{ steps.token.outputs.token }}@github.com/${{ github.repository }}"
 
       - uses: actions/setup-node@v4
         with:
@@ -94,7 +106,7 @@ jobs:
           command: pages deploy public --project-name payg-inference-calculator --branch main
 
   deploy:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.actor != 'tokenwatch-data-bot[bot]'
     needs: test
     runs-on: ubuntu-latest
     steps:
