@@ -13,6 +13,15 @@ Compare pay-as-you-go LLM inference pricing across inference providers. Enter yo
 5. **`functions/api/v1/`** provides a queryable API via Cloudflare Pages Functions for all three catalogs (text, image, video).
 6. **GitHub Actions** refreshes pricing + performance on a 2-hourly cron, commits updated JSON, and deploys to Cloudflare Pages.
 
+## SEO
+
+TokenWatch ships SEO infrastructure for a client-side-rendered SPA:
+
+- **`scripts/generate-seo.mjs`** (`npm run seo`) server-renders the **25 cheapest models** (by effective cost at the agentic mix 2.5/97/0.5) into `index.html` as a real HTML table — so Google's crawler sees pricing content in the raw HTML, not an empty JS-rendered shell. It also generates `sitemap.xml` (with `lastmod` from `generated_at`) and `robots.txt`. **Idempotent** — replaces the existing `class="seo-models"` section, never re-inserts.
+- All 3 HTML pages carry keyword-rich titles/descriptions, canonical tags, `og:image` (1200×630), `twitter:card=summary_large_image`, and JSON-LD structured data (`WebSite` + `SoftwareApplication` + `FAQPage` + `BreadcrumbList`).
+- `_headers` sets `X-Robots-Tag: noindex` on `/api/*` and the raw JSON data files so they don't compete with the HTML pages.
+- See [docs/conversations/20260803-seo-gsc-setup-public.md](docs/conversations/20260803-seo-gsc-setup-public.md) for the full setup record.
+
 ## Usage
 
 - **Search by provider**: Type a provider name (e.g. "deepinfra", "fireworks", "wafer") to filter results to that inference provider across all models.
@@ -58,57 +67,23 @@ Presets: Agentic (2.5/97/0.5), Balanced (30/50/20), Heavy output (10/0/90), No c
 
 | Source | Tier | Description |
 |---|---|---|
-| Direct providers | Tier 1 | DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac, SambaNova, Hyper — public `/v1/models` endpoints |
-| OpenRouter `/endpoints` | Tier 2 | De-aggregated per-backend pricing — each backend (Fireworks, Together, Novita, SiliconFlow, etc.) becomes its own row. Also captures cache_write, uptime, max_completion_tokens. |
-| CSV-sourced | Tier 3 | Makora, Xiaomimimo (from `data/manual-pricing.csv`) |
-| Hardcoded | Tier 3 | OpenCode Go + Umans (`UMANS_MODELS` manual table in fetcher; status.umans.ai SSR is for performance data only) |
-
-**3-tier precedence**: when the same (model, provider) appears in multiple tiers, the higher-authority tier wins — direct > OpenRouter > CSV/hardcoded. Quantization IS part of the dedup key — `canonicalId()` preserves quant suffixes, so different quants of the same model+provider stay distinct rows.
-**Text models**: ~940 text-generation models across ~75 inference providers and ~55 underlying orgs. **~65% are ZDR-compliant**.
-**Sidecar enrichments** (non-fatal): models.dev metadata (~40% coverage), Artificial Analysis quality benchmarks (~75% coverage), fal.ai image/video (Tier-1 merge).
+| DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac, SambaNova, Hyper | 1 | Direct `/v1/models` fetch (authoritative for their own offerings) |
+| OpenRouter `/endpoints` | 2 | De-aggregated per-backend pricing (Fireworks, Together, Novita, SiliconFlow, etc.) |
+| Makora, Xiaomimimo | 3 | CSV (`data/manual-pricing.csv`) |
+| OpenCode Go | 3 | Hardcoded |
+| Umans | 3 | Manually maintained `UMANS_MODELS` / `parseUmansHardcoded()` |
 
 ## Image & Video Generation
 
-TokenWatch also tracks dedicated image and video generation models from OpenRouter and fal.ai:
-
-| Modality | Source | Models | Pricing |
-|---|---|---|---|
-| **Image** | OpenRouter `/images` + fal.ai | ~160 | Flat per-image, per-megapixel, or per-token |
-| **Video** | OpenRouter `/videos` + fal.ai | ~100 | Per-second with resolution/audio variants |
-
-Image and video models have their own tabs (see navigation bar). Pricing units vary by model — flat per-image costs are directly computable; token-priced and megapixel-priced models show per-unit rates since total cost depends on generation complexity.
-
-Only text-generation models are filtered from the text catalog. Image and video catalogs are separate and do not include text-generation models.
+OpenRouter has dedicated APIs for image and video generation — separate from the chat `/v1/models` endpoint. These are fetched by `fetch-images.mjs` and `fetch-videos.mjs`, then merged with fal.ai (Tier-1 precedence).
 
 ## API
 
-Cloudflare Pages Functions serve a queryable API at `/api/v1/`:
-
-- `GET /api/v1/` — API info and endpoint directory
-- `GET /api/v1/stats` — summary statistics: model count, provider count, org count, ZDR count, subscription count, cache support counts, quantization breakdown, per-provider and per-org counts
-- `GET /api/v1/orgs` — all orgs with model counts, sorted by count descending
-- `GET /api/v1/providers` — provider metadata (privacy/ToS/status URLs, HQ, datacenters, `retains_prompts`, `may_train`, `retention_days`). Optional `?zdr=true` filters to ZDR-compliant providers only.
-- `GET /api/v1/models` — list text models with filters: `?org=`, `?provider=`, `?min_context=`, `?min_output=`, `?quantization=`, `?cache_read=true`, `?cache_write=true`, `?promo=true`, `?zdr=true`, `?sub=true`, `?search=`, `?sort=`, `?order=`, `?limit=`, `?offset=`. Sort keys: `id`, `input`, `output`, `cache_read`, `cache_write`, `context`, `max_output`, `uptime`, `discount`. Model objects include `zdr: true` and `subscription: true` when applicable.
-- `GET /api/v1/models/:canonicalId/providers` — all providers hosting a model, sorted by cost (includes `zdr` and `subscription` fields per provider). Optional `?tokens=N&mix=inputPct,cachePct,outputPct` for mix-aware cost sorting.
-- `GET /api/v1/images` — list image models with filters: `?org=`, `?provider=`, `?search=`, `?sort=`, `?order=`, `?limit=`, `?offset=`. Sort keys: `id`, `org`, `provider`.
-- `GET /api/v1/images/:id` — single image model with pricing variants (accepts bare canonical ID or full `org/model` ID)
-- `GET /api/v1/videos` — list video models with filters: `?org=`, `?provider=`, `?search=`, `?sort=`, `?order=`, `?limit=`, `?offset=`. Sort keys: `id`, `org`, `provider`.
-- `GET /api/v1/videos/:id` — single video model with pricing variants (accepts bare canonical ID or full `org/model` ID)
-
-All responses include CORS headers for cross-origin use.
+Cloudflare Pages Functions at `functions/api/v1/` serve queryable endpoints for all three catalogs (text, image, video). See [AGENTS.md](AGENTS.md#api-endpoints) for the full endpoint list.
 
 ## Embeddable widget
 
-Embed a live pricing card on any site:
-
-```html
-<div data-tw-model="glm-5.2" data-tw-tokens="1000" data-tw-mix="2.5,97,0.5"></div>
-<script src="https://tokenwatch.wyrdwerk.com/widget/embed.js"></script>
-```
-
-Options via data attributes: `data-tw-model` (required), `data-tw-tokens` (default: 1000), `data-tw-mix` (default: "2.5,97,0.5"), `data-tw-theme` (auto/dark/light).
-
-Demo: https://tokenwatch.wyrdwerk.com/widget/demo.html
+`public/widget/embed.js` — embeddable JS snippet using Shadow DOM. Auto-detects `[data-tw-model]` elements, fetches the API, renders compact pricing cards. See `public/widget/demo.html`.
 
 ## Development
 
@@ -125,6 +100,9 @@ npm run serve
 # Run the test suite (zero-dep, uses node:test)
 npm test
 
+# Server-render cheapest models into index.html + generate sitemap.xml/robots.txt (run before deploy)
+npm run seo
+
 # Rewrite ?v= cache-bust tokens to content hashes (run before deploy)
 npm run bust:cache
 ```
@@ -137,15 +115,17 @@ ARCHITECTURE.md               # Pipeline diagram (3 pipelines: text / image / vi
 docs/
   canonicalization-edge-cases.md  # 10 canonicalization traps + frontend parity guard
   adr/                           # Architecture Decision Records (settled + proposed design choices)
+  conversations/                 # Sanitized public records of working sessions (incl. SEO/GSC setup)
 ```
 scripts/
   fetch-pricing.mjs          # 3-tier fetch + OR de-aggregation + provider metadata + org extraction + dedup
+  generate-seo.mjs           # Server-renders 25 cheapest models into index.html + generates sitemap.xml/robots.txt (npm run seo)
 data/
   manual-pricing.csv          # Static pricing for CSV-sourced providers
 public/
-  index.html                 # UI: dual search, usage inputs, 11-column results table (incl. Speed + Blended $/M), group-by, comparison modal, Export CSV, mobile sort
+  index.html                 # UI: dual search, usage inputs, 11-column results table (incl. Speed + Blended $/M), group-by, comparison modal, Export CSV, mobile sort. Also SEO head metadata + JSON-LD + FAQ + server-rendered table
   app.js                     # State, URL hash, search, cost computation, blendedCostFor, exportCsv, group-by, comparison (Speed + Blended rows), monthly mode, rendering
-  styles.css                 # Dark/light theme, all badges, group headers, comparison modal, mode toggle, responsive (card layout, mobile sort)
+  styles.css                 # Dark/light theme, all badges, group headers, comparison modal, mode toggle, responsive (card layout, mobile sort). Includes .seo-faq/.seo-models/.noscript-note
   image.html                 # Image tab: search, count input, variant filter, sortable table, mobile sort
   image-app.js               # Image pricing calculator, typeahead search, unit-adaptive columns, mobile card layout
   video.html                 # Video tab: search, duration input, resolution/audio filters, sortable table, mobile sort
@@ -153,6 +133,10 @@ public/
   pricing.json               # Generated data (refreshed every 2h by CI)
   image-pricing.json         # Generated image model data (refreshed every 2h)
   video-pricing.json         # Generated video model data (refreshed every 2h)
+  sitemap.xml                # Generated by generate-seo.mjs (npm run seo)
+  robots.txt                 # Generated by generate-seo.mjs (npm run seo)
+  favicon.svg                # Site favicon
+  og/og-image.svg            # Open Graph social preview image (1200×630)
   widget/
     embed.js                 # Embeddable widget (Shadow DOM, auto-detect, theme support)
     demo.html                # Widget demo page
