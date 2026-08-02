@@ -24,12 +24,29 @@ const state = {
   currentRows: null,
   perfData: null,         // loaded from performance.json
   showAllRows: false,    // when false, flat unfiltered table caps at ROW_CAP rows
+  colOrder: null,         // array of the 9 draggable column keys in display order (null = default)
+  colHidden: null,        // Set of hidden column keys (null = none hidden)
 };
 
 // Flat-table render cap: first paint shows this many rows + a "Show all" row.
 // data-idx is resolved via findIndex against the full state.currentRows, so a
 // head slice keeps detail-modal/compare indices correct for visible rows.
 const ROW_CAP = 250;
+
+// The 9 draggable/hideable columns (between the locked # and Total Cost columns).
+// key → { label (popover + hash), dataLabel (td[data-label] match) }.
+const COLUMN_KEYS = [
+  { key: 'org',        label: 'Org',          dataLabel: 'Org' },
+  { key: 'provider',   label: 'Provider',     dataLabel: 'Provider' },
+  { key: 'model',      label: 'Model',        dataLabel: 'Model' },
+  { key: 'input',      label: 'Input $/M',    dataLabel: 'Input $/M' },
+  { key: 'output',     label: 'Output $/M',   dataLabel: 'Output $/M' },
+  { key: 'cache_read', label: 'Cache $/M',    dataLabel: 'Cache $/M' },
+  { key: 'context',    label: 'Context',      dataLabel: 'Context' },
+  { key: 'speed',      label: 'Speed',        dataLabel: 'Speed' },
+  { key: 'blended',    label: 'Blended $/M',  dataLabel: 'Blended $/M' },
+];
+const DEFAULT_COL_ORDER = COLUMN_KEYS.map((c) => c.key);
 
 // ── DOM ───────────────────────────────────────────────────────────────────────
 const $ = (id) => document.getElementById(id);
@@ -153,10 +170,18 @@ function serializeState() {
 
   const cacheWriteVal = parseFloat(document.getElementById('cacheWriteTokens').value) || 0;
   const amortizeVal = parseInt(document.getElementById('amortizeN').value, 10) || 100;
-  if (cacheWriteVal > 0) params.set('cw', document.getElementById('cacheWriteTokens').value);
-  if (amortizeVal !== 100) params.set('cwn', String(amortizeVal));
+    if (cacheWriteVal > 0) params.set('cw', document.getElementById('cacheWriteTokens').value);
+    if (amortizeVal !== 100) params.set('cwn', String(amortizeVal));
 
-  return params.toString();
+    // Column customization: order + hidden set (only when non-default)
+    if (state.colOrder && state.colOrder.join(',') !== DEFAULT_COL_ORDER.join(',')) {
+      params.set('cols', state.colOrder.join(','));
+    }
+    if (state.colHidden && state.colHidden.size > 0) {
+      params.set('hide', [...state.colHidden].join(','));
+    }
+
+    return params.toString();
 }
 function deserializeState(hash) {
   els.totalTokens.value = DEFAULTS.totalTokens;
@@ -183,8 +208,10 @@ function deserializeState(hash) {
   els.budgetField.style.display = 'none';
   updateLabelsAndHeaders();
   els.groupBy.value = DEFAULTS.groupBy;
-  document.getElementById('cacheWriteTokens').value = '0';
-  document.getElementById('amortizeN').value = '100';
+    document.getElementById('cacheWriteTokens').value = '0';
+    document.getElementById('amortizeN').value = '100';
+    state.colOrder = null;
+    state.colHidden = null;
 
   const raw = (hash || '').replace(/^#/, '');
   if (!raw) return;
@@ -219,8 +246,20 @@ function deserializeState(hash) {
   if (params.has('cw')) document.getElementById('cacheWriteTokens').value = params.get('cw');
   if (params.has('budget')) els.budgetInput.value = params.get('budget');
   if (params.get('by') === 'budget') setComputeBy('budget');
-  if (params.has('cwn')) document.getElementById('amortizeN').value = params.get('cwn');
-}
+    if (params.has('cwn')) document.getElementById('amortizeN').value = params.get('cwn');
+
+    // Column customization: order + hidden set
+      if (params.has('cols')) {
+        const order = params.get('cols').split(',').filter((k) => COLUMN_KEYS.some((c) => c.key === k));
+        // Only accept a complete, valid order — a partial list would silently
+        // append the missing columns in default order, which is surprising.
+        if (order.length === COLUMN_KEYS.length) state.colOrder = order;
+      }
+    if (params.has('hide')) {
+      const hidden = params.get('hide').split(',').filter((k) => COLUMN_KEYS.some((c) => c.key === k));
+      if (hidden.length > 0) state.colHidden = new Set(hidden);
+    }
+  }
 
 /** Sync the URL hash to current state without adding history entries. */
 function updateHash() {
@@ -476,16 +515,19 @@ function attachListeners() {
 
   // Sortable column headers (mouse + keyboard).
   document.querySelectorAll('th.sortable').forEach((th) => {
-    const sort = () => {
-      const col = th.dataset.sort;
-      if (state.sortBy === col) {
-        state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
-      } else {
-        state.sortBy = col;
-        state.sortDir = 'asc';
-      }
-      computeAndRender();
-    };
+      const sort = () => {
+        // Skip if this click immediately follows a column drag (the drag's
+        // pointerdown set __colDragSuppress; the click fires right after).
+        if (window.__colDragSuppress && Date.now() - window.__colDragSuppress < 300) return;
+        const col = th.dataset.sort;
+        if (state.sortBy === col) {
+          state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          state.sortBy = col;
+          state.sortDir = 'asc';
+        }
+        computeAndRender();
+      };
     th.setAttribute('tabindex', '0');
     th.setAttribute('role', 'button');
     th.addEventListener('click', sort);
@@ -523,11 +565,14 @@ function attachListeners() {
   els.detailModal.addEventListener('click', (e) => {
     if (e.target === els.detailModal) closeDetailModal();
   });
-  document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return;
-    if (els.detailModal.style.display !== 'none') closeDetailModal();
-    if (els.compareModal.style.display !== 'none') closeCompareModal();
-  });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (els.detailModal.style.display !== 'none') closeDetailModal();
+      if (els.compareModal.style.display !== 'none') closeCompareModal();
+      // Close the column popover too (additive — no conflict with the modals).
+      const colPop = document.getElementById('colPopover');
+      if (colPop && !colPop.hidden) toggleColPopover(false);
+    });
 
   window.addEventListener('hashchange', () => {
     deserializeState(location.hash.slice(1));
@@ -541,10 +586,43 @@ function attachListeners() {
   setInterval(() => {
     if (document.visibilityState === 'visible') refreshPerfData().then((changed) => { if (changed) computeAndRender(); });
   }, PERF_REFRESH_MS);
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') refreshPerfData().then((changed) => { if (changed) computeAndRender(); });
-  });
-}
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') refreshPerfData().then((changed) => { if (changed) computeAndRender(); });
+    });
+
+    // ── Column customization (drag-reorder + hide) ──
+    initColumnDrag();
+    const colConfigBtn = document.getElementById('colConfigBtn');
+    const colPopover = document.getElementById('colPopover');
+    if (colConfigBtn) {
+      colConfigBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleColPopover();
+      });
+    }
+    // Close popover on outside click
+    document.addEventListener('click', (e) => {
+      if (colPopover && !colPopover.hidden && !e.target.closest('.col-config')) {
+        toggleColPopover(false);
+      }
+    });
+    // Per-column hide toggles (event delegation)
+    const colPopoverList = document.getElementById('colPopoverList');
+    if (colPopoverList) {
+      colPopoverList.addEventListener('change', (e) => {
+        if (!e.target.classList.contains('col-toggle')) return;
+        const col = e.target.dataset.col;
+        const hidden = effectiveColHidden();
+        if (e.target.checked) hidden.delete(col);
+        else hidden.add(col);
+        state.colHidden = hidden;
+        applyColumnLayout();
+        updateHash();
+      });
+    }
+    const colResetBtn = document.getElementById('colResetBtn');
+    if (colResetBtn) colResetBtn.addEventListener('click', resetColumns);
+  }
 
 function applyPreset(name) {
   const presets = {
@@ -1404,6 +1482,173 @@ function renderGroupedTable(rows, tokens, groupBy) {
   els.resultsBody.innerHTML = html;
 }
 
+// ── Column customization (drag-reorder + hide) ────────────────────────────────
+
+/** Resolve the effective column order (default if state.colOrder is null). */
+function effectiveColOrder() {
+  return state.colOrder || DEFAULT_COL_ORDER;
+}
+
+/** Resolve the effective hidden set (empty if state.colHidden is null). */
+function effectiveColHidden() {
+  return state.colHidden || new Set();
+}
+
+/**
+ * Apply the current column order + visibility to the rendered table DOM.
+ * Reorders thead <th> and each tbody <td> to match state.colOrder, and toggles
+ * the hide-col-* classes per state.colHidden. The # and Total Cost columns are
+ * never reordered (they stay first/last) and never hidden.
+ */
+function applyColumnLayout() {
+  const table = document.getElementById('resultsTable');
+  if (!table) return;
+  const theadRow = table.querySelector('thead tr');
+  if (!theadRow) return;
+
+  const order = effectiveColOrder();
+  const hidden = effectiveColHidden();
+
+  // Reorder thead <th> (skip index 0 = # and last = Total Cost)
+  const ths = Array.from(theadRow.children);
+  if (ths.length < 3) return;
+  const firstTh = ths[0];
+  const lastTh = ths[ths.length - 1];
+  const middleThs = ths.slice(1, -1);
+  const thByKey = new Map();
+  for (const th of middleThs) thByKey.set(th.dataset.sort, th);
+  const reordered = order.map((k) => thByKey.get(k)).filter(Boolean);
+  // Append any th not in the order (safety) in their existing relative order
+  for (const th of middleThs) if (!reordered.includes(th)) reordered.push(th);
+  for (const th of reordered) theadRow.insertBefore(th, lastTh);
+
+  // Reorder each tbody <td> (skip index 0 = # and last = Total Cost)
+  const bodyRows = table.querySelectorAll('tbody tr');
+  for (const tr of bodyRows) {
+    // Skip group-header rows (single colspan cell) and show-all rows
+    if (tr.classList.contains('group-header') || tr.classList.contains('show-all-row')) continue;
+    const tds = Array.from(tr.children);
+    if (tds.length < 3) continue;
+    const firstTd = tds[0];
+    const lastTd = tds[tds.length - 1];
+    const middleTds = tds.slice(1, -1);
+    const tdByLabel = new Map();
+    for (const td of middleTds) tdByLabel.set(td.dataset.label, td);
+    const reorderedTds = [];
+    for (const k of order) {
+      const col = COLUMN_KEYS.find((c) => c.key === k);
+      if (col && tdByLabel.has(col.dataLabel)) reorderedTds.push(tdByLabel.get(col.dataLabel));
+    }
+    for (const td of middleTds) if (!reorderedTds.includes(td)) reorderedTds.push(td);
+    for (const td of reorderedTds) tr.insertBefore(td, lastTd);
+  }
+
+  // Toggle hide classes
+  for (const col of COLUMN_KEYS) {
+    table.classList.toggle('hide-col-' + col.key, hidden.has(col.key));
+  }
+}
+
+/** Build the popover checkbox list from COLUMN_KEYS + current hidden state. */
+function renderColPopover() {
+  const list = document.getElementById('colPopoverList');
+  if (!list) return;
+  const hidden = effectiveColHidden();
+  list.innerHTML = COLUMN_KEYS.map((c) => {
+    const checked = hidden.has(c.key) ? '' : ' checked';
+    return `<label><input type="checkbox" class="col-toggle" data-col="${c.key}"${checked}> ${esc(c.label)}</label>`;
+  }).join('');
+}
+
+/** Toggle the popover open/closed. */
+function toggleColPopover(force) {
+  const btn = document.getElementById('colConfigBtn');
+  const pop = document.getElementById('colPopover');
+  if (!btn || !pop) return;
+  const open = force !== undefined ? force : pop.hidden;
+  pop.hidden = !open;
+  btn.setAttribute('aria-expanded', String(open));
+  if (open) renderColPopover();
+}
+
+/** Reset column order + visibility to defaults. */
+function resetColumns() {
+  state.colOrder = null;
+  state.colHidden = null;
+  applyColumnLayout();
+  renderColPopover();
+  updateHash();
+}
+
+/** Wire drag-to-reorder on the draggable column handles. */
+function initColumnDrag() {
+  const table = document.getElementById('resultsTable');
+  if (!table) return;
+  let dragKey = null;
+  let dragTh = null;
+
+    table.addEventListener('pointerdown', (e) => {
+      const handle = e.target.closest('.col-handle');
+      if (!handle) return;
+      const th = handle.closest('th');
+      if (!th || !th.dataset.sort) return;
+      e.preventDefault();
+      // Suppress the click-to-sort that would otherwise fire after the drag
+      // (preventDefault on pointerdown does not stop the subsequent click).
+      window.__colDragSuppress = Date.now();
+      dragKey = th.dataset.sort;
+      dragTh = th;
+      th.classList.add('col-dragging');
+      table.classList.add('col-dragging');
+      th.setPointerCapture(e.pointerId);
+    });
+
+      table.addEventListener('pointermove', (e) => {
+        if (!dragTh) return;
+        // setPointerCapture retargets pointer events to dragTh, so e.target is
+        // always the dragged header. Resolve the hovered column from coordinates.
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const target = el ? el.closest('th') : null;
+        // Only highlight draggable columns (exclude locked # and Total Cost).
+        if (!target || target === dragTh || !target.dataset.sort || !DEFAULT_COL_ORDER.includes(target.dataset.sort)) return;
+        // Clear previous drop targets
+        table.querySelectorAll('th.col-drop-target').forEach((t) => t.classList.remove('col-drop-target'));
+        target.classList.add('col-drop-target');
+      });
+
+    table.addEventListener('pointerup', (e) => {
+      if (!dragTh) return;
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const target = el ? el.closest('th') : null;
+      table.querySelectorAll('th.col-drop-target').forEach((t) => t.classList.remove('col-drop-target'));
+      dragTh.classList.remove('col-dragging');
+      table.classList.remove('col-dragging');
+      if (target && target !== dragTh && target.dataset.sort) {
+        // Reorder state.colOrder: move dragKey to target's position
+        const order = effectiveColOrder().slice();
+        const from = order.indexOf(dragKey);
+        const to = order.indexOf(target.dataset.sort);
+        if (from >= 0 && to >= 0) {
+          order.splice(from, 1);
+          order.splice(to, 0, dragKey);
+          state.colOrder = order;
+          applyColumnLayout();
+          updateHash();
+        }
+      }
+      dragKey = null;
+      dragTh = null;
+    });
+
+  table.addEventListener('pointercancel', () => {
+    if (dragTh) dragTh.classList.remove('col-dragging');
+    table.classList.remove('col-dragging');
+    table.querySelectorAll('th.col-drop-target').forEach((t) => t.classList.remove('col-drop-target'));
+    dragKey = null;
+    dragTh = null;
+  });
+}
+
 function renderTable(rows, tokens) {
   if (rows.length === 0) {
     const colCount = els.showOrg?.checked ? 11 : 10;
@@ -1412,12 +1657,13 @@ function renderTable(rows, tokens) {
   }
   const groupBy = els.groupBy?.value || 'none';
   state.groupBy = groupBy;
-  if (groupBy === 'none') {
-    renderFlatTable(rows, tokens);
-  } else {
-    renderGroupedTable(rows, tokens, groupBy);
+    if (groupBy === 'none') {
+      renderFlatTable(rows, tokens);
+    } else {
+      renderGroupedTable(rows, tokens, groupBy);
+    }
+    applyColumnLayout();
   }
-}
 
 /** Export current results table to CSV and trigger download. */
 function exportCsv() {

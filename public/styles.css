@@ -550,6 +550,132 @@ tbody tr:hover { background: var(--surface-2); }
   }
 }
 
+/* ── Column customization (drag-reorder + hide) ─────────────────────────── */
+/* Drag handle on draggable headers */
+.col-handle {
+  display: inline-block;
+  margin-right: 0.35rem;
+  color: var(--text-dim);
+  cursor: grab;
+  user-select: none;
+  touch-action: none; /* let pointer drags reorder instead of scrolling on touch */
+  font-size: 0.8rem;
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+.col-handle:hover { opacity: 1; }
+th.sortable:active .col-handle { cursor: grabbing; }
+
+/* Dragging state */
+#resultsTable.col-dragging th { cursor: grabbing; }
+#resultsTable.col-dragging th.col-dragging {
+  opacity: 0.4;
+  background: var(--surface-2);
+}
+#resultsTable th.col-drop-target {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* Column-config button + popover */
+.col-config { position: relative; margin-left: 0.5rem; }
+.col-config-btn {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  padding: 0.35rem 0.9rem;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.col-config-btn:hover { background: var(--surface-2); }
+.col-config-btn[aria-expanded="true"] { background: var(--surface-2); border-color: var(--accent); }
+.col-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  min-width: 200px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--text) 18%, transparent);
+  padding: 0.6rem;
+}
+.col-popover[hidden] { display: none; }
+.col-popover-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  margin-bottom: 0.4rem;
+}
+.col-popover-list { display: flex; flex-direction: column; gap: 0.15rem; max-height: 60vh; overflow-y: auto; }
+.col-popover-list label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0.2rem 0.2rem;
+  border-radius: var(--radius-sm, 4px);
+}
+.col-popover-list label:hover { background: var(--surface-2); }
+.col-popover-list input { width: auto; }
+.col-reset-btn {
+  margin-top: 0.5rem;
+  width: 100%;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 4px);
+  padding: 0.3rem 0.5rem;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.col-reset-btn:hover { background: var(--border); }
+
+/* Generalized column-hide — desktop only (mobile uses card layout) */
+@media (min-width: 641px) {
+  #resultsTable.hide-col-org th[data-sort="org"],
+  #resultsTable.hide-col-org td[data-label="Org"] { display: none; }
+  #resultsTable.hide-col-provider th[data-sort="provider"],
+  #resultsTable.hide-col-provider td[data-label="Provider"] { display: none; }
+  #resultsTable.hide-col-model th[data-sort="model"],
+  #resultsTable.hide-col-model td[data-label="Model"] { display: none; }
+  #resultsTable.hide-col-input th[data-sort="input"],
+  #resultsTable.hide-col-input td[data-label="Input $/M"] { display: none; }
+  #resultsTable.hide-col-output th[data-sort="output"],
+  #resultsTable.hide-col-output td[data-label="Output $/M"] { display: none; }
+  #resultsTable.hide-col-cache_read th[data-sort="cache_read"],
+  #resultsTable.hide-col-cache_read td[data-label="Cache $/M"] { display: none; }
+  #resultsTable.hide-col-context th[data-sort="context"],
+  #resultsTable.hide-col-context td[data-label="Context"] { display: none; }
+  #resultsTable.hide-col-speed th[data-sort="speed"],
+  #resultsTable.hide-col-speed td[data-label="Speed"] { display: none; }
+  #resultsTable.hide-col-blended th[data-sort="blended"],
+  #resultsTable.hide-col-blended td[data-label="Blended $/M"] { display: none; }
+}
+
+/* Mobile card mode: hidden columns must not reappear as card rows */
+@media (max-width: 640px) {
+  #resultsTable.hide-col-org td[data-label="Org"],
+  #resultsTable.hide-col-provider td[data-label="Provider"],
+  #resultsTable.hide-col-model td[data-label="Model"],
+  #resultsTable.hide-col-input td[data-label="Input $/M"],
+  #resultsTable.hide-col-output td[data-label="Output $/M"],
+  #resultsTable.hide-col-cache_read td[data-label="Cache $/M"],
+  #resultsTable.hide-col-context td[data-label="Context"],
+  #resultsTable.hide-col-speed td[data-label="Speed"],
+  #resultsTable.hide-col-blended td[data-label="Blended $/M"] { display: none; }
+}
+
 /* Hide org toggle on mobile — Org badge always shows inline there */
 @media (max-width: 640px) {
   .org-toggle { display: none; }

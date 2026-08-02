@@ -165,6 +165,14 @@
         </select>
         <label class="org-toggle"><input type="checkbox" id="showOrg"> Show Org</label>
         <button type="button" id="exportCsvBtn" class="export-csv-btn">Export CSV</button>
+        <div class="col-config">
+          <button type="button" id="colConfigBtn" class="col-config-btn" aria-haspopup="true" aria-expanded="false">Hide Columns</button>
+          <div class="col-popover" id="colPopover" hidden>
+            <div class="col-popover-title">Columns</div>
+            <div class="col-popover-list" id="colPopoverList"></div>
+            <button type="button" id="colResetBtn" class="col-reset-btn">Reset columns</button>
+          </div>
+        </div>
       </div>
       <select class="mobile-sort" id="mobileSort" aria-label="Sort results">
         <option value="cost:asc">Total Cost ↑</option>
@@ -193,15 +201,15 @@
           <thead>
             <tr>
               <th>#</th>
-              <th class="sortable" data-sort="org">Org</th>
-              <th class="sortable" data-sort="provider">Provider</th>
-              <th class="sortable" data-sort="model">Model</th>
-              <th class="sortable num" data-sort="input">Input $/M</th>
-              <th class="sortable num" data-sort="output">Output $/M</th>
-              <th class="sortable num" data-sort="cache_read">Cache $/M</th>
-              <th class="sortable num" data-sort="context">Context</th>
-              <th class="sortable num" data-sort="speed" id="speedColumnHeader">Speed</th>
-              <th class="sortable num" data-sort="blended">Blended $/M</th>
+              <th class="sortable" data-sort="org"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>Org</th>
+              <th class="sortable" data-sort="provider"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>Provider</th>
+              <th class="sortable" data-sort="model"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>Model</th>
+              <th class="sortable num" data-sort="input"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>Input $/M</th>
+              <th class="sortable num" data-sort="output"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>Output $/M</th>
+              <th class="sortable num" data-sort="cache_read"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>Cache $/M</th>
+              <th class="sortable num" data-sort="context"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>Context</th>
+              <th class="sortable num" data-sort="speed" id="speedColumnHeader"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>Speed</th>
+              <th class="sortable num" data-sort="blended"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>Blended $/M</th>
               <th class="sortable num" data-sort="cost" id="costColumnHeader">Total Cost</th>
             </tr>
           </thead>
