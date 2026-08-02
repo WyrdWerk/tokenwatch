@@ -27,3 +27,15 @@
 # External embed script loaded WITHOUT path hash by third-party sites — must revalidate.
 /widget/embed.js
   Cache-Control: public, max-age=3600, must-revalidate
+
+# SEO: noindex raw data files + API responses (they are data, not pages)
+/api/*
+  X-Robots-Tag: noindex
+/pricing.json
+  X-Robots-Tag: noindex
+/image-pricing.json
+  X-Robots-Tag: noindex
+/video-pricing.json
+  X-Robots-Tag: noindex
+/performance.json
+  X-Robots-Tag: noindex

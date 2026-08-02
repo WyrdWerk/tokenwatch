@@ -1093,3 +1093,68 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
   #compareTray { flex-wrap: wrap; gap: 4px; padding: 8px; }
   #compareTray .compare-tray-info { font-size: 0.8rem; }
 }
+
+/* ── SEO sections (FAQ, server-rendered models, noscript) ─────────────────── */
+.seo-faq, .seo-models {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+.seo-faq h2, .seo-models h2 {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+.seo-faq details {
+  border: 1px solid var(--border, #e0dcd4);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  background: var(--surface, #fff);
+}
+.seo-faq summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.seo-faq p {
+  margin: 0.5rem 0 0;
+  color: var(--muted, #666);
+  line-height: 1.5;
+}
+.seo-models .table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border, #e0dcd4);
+  border-radius: 8px;
+}
+.seo-models table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.seo-models th, .seo-models td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border, #e0dcd4);
+}
+.seo-models th {
+  background: var(--surface, #fff);
+  font-weight: 600;
+}
+.seo-models td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.seo-note {
+  color: var(--muted, #666);
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+.noscript-note {
+  max-width: 1200px;
+  margin: 1rem auto;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border, #e0dcd4);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  font-size: 0.9rem;
+}

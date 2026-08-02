@@ -12,6 +12,7 @@
     "build:prod": "node scripts/fetch-pricing.mjs && node scripts/fetch-images.mjs && node scripts/fetch-videos.mjs && echo 'Static site in ./public'",
     "fetch:perf": "node scripts/fetch-performance.mjs",
     "test": "node --test test/*.test.mjs",
+    "seo": "node scripts/generate-seo.mjs",
     "bust:cache": "node scripts/bust-cache.mjs"
   },
   "license": "MIT",
