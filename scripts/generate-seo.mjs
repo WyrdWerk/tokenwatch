@@ -78,9 +78,9 @@ async function main() {
     + "    </section>";
 
   let indexHtml = await readFile(join(PUBLIC, "index.html"), "utf8");
-  const placeholder = "<!-- SEO:server-rendered-models -->";
-  if (indexHtml.includes(placeholder)) {
-    indexHtml = indexHtml.replace(placeholder, seoTable);
+  const seoMarker = 'class="seo-models"';
+  if (indexHtml.includes(seoMarker)) {
+    indexHtml = indexHtml.replace(/<section class="seo-models"[\s\S]*?<\/section>/, seoTable);
   } else {
     indexHtml = indexHtml.replace("</main>", seoTable + "\n  </main>");
   }
