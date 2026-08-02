@@ -31,12 +31,13 @@ Compare pay-as-you-go LLM inference pricing across inference providers. Enter yo
 - **Blended $/M**: Table column (before Total Cost) showing the effective per-million-token rate at your current input/cache/output mix. Excludes cache-write and monthly multiplier — pure cross-model comparison metric. Also shown in the comparison modal.
 - **Export CSV**: Button above the results table downloads the current filtered/sorted results (all pricing columns, Speed, Blended $/M, ZDR, subscription, discount).
 - **Speed**: Throughput p50 (tokens/sec) from performance data — table column + comparison modal row (blank when unavailable).
+- **Column customization**: Drag the ⠿ handle on any of the 9 middle column headers (Org … Blended $/M) to reorder them; the # and Total Cost columns stay locked first/last. Use the **Hide Columns** button to show/hide any middle column via per-column checkboxes + a Reset button. Order + visibility persist in the URL hash.
 
 - **Image tab**: Enter number of images, optionally filter by resolution variant. Search by provider or model using the typeahead inputs. Flat per-image models show total cost; token-priced and megapixel-priced models show per-unit rates (cost varies by generation complexity).
 - **Video tab**: Enter video duration in seconds, filter by resolution and audio. Search by provider or model using the typeahead inputs. All models show per-second pricing with computed total cost.
 - **Tab navigation**: Use the Text/Image/Video tabs at the top to switch between modalities.
 - **Mobile**: On screens ≤640px, tables transform into stacked cards with field labels. A sort dropdown appears for reordering results (column headers are hidden in card mode).
-- **Shareable URLs**: All state (search, tokens, mix, budget, sort, mode, group, filters, ZDR, subscription) is encoded in the URL hash for sharing.
+- **Shareable URLs**: All state (search, tokens, mix, budget, sort, mode, group, filters, ZDR, subscription, column order + visibility) is encoded in the URL hash for sharing.
 
 ### Token calculation
 
