@@ -40,8 +40,15 @@ function json(data, status = 200) {
 // ── Pagination helper ─────────────────────────────────────────────────────────
 
 function paginate(arr, params) {
-  const limit = Math.min(parseInt(params.get('limit'), 10) || 100, 500);
-  const offset = parseInt(params.get('offset'), 10) || 0;
+  // Clamp user input: limit ∈ [1,500], offset ≥ 0. Non-numeric, zero, or negative
+  // values fall back to the defaults — a negative offset would silently slice
+  // from the END of the array and a negative limit would drop trailing rows.
+  const requestedLimit = parseInt(params.get('limit'), 10);
+  const limit = Number.isFinite(requestedLimit) && requestedLimit > 0
+    ? Math.min(requestedLimit, 500)
+    : 100;
+  const requestedOffset = parseInt(params.get('offset'), 10);
+  const offset = Number.isFinite(requestedOffset) && requestedOffset > 0 ? requestedOffset : 0;
   const total = arr.length;
   const paged = arr.slice(offset, offset + limit);
   return { total, offset, limit, paged };
@@ -329,7 +336,13 @@ export async function onRequestGet(context) {
 
     // /api/v1/images/:id — single model (accepts org/model or bare canonical id)
     if (path.startsWith('images/') && subPath) {
-      const target = canonicalId(decodeURIComponent(subPath));
+      let requestedId;
+      try {
+        requestedId = decodeURIComponent(subPath);
+      } catch {
+        return json({ error: 'Invalid model id encoding' }, 400); // malformed %-encoding
+      }
+      const target = canonicalId(requestedId);
       const model = imagePricing.models.find(m => canonicalId(m.id) === target);
       if (!model) {
         return json({ error: 'Image model not found', id: subPath }, 404);
@@ -399,7 +412,13 @@ export async function onRequestGet(context) {
 
     // /api/v1/videos/:id — single model (accepts org/model or bare canonical id)
     if (path.startsWith('videos/') && subPath) {
-      const target = canonicalId(decodeURIComponent(subPath));
+      let requestedId;
+      try {
+        requestedId = decodeURIComponent(subPath);
+      } catch {
+        return json({ error: 'Invalid model id encoding' }, 400); // malformed %-encoding
+      }
+      const target = canonicalId(requestedId);
       const model = videoPricing.models.find(m => canonicalId(m.id) === target);
       if (!model) {
         return json({ error: 'Video model not found', id: subPath }, 404);

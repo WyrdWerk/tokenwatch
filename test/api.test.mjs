@@ -241,6 +241,27 @@ test('?limit=2&offset=2 returns the next page', async () => {
   for (const m of page2) assert.ok(!page1Ids.has(m.id), 'no overlap between pages');
 });
 
+test('?limit=-5 clamps to the default (negative limit must not drop trailing rows)', async () => {
+  const { body } = await getJson(makeContext('/api/v1/models', '?limit=-5'));
+  assert.equal(body.limit, 100); // invalid → default
+  assert.equal(body.models.length, 5); // fixture has 5; a negative slice would have returned 0
+});
+
+test('?limit=0 and ?limit=abc fall back to the default limit', async () => {
+  for (const raw of ['0', 'abc']) {
+    const { body } = await getJson(makeContext('/api/v1/models', `?limit=${raw}`));
+    assert.equal(body.limit, 100, `limit=${raw} should default to 100`);
+  }
+});
+
+test('?limit=2&offset=-1 clamps offset to 0 (negative offset must not slice from the end)', async () => {
+  const clamped = (await getJson(makeContext('/api/v1/models', '?limit=2&offset=-1'))).body;
+  const normal = (await getJson(makeContext('/api/v1/models', '?limit=2&offset=0'))).body;
+  assert.equal(clamped.offset, 0);
+  assert.deepEqual(clamped.models.map(m => m.id), normal.models.map(m => m.id),
+    'offset=-1 must behave like offset=0, not return the last page');
+});
+
 test('?min_context=500000 filters by context length', async () => {
   const { body } = await getJson(makeContext('/api/v1/models', '?min_context=500000'));
   for (const m of body.models) {
@@ -371,6 +392,22 @@ test('/models/:id/providers with malformed %-encoding returns 400 JSON, not an u
   assert.equal(body.error, 'Invalid model id encoding');
 });
 
+test('/api/v1/images/:id with malformed %-encoding returns 400 JSON, not an uncaught URIError', async () => {
+  const res = await onRequestGet(makeContext('/api/v1/images/%E0%A4%A'));
+  assert.equal(res.status, 400);
+  assert.equal(res.headers.get('Content-Type'), 'application/json');
+  const body = await res.json();
+  assert.equal(body.error, 'Invalid model id encoding');
+});
+
+test('/api/v1/videos/:id with malformed %-encoding returns 400 JSON, not an uncaught URIError', async () => {
+  const res = await onRequestGet(makeContext('/api/v1/videos/%E0%A4%A'));
+  assert.equal(res.status, 400);
+  assert.equal(res.headers.get('Content-Type'), 'application/json');
+  const body = await res.json();
+  assert.equal(body.error, 'Invalid model id encoding');
+});
+
 // ── /api/v1/orgs ──────────────────────────────────────────────────────────────
 
 test('/api/v1/orgs returns orgs sorted by count desc', async () => {
@@ -423,6 +460,14 @@ test('/api/v1/images/nonexistent returns 404', async () => {
   assert.equal(status, 404);
 });
 
+test('/api/v1/images/:id with malformed %-encoding returns 400 JSON, not an uncaught URIError', async () => {
+  const res = await onRequestGet(makeContext('/api/v1/images/%E0%A4%A'));
+  assert.equal(res.status, 400);
+  assert.equal(res.headers.get('Content-Type'), 'application/json');
+  const body = await res.json();
+  assert.equal(body.error, 'Invalid model id encoding');
+});
+
 // ── /api/v1/videos ────────────────────────────────────────────────────────────
 
 test('/api/v1/videos returns all video models', async () => {
@@ -441,6 +486,14 @@ test('/api/v1/videos/sora-2-pro returns full record with pricing variants', asyn
 test('/api/v1/videos/openai/sora-2-pro accepts full org/model ID', async () => {
   const { body } = await getJson(makeContext('/api/v1/videos/openai/sora-2-pro'));
   assert.equal(body.model.id, 'openai/sora-2-pro');
+});
+
+test('/api/v1/videos/:id with malformed %-encoding returns 400 JSON, not an uncaught URIError', async () => {
+  const res = await onRequestGet(makeContext('/api/v1/videos/%E0%A4%A'));
+  assert.equal(res.status, 400);
+  assert.equal(res.headers.get('Content-Type'), 'application/json');
+  const body = await res.json();
+  assert.equal(body.error, 'Invalid model id encoding');
 });
 
 // ── 404 ───────────────────────────────────────────────────────────────────────
