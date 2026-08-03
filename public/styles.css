@@ -116,6 +116,7 @@ header {
 }
 
 header h1 { font-size: 1.8rem; font-weight: 700; }
+.tagline { font-size: 1.15rem; font-weight: 600; margin-top: 0.9rem; }
 .subtitle { color: var(--text-dim); margin-top: 0.3rem; font-size: 0.95rem; }
 
 /* ── Tab navigation ─────────────────────────────────────────────────── */
@@ -1027,6 +1028,7 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
 @media (max-width: 768px) {
   header { padding: 1.5rem 1rem 1rem; }
   header h1 { font-size: 1.4rem; }
+  .tagline { font-size: 1rem; }
   .header-row { flex-direction: column; gap: 0.5rem; }
   .controls { flex-direction: column; }
   .control-group { min-width: 100%; }
