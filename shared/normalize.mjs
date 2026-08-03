@@ -46,6 +46,11 @@ export function canonicalId(id) {
   return k;
 }
 
+/** Quantization/tier suffixes that may appear at the END of a canonical ID.
+ *  Shared by orgLookupKey (strip for org resolution) and quantFromId (extract
+ *  for the quantization field) — keep the list in ONE place to prevent drift. */
+export const QUANT_SUFFIX_RE = /-(fp8|nvfp4|int4-mixed-ar|int4|bf16|fp16|fp6|mxfp4)$/;
+
 /**
  * Build a key for org cross-referencing.
  * Like canonicalId but also strips quantization and tier suffixes.
@@ -53,6 +58,16 @@ export function canonicalId(id) {
  */
 export function orgLookupKey(id) {
   return canonicalId(id)
-    .replace(/-(fp8|nvfp4|int4-mixed-ar|int4|bf16|fp16|fp6|mxfp4)$/, '')
+    .replace(QUANT_SUFFIX_RE, '')
     .replace(/-long$/, '');
+}
+
+/** Extract a quantization tag from a model ID, or null when absent.
+ *  Matches on the canonical ID so date suffixes are stripped first
+ *  ('glm-5.2-fp8-20260803' → 'fp8'). Examples: 'glm-5.2-fp8' → 'fp8',
+ *  'qwen3-coder-480b-a35b-instruct-int4-mixed-ar' → 'int4-mixed-ar',
+ *  'llama-4-scout-17b-instruct-v1:0-turbo' → null (-turbo is not a quant). */
+export function quantFromId(id) {
+  const match = canonicalId(id).match(QUANT_SUFFIX_RE);
+  return match ? match[1] : null;
 }

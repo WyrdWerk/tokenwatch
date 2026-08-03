@@ -15,15 +15,14 @@
 
 // Import shared helpers from lib.mjs (the Node-pipeline convention — it re-exports
 // the pure shared/*.mjs modules). fetchJson is node:fs-backed and lives here.
-import { fetchJson, PROVIDER_MAP, normalizeForMatch } from './lib.mjs';
+import { fetchJson, REVERSE_PROVIDER_MAP, normalizeForMatch } from './lib.mjs';
 
 const MODELSDEV_URL = 'https://models.dev/api.json';
 
 // Reverse map: models.dev provider_id → TW provider slug.
-const REVERSE_MAP = new Map();
-for (const [twKey, mdId] of Object.entries(PROVIDER_MAP)) {
-  REVERSE_MAP.set(mdId, twKey);
-}
+// Single source of truth is REVERSE_PROVIDER_MAP in shared/modelsdev.mjs
+// (derived from PROVIDER_MAP); tests assert it round-trips every entry.
+const REVERSE_MAP = new Map(Object.entries(REVERSE_PROVIDER_MAP));
 
 /**
  * Build the enrichment index from a parsed models.dev API response.

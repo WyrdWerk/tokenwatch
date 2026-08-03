@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canonicalId, orgLookupKey } from '../shared/normalize.mjs';
+import { canonicalId, orgLookupKey, quantFromId } from '../shared/normalize.mjs';
 
 // ── canonicalId: org/ prefix stripping ────────────────────────────────────────
 
@@ -120,4 +120,29 @@ test('orgLookupKey still strips the same suffixes canonicalId does', () => {
   assert.equal(orgLookupKey('org/model:free'), 'model');
   assert.equal(orgLookupKey('org/model-preview'), 'model');
   assert.equal(orgLookupKey('org/model-2024-08-06'), 'model');
+});
+
+// ── quantFromId: quantization extraction (shares QUANT_SUFFIX_RE with orgLookupKey) ──
+
+test('quantFromId extracts quant suffixes from canonical IDs', () => {
+  assert.equal(quantFromId('z-ai/glm-5.2-fp8'), 'fp8');
+  assert.equal(quantFromId('z-ai/glm-5.2-nvfp4'), 'nvfp4');
+  assert.equal(quantFromId('z-ai/glm-5.2-int4-mixed-ar'), 'int4-mixed-ar');
+  assert.equal(quantFromId('z-ai/glm-5.2-int4'), 'int4');
+  assert.equal(quantFromId('z-ai/glm-5.2-bf16'), 'bf16');
+  assert.equal(quantFromId('qwen3-coder-480b-a35b-instruct-int4-mixed-ar'), 'int4-mixed-ar');
+  assert.equal(quantFromId('meta-llama/llama-4-maverick-17b-128e-instruct-fp8'), 'fp8');
+});
+
+test('quantFromId matches the canonical ID, not the raw ID (date suffixes stripped first)', () => {
+  // -fp8-20260803 → canonicalId strips the date → ends with -fp8 → hit.
+  assert.equal(quantFromId('glm-5.2-fp8-20260803'), 'fp8');
+});
+
+test('quantFromId returns null for non-quant suffixes (turbo/SKU/size tokens preserved)', () => {
+  assert.equal(quantFromId('meta-llama/llama-4-scout-17b-instruct-v1:0-turbo'), null);
+  assert.equal(quantFromId('org/model-fast'), null);
+  assert.equal(quantFromId('org/model-highspeed'), null);
+  assert.equal(quantFromId('org/qwen3-30b-a3b'), null); // size tokens are NOT quants
+  assert.equal(quantFromId('anthropic/claude-sonnet-5'), null);
 });

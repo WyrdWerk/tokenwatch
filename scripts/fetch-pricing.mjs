@@ -13,9 +13,10 @@
  *          OpenCode Go (hardcoded)
  *
  * Precedence: (canonical_model, normalized_provider) — direct wins over
- * OpenRouter, which wins over CSV/hardcoded. Quantization is NOT part of
- * the dedup key — same model+provider at different quants collapses to
- * one row (first-seen / highest-tier wins).
+ * OpenRouter, which wins over CSV/hardcoded. Quantization IS part of the
+ * dedup key — canonicalId preserves quant suffixes (glm-5.2-fp8 vs
+ * glm-5.2-nvfp4), so different quants of the same model+provider stay
+ * distinct rows (first-seen / highest-tier wins among identical keys).
  *
  * Model record:
  * {
@@ -30,13 +31,13 @@
  * }
  */
 
-import { writeFile, mkdir, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import {
-  num, perTokToPerM, centsToDollars, passthrough, parseSference, parseNeuralwatt, parseMerius,
+  perTokToPerM, centsToDollars, passthrough, parseSference, parseNeuralwatt, parseMerius,
   NON_TEXT_ID, isTextModel,
   ORG_ALIASES, PROVIDER_NAME_MAP,
   orgFromId, orgFromName,
-  canonicalId, orgLookupKey,
+  canonicalId, orgLookupKey, quantFromId,
   normalizeProvider, dedupKey, dedupModels,
   fetchJson, fetchJsonWithRetry,
   checkCoverageDrop,
@@ -44,6 +45,7 @@ import {
   applyBenchmarkEnrichment,
   applyAAEnrichment,
   buildBenchmarkIndex,
+  maybeWriteJson,
 } from './lib.mjs';
 import { fetchModelsDevEnrichment } from './fetch-modelsdev.mjs';
 import { fetchAABenchmarks } from './fetch-aa.mjs';
@@ -455,24 +457,6 @@ function parseSambaNova(data) {
     })
 }
 
-function parseUmans(data) {
-  return (data.data || []).map((m) => ({
-    id: m.id,
-    name: m.id,
-    provider: 'umans',
-    quantization: null,
-    discount: 0,
-    context_length: m.context_length ?? null,
-    pricing: {
-      input: passthrough(m.pricing?.input),
-      output: passthrough(m.pricing?.output),
-      cache_read: null,
-      cache_write: null,
-    },
-  }));
-}
-
-// ── OpenRouter de-aggregation ─────────────────────────────────────────────────
 // ── OpenRouter de-aggregation ─────────────────────────────────────────────────
 
 /** Fetch /endpoints for a single model, return per-backend rows. */
@@ -881,6 +865,21 @@ async function main() {
   // dry-run summary below can print the delta.
   const prevCount = await checkCoverageDrop('public/pricing.json', out.models.length);
 
+  // ── Quantization fill ──
+  // Direct/CSV/hardcoded parsers set quantization: null even when the quant is
+  // baked into the model ID (e.g. makora glm-5.2-fp8). Without this, the API's
+  // ?quantization= filter and /stats miss those rows entirely. Matches on the
+  // canonical ID (date suffixes stripped first); never overwrites a non-null
+  // value (OpenRouter rows carry ep.quantization).
+  let quantFilled = 0;
+  for (const m of out.models) {
+    if (m.quantization == null) {
+      const q = quantFromId(m.id);
+      if (q) { m.quantization = q; quantFilled++; }
+    }
+  }
+  if (quantFilled > 0) console.log(`  Quantization filled for ${quantFilled} rows (from ID suffix)`);
+
   // ── Org enrichment ──
   const canonToOrg = {};
   for (const m of out.models) {
@@ -1025,9 +1024,8 @@ async function main() {
     return;
   }
 
-  await mkdir('public', { recursive: true });
-  await writeFile('public/pricing.json', JSON.stringify(out, null, 2));
-  console.log(`\n→ Wrote public/pricing.json (${out.models.length} models from ${out.providers.length} providers)`);
+  const wrote = await maybeWriteJson('public/pricing.json', out);
+  if (wrote) console.log(`\n→ Wrote public/pricing.json (${out.models.length} models from ${out.providers.length} providers)`);
 }
 
 main().catch((err) => { console.error('Fatal:', err); process.exit(1); });
