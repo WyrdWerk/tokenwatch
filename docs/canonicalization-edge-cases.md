@@ -17,7 +17,7 @@ to canonicalization MUST keep these tests green; if behavior is intended to chan
 the test is the spec and must be updated in the same commit.
 
 **Known duplication (parity-guarded, not unguarded):** `public/app.js` ships a
-client-side `canonicalModelId()` (defined near `public/app.js:300`) that
+client-side `canonicalModelId()` (defined in `public/app.js`) that
 re-implements `canonicalId()` for the datalist typeahead. It is NOT imported from
 `shared/normalize.mjs` (the static frontend has no bundler — see ADR 0001). The
 duplication is intentional and **guarded by `test/parity.test.mjs:56-89`**, which
@@ -51,15 +51,16 @@ why the frontend duplication is parity-guarded (Edge Case 10).
 
 ## 2. Quantization in the dedup key; `orgLookupKey` is org-resolution-only
 
-**Where:** `shared/normalize.mjs` — `canonicalId()` (lines 30-32) and
-`orgLookupKey()` (lines 49-53); dedup caller `scripts/lib.mjs:161-175`.
+**Where:** `shared/normalize.mjs` — `canonicalId()`, `orgLookupKey()`,
+`quantFromId()`; dedup caller `dedupKey()` / `dedupModels()` in `scripts/lib.mjs`.
 **The trap:** The two functions diverge **intentionally**, and dedup uses
 `canonicalId` — NOT `orgLookupKey`. `canonicalId` keeps quant suffixes
-(`-fp8`, `-nvfp4`, `-int4`, `-bf16`, etc.), so `dedupKey()` in `scripts/lib.mjs:162`
+(`-fp8`, `-nvfp4`, `-int4`, `-bf16`, etc.), so `dedupKey()` in `scripts/lib.mjs`
 (`${canonicalId(m.id)}|${normalizeProvider(m.provider)}`) produces **distinct
 keys for different quants** — they stay distinct rows. `orgLookupKey` strips
 quant + tier (`-long`) so quants of the same model group under one org/model for
-**org resolution** — it is NOT used for dedup (`normalize.mjs:52`: "Used ONLY
+**org resolution** — it is NOT used for dedup (`orgLookupKey()` in
+`shared/normalize.mjs`: "Used ONLY
 for org resolution — not for dedup or model display"). An agent must not "unify"
 the two functions, and must not route dedup through `orgLookupKey`.
 **Handling:** Two separate functions; dedup calls `canonicalId` (quant preserved);
@@ -160,7 +161,7 @@ non-reproducible across runs.
 
 ## 9. `falCanonicalId` modality-suffix logic
 
-**Where:** `scripts/fetch-fal.mjs` — `falCanonicalId()`.
+**Where:** `scripts/lib.mjs` — `falCanonicalId()` (imported by `fetch-fal.mjs`).
 **The trap:** fal.ai preserves nested endpoint identity (modality suffix) that
 `canonicalId` would strip — because fal's image/video endpoints are distinct
 despite sharing a base model.
@@ -174,9 +175,8 @@ image/video endpoints onto their base model.
 
 ## 10. Frontend `canonicalModelId()` parity (guarded, with limits)
 
-**Where:** `public/app.js` — `canonicalModelId()` (near `public/app.js:300`;
-mirror of `shared/normalize.mjs` — `canonicalId()`); guard at
-`test/parity.test.mjs:56-89`.
+**Where:** `public/app.js` — `canonicalModelId()` (mirror of `shared/normalize.mjs` —
+`canonicalId()`); guard at `test/parity.test.mjs`.
 **The trap:** Two independent implementations of the same normalization. Change
 `shared/normalize.mjs` without mirroring in `public/app.js` → the typeahead
 suggests IDs the API won't recognize. This is the `-preview-customtools` class

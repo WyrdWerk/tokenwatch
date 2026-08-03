@@ -13,10 +13,10 @@ times with conflicting prices.
 ## Decision
 
 Three tiers with strict precedence on the `canonicalId(m.id) | normalized_provider`
-dedup key (`scripts/lib.mjs:162`): **Tier 1 direct > Tier 2 OpenRouter
+dedup key (`dedupKey()` in `scripts/lib.mjs`): **Tier 1 direct > Tier 2 OpenRouter
 de-aggregated > Tier 3 CSV/hardcoded**. First-seen/highest-tier wins among
 identical keys. Quantization IS part of the key — `canonicalId()` preserves
-quant suffixes (`normalize.mjs:30-32`), so different quants of the same
+quant suffixes (`shared/normalize.mjs`), so different quants of the same
 model+provider produce distinct keys and stay distinct rows
 (`test/canonicalization.test.mjs:88-97`). Note: AGENTS.md previously stated
 the opposite ("Quantization is NOT part of the dedup key") — that claim was

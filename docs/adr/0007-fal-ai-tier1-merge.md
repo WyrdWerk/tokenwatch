@@ -12,7 +12,8 @@ could appear twice with conflicting pricing.
 ## Decision
 
 fal.ai is a **Tier-1 source** for image/video, prepended to OpenRouter image/video
-rows, then deduped with fal.ai winning. `falCanonicalId()` (in `scripts/fetch-fal.mjs`)
+rows, then deduped with fal.ai winning. `falCanonicalId()` (in `scripts/lib.mjs`,
+imported by `fetch-fal.mjs`)
 preserves nested endpoint/modality suffixes that `canonicalId` would strip,
 because fal's image/video endpoints are distinct despite sharing a base model.
 Fetch is non-fatal. (Source: `docs/superpowers/specs/2026-07-09-fal-ai-integration-design.md`,
