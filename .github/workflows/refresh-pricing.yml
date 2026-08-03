@@ -8,7 +8,12 @@ on:
   schedule:
     # every 2 hours
     - cron: '0 */2 * * *'
-  workflow_dispatch: {} # manual trigger
+  workflow_dispatch:
+    inputs:
+      force:
+        type: boolean
+        default: false
+        description: 'Deploy even when nothing changed (recovery lever after a failed deploy)'
   push:
     branches:
       - main
@@ -18,7 +23,8 @@ permissions:
 
 jobs:
   test:
-    if: (github.event_name == 'push' || github.event_name == 'pull_request') && github.actor != 'tokenwatch-data-bot[bot]'
+    # PR coverage lives in ci.yml (this workflow has no pull_request trigger).
+    if: github.event_name == 'push' && github.actor != 'tokenwatch-data-bot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,6 +39,7 @@ jobs:
   refresh:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -81,29 +88,53 @@ jobs:
         run: node scripts/fetch-performance.mjs
 
       - name: Commit pricing + performance data
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add public/pricing.json public/image-pricing.json public/video-pricing.json public/performance.json
           if git diff --cached --quiet; then
-            echo "No pricing changes — skipping commit."
+            echo "No pricing changes — skipping commit and deploy."
           else
             git commit -m "chore: refresh pricing data ($(date -u +%Y-%m-%dT%H:%M) UTC)"
             git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Generate SEO (regenerate cheapest-models table + sitemap)
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
+        run: node scripts/generate-seo.mjs
+
+      - name: Verify SEO integrity
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
+        run: |
+          grep -q 'class="seo-models"' public/index.html || { echo "generate-seo did not produce the seo-models section"; exit 1; }
+          test -s public/sitemap.xml || { echo "sitemap.xml is empty"; exit 1; }
+
       - name: Bust cache (content-hash ?v= tokens)
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
         run: node scripts/bust-cache.mjs
 
       - name: Minify JSON
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
         run: node scripts/minify-json.mjs
 
       - name: Deploy to Cloudflare Pages
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy public --project-name payg-inference-calculator --branch main
+
+      - name: Verify hashed asset content-type (guards the 2026-07-30 SPA-fallback outage)
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
+        run: |
+          file="$(ls public/h/*.js 2>/dev/null | xargs -n1 basename | head -n 1)"
+          if [ -z "$file" ]; then echo "no hashed JS in public/h/ — did bust-cache run?"; exit 1; fi
+          ct="$(curl -sSI "https://payg-inference-calculator.pages.dev/h/${file}" | grep -i '^content-type:' | tr -d '\r' | awk '{print $2}')"
+          echo "checking /h/${file} → content-type: ${ct:-<empty>}"
+          [ "$ct" = "application/javascript" ] || { echo "FAIL: /h/* served as ${ct:-empty} (broken SPA fallback)"; exit 1; }
 
   deploy:
     if: github.event_name == 'push' && github.actor != 'tokenwatch-data-bot[bot]'
@@ -116,6 +147,14 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Generate SEO (regenerate cheapest-models table + sitemap)
+        run: node scripts/generate-seo.mjs
+
+      - name: Verify SEO integrity
+        run: |
+          grep -q 'class="seo-models"' public/index.html || { echo "generate-seo did not produce the seo-models section"; exit 1; }
+          test -s public/sitemap.xml || { echo "sitemap.xml is empty"; exit 1; }
+
       - name: Bust cache (content-hash ?v= tokens)
         run: node scripts/bust-cache.mjs
 
@@ -128,3 +167,11 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy public --project-name payg-inference-calculator --branch main
+
+      - name: Verify hashed asset content-type (guards the 2026-07-30 SPA-fallback outage)
+        run: |
+          file="$(ls public/h/*.js 2>/dev/null | xargs -n1 basename | head -n 1)"
+          if [ -z "$file" ]; then echo "no hashed JS in public/h/ — did bust-cache run?"; exit 1; fi
+          ct="$(curl -sSI "https://payg-inference-calculator.pages.dev/h/${file}" | grep -i '^content-type:' | tr -d '\r' | awk '{print $2}')"
+          echo "checking /h/${file} → content-type: ${ct:-<empty>}"
+          [ "$ct" = "application/javascript" ] || { echo "FAIL: /h/* served as ${ct:-empty} (broken SPA fallback)"; exit 1; }

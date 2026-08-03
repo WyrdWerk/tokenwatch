@@ -8,7 +8,12 @@ on:
   schedule:
     # every Monday at 06:00 UTC
     - cron: '0 6 * * 1'
-  workflow_dispatch: {} # manual trigger
+  workflow_dispatch:
+    inputs:
+      force:
+        type: boolean
+        default: false
+        description: 'Deploy even when nothing changed (recovery lever after a failed deploy)'
 
 permissions:
   contents: write
@@ -16,6 +21,7 @@ permissions:
 jobs:
   refresh-aa:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -47,26 +53,50 @@ jobs:
         run: node scripts/fetch-pricing.mjs
 
       - name: Commit AA cache + refreshed pricing
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/aa-benchmarks.json public/pricing.json
           if git diff --cached --quiet; then
-            echo "No AA changes — skipping commit."
+            echo "No AA changes — skipping commit and deploy."
           else
             git commit -m "chore: refresh AA benchmarks ($(date -u +%Y-%m-%dT%H:%M) UTC)"
             git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Generate SEO (regenerate cheapest-models table + sitemap)
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
+        run: node scripts/generate-seo.mjs
+
+      - name: Verify SEO integrity
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
+        run: |
+          grep -q 'class="seo-models"' public/index.html || { echo "generate-seo did not produce the seo-models section"; exit 1; }
+          test -s public/sitemap.xml || { echo "sitemap.xml is empty"; exit 1; }
+
       - name: Bust cache (content-hash ?v= tokens)
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
         run: node scripts/bust-cache.mjs
 
       - name: Minify JSON
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
         run: node scripts/minify-json.mjs
 
       - name: Deploy to Cloudflare Pages
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy public --project-name payg-inference-calculator --branch main
+
+      - name: Verify hashed asset content-type (guards the 2026-07-30 SPA-fallback outage)
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
+        run: |
+          file="$(ls public/h/*.js 2>/dev/null | xargs -n1 basename | head -n 1)"
+          if [ -z "$file" ]; then echo "no hashed JS in public/h/ — did bust-cache run?"; exit 1; fi
+          ct="$(curl -sSI "https://payg-inference-calculator.pages.dev/h/${file}" | grep -i '^content-type:' | tr -d '\r' | awk '{print $2}')"
+          echo "checking /h/${file} → content-type: ${ct:-<empty>}"
+          [ "$ct" = "application/javascript" ] || { echo "FAIL: /h/* served as ${ct:-empty} (broken SPA fallback)"; exit 1; }

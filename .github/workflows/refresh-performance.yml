@@ -8,7 +8,12 @@ on:
   schedule:
     # every 2 hours at minute 30 (offset from pricing refresh at 00:00)
     - cron: '30 */2 * * *'
-  workflow_dispatch: {} # manual trigger
+  workflow_dispatch:
+    inputs:
+      force:
+        type: boolean
+        default: false
+        description: 'Deploy even when nothing changed (recovery lever after a failed deploy)'
 
 permissions:
   contents: write
@@ -16,6 +21,7 @@ permissions:
 jobs:
   perf:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -58,15 +64,15 @@ jobs:
         id: commit
 
       - name: Bust cache (content-hash ?v= tokens)
-        if: steps.commit.outputs.changed == 'true'
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
         run: node scripts/bust-cache.mjs
 
       - name: Minify JSON
-        if: steps.commit.outputs.changed == 'true'
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
         run: node scripts/minify-json.mjs
 
       - name: Deploy to Cloudflare Pages
-        if: steps.commit.outputs.changed == 'true'
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

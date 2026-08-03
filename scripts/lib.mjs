@@ -3,7 +3,8 @@
  * Used by fetch-pricing.mjs, fetch-images.mjs, fetch-videos.mjs.
  */
 
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { dirname } from 'node:path';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -154,13 +155,13 @@ export function orgFromName(name) {
 // canonicalId and orgLookupKey live in shared/normalize.mjs so the Cloudflare
 // Pages Function can import the same source of truth without pulling in
 // node:fs (which this file imports below for checkCoverageDrop).
-export { canonicalId, orgLookupKey } from '../shared/normalize.mjs';
-import { canonicalId, orgLookupKey } from '../shared/normalize.mjs';
+export { canonicalId, orgLookupKey, quantFromId } from '../shared/normalize.mjs';
+import { canonicalId, orgLookupKey, quantFromId } from '../shared/normalize.mjs';
 
 // models.dev reconciliation helpers live in shared/modelsdev.mjs (pure, no
 // node: imports) so they could in principle be bundled into the Worker too.
 // Re-exported here for fetch-modelsdev.mjs to consume.
-export { PROVIDER_MAP, normalizeForMatch, findEnrichment, applyEnrichment } from '../shared/modelsdev.mjs';
+export { PROVIDER_MAP, REVERSE_PROVIDER_MAP, normalizeForMatch, findEnrichment, applyEnrichment } from '../shared/modelsdev.mjs';
 
 // Benchmark matching helpers live in shared/benchmarks.mjs (pure, no node:
 // imports) — same purity contract as normalize.mjs and modelsdev.mjs so they
@@ -258,6 +259,34 @@ export function dedupModels(tieredModels) {
     result.push(m);
   }
   return result;
+}
+
+// ── write-if-changed ───────────────────────────────────────────────────────────
+
+/**
+ * Write a JSON artifact only when its content changed (excluding `generated_at`),
+ * so a refresh that produced identical data leaves the file untouched. CI's
+ * commit step (refresh-pricing.yml) then sees a quiet `git diff` → no commit →
+ * no bust-cache/deploy on no-change cycles. Mirrors the skip-if-unchanged
+ * pattern in fetch-performance.mjs. Returns true when written, false when skipped.
+ */
+export async function maybeWriteJson(outputPath, out) {
+  await mkdir(dirname(outputPath), { recursive: true });
+  try {
+    const prev = JSON.parse(await readFile(outputPath, 'utf8'));
+    const { generated_at: _prevGeneratedAt, ...prevRest } = prev;
+    const { generated_at: _nextGeneratedAt, ...nextRest } = out;
+    const prevStr = JSON.stringify(prevRest);
+    if (JSON.stringify(nextRest) === prevStr) {
+      console.log(`\n→ No changes to ${outputPath} — skipping write`);
+      console.log('  (CI commit step will detect no diff and skip deploy)');
+      return false;
+    }
+  } catch {
+    // No existing file or invalid JSON — treat as new data
+  }
+  await writeFile(outputPath, JSON.stringify(out, null, 2));
+  return true;
 }
 
 // ── fal.ai helpers ──

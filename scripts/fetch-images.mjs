@@ -20,10 +20,10 @@
  * }
  */
 
-import { writeFile, mkdir } from 'node:fs/promises';
 import {
   orgFromId, orgFromName, canonicalId, orgLookupKey, ORG_ALIASES,
   num, fetchJsonWithRetry, checkCoverageDrop, CoverageDropError, parseArgs, dedupModels,
+  maybeWriteJson,
 } from './lib.mjs';
 import { fetchFalImageModels } from './fetch-fal.mjs';
 
@@ -185,9 +185,8 @@ async function main() {
     return;
   }
 
-  await mkdir('public', { recursive: true });
-  await writeFile(OUTPUT_PATH, JSON.stringify(out, null, 2));
-  console.log(`\n→ Wrote ${OUTPUT_PATH} (${dedupedModels.length} models)`);
+  const wrote = await maybeWriteJson(OUTPUT_PATH, out);
+  if (wrote) console.log(`\n→ Wrote ${OUTPUT_PATH} (${dedupedModels.length} models)`);
 }
 
 main().catch((err) => {
