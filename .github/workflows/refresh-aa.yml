@@ -95,7 +95,8 @@ jobs:
       - name: Verify hashed asset content-type (guards the 2026-07-30 SPA-fallback outage)
         if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
         run: |
-          file="$(ls public/h/*.js 2>/dev/null | xargs -n1 basename | head -n 1)"
+          first="$(ls public/h/*.js 2>/dev/null | head -n 1)"
+          file="${first##*/}"
           if [ -z "$file" ]; then echo "no hashed JS in public/h/ — did bust-cache run?"; exit 1; fi
           ct="$(curl -sSI "https://payg-inference-calculator.pages.dev/h/${file}" | grep -i '^content-type:' | tr -d '\r' | awk '{print $2}')"
           echo "checking /h/${file} → content-type: ${ct:-<empty>}"

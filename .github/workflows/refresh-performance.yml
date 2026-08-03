@@ -79,5 +79,15 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy public --project-name payg-inference-calculator --branch main
 
+      - name: Verify hashed asset content-type (guards the 2026-07-30 SPA-fallback outage)
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
+        run: |
+          first="$(ls public/h/*.js 2>/dev/null | head -n 1)"
+          file="${first##*/}"
+          if [ -z "$file" ]; then echo "no hashed JS in public/h/ — did bust-cache run?"; exit 1; fi
+          ct="$(curl -sSI "https://payg-inference-calculator.pages.dev/h/${file}" | grep -i '^content-type:' | tr -d '\r' | awk '{print $2}')"
+          echo "checking /h/${file} → content-type: ${ct:-<empty>}"
+          [ "$ct" = "application/javascript" ] || { echo "FAIL: /h/* served as ${ct:-empty} (broken SPA fallback)"; exit 1; }
+
       # Deploy is explicit (not relying on push-triggered refresh-pricing.yml deploy)
       # because GITHUB_TOKEN pushes do not trigger downstream workflow runs.
