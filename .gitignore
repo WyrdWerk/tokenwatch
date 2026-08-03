@@ -28,5 +28,17 @@ node_modules/
 # Agent state
 .pi/
 
+# Investigation artifacts (one-off analysis dumps, not source)
+models_dev_api.json
+final_output.json
+final_report.md
+investigation_summary.md
+pipeline-investigation.md
+tmp/
+
+# public/h/ is DEPLOYED but NOT committed — do NOT ignore it!
+# (wrangler skips gitignored files; ignoring /h/ caused the 2026-07-30
+#  broken-SPA-fallback outage. bust-cache.mjs generates these at deploy.)
+
 # Neuralwatt estimator cache (runtime artifact, not source)
 data/neuralwatt-estimator-cache.json
