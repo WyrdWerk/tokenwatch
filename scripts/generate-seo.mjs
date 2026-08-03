@@ -1,11 +1,16 @@
 /**
  * generate-seo.mjs — build-time SEO generation.
- * Server-renders cheapest models into index.html for crawlability,
- * regenerates sitemap.xml + robots.txt. Idempotent.
+ * Server-renders cheapest models into index.html for crawlability, substitutes
+ * live model/provider counts into the head/JSON-LD/FAQ copy, and regenerates
+ * sitemap.xml + robots.txt. Idempotent.
+ *
+ * Pure builders (renderSeoTable / renderCounts / buildSitemap / buildRobots) are
+ * exported for tests; main() runs only when invoked as a script.
  */
-import { readFile, writeFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import { readFile, writeFile, rename } from "node:fs/promises";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, join } from "node:path";
+import { blendedRate, AGENTIC_MIX } from "../shared/cost.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC = join(__dirname, "..", "public");
@@ -24,31 +29,22 @@ function fmtPrice(v) {
   return "$" + v.toFixed(2);
 }
 
-async function main() {
-  let pricing;
-  try {
-    pricing = JSON.parse(await readFile(join(PUBLIC, "pricing.json"), "utf8"));
-  } catch (err) {
-    console.error("generate-seo: pricing.json not found — run fetch-pricing.mjs first.");
-    process.exit(1);
-  }
-  const models = pricing.models || [];
-  const generatedAt = pricing.generated_at || new Date().toISOString();
-  const lastmod = generatedAt.slice(0, 10);
-
-  const priced = models
+/**
+ * Pick the 25 cheapest models by effective $/M at the agentic mix.
+ * Uses shared/cost.mjs blendedRate — the SAME null semantics as the app's
+ * blendedCostFor (cache_read null → charged at the input rate). Pure.
+ */
+export function cheapestModels(models, topN = TOP_N) {
+  return models
     .filter((m) => m.pricing && (m.pricing.input > 0 || m.pricing.output > 0))
-    .map((m) => {
-      const { input = 0, output = 0, cache_read = null } = m.pricing;
-      const eff = cache_read != null && cache_read > 0
-        ? input * 0.025 + cache_read * 0.97 + output * 0.005
-        : input * 0.025 + output * 0.005;
-      return { m, eff };
-    })
-    .filter((x) => x.eff > 0)
+    .map((m) => ({ m, eff: blendedRate(m.pricing, AGENTIC_MIX) }))
+    .filter((x) => x.eff != null && x.eff > 0)
     .sort((a, b) => a.eff - b.eff)
-    .slice(0, TOP_N);
+    .slice(0, topN);
+}
 
+/** Render the `<section class="seo-models" id="cheapest">…</section>` block. Pure. */
+export function renderSeoTable(priced, lastmod) {
   const rows = priced.map(({ m, eff }) => {
     const p = m.pricing || {};
     return "      <tr>"
@@ -62,7 +58,7 @@ async function main() {
       + "      </tr>";
   }).join("\n");
 
-  const seoTable = "    <section class=\"seo-models\" aria-label=\"Cheapest LLM API models\">"
+  return "    <section class=\"seo-models\" id=\"cheapest\" aria-label=\"Cheapest LLM API models\">"
     + "      <h2>Cheapest LLM API models right now</h2>"
     + "      <p>Ranked by effective cost at a typical agentic mix (2.5% input, 97% cached input, 0.5% output). Prices are USD per million tokens. Use the calculator above to compute your exact workload cost.</p>"
     + "      <div class=\"table-wrap\">"
@@ -76,29 +72,85 @@ async function main() {
     + "      </div>"
     + "      <p class=\"seo-note\">Pricing refreshed " + esc(lastmod) + " from public provider APIs. Always verify on the provider official pricing page.</p>"
     + "    </section>";
+}
 
-  let indexHtml = await readFile(join(PUBLIC, "index.html"), "utf8");
-  const seoMarker = 'class="seo-models"';
-  if (indexHtml.includes(seoMarker)) {
-    indexHtml = indexHtml.replace(/<section class="seo-models"[\s\S]*?<\/section>/, seoTable);
-  } else {
-    indexHtml = indexHtml.replace("</main>", seoTable + "\n  </main>");
+/**
+ * Substitute live counts into the {{modelCount}} / {{providerCount}} placeholders
+ * (head title/description, og/twitter, JSON-LD WebSite + FAQPage, subtitle, FAQ).
+ * Global replace — the JSON-LD block and FAQ carry the counts in multiple spots.
+ * Throws if any placeholder survives (a hand-edit changing the token text would
+ * otherwise ship unreplaced markup silently). Pure.
+ */
+export function renderCounts(markup, modelCount, providerCount) {
+  const out = markup
+    .replaceAll("{{modelCount}}", String(modelCount))
+    .replaceAll("{{providerCount}}", String(providerCount));
+  if (out.includes("{{")) {
+    throw new Error(`generate-seo: unreplaced count placeholder remains in index.html (model=${modelCount}, provider=${providerCount})`);
   }
-  await writeFile(join(PUBLIC, "index.html"), indexHtml);
-  console.log("generate-seo: rendered " + priced.length + " cheapest models into index.html");
+  return out;
+}
 
-  const sitemap = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+/** Sitemap for the three static pages, lastmod from pricing.generated_at. Pure. */
+export function buildSitemap(lastmod) {
+  return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
     + "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"
     + "  <url><loc>" + SITE + "/</loc><lastmod>" + lastmod + "</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>"
     + "  <url><loc>" + SITE + "/image</loc><lastmod>" + lastmod + "</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>"
     + "  <url><loc>" + SITE + "/video</loc><lastmod>" + lastmod + "</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>"
     + "</urlset>";
-  await writeFile(join(PUBLIC, "sitemap.xml"), sitemap);
+}
+
+/** robots.txt — allow crawl, disallow the API, point at the sitemap. Pure. */
+export function buildRobots() {
+  return "User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: " + SITE + "/sitemap.xml\n";
+}
+
+/** Atomic write (tmp + rename) so a runner death can never leave a truncated file. */
+async function writeAtomic(filePath, content) {
+  const tmp = `${filePath}.tmp`;
+  await writeFile(tmp, content);
+  await rename(tmp, filePath);
+}
+
+async function main() {
+  let pricing;
+  try {
+    pricing = JSON.parse(await readFile(join(PUBLIC, "pricing.json"), "utf8"));
+  } catch (err) {
+    console.error("generate-seo: pricing.json not found — run fetch-pricing.mjs first.");
+    process.exit(1);
+  }
+  const models = pricing.models || [];
+  const generatedAt = pricing.generated_at || new Date().toISOString();
+  const lastmod = generatedAt.slice(0, 10);
+
+  const priced = cheapestModels(models);
+
+  let indexHtml = await readFile(join(PUBLIC, "index.html"), "utf8");
+  const seoTable = renderSeoTable(priced, lastmod);
+  const seoMarker = 'class="seo-models"';
+  if (indexHtml.includes(seoMarker)) {
+    // Consume the preceding newline + indentation so the replacement is canonical:
+    // rerunning generate-seo must be byte-idempotent (no indentation creep per run).
+    indexHtml = indexHtml.replace(/(?:\r?\n)[ \t]*<section[^>]*class="seo-models"[^>]*>[\s\S]*?<\/section>/, "\n" + seoTable);
+  } else {
+    indexHtml = indexHtml.replace("</main>", seoTable + "\n  </main>");
+  }
+
+  const providerCount = new Set(models.map((m) => m.provider)).size;
+  indexHtml = renderCounts(indexHtml, models.length, providerCount);
+  await writeAtomic(join(PUBLIC, "index.html"), indexHtml);
+  console.log("generate-seo: rendered " + priced.length + " cheapest models and counts (" + models.length + " models / " + providerCount + " providers) into index.html");
+
+  await writeAtomic(join(PUBLIC, "sitemap.xml"), buildSitemap(lastmod));
   console.log("generate-seo: wrote sitemap.xml");
 
-  const robots = "User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: " + SITE + "/sitemap.xml\n";
-  await writeFile(join(PUBLIC, "robots.txt"), robots);
+  await writeAtomic(join(PUBLIC, "robots.txt"), buildRobots());
   console.log("generate-seo: wrote robots.txt");
 }
 
-main().catch((err) => { console.error("generate-seo failed:", err); process.exit(1); });
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMain) {
+  main().catch((err) => { console.error("generate-seo failed:", err); process.exit(1); });
+}
