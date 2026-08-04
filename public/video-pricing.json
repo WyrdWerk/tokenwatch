@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-04T11:56:01.586Z",
+  "generated_at": "2026-08-04T19:18:03.931Z",
   "models": [
     {
       "id": "kling-video-v3-pro",
@@ -1352,6 +1352,51 @@
       ]
     },
     {
+      "id": "black-forest-labs/flux-3-video",
+      "name": "Black Forest Labs: FLUX.3 Video",
+      "org": "black-forest-labs",
+      "provider": "black-forest-labs",
+      "supported_durations": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      ],
+      "supported_resolutions": [
+        "720p",
+        "1080p"
+      ],
+      "pricing": [
+        {
+          "resolution": "720p",
+          "audio": null,
+          "cost_per_second": 0.17
+        },
+        {
+          "resolution": "1080p",
+          "audio": null,
+          "cost_per_second": 0.29
+        },
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.17
+        }
+      ]
+    },
+    {
       "id": "minimax/hailuo-3",
       "name": "MiniMax: H3",
       "org": "minimax",
@@ -1424,7 +1469,7 @@
     },
     {
       "id": "x-ai/grok-imagine-video-1.5",
-      "name": "xAI: Grok Imagine Video 1.5",
+      "name": "SpaceXAI: Grok Imagine Video 1.5",
       "org": "xai",
       "provider": "xai",
       "supported_durations": [
@@ -1543,7 +1588,7 @@
     },
     {
       "id": "x-ai/grok-imagine-video",
-      "name": "xAI: Grok Imagine Video",
+      "name": "SpaceXAI: Grok Imagine Video",
       "org": "xai",
       "provider": "xai",
       "supported_durations": [
