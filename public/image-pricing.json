@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-04T19:18:03.732Z",
+  "generated_at": "2026-08-05T04:55:04.500Z",
   "models": [
     {
       "id": "flux-schnell",
@@ -2372,6 +2372,132 @@
         {
           "unit": "image",
           "variant": null,
+          "cost_per_unit": 0.03,
+          "cost_per_million": null
+        }
+      ]
+    },
+    {
+      "id": "qwen/qwen-image-3-pro",
+      "name": "Qwen: Qwen Image 3 Pro",
+      "org": "qwen",
+      "provider": "qwen",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": {
+        "resolution": {
+          "type": "enum",
+          "values": [
+            "1K",
+            "2K"
+          ]
+        },
+        "aspect_ratio": {
+          "type": "enum",
+          "values": [
+            "1:1",
+            "1:2",
+            "1:4",
+            "2:1",
+            "2:3",
+            "3:2",
+            "3:4",
+            "4:1",
+            "4:3",
+            "4:5",
+            "5:4",
+            "9:16",
+            "16:9"
+          ]
+        },
+        "n": {
+          "type": "range",
+          "min": 1,
+          "max": 6
+        },
+        "input_references": {
+          "type": "range",
+          "min": 0,
+          "max": 4
+        },
+        "seed": {
+          "type": "boolean"
+        }
+      },
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": "1k",
+          "cost_per_unit": 0.04,
+          "cost_per_million": null
+        },
+        {
+          "unit": "image",
+          "variant": "2k",
+          "cost_per_unit": 0.075,
+          "cost_per_million": null
+        }
+      ]
+    },
+    {
+      "id": "qwen/qwen-image-3",
+      "name": "Qwen: Qwen Image 3",
+      "org": "qwen",
+      "provider": "qwen",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": {
+        "resolution": {
+          "type": "enum",
+          "values": [
+            "1K",
+            "2K"
+          ]
+        },
+        "aspect_ratio": {
+          "type": "enum",
+          "values": [
+            "1:1",
+            "1:2",
+            "1:4",
+            "2:1",
+            "2:3",
+            "3:2",
+            "3:4",
+            "4:1",
+            "4:3",
+            "4:5",
+            "5:4",
+            "9:16",
+            "16:9"
+          ]
+        },
+        "n": {
+          "type": "range",
+          "min": 1,
+          "max": 6
+        },
+        "input_references": {
+          "type": "range",
+          "min": 0,
+          "max": 4
+        },
+        "seed": {
+          "type": "boolean"
+        }
+      },
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": "1k",
+          "cost_per_unit": 0.03,
+          "cost_per_million": null
+        },
+        {
+          "unit": "image",
+          "variant": "2k",
           "cost_per_unit": 0.03,
           "cost_per_million": null
         }
