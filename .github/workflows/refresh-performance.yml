@@ -63,7 +63,15 @@ jobs:
           fi
         id: commit
 
-      - name: Bust cache (content-hash ?v= tokens)
+      - name: Generate SEO
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
+        run: node scripts/generate-seo.mjs
+
+      - name: Verify generated SEO surface
+        if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
+        run: node scripts/verify-seo.mjs
+
+      - name: Bust cache (content-hashed asset paths)
         if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
         run: node scripts/bust-cache.mjs
 

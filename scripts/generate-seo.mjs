@@ -1,156 +1,232 @@
+#!/usr/bin/env node
 /**
- * generate-seo.mjs — build-time SEO generation.
- * Server-renders cheapest models into index.html for crawlability, substitutes
- * live model/provider counts into the head/JSON-LD/FAQ copy, and regenerates
- * sitemap.xml + robots.txt. Idempotent.
+ * Build-time SEO generation.
  *
- * Pure builders (renderSeoTable / renderCounts / buildSitemap / buildRobots) are
- * exported for tests; main() runs only when invoked as a script.
+ * Reads the committed text, image, and video catalogs; enriches the three
+ * calculator pages with crawlable pricing and FAQs; generates provider and
+ * documentation pages; then writes sitemap.xml and robots.txt.
  */
-import { readFile, writeFile, rename } from "node:fs/promises";
-import { fileURLToPath, pathToFileURL } from "node:url";
-import { dirname, join } from "node:path";
-import { blendedRate, AGENTIC_MIX } from "../shared/cost.mjs";
+
+import { readFile, writeFile, rename, mkdir, rm } from 'node:fs/promises';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { dirname, join } from 'node:path';
+import {
+  TOP_N,
+  cheapestModels,
+  cheapestImageModels,
+  cheapestVideoModels,
+  renderSeoTable,
+  renderImageSeoSection,
+  renderVideoSeoSection,
+  homeFaqItems,
+  imageFaqItems,
+  videoFaqItems,
+  renderFaqSection,
+  calculatorStructuredData,
+  replaceStructuredData,
+  replaceSection,
+  renderModalityMeta,
+  renderHomepageMeta,
+  renderCounts,
+  collectProviderPages,
+  renderProviderPage,
+  renderProviderDirectoryPage,
+  renderMethodologyPage,
+  renderApiDocsPage,
+  renderExploreLinks,
+  buildSitemap,
+  buildRobots,
+} from './seo-pages.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PUBLIC = join(__dirname, "..", "public");
-const SITE = "https://tokenwatch.wyrdwerk.com";
-const TOP_N = 25;
+const PUBLIC = join(__dirname, '..', 'public');
 
-function esc(s) {
-  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-function fmtPrice(v) {
-  if (v === null || v === undefined) return "—";
-  if (v === 0) return "$0";
-  if (v < 0.01) return "$" + v.toFixed(4);
-  if (v < 1) return "$" + v.toFixed(3);
-  return "$" + v.toFixed(2);
-}
-
-/**
- * Pick the 25 cheapest models by effective $/M at the agentic mix.
- * Uses shared/cost.mjs blendedRate — the SAME null semantics as the app's
- * blendedCostFor (cache_read null → charged at the input rate). Pure.
- */
-export function cheapestModels(models, topN = TOP_N) {
-  return models
-    .filter((m) => m.pricing && (m.pricing.input > 0 || m.pricing.output > 0))
-    .map((m) => ({ m, eff: blendedRate(m.pricing, AGENTIC_MIX) }))
-    .filter((x) => x.eff != null && x.eff > 0)
-    .sort((a, b) => a.eff - b.eff)
-    .slice(0, topN);
-}
-
-/** Render the `<section class="seo-models" id="cheapest">…</section>` block. Pure. */
-export function renderSeoTable(priced, lastmod) {
-  const rows = priced.map(({ m, eff }) => {
-    const p = m.pricing || {};
-    return "      <tr>"
-      + "        <td>" + esc(m.org || m.provider) + "</td>"
-      + "        <td>" + esc(m.provider) + "</td>"
-      + "        <td>" + esc(m.name || m.id) + "</td>"
-      + "        <td class=\"num\">" + fmtPrice(p.input) + "</td>"
-      + "        <td class=\"num\">" + fmtPrice(p.output) + "</td>"
-      + "        <td class=\"num\">" + fmtPrice(p.cache_read) + "</td>"
-      + "        <td class=\"num\">" + fmtPrice(eff) + "</td>"
-      + "      </tr>";
-  }).join("\n");
-
-  return "    <section class=\"seo-models\" id=\"cheapest\" aria-label=\"Cheapest LLM API models\">"
-    + "      <h2>Cheapest LLM API models right now</h2>"
-    + "      <p>Ranked by effective cost at a typical agentic mix (2.5% input, 97% cached input, 0.5% output). Prices are USD per million tokens. Use the calculator above to compute your exact workload cost.</p>"
-    + "      <div class=\"table-wrap\">"
-    + "        <table>"
-    + "          <caption>Cheapest LLM API models by effective per-million-token cost</caption>"
-    + "          <thead><tr><th scope=\"col\">Org</th><th scope=\"col\">Provider</th><th scope=\"col\">Model</th><th scope=\"col\" class=\"num\">Input $/M</th><th scope=\"col\" class=\"num\">Output $/M</th><th scope=\"col\" class=\"num\">Cache $/M</th><th scope=\"col\" class=\"num\">Effective $/M</th></tr></thead>"
-    + "          <tbody>"
-    + rows
-    + "          </tbody>"
-    + "        </table>"
-    + "      </div>"
-    + "      <p class=\"seo-note\">Pricing refreshed " + esc(lastmod) + " from public provider APIs. Always verify on the provider official pricing page.</p>"
-    + "    </section>";
-}
-
-/**
- * Substitute live counts into the {{modelCount}} / {{providerCount}} placeholders
- * (head title/description, og/twitter, JSON-LD WebSite + FAQPage, subtitle, FAQ).
- * Global replace — the JSON-LD block and FAQ carry the counts in multiple spots.
- * Throws if any placeholder survives (a hand-edit changing the token text would
- * otherwise ship unreplaced markup silently). Pure.
- */
-export function renderCounts(markup, modelCount, providerCount) {
-  const out = markup
-    .replaceAll("{{modelCount}}", String(modelCount))
-    .replaceAll("{{providerCount}}", String(providerCount));
-  if (out.includes("{{")) {
-    throw new Error(`generate-seo: unreplaced count placeholder remains in index.html (model=${modelCount}, provider=${providerCount})`);
+async function readJson(path, label) {
+  let parsed;
+  try {
+    parsed = JSON.parse(await readFile(path, 'utf8'));
+  } catch (error) {
+    throw new Error(`generate-seo: cannot read ${label}: ${error.message}`);
   }
+  if (!Array.isArray(parsed.models) || !parsed.generated_at) {
+    throw new Error(`generate-seo: ${label} must contain generated_at and models[]`);
+  }
+  return parsed;
+}
+
+async function writeAtomic(path, content) {
+  await mkdir(dirname(path), { recursive: true });
+  const temp = `${path}.${process.pid}.tmp`;
+  await writeFile(temp, content);
+  await rename(temp, path);
+}
+
+function dateOnly(value, label) {
+  const date = String(value).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(`generate-seo: invalid ${label} generated_at: ${value}`);
+  return date;
+}
+
+function newestDate(dates) {
+  return [...dates].sort().at(-1);
+}
+
+function providerLastmod(provider, dates) {
+  const represented = [];
+  if (provider.text.length) represented.push(dates.text);
+  if (provider.image.length) represented.push(dates.image);
+  if (provider.video.length) represented.push(dates.video);
+  return newestDate(represented);
+}
+
+async function stageProviderPages(providers, dates) {
+  const target = join(PUBLIC, 'providers');
+  const stage = join(PUBLIC, `.providers-${process.pid}.tmp`);
+  await rm(stage, { recursive: true, force: true });
+  await mkdir(stage, { recursive: true });
+  await writeFile(join(stage, 'index.html'), renderProviderDirectoryPage(providers));
+  for (const provider of providers) {
+    const dir = join(stage, provider.slug);
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, 'index.html'), renderProviderPage(provider, dates));
+  }
+
+  const backup = join(PUBLIC, `.providers-${process.pid}.bak`);
+  await rm(backup, { recursive: true, force: true });
+  let movedOld = false;
+  try {
+    await rename(target, backup);
+    movedOld = true;
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  try {
+    await rename(stage, target);
+  } catch (error) {
+    if (movedOld) await rename(backup, target);
+    throw error;
+  }
+  if (movedOld) await rm(backup, { recursive: true, force: true });
+}
+
+function renderHomepage(markup, pricing, rows, dates) {
+  const modelCount = pricing.models.length;
+  const providerCount = new Set(pricing.models.map((model) => model.provider)).size;
+  const faq = homeFaqItems(modelCount, providerCount);
+  let out = renderCounts(markup, modelCount, providerCount);
+  out = renderHomepageMeta(out, modelCount, providerCount);
+  out = replaceSection(out, 'seo-models', renderSeoTable(rows, dates.text));
+  out = replaceSection(out, 'seo-faq', renderFaqSection('Frequently asked LLM API pricing questions', faq));
+  out = replaceSection(out, 'seo-links', renderExploreLinks());
+  out = replaceStructuredData(out, calculatorStructuredData({
+    page: 'text',
+    title: `LLM API Pricing Comparison — ${modelCount} Models Across ${providerCount} Providers`,
+    description: `Compare pay-as-you-go LLM API pricing across ${providerCount} providers and ${modelCount} models using workload-specific token costs.`,
+    faq,
+    rows,
+  }));
   return out;
 }
 
-/** Sitemap for the three static pages, lastmod from pricing.generated_at. Pure. */
-export function buildSitemap(lastmod) {
-  return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-    + "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"
-    + "  <url><loc>" + SITE + "/</loc><lastmod>" + lastmod + "</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>"
-    + "  <url><loc>" + SITE + "/image</loc><lastmod>" + lastmod + "</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>"
-    + "  <url><loc>" + SITE + "/video</loc><lastmod>" + lastmod + "</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>"
-    + "</urlset>";
+function renderImagePage(markup, imagePricing, dates) {
+  const groups = Object.fromEntries(['image', 'megapixel', 'token'].map((unit) => [unit, cheapestImageModels(imagePricing.models, unit, 15)]));
+  const faq = imageFaqItems();
+  const itemRows = [...groups.image, ...groups.megapixel, ...groups.token];
+  let out = renderModalityMeta(markup, 'image', imagePricing.models.length);
+  out = replaceSection(out, 'seo-models', renderImageSeoSection(groups, dates.image));
+  out = replaceSection(out, 'seo-faq', renderFaqSection('Image generation API pricing questions', faq));
+  out = replaceSection(out, 'seo-links', renderExploreLinks());
+  out = replaceStructuredData(out, calculatorStructuredData({
+    page: 'image',
+    title: `Image Generation API Pricing — ${imagePricing.models.length} Models`,
+    description: 'Compare image API prices while keeping flat-image, megapixel, and image-token billing units separate.',
+    faq,
+    rows: itemRows,
+  }));
+  return out;
 }
 
-/** robots.txt — allow crawl, disallow the API, point at the sitemap. Pure. */
-export function buildRobots() {
-  return "User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: " + SITE + "/sitemap.xml\n";
+function renderVideoPage(markup, videoPricing, rows, dates) {
+  const faq = videoFaqItems();
+  let out = renderModalityMeta(markup, 'video', videoPricing.models.length);
+  out = replaceSection(out, 'seo-models', renderVideoSeoSection(rows, dates.video));
+  out = replaceSection(out, 'seo-faq', renderFaqSection('Video generation API pricing questions', faq));
+  out = replaceSection(out, 'seo-links', renderExploreLinks());
+  out = replaceStructuredData(out, calculatorStructuredData({
+    page: 'video',
+    title: `Video Generation API Pricing — ${videoPricing.models.length} Models`,
+    description: 'Compare video API prices by per-second rate, resolution, audio mode, and total duration.',
+    faq,
+    rows,
+  }));
+  return out;
 }
 
-/** Atomic write (tmp + rename) so a runner death can never leave a truncated file. */
-async function writeAtomic(filePath, content) {
-  const tmp = `${filePath}.tmp`;
-  await writeFile(tmp, content);
-  await rename(tmp, filePath);
-}
+export async function main() {
+  const [pricing, imagePricing, videoPricing, indexMarkup, imageMarkup, videoMarkup] = await Promise.all([
+    readJson(join(PUBLIC, 'pricing.json'), 'pricing.json'),
+    readJson(join(PUBLIC, 'image-pricing.json'), 'image-pricing.json'),
+    readJson(join(PUBLIC, 'video-pricing.json'), 'video-pricing.json'),
+    readFile(join(PUBLIC, 'index.html'), 'utf8'),
+    readFile(join(PUBLIC, 'image.html'), 'utf8'),
+    readFile(join(PUBLIC, 'video.html'), 'utf8'),
+  ]);
 
-async function main() {
-  let pricing;
-  try {
-    pricing = JSON.parse(await readFile(join(PUBLIC, "pricing.json"), "utf8"));
-  } catch (err) {
-    console.error("generate-seo: pricing.json not found — run fetch-pricing.mjs first.");
-    process.exit(1);
+  const dates = {
+    text: dateOnly(pricing.generated_at, 'pricing.json'),
+    image: dateOnly(imagePricing.generated_at, 'image-pricing.json'),
+    video: dateOnly(videoPricing.generated_at, 'video-pricing.json'),
+  };
+  const textRows = cheapestModels(pricing.models, TOP_N);
+  const videoRows = cheapestVideoModels(videoPricing.models, TOP_N);
+  const providerPages = collectProviderPages({ pricing, imagePricing, videoPricing });
+  if (!providerPages.length) throw new Error('generate-seo: provider eligibility produced zero pages');
+
+  const rendered = {
+    index: renderHomepage(indexMarkup, pricing, textRows, dates),
+    image: renderImagePage(imageMarkup, imagePricing, dates),
+    video: renderVideoPage(videoMarkup, videoPricing, videoRows, dates),
+  };
+  if (!rendered.index.includes('class="seo-models"') || !rendered.image.includes('class="seo-models"') || !rendered.video.includes('class="seo-models"')) {
+    throw new Error('generate-seo: a calculator page is missing crawlable pricing content');
   }
-  const models = pricing.models || [];
-  const generatedAt = pricing.generated_at || new Date().toISOString();
-  const lastmod = generatedAt.slice(0, 10);
 
-  const priced = cheapestModels(models);
+  const modelCount = pricing.models.length;
+  const providerCount = new Set(pricing.models.map((model) => model.provider)).size;
+  const methodology = renderMethodologyPage({ modelCount, providerCount, generatedAt: pricing.generated_at });
+  const apiDocs = renderApiDocsPage();
+  const sitemapEntries = [
+    { path: '/', lastmod: dates.text, changefreq: 'daily', priority: '1.0' },
+    { path: '/image', lastmod: dates.image, changefreq: 'daily', priority: '0.8' },
+    { path: '/video', lastmod: dates.video, changefreq: 'daily', priority: '0.8' },
+    { path: '/providers/', lastmod: newestDate(Object.values(dates)), changefreq: 'daily', priority: '0.8' },
+    ...providerPages.map((provider) => ({ path: `/providers/${provider.slug}/`, lastmod: providerLastmod(provider, dates), changefreq: 'daily', priority: '0.7' })),
+    { path: '/docs/methodology/', lastmod: dates.text, changefreq: 'monthly', priority: '0.6' },
+    { path: '/docs/api/', changefreq: 'monthly', priority: '0.6' },
+  ];
+  const sitemap = buildSitemap(sitemapEntries);
+  const robots = buildRobots();
 
-  let indexHtml = await readFile(join(PUBLIC, "index.html"), "utf8");
-  const seoTable = renderSeoTable(priced, lastmod);
-  const seoMarker = 'class="seo-models"';
-  if (indexHtml.includes(seoMarker)) {
-    // Consume the preceding newline + indentation so the replacement is canonical:
-    // rerunning generate-seo must be byte-idempotent (no indentation creep per run).
-    indexHtml = indexHtml.replace(/(?:\r?\n)[ \t]*<section[^>]*class="seo-models"[^>]*>[\s\S]*?<\/section>/, "\n" + seoTable);
-  } else {
-    indexHtml = indexHtml.replace("</main>", seoTable + "\n  </main>");
-  }
+  await stageProviderPages(providerPages, dates);
+  await Promise.all([
+    writeAtomic(join(PUBLIC, 'index.html'), rendered.index),
+    writeAtomic(join(PUBLIC, 'image.html'), rendered.image),
+    writeAtomic(join(PUBLIC, 'video.html'), rendered.video),
+    writeAtomic(join(PUBLIC, 'docs', 'methodology', 'index.html'), methodology),
+    writeAtomic(join(PUBLIC, 'docs', 'api', 'index.html'), apiDocs),
+    writeAtomic(join(PUBLIC, 'sitemap.xml'), sitemap),
+    writeAtomic(join(PUBLIC, 'robots.txt'), robots),
+  ]);
 
-  const providerCount = new Set(models.map((m) => m.provider)).size;
-  indexHtml = renderCounts(indexHtml, models.length, providerCount);
-  await writeAtomic(join(PUBLIC, "index.html"), indexHtml);
-  console.log("generate-seo: rendered " + priced.length + " cheapest models and counts (" + models.length + " models / " + providerCount + " providers) into index.html");
-
-  await writeAtomic(join(PUBLIC, "sitemap.xml"), buildSitemap(lastmod));
-  console.log("generate-seo: wrote sitemap.xml");
-
-  await writeAtomic(join(PUBLIC, "robots.txt"), buildRobots());
-  console.log("generate-seo: wrote robots.txt");
+  console.log(`generate-seo: rendered ${textRows.length} text, ${videoRows.length} video, and modality-safe image price rows`);
+  console.log(`generate-seo: generated ${providerPages.length} provider pages plus methodology and API documentation`);
+  console.log(`generate-seo: wrote ${sitemapEntries.length} sitemap URLs and refreshed all calculator SEO sections`);
 }
 
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {
-  main().catch((err) => { console.error("generate-seo failed:", err); process.exit(1); });
+  main().catch((error) => {
+    console.error('generate-seo failed:', error);
+    process.exit(1);
+  });
 }

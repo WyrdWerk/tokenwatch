@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#F8F5F0" />
+  <script>(function(){try{var t=localStorage.getItem('tw-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',t==='dark'?'#1a1612':'#F8F5F0')}catch(e){}})();</script>
+  <title>LLM API Pricing Methodology &amp; Data Sources | TokenWatch</title>
+  <meta name="description" content="How TokenWatch sources, normalizes, deduplicates, enriches, and compares pay-as-you-go AI inference pricing." />
+  <link rel="canonical" href="https://tokenwatch.wyrdwerk.com/docs/methodology/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="TokenWatch" />
+  <meta property="og:title" content="LLM API Pricing Methodology &amp; Data Sources | TokenWatch" />
+  <meta property="og:description" content="How TokenWatch sources, normalizes, deduplicates, enriches, and compares pay-as-you-go AI inference pricing." />
+  <meta property="og:url" content="https://tokenwatch.wyrdwerk.com/docs/methodology/" />
+  <meta property="og:image" content="https://tokenwatch.wyrdwerk.com/og/og-image.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="LLM API Pricing Methodology &amp; Data Sources | TokenWatch" />
+  <meta name="twitter:description" content="How TokenWatch sources, normalizes, deduplicates, enriches, and compares pay-as-you-go AI inference pricing." />
+  <meta name="twitter:image" content="https://tokenwatch.wyrdwerk.com/og/og-image.svg" />
+  <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/space-grotesk-600.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/styles.css?v=dev" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <script id="seo-structured-data" type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","url":"https://tokenwatch.wyrdwerk.com/docs/methodology/","headline":"TokenWatch pricing methodology and data sources","description":"How TokenWatch sources, normalizes, deduplicates, enriches, and compares pay-as-you-go AI inference pricing."},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Text pricing","item":"https://tokenwatch.wyrdwerk.com/"},{"@type":"ListItem","position":2,"name":"Methodology","item":"https://tokenwatch.wyrdwerk.com/docs/methodology/"}]}]}</script>
+</head>
+<body>
+  <header><div class="header-row"><a class="brand-link site-brand" href="/">TokenWatch</a></div><h1 class="tagline">Pricing methodology and data sources</h1><p class="subtitle">How provider-specific prices become comparable TokenWatch records</p><nav class="tab-nav" aria-label="TokenWatch sections"><a class="tab-link" href="/">Text</a><a class="tab-link" href="/image">Image</a><a class="tab-link" href="/video">Video</a><a class="tab-link" href="/providers/">Providers</a><a class="tab-link" href="/docs/methodology/">Methodology</a><a class="tab-link" href="/docs/api/">API</a></nav></header>
+  <main class="seo-page-main">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Text pricing</a><span aria-hidden="true">/</span><a href="/docs/methodology/">Methodology</a></nav>
+    <article class="seo-prose">
+      <h2>How TokenWatch builds a comparable catalog</h2>
+      <p>The current text catalog contains 1182 provider-specific offerings across 82 inference providers. Its source timestamp is <time datetime="2026-08-11T19:50:14.121Z">2026-08-11T19:50:14.121Z</time>.</p>
+      <h2>Source order</h2>
+      <p>Direct provider APIs are the first source because a provider is authoritative for its own prices. OpenRouter endpoint data comes next and is split into provider-specific rows. CSV and maintained fallback records fill gaps after live sources.</p>
+      <h2>Price normalization</h2>
+      <p>Text prices are stored as US dollars per million tokens. Sources quoted per token are multiplied by one million; Wafer cents-per-million values are divided by 100. Image prices keep their native flat-image, megapixel, or image-token units. Video prices are normalized to dollars per second.</p>
+      <h2>Model identity and provider precedence</h2>
+      <p>The deduplication key combines a canonical model ID with a normalized provider. Provider prefixes, dated aliases, and selected routing suffixes can normalize to one identity. Quantization suffixes remain part of the key, so FP8, NVFP4, and INT4 rows stay separate.</p>
+      <h2>Cost calculations</h2>
+      <p>Blended $/M applies the selected input, cached-input, and output percentages. If a provider does not publish a cache-read price, cached input falls back to the normal input rate. Cache-write charges stay separate because they are one-time costs amortized across reuse.</p>
+      <h2>Privacy and policy data</h2>
+      <p>ZDR tags come from endpoint-level OpenRouter data or reviewed provider metadata. Missing metadata does not become a positive or negative privacy claim. Provider pages link to reviewed policies when TokenWatch has them.</p>
+      <h2>Benchmarks and performance</h2>
+      <p>Quality indices and design-arena scores are sidecar enrichment, not prices. Variant matching is conservative to reduce false attribution. Throughput is displayed separately because speed, quality, context limits, and cost answer different questions.</p>
+      <h2>Known limits</h2>
+      <p>Provider catalogs can change between refreshes. Promotions may expire, regional prices may differ, and unpublished cache prices are unknown rather than zero. Treat TokenWatch as a comparison and estimation tool, then confirm a shortlisted provider's current terms.</p>
+    </article>
+  </main>
+  <footer><p>Pricing changes. Verify rates and policy details with the provider before committing spend.</p><p class="footer-links"><a href="/providers/">Providers</a> · <a href="/docs/methodology/">Methodology</a> · <a href="/docs/api/">API docs</a> · <a href="https://github.com/WyrdWerk/tokenwatch">Source</a></p></footer>
+</body>
+</html>

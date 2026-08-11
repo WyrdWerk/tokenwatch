@@ -104,6 +104,40 @@ export function parseMerius(data) {
     });
 }
 
+const ASTER_ORG_BY_ID = new Map([
+  ['gpt-oss-120b', 'openai'],
+  ['gpt-oss-120b-fast', 'openai'],
+  ['glm-5.2', 'z-ai'],
+  ['kimi-k3', 'moonshot'],
+]);
+
+/** Aster Labs https://api.asterlab.ai/v1/models → text model records (prices already $/M). */
+export function parseAster(data) {
+  const models = Array.isArray(data?.data) ? data.data : [];
+  return models.flatMap((m) => {
+    if (!m || typeof m.id !== 'string' || !m.id || m.pricing?.per_search_usd != null) return [];
+    const p = m.pricing || {};
+    const input = passthrough(p.input_per_million_tokens_usd ?? p.input);
+    const output = passthrough(p.output_per_million_tokens_usd ?? p.output);
+    if (input === null && output === null) return [];
+    return [{
+      id: m.id,
+      name: m.display_name || m.id,
+      org: ASTER_ORG_BY_ID.get(m.id) || orgFromId(m.id) || null,
+      provider: 'aster',
+      quantization: null,
+      discount: 0,
+      context_length: m.context_length ?? null,
+      pricing: {
+        input,
+        output,
+        cache_read: passthrough(p.cached_input_per_million_tokens_usd),
+        cache_write: null,
+      },
+    }];
+  });
+}
+
 /** Filter out non-text models by ID pattern. */
 export const NON_TEXT_ID = /(?:^|[-/])(embed|embedding|embeddinggemma|clip|bge|tts|bark|parler|kokoro|openvoice)(?:[-/]|$)/i;
 export function isTextModel(id) {
@@ -212,6 +246,8 @@ export const PROVIDER_NAME_MAP = {
   'sakana ai': 'sakana',
   'arcee ai': 'arcee',
   'neuralwatt': 'neuralwatt',
+  'aster': 'aster',
+  'aster labs': 'aster',
   'inception': 'inception',
   'infermatic': 'infermatic',
   'mara': 'mara',
@@ -231,7 +267,7 @@ export const PROVIDER_NAME_MAP = {
   'sourceful': 'sourceful',
   'x-ai': 'xai',
   'microsoft': 'microsoft',
-    'umans': 'umans',
+  'umans': 'umans',
   'umans ai': 'umans',
 };
 

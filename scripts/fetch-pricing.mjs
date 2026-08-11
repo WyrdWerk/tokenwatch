@@ -6,7 +6,8 @@
  * inference provider), normalizes to $/M tokens, and writes public/pricing.json.
  *
  * Tier 1 — Direct providers: DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac,
- *          SambaNova, HyperCharm, Sference (authoritative source for their own offerings)
+ *          SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs
+ *          (authoritative source for their own offerings)
  * Tier 2 — OpenRouter /endpoints: de-aggregated per-backend pricing
  *          (each backend like Fireworks, Together, Novita becomes its own row)
  * Tier 3 — CSV-sourced: Makora, Xiaomimimo (manual-pricing.csv)
@@ -33,7 +34,7 @@
 
 import { readFile } from 'node:fs/promises';
 import {
-  perTokToPerM, centsToDollars, passthrough, parseSference, parseNeuralwatt, parseMerius,
+  perTokToPerM, centsToDollars, passthrough, parseSference, parseNeuralwatt, parseMerius, parseAster,
   NON_TEXT_ID, isTextModel,
   ORG_ALIASES, PROVIDER_NAME_MAP,
   orgFromId, orgFromName,
@@ -119,6 +120,12 @@ const DIRECT_PROVIDERS = [
     name: 'Merius',
     url: 'https://api.merius.ai/v1/models',
     parse: parseMerius,
+  },
+  {
+    key: 'aster',
+    name: 'Aster Labs',
+    url: 'https://api.asterlab.ai/v1/models',
+    parse: parseAster,
   },
   ];
 
@@ -254,6 +261,18 @@ const MANUAL_PROVIDER_META = {
     retains_prompts: false,  // ZDR: "Processed transiently to deliver inference results but not permanently stored. Conversation context may be held in volatile memory for up to 24 hours... automatically purged"
     may_train: false,         // "We do not use your API inputs or outputs to train, fine-tune, or improve any machine learning models"
     retention_days: 1,        // 24h volatile purge; anonymized semantic representations retained for cache (non-reconstructive per policy)
+  },
+  aster: {
+    privacy_policy_url: 'https://www.asterlab.ai/privacy',
+    terms_of_service_url: 'https://www.asterlab.ai/terms',
+    status_page_url: null,        // Unknown — no public status page found
+    headquarters: 'US',
+    datacenters: null,            // Unknown — not disclosed
+    // The three fields below are scoped to the INFERENCE API FAQ (https://www.asterlab.ai/inference),
+    // NOT Aster's broader agent privacy policy, which governs the agent product and is not equivalent.
+    retains_prompts: false,  // Inference FAQ: zero data retention by default — prompts/outputs run in memory and are never stored
+    may_train: null,         // Terms/privacy make no explicit no-training promise for the inference API; cannot claim false
+    retention_days: 0,       // Inference FAQ: ZDR by default — token counts are the only thing retained (for billing)
   },
 };
 
@@ -609,10 +628,10 @@ async function fetchProviderMeta() {
       const slug = p.slug || normalizeProvider(p.displayName || p.name);
       if (!meta[slug]) meta[slug] = { source: 'frontend' };
       const dp = p.dataPolicy || {};
-      // Only set data policy fields from frontend (don't clobber manual URLs)
-      if (dp.retainsPrompts !== undefined) meta[slug].retains_prompts = dp.retainsPrompts;
-      if (dp.training !== undefined) meta[slug].may_train = dp.training;
-      if (dp.retentionDays !== undefined) meta[slug].retention_days = dp.retentionDays;
+      // Only set when absent — null/false/0 are intentional manual values (e.g. may_train:null) and must survive
+      if (dp.retainsPrompts !== undefined && !('retains_prompts' in meta[slug])) meta[slug].retains_prompts = dp.retainsPrompts;
+      if (dp.training !== undefined && !('may_train' in meta[slug])) meta[slug].may_train = dp.training;
+      if (dp.retentionDays !== undefined && !('retention_days' in meta[slug])) meta[slug].retention_days = dp.retentionDays;
       // Fill HQ/datacenters if not already set
       if (!meta[slug].headquarters && p.headquarters) meta[slug].headquarters = p.headquarters;
       if (!meta[slug].datacenters && p.datacenters) meta[slug].datacenters = p.datacenters;

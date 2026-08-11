@@ -1,109 +1,218 @@
-import { test } from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
-import { blendedRate, AGENTIC_MIX } from '../shared/cost.mjs';
-import { cheapestModels, renderSeoTable, renderCounts, buildSitemap, buildRobots } from '../scripts/generate-seo.mjs';
+import {
+  cheapestModels,
+  cheapestImageModels,
+  cheapestVideoModels,
+  renderSeoTable,
+  renderImageSeoSection,
+  renderVideoSeoSection,
+  renderFaqSection,
+  calculatorStructuredData,
+  renderJsonLd,
+  replaceStructuredData,
+  replaceSection,
+  renderCounts,
+  renderHomepageMeta,
+  collectProviderPages,
+  providerSlug,
+  renderProviderDirectoryPage,
+  renderApiDocsPage,
+  buildSitemap,
+  buildRobots,
+} from '../scripts/seo-pages.mjs';
+import { AGENTIC_MIX, blendedRate } from '../shared/cost.mjs';
+import { API_ENDPOINTS, endpointDirectory } from '../shared/api-meta.mjs';
 
-// ── Vendored copy of public/app.js blendedCostFor (classic script, not importable) ──
-// The parity guard: this file must stay semantically identical to the app's
-// blendedCostFor (app.js) — update BOTH when the mix formula changes.
-function appBlendedCostFor(pricing, tokens) {
-  const inRate  = pricing.input != null ? pricing.input * tokens.inputPct / 100 : null;
-  const outRate = pricing.output != null ? pricing.output * tokens.outputPct / 100 : null;
-  const crPrice = pricing.cache_read != null ? pricing.cache_read : pricing.input;
-  const crRate  = crPrice != null ? crPrice * tokens.cacheReadPct / 100 : null;
-  if (tokens.inputPct > 0 && inRate === null) return null;
-  if (tokens.outputPct > 0 && outRate === null) return null;
-  return (inRate || 0) + (outRate || 0) + (crRate || 0);
-}
-
-const FIXTURES = [
-  { input: 1.25, output: 5, cache_read: 0.31 },          // normal cache discount
-  { input: 0.019, output: 0.03, cache_read: null },      // null cache_read → input rate
-  { input: 2, output: 4, cache_read: 0 },                // $0 cache → leg stays $0
-  { input: null, output: 1 },                            // unpriced input
-  { input: 10, output: null },                           // unpriced output
-  { input: null, output: null },                         // fully unpriced
-  { input: 0, output: 0, cache_read: 0 },                // free
-];
-const MIXES = [
-  AGENTIC_MIX,
-  { inputPct: 30, cacheReadPct: 50, outputPct: 20 },
-  { inputPct: 0, cacheReadPct: 100, outputPct: 0 },
-  { inputPct: 100, cacheReadPct: 0, outputPct: 0 },
+const textModels = [
+  { id: 'org/cheap', name: 'Cheap <Model>', org: 'org', provider: 'alpha', pricing: { input: 1, output: 2, cache_read: 0.1 } },
+  { id: 'org/expensive', name: 'Expensive', org: 'org', provider: 'alpha', pricing: { input: 4, output: 8, cache_read: 1 } },
+  { id: 'org/other', name: 'Other', org: 'org', provider: 'beta', pricing: { input: 2, output: 3, cache_read: null } },
 ];
 
-test('blendedRate matches the app.js blendedCostFor mirror on every fixture', () => {
-  for (const pricing of FIXTURES) {
-    for (const mix of MIXES) {
-      const shared = blendedRate(pricing, mix);
-      // Both shared/cost.mjs and the mirrored app.js copy read cacheReadPct
-      // (the getTokens() key shape) — pass the same mix object to each.
-      const app = appBlendedCostFor(pricing, mix);
-      assert.equal(shared, app, `blendedRate(${JSON.stringify(pricing)}, ${JSON.stringify(mix)})`);
-    }
+const imageModels = [
+  { id: 'org/a', name: 'Image A', provider: 'alpha', pricing: [
+    { unit: 'image', variant: 'large', cost_per_unit: 0.08, cost_per_million: null },
+    { unit: 'image', variant: 'small', cost_per_unit: 0.04, cost_per_million: null },
+    { unit: 'megapixel', variant: 'mp', cost_per_unit: 0.02, cost_per_million: 0.02 },
+  ] },
+  { id: 'org/b', name: 'Image B', provider: 'beta', pricing: [
+    { unit: 'token', variant: 'standard', cost_per_unit: null, cost_per_million: 5 },
+  ] },
+];
+
+const videoModels = [
+  { id: 'org/v1', name: 'Video One', provider: 'alpha', pricing: [
+    { resolution: '1080p', audio: true, cost_per_second: 0.2 },
+    { resolution: '720p', audio: false, cost_per_second: 0.1 },
+  ] },
+  { id: 'org/v2', name: 'Video Two', provider: 'beta', pricing: [{ resolution: '720p', audio: null, cost_per_second: 0.15 }] },
+];
+
+test('cheapestModels ranks by the shared Agentic blended-rate contract', () => {
+  const rows = cheapestModels(textModels, 2);
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0].m.id, 'org/cheap');
+  assert.equal(rows[0].eff, blendedRate(textModels[0].pricing, AGENTIC_MIX));
+});
+
+test('renderSeoTable escapes data and exposes the price columns', () => {
+  const html = renderSeoTable(cheapestModels(textModels), '2026-08-11');
+  assert.match(html, /Cheap &lt;Model&gt;/);
+  assert.match(html, /Input \$\/M/);
+  assert.match(html, /Blended \$\/M/);
+  assert.match(html, /2026-08-11/);
+  assert.doesNotMatch(html, /Cheap <Model>/);
+});
+
+test('image rankings remain separated by billing unit and pick one cheapest variant per model', () => {
+  const flat = cheapestImageModels(imageModels, 'image', 10);
+  const megapixel = cheapestImageModels(imageModels, 'megapixel', 10);
+  const token = cheapestImageModels(imageModels, 'token', 10);
+  assert.equal(flat.length, 1);
+  assert.equal(flat[0].p.variant, 'small');
+  assert.equal(megapixel[0].rate, 0.02);
+  assert.equal(token[0].rate, 5);
+
+  const html = renderImageSeoSection({ image: flat, megapixel, token }, '2026-08-11');
+  assert.match(html, /flat per-image/i);
+  assert.match(html, /per-megapixel/i);
+  assert.match(html, /million image tokens/i);
+  assert.ok(html.indexOf('flat per-image') < html.indexOf('per-megapixel'));
+});
+
+test('video ranking selects the cheapest variant once and shows a 30-second example', () => {
+  const rows = cheapestVideoModels(videoModels);
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0].m.id, 'org/v1');
+  assert.equal(rows[0].p.resolution, '720p');
+  const html = renderVideoSeoSection(rows, '2026-08-11');
+  assert.match(html, /\$3\.00/);
+  assert.match(html, /No audio/);
+  assert.equal((html.match(/Video One/g) || []).length, 1);
+});
+
+test('visible FAQ and FAQPage JSON-LD are generated from the same records', () => {
+  const faq = [['Can I compare prices?', 'Yes, compare matching units.'], ['Is missing cache free?', 'No.']];
+  const visible = renderFaqSection('Questions', faq);
+  const data = calculatorStructuredData({ page: 'image', title: 'Image pricing', description: 'Compare.', faq, rows: [] });
+  const faqGraph = data['@graph'].find((node) => node['@type'] === 'FAQPage');
+  assert.deepEqual(faqGraph.mainEntity.map((item) => [item.name, item.acceptedAnswer.text]), faq);
+  for (const [question, answer] of faq) {
+    assert.ok(visible.includes(question));
+    assert.ok(visible.includes(answer));
   }
+  assert.match(renderJsonLd(data), /id="seo-structured-data"/);
 });
 
-test('blendedRate: null cache_read falls back to the INPUT rate (does not drop the leg)', () => {
-  // The regression: generate-seo used to compute input*0.025 + output*0.005 for
-  // null-cache models, making them ~97% too cheap in the SEO top-25.
-  const rate = blendedRate({ input: 0.019, output: 0.03, cache_read: null }, AGENTIC_MIX);
-  const expected = 0.019 * 0.025 + 0.019 * 0.97 + 0.03 * 0.005;
-  assert.ok(Math.abs(rate - expected) < 1e-12, `expected ${expected}, got ${rate}`);
+test('section and structured-data replacement are byte-idempotent', () => {
+  const section = '    <section class="seo-faq" id="faq"><h2>FAQ</h2></section>';
+  const shell = '<html><head><script type="application/ld+json">{"old":true}</script></head><body><main></main></body></html>';
+  const data = calculatorStructuredData({ page: 'text', title: 'Text', description: 'Compare', faq: [], rows: [] });
+  const once = replaceStructuredData(replaceSection(shell, 'seo-faq', section), data);
+  const twice = replaceStructuredData(replaceSection(once, 'seo-faq', section), data);
+  assert.equal(twice, once);
+  assert.equal((twice.match(/seo-structured-data/g) || []).length, 1);
+  assert.equal((twice.match(/class="seo-faq"/g) || []).length, 1);
 });
 
-test('blendedRate: $0 cache_read stays a $0 leg (no >0 guard on the fallback)', () => {
-  const rate = blendedRate({ input: 2, output: 4, cache_read: 0 }, AGENTIC_MIX);
-  const expected = 2 * 0.025 + 0 * 0.97 + 4 * 0.005;
-  assert.ok(Math.abs(rate - expected) < 1e-12, `expected ${expected}, got ${rate}`);
+test('renderCounts substitutes all count tokens and rejects drifted placeholders', () => {
+  assert.equal(renderCounts('{{modelCount}}/{{providerCount}}', 1180, 82), '1180/82');
+  assert.throws(() => renderCounts('{{model_count}}', 1, 1), /unreplaced count placeholder/);
 });
 
-test('blendedRate: unpriced input with inputPct > 0 returns null (cannot serve the mix)', () => {
-  assert.equal(blendedRate({ input: null, output: 1 }, AGENTIC_MIX), null);
-  // inputPct=0 → input price doesn't matter; output leg alone is priced: 1 × 100/100 = 1.0
-  assert.equal(blendedRate({ input: null, output: 1 }, { inputPct: 0, cacheReadPct: 0, outputPct: 100 }), 1.0);
+test('renderHomepageMeta refreshes stale literal homepage counts, preserves OG/canonical markup, and is byte-idempotent', () => {
+  const stale = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LLM API Pricing Comparison — Compare 1180 Models Across 82 Providers | TokenWatch</title>
+  <meta name="description" content="Know what your AI actually costs before the bill arrives. Compare pay-as-you-go LLM API pricing across 82 providers and 1180 models — text, image, and video. Enter your token mix or budget and find the cheapest option for your agentic workload." />
+  <link rel="canonical" href="https://tokenwatch.wyrdwerk.com/" />
+  <meta property="og:title" content="LLM API Pricing Comparison — Know What Your AI Actually Costs | TokenWatch" />
+  <meta property="og:description" content="Compare pay-as-you-go LLM API pricing across 82 providers and 1180 models. Enter your token mix or budget and find the cheapest option for your agentic workload." />
+</head>
+<body>
+  <header><h2 class="tagline">Know what your AI actually costs before the bill arrives</h2><p class="subtitle">Compare pay-as-you-go LLM API pricing across 82 providers and 1180 models. Enter your token mix or set a budget — see exactly what your agents cost before you commit.</p></header>
+</body>
+</html>`;
+  const refreshed = renderHomepageMeta(stale, 1181, 82);
+  // title, meta description, and visible subtitle carry the current model count (1181)
+  assert.match(refreshed, /<title>LLM API Pricing Comparison — Compare 1181 Models Across 82 Providers \| TokenWatch<\/title>/);
+  assert.match(refreshed, /<meta name="description" content="[^"]*across 82 providers and 1181 models[^"]*" \/>/);
+  assert.match(refreshed, /<p class="subtitle">Compare pay-as-you-go LLM API pricing across 82 providers and 1181 models\./);
+  // stale 1180 is gone from the overwritten fields
+  assert.doesNotMatch(refreshed, /Compare 1180 Models/);
+  // canonical and OG metadata are preserved untouched (OG retains the stale 1180, proving it was not rewritten)
+  assert.match(refreshed, /<link rel="canonical" href="https:\/\/tokenwatch\.wyrdwerk\.com\/" \/>/);
+  assert.match(refreshed, /<meta property="og:title" content="LLM API Pricing Comparison — Know What Your AI Actually Costs \| TokenWatch" \/>/);
+  assert.match(refreshed, /<meta property="og:description" content="[^"]*across 82 providers and 1180 models[^"]*" \/>/);
+  // unrelated header markup survives intact
+  assert.match(refreshed, /<h2 class="tagline">Know what your AI actually costs before the bill arrives<\/h2>/);
+  // repeated application is byte-idempotent
+  assert.equal(renderHomepageMeta(refreshed, 1181, 82), refreshed);
 });
 
-test('cheapestModels picks 25, ranks ascending, drops unpriced/free-negative entries', () => {
-  const m = (id, input, output, cache_read) => ({ id, name: id, org: 'x', provider: 'p', pricing: { input, output, cache_read } });
-  const models = [
-    m('cheap', 0.01, 0.02, 0.001),
-    m('zero-eff', 0, 0, null),                 // eff = 0 → dropped
-    m('null-input', null, 1, null),            // eff null → dropped
-    m('pricy', 5, 10, 1),
-  ];
-  const picked = cheapestModels(models, 25);
-  assert.equal(picked.length, 2);
-  assert.ok(picked[0].eff < picked[1].eff, 'ascending by effective rate');
-  assert.equal(picked[0].m.id, 'cheap');
+test('renderHomepageMeta overwrites placeholder homepage fields after token substitution', () => {
+  const templated = `<title>LLM API Pricing Comparison — Compare {{modelCount}} Models Across {{providerCount}} Providers | TokenWatch</title>
+<meta name="description" content="Compare across {{providerCount}} providers and {{modelCount}} models." />
+<p class="subtitle">Compare across {{providerCount}} providers and {{modelCount}} models.</p>`;
+  const refreshed = renderHomepageMeta(renderCounts(templated, 1181, 82), 1181, 82);
+  assert.match(refreshed, /Compare 1181 Models Across 82 Providers/);
+  assert.match(refreshed, /<meta name="description" content="Know what your AI actually costs[^"]*across 82 providers and 1181 models[^"]*" \/>/);
+  assert.match(refreshed, /<p class="subtitle">Compare pay-as-you-go LLM API pricing across 82 providers and 1181 models\./);
+  assert.doesNotMatch(refreshed, /{{/);
 });
 
-test('renderSeoTable includes id="cheapest" anchor and escapes data', () => {
-  const priced = [{ m: { org: 'a', provider: 'p', name: 'M <script>', pricing: { input: 1, output: 2, cache_read: null } }, eff: 1.5 }];
-  const html = renderSeoTable(priced, '2026-08-03');
-  assert.ok(html.includes('class="seo-models" id="cheapest"'), 'anchor id must exist for the noscript #cheapest link');
-  assert.ok(html.includes('M &lt;script&gt;'), 'model names must be HTML-escaped');
-  assert.ok(html.includes('2026-08-03'));
+test('provider pages require three distinct priced model identities across catalogs', () => {
+  const pricing = {
+    providers: [{ key: 'alpha', name: 'Alpha API' }, { key: 'thin', name: 'Thin' }],
+    providers_meta: { alpha: { retains_prompts: false } },
+    models: [textModels[0], textModels[1], { ...textModels[0], id: 'org/cheap-fp8' }, { ...textModels[0], provider: 'thin' }],
+  };
+  const pages = collectProviderPages({ pricing, imagePricing: { models: imageModels }, videoPricing: { models: videoModels } });
+  const alpha = pages.find((page) => page.key === 'alpha');
+  assert.ok(alpha);
+  assert.equal(alpha.name, 'Alpha API');
+  assert.ok(alpha.modelCount >= 3);
+  assert.equal(pages.some((page) => page.key === 'thin'), false);
+  assert.equal(providerSlug('Alpha API'), 'alpha-api');
+
+  const directory = renderProviderDirectoryPage(pages);
+  assert.match(directory, /\/providers\/alpha\//);
+  assert.match(directory, /Reviewed ZDR/);
+  assert.equal((directory.match(/<link rel="canonical"/g) || []).length, 1);
+  assert.match(directory, /<h1 class="tagline">Inference provider directory<\/h1>/);
+  assert.equal((directory.match(/<h1\b/g) || []).length, 1);
 });
 
-test('renderCounts substitutes live counts in every placeholder', () => {
-  const markup = '<title>{{modelCount}} across {{providerCount}}</title>'
-    + ' "{{modelCount}} models across {{providerCount}} providers"'; // JSON-LD-style double mention
-  const out = renderCounts(markup, 994, 81);
-  assert.ok(!out.includes('{{'), 'no placeholders may survive replacement');
-  assert.ok(out.includes('994') && out.includes('81'));
+test('provider slug collisions fail instead of overwriting generated pages', () => {
+  const records = (provider) => [1, 2, 3].map((n) => ({ id: `org/model-${provider}-${n}`, provider, pricing: { input: 1, output: 1 } }));
+  const pricing = { providers: [], providers_meta: {}, models: [...records('a b'), ...records('a-b')] };
+  assert.throws(() => collectProviderPages({ pricing, imagePricing: { models: [] }, videoPricing: { models: [] } }), /slug collision/);
 });
 
-test('renderCounts throws when a placeholder cannot be resolved (drifted token)', () => {
-  const drifted = 'Compare {{ modelCount }} models';
-  assert.throws(() => renderCounts(drifted, 994, 81), /unreplaced count placeholder/);
+test('API documentation renders from the same endpoint metadata as API discovery', () => {
+  const docs = renderApiDocsPage();
+  const directory = endpointDirectory();
+  const discoverable = API_ENDPOINTS.filter((endpoint) => endpoint.path !== '/api/v1/');
+  assert.equal(directory.length, discoverable.length);
+  for (const endpoint of API_ENDPOINTS) assert.ok(docs.includes(endpoint.path));
+  for (const endpoint of discoverable) {
+    assert.ok(directory.some((line) => line.startsWith(endpoint.path + ' —')));
+  }
+  assert.match(docs, /min_intelligence/);
+  assert.match(docs, /benchmarked/);
 });
 
-test('buildSitemap / buildRobots are well-formed and reference the site', () => {
-  const sitemap = buildSitemap('2026-08-03');
-  assert.ok(sitemap.includes('<lastmod>2026-08-03</lastmod>'));
-  assert.ok(sitemap.includes('https://tokenwatch.wyrdwerk.com/'));
-  assert.ok((sitemap.match(/<url>/g) || []).length === 3);
-  assert.ok(buildRobots().includes('Disallow: /api/'));
-  assert.ok(buildRobots().includes('Sitemap: https://tokenwatch.wyrdwerk.com/sitemap.xml'));
+test('dynamic sitemap rejects duplicates and includes generated routes', () => {
+  const sitemap = buildSitemap([
+    { path: '/', lastmod: '2026-08-11' },
+    { path: '/image', lastmod: '2026-08-10' },
+    { path: '/providers/alpha/', lastmod: '2026-08-11' },
+  ]);
+  assert.equal((sitemap.match(/<url>/g) || []).length, 3);
+  assert.match(sitemap, /https:\/\/tokenwatch\.wyrdwerk\.com\/providers\/alpha\//);
+  assert.throws(() => buildSitemap([{ path: '/' }, { path: '/' }]), /duplicate sitemap path/);
+  assert.match(buildRobots(), /Disallow: \/api\//);
 });

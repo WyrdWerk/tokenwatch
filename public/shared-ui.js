@@ -6,6 +6,9 @@
 // logic stays in each app file.
 (function () {
   'use strict';
+  // Absolute URL is required because deployed app scripts execute from /h/.
+  // Preload at startup so Web Share keeps its click activation.
+  const snapshotCodecPromise = import('/share-snapshot.mjs');
 
   const $ = (id) => document.getElementById(id);
 
@@ -151,51 +154,57 @@
     const scale = opts.scale || Math.min(2, window.devicePixelRatio || 2);
     const theme = document.documentElement.getAttribute('data-theme') || 'light';
     const pageBg = theme === 'dark' ? '#1a1612' : '#F8F5F0';
+    const rootStyle = getComputedStyle(document.documentElement);
     const textColor = getComputedStyle(el).color || (theme === 'dark' ? '#f0ebe3' : '#1a1612');
-    const dimColor = getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim()
+    const dimColor = rootStyle.getPropertyValue('--text-dim').trim()
       || (theme === 'dark' ? '#a3988a' : '#6b635a');
-    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()
-      || '#0d7377';
-    const border = getComputedStyle(document.documentElement).getPropertyValue('--border').trim()
+    const accent = rootStyle.getPropertyValue('--accent').trim() || '#0d7377';
+    const bestColor = rootStyle.getPropertyValue('--green').trim() || '#2d8a5a';
+    const bestBg = theme === 'dark' ? '#183b2b' : '#e5f4eb';
+    const border = rootStyle.getPropertyValue('--border').trim()
       || (theme === 'dark' ? '#3a342c' : '#ddd5c8');
-    const surface = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim()
+    const surface = rootStyle.getPropertyValue('--surface').trim()
       || (theme === 'dark' ? '#242018' : '#fff');
 
     const pad = 24;
+    const inset = 12;
     const brand = el.querySelector('.compare-brand-link');
     const title = el.querySelector('.compare-modal-header h2');
     const snapshot = el.querySelector('.compare-snapshot');
     const table = el.querySelector('.compare-table');
-
-    // Measure table
     const rows = table ? Array.from(table.querySelectorAll('tr')) : [];
-    const grid = rows.map((tr) => Array.from(tr.children).map((cell) => ({
-      text: (cell.textContent || '').replace(/\s+/g, ' ').trim(),
-      isHead: cell.tagName === 'TH',
-      isLabel: cell.classList.contains('compare-label'),
-      isNum: cell.classList.contains('num'),
-      isBest: cell.classList.contains('compare-cheapest'),
-    })));
-    const colCount = grid.reduce((m, r) => Math.max(m, r.length), 0) || 1;
+    const grid = rows.map((tr) => Array.from(tr.children).map((cell, ci) => {
+      const style = getComputedStyle(cell);
+      return {
+        text: (cell.textContent || '').replace(/\s+/g, ' ').trim(),
+        isHead: cell.tagName === 'TH',
+        isLabel: cell.classList.contains('compare-label'),
+        isValue: ci > 0,
+        isBest: cell.classList.contains('compare-cheapest'),
+        font: `${style.fontWeight || 400} ${style.fontSize || '12px'} ${style.fontFamily || 'system-ui'}`,
+        fontSize: parseFloat(style.fontSize) || 12,
+      };
+    }));
+    const colCount = grid.reduce((max, row) => Math.max(max, row.length), 0) || 1;
 
-    // Column widths from live table when available
     let colWidths = [];
     if (table && table.rows[0]) {
-      colWidths = Array.from(table.rows[0].cells).map((c) => Math.ceil(c.getBoundingClientRect().width));
+      colWidths = Array.from(table.rows[0].cells).map((cell) => Math.ceil(cell.getBoundingClientRect().width));
     }
-    if (colWidths.length !== colCount) {
-      colWidths = Array(colCount).fill(120);
-      colWidths[0] = 140;
+    if (colWidths.length !== colCount || colWidths.some((width) => width < 1)) {
+      colWidths = Array(colCount).fill(160);
+      colWidths[0] = 168;
     }
+    const rowHeights = rows.map((row) => Math.max(38, Math.ceil(row.getBoundingClientRect().height) || 38));
 
-    const rowH = 32;
-    const brandH = 28;
+    const brandH = 30;
     const titleGap = 8;
-    const snapH = snapshot ? 44 : 0;
-    const tableW = colWidths.reduce((a, b) => a + b, 0);
+    const snapH = snapshot ? Math.max(44, Math.ceil(snapshot.getBoundingClientRect().height) || 44) : 0;
+    const tableW = colWidths.reduce((sum, width) => sum + width, 0);
     const contentW = Math.max(tableW, 420);
     const width = contentW + pad * 2;
-    const height = pad + brandH + titleGap + (title ? 28 : 0) + (snapH ? snapH + 12 : 0) + grid.length * rowH + pad;
+    const height = pad + brandH + titleGap + (snapH ? snapH + 12 : 0)
+      + rowHeights.reduce((sum, rowHeight) => sum + rowHeight, 0) + pad;
 
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(width * scale);
@@ -203,7 +212,52 @@
     const ctx = canvas.getContext('2d');
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
-    // Background + border card
+    function wrapLines(text, maxWidth, maxLines) {
+      if (!text) return [''];
+      const words = [];
+      for (const word of text.split(/\s+/)) {
+        if (ctx.measureText(word).width <= maxWidth) {
+          words.push(word);
+          continue;
+        }
+        let part = '';
+        for (const char of word) {
+          if (part && ctx.measureText(part + char).width > maxWidth) {
+            words.push(part);
+            part = char;
+          } else {
+            part += char;
+          }
+        }
+        if (part) words.push(part);
+      }
+      const lines = [];
+      let line = '';
+      for (const word of words) {
+        const next = line ? `${line} ${word}` : word;
+        if (line && ctx.measureText(next).width > maxWidth) {
+          lines.push(line);
+          line = word;
+        } else {
+          line = next;
+        }
+      }
+      if (line) lines.push(line);
+      if (lines.length <= maxLines) return lines;
+      const kept = lines.slice(0, maxLines);
+      let last = kept[maxLines - 1];
+      while (last && ctx.measureText(last + '…').width > maxWidth) last = last.slice(0, -1);
+      kept[maxLines - 1] = `${last.trimEnd()}…`;
+      return kept;
+    }
+
+    function drawLines(lines, x, y, rowHeight, align, lineHeight) {
+      const firstY = y + (rowHeight - lines.length * lineHeight) / 2 + lineHeight / 2;
+      ctx.textAlign = align;
+      ctx.textBaseline = 'middle';
+      lines.forEach((line, index) => ctx.fillText(line, x, firstY + index * lineHeight));
+    }
+
     ctx.fillStyle = solidBg(el, pageBg);
     ctx.fillRect(0, 0, width, height);
     ctx.strokeStyle = border;
@@ -211,87 +265,69 @@
     ctx.strokeRect(0.5, 0.5, width - 1, height - 1);
 
     let y = pad;
-    // Brand
     ctx.fillStyle = accent;
-    ctx.font = 'bold 14px system-ui, -apple-system, Segoe UI, sans-serif';
+    ctx.font = '700 14px Inter, system-ui, -apple-system, Segoe UI, sans-serif';
     ctx.textBaseline = 'middle';
-    const brandText = (brand && brand.textContent.trim()) || 'WyrdWerk';
+    ctx.textAlign = 'left';
+    const brandText = (brand && brand.textContent.trim()) || 'TokenWatch';
     ctx.fillText(brandText, pad, y + brandH / 2);
-    // Title next to brand
     if (title) {
-      const bw = ctx.measureText(brandText).width;
+      const brandWidth = ctx.measureText(brandText).width;
       ctx.fillStyle = textColor;
-      ctx.font = '600 18px system-ui, -apple-system, Segoe UI, sans-serif';
-      ctx.fillText((title.textContent || 'Comparison').trim(), pad + bw + 16, y + brandH / 2);
+      ctx.font = '650 18px Inter, system-ui, -apple-system, Segoe UI, sans-serif';
+      ctx.fillText((title.textContent || 'Comparison').trim(), pad + brandWidth + 16, y + brandH / 2);
     }
     y += brandH + titleGap;
 
-    // Snapshot strip
     if (snapshot) {
       ctx.fillStyle = surface;
       ctx.fillRect(pad, y, contentW, snapH);
       ctx.strokeStyle = border;
       ctx.strokeRect(pad + 0.5, y + 0.5, contentW - 1, snapH - 1);
       ctx.fillStyle = textColor;
-      ctx.font = '12px system-ui, -apple-system, Segoe UI, sans-serif';
-      const snapText = (snapshot.textContent || '').replace(/\s+/g, ' ').trim();
-      // Simple wrap
-      const maxW = contentW - 16;
-      const words = snapText.split(' ');
-      let line = '';
-      let ly = y + 16;
-      for (const w of words) {
-        const test = line ? line + ' ' + w : w;
-        if (ctx.measureText(test).width > maxW && line) {
-          ctx.fillText(line, pad + 8, ly);
-          line = w;
-          ly += 16;
-          if (ly > y + snapH - 8) break;
-        } else line = test;
-      }
-      if (line && ly <= y + snapH - 8) ctx.fillText(line, pad + 8, ly);
+      ctx.font = '500 12px Inter, system-ui, -apple-system, Segoe UI, sans-serif';
+      const snapshotText = (snapshot.textContent || '').replace(/\s+/g, ' ').trim();
+      const lineHeight = 16;
+      const maxLines = Math.max(1, Math.floor((snapH - 16) / lineHeight));
+      drawLines(wrapLines(snapshotText, contentW - inset * 2, maxLines), pad + inset, y, snapH, 'left', lineHeight);
       y += snapH + 12;
     }
 
-    // Table
-    let x0 = pad;
-    grid.forEach((row, ri) => {
-      let x = x0;
-      const y0 = y + ri * rowH;
-      row.forEach((cell, ci) => {
-        const w = colWidths[ci] || 100;
-        // cell bg
-        if (cell.isHead) ctx.fillStyle = surface;
-        else if (cell.isBest) ctx.fillStyle = theme === 'dark' ? 'rgba(13,115,119,0.25)' : 'rgba(13,115,119,0.12)';
-        else ctx.fillStyle = solidBg(el, pageBg);
-        ctx.fillRect(x, y0, w, rowH);
+    grid.forEach((row, rowIndex) => {
+      let x = pad;
+      const rowHeight = rowHeights[rowIndex] || 38;
+      row.forEach((cell, cellIndex) => {
+        const cellWidth = colWidths[cellIndex] || 160;
+        ctx.fillStyle = cell.isBest ? bestBg : (cell.isHead || cell.isLabel ? surface : solidBg(el, pageBg));
+        ctx.fillRect(x, y, cellWidth, rowHeight);
         ctx.strokeStyle = border;
-        ctx.strokeRect(x + 0.5, y0 + 0.5, w - 1, rowH - 1);
+        ctx.strokeRect(x + 0.5, y + 0.5, cellWidth - 1, rowHeight - 1);
 
-        ctx.fillStyle = cell.isLabel || cell.isHead ? dimColor : textColor;
-        if (cell.isBest) ctx.fillStyle = accent;
-        ctx.font = (cell.isHead || cell.isLabel ? '600 ' : '400 ') + '12px system-ui, -apple-system, Segoe UI, sans-serif';
-        ctx.textBaseline = 'middle';
-        const tx = cell.text;
-        const tw = ctx.measureText(tx).width;
-        const textX = cell.isNum ? x + w - 8 - Math.min(tw, w - 16) : x + 8;
-        // clip
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(x + 4, y0, w - 8, rowH);
-        ctx.clip();
-        ctx.fillText(tx, textX, y0 + rowH / 2);
-        ctx.restore();
-        x += w;
+        ctx.fillStyle = cell.isBest ? bestColor : (cell.isHead || cell.isLabel ? dimColor : textColor);
+        ctx.font = cell.isBest
+          ? cell.font.replace(/^\d+/, '600')
+          : cell.font;
+        const lineHeight = Math.max(16, Math.ceil(cell.fontSize + 4));
+        const maxLines = Math.max(1, Math.floor((rowHeight - 12) / lineHeight));
+        const lines = wrapLines(cell.text, cellWidth - inset * 2, maxLines);
+        drawLines(
+          lines,
+          cell.isValue ? x + cellWidth - inset : x + inset,
+          y,
+          rowHeight,
+          cell.isValue ? 'right' : 'left',
+          lineHeight,
+        );
+        x += cellWidth;
       });
+      y += rowHeight;
     });
 
-    // Footer attribution
-    const footY = height - 12;
     ctx.fillStyle = dimColor;
-    ctx.font = '10px system-ui, -apple-system, Segoe UI, sans-serif';
+    ctx.font = '400 10px Inter, system-ui, -apple-system, Segoe UI, sans-serif';
     ctx.textBaseline = 'bottom';
-    ctx.fillText('tokenwatch.wyrdwerk.com', pad, footY);
+    ctx.textAlign = 'left';
+    ctx.fillText('tokenwatch.wyrdwerk.com', pad, height - 12);
 
     return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
@@ -341,23 +377,94 @@
     return 'downloaded';
   }
 
-  /** Wire "Copy as image" on all compare modals (event delegation). */
+  /** Freeze the exact visible values of a cost/comparison card for a share URL. */
+  function snapshotFromCard(card, kind) {
+    const table = card && card.querySelector('.compare-table');
+    const header = table && table.tHead && table.tHead.rows[0];
+    if (!table || !header || header.cells.length < 2) throw new Error('snapshot card is missing its comparison table');
+    const clean = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+    const columns = Array.from(header.cells).slice(1).map((cell) => clean(cell.textContent));
+    const rows = Array.from(table.tBodies[0]?.rows || []).map((row) => {
+      const cells = Array.from(row.cells);
+      const values = cells.slice(1).map((cell) => clean(cell.textContent));
+      const best = cells.slice(1).flatMap((cell, index) => cell.classList.contains('compare-cheapest') ? [index] : []);
+      return [clean(cells[0]?.textContent), values, best];
+    });
+    return {
+      v: 1,
+      k: kind,
+      t: clean(card.querySelector('.compare-modal-header h2')?.textContent) || (kind === 'cost' ? 'Cost card' : 'Comparison'),
+      b: clean(card.querySelector('.compare-snapshot')?.textContent),
+      c: columns,
+      r: rows,
+      m: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
+      d: new Date().toISOString().slice(0, 10),
+    };
+  }
+
+  async function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    const input = document.createElement('textarea');
+    input.value = text;
+    input.setAttribute('readonly', '');
+    input.style.position = 'fixed';
+    input.style.left = '-9999px';
+    document.body.appendChild(input);
+    input.select();
+    const copied = document.execCommand && document.execCommand('copy');
+    input.remove();
+    if (!copied) throw new Error('clipboard is unavailable');
+  }
+
+  /** Share a direct image URL containing an immutable snapshot payload. */
+  async function shareElementAsUrl(card, kind) {
+    const { encodeSnapshot } = await snapshotCodecPromise;
+    const encoded = encodeSnapshot(snapshotFromCard(card, kind));
+    const url = new URL('/share', window.location.origin);
+    url.searchParams.set('d', encoded);
+    const shareUrl = url.toString();
+    const title = kind === 'cost' ? 'TokenWatch cost card' : 'TokenWatch comparison';
+
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title, text: `${title} snapshot`, url: shareUrl });
+        return { result: 'shared', url: shareUrl };
+      } catch (error) {
+        if (error && error.name === 'AbortError') return { result: 'cancelled', url: shareUrl };
+        // Web Share may exist but reject URLs in desktop/headless environments.
+      }
+    }
+    await copyText(shareUrl);
+    return { result: 'copied', url: shareUrl };
+  }
+
+  /** Wire image copy and immutable URL sharing on comparison modals. */
   function initCompareCapture() {
     document.addEventListener('click', async (e) => {
-      const btn = e.target.closest && e.target.closest('#compareCopyImage, .compare-copy-btn');
+      const copyBtn = e.target.closest && e.target.closest('#compareCopyImage, .compare-copy-btn');
+      const shareBtn = e.target.closest && e.target.closest('#compareShareImage, .compare-share-btn');
+      const btn = shareBtn || copyBtn;
       if (!btn) return;
       e.preventDefault();
       const card = btn.closest('.compare-modal-content');
       if (!card) return;
       const prev = btn.textContent;
       btn.disabled = true;
-      btn.textContent = 'Copying…';
+      btn.textContent = shareBtn ? 'Sharing…' : 'Copying…';
       try {
-        const stamp = new Date().toISOString().slice(0, 10);
-        const result = await copyElementAsImage(card, `tokenwatch-compare-${stamp}.png`);
-        btn.textContent = result === 'copied' ? 'Copied!' : 'Downloaded';
+        if (shareBtn) {
+          const { result } = await shareElementAsUrl(card, 'comparison');
+          btn.textContent = result === 'shared' ? 'Shared!' : result === 'copied' ? 'URL copied!' : 'Cancelled';
+        } else {
+          const stamp = new Date().toISOString().slice(0, 10);
+          const result = await copyElementAsImage(card, `tokenwatch-compare-${stamp}.png`);
+          btn.textContent = result === 'copied' ? 'Copied!' : 'Downloaded';
+        }
       } catch (err) {
-        console.warn('Compare image capture failed:', err);
+        console.warn(shareBtn ? 'Compare URL sharing failed:' : 'Compare image capture failed:', err);
         btn.textContent = 'Failed';
       }
       setTimeout(() => {
@@ -372,6 +479,6 @@
 
   window.TW = {
     $, esc, median, fmtIST, debounce, round3, makeFormatters, initTheme, applyTheme, modal,
-    domToPngBlob, copyElementAsImage, initCompareCapture,
+    domToPngBlob, downloadBlob, copyElementAsImage, snapshotFromCard, shareElementAsUrl, initCompareCapture,
   };
 })();

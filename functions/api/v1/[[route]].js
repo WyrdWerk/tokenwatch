@@ -15,6 +15,7 @@
 //   OPTIONS *                                  — CORS preflight
 
 import { canonicalId } from '../../../shared/normalize.mjs';
+import { endpointDirectory } from '../../../shared/api-meta.mjs';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -79,17 +80,7 @@ export async function onRequestGet(context) {
       model_count: pricing.models.length,
       provider_count: [...new Set(pricing.models.map(m => m.provider))].length,
       source_count: pricing.providers.length,
-      endpoints: [
-        '/api/v1/models — list text models (with filters: org, provider, min_context, min_output, quantization, cache_read, cache_write, promo, zdr, sub, search, sort, order, limit, offset)',
-        '/api/v1/models/:canonicalId/providers — all providers for a model, sorted by cost (optional tokens + mix params for mix-aware sorting)',
-        '/api/v1/stats — summary statistics (model/provider/org counts, ZDR/subscription counts, quantization breakdown)',
-        '/api/v1/orgs — all orgs with model counts',
-        '/api/v1/providers — provider metadata (optional ?zdr=true filter)',
-        '/api/v1/images — list image models (with filters: org, provider, search, sort, order, limit, offset)',
-        '/api/v1/images/:id — single image model with pricing variants',
-        '/api/v1/videos — list video models (with filters: org, provider, search, sort, order, limit, offset)',
-        '/api/v1/videos/:id — single video model with pricing variants',
-      ],
+      endpoints: endpointDirectory(),
     });
   }
 

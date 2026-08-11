@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * bust-cache.mjs — rewrite asset refs in public/*.html to content-hashed paths.
+ * bust-cache.mjs — rewrite asset refs in every HTML file under public/.
  *
  * Why path-based (not ?v= query strings)?
  *   Cloudflare's edge cache for the custom domain (tokenwatch.wyrdwerk.com) has
  *   been observed to ignore query strings in the cache key for JS/CSS. Content-
- *   hashed PATHS (h/app.<hash>.js) always miss the stale entry.
+ *   hashed PATHS (/h/app.<hash>.js) always miss the stale entry.
  *
  * Repo HTML keeps stable refs like src="app.js?v=dev" (or plain app.js). This
  * script rewrites them for deploy only — hashed files under public/h/ are
@@ -18,16 +18,17 @@
  * 1 year. FIX: public/h/ must NOT be in .gitignore. The files are generated
  * locally/CI before deploy and must be present in the upload set.
  *
- * Idempotent: safe to run twice. Existing h/<name>.<hash>.<ext> refs are
- * normalized back to <name>.<ext> before re-hashing.
+ * Idempotent: safe to run twice. Existing /h/<name>.<hash>.<ext> refs are
+ * normalized back to <name>.<ext> before re-hashing. Rewritten paths are
+ * root-relative so nested generated pages load the same assets as root pages.
  *
  * Zero dependencies. Node >=18.
  */
 
 import { readFile, writeFile, readdir, mkdir, copyFile, rm } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { join, dirname, basename, extname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join, dirname, basename, extname, relative } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, '..', 'public');
@@ -45,7 +46,7 @@ const FINGERPRINT = new Set([
 const REF_REGEX = /((?:href|src)=["'])([^"']+)(["'])/g;
 
 // h/app.476dfb74.js → app.js
-const HASHED_PATH_RE = /^h\/(.+)\.([a-f0-9]{8})(\.[a-z0-9]+)$/i;
+const HASHED_PATH_RE = /^\/?h\/(.+)\.([a-f0-9]{8})(\.[a-z0-9]+)$/i;
 
 async function hashFile(filePath) {
   const content = await readFile(filePath);
@@ -59,12 +60,12 @@ function fingerprintedName(assetBase, hash) {
 }
 
 /** Map any ref path to a bare fingerprintable basename, or null. */
-function baseAssetName(refPath) {
+export function baseAssetName(refPath) {
   // strip query
   const pathOnly = refPath.split('?')[0];
   const base = basename(pathOnly);
 
-  // Already path-hashed: h/app.476dfb74.js
+  // Already path-hashed: /h/app.476dfb74.js
   const m = pathOnly.replace(/^\.\//, '').match(HASHED_PATH_RE);
   if (m) {
     const name = m[1] + m[3]; // app + .js
@@ -76,7 +77,7 @@ function baseAssetName(refPath) {
   return null;
 }
 
-async function bustHtml(htmlPath, assetHashes) {
+export async function bustHtml(htmlPath, assetHashes) {
   let html = await readFile(htmlPath, 'utf-8');
   let count = 0;
 
@@ -86,14 +87,29 @@ async function bustHtml(htmlPath, assetHashes) {
     const hash = assetHashes.get(base);
     if (!hash) return full;
     count++;
-    return `${prefix}h/${fingerprintedName(base, hash)}${quote}`;
+    return `${prefix}/h/${fingerprintedName(base, hash)}${quote}`;
   });
 
   if (count > 0) await writeFile(htmlPath, html, 'utf-8');
   return count;
 }
 
-async function main() {
+export async function findHtmlFiles(root = PUBLIC_DIR) {
+  const files = [];
+  async function walk(dir) {
+    const entries = await readdir(dir, { withFileTypes: true });
+    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+      if (entry.name === 'h' || entry.name.startsWith('.')) continue;
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) await walk(path);
+      else if (entry.isFile() && entry.name.endsWith('.html')) files.push(path);
+    }
+  }
+  await walk(root);
+  return files;
+}
+
+export async function main() {
   await rm(HASH_DIR, { recursive: true, force: true });
   await mkdir(HASH_DIR, { recursive: true });
 
@@ -111,20 +127,12 @@ async function main() {
     }
   }
 
-  const htmlFiles = (await readdir(PUBLIC_DIR))
-    .filter((f) => f.endsWith('.html'))
-    .map((f) => join(PUBLIC_DIR, f));
-
-  try {
-    const widgetDemo = join(PUBLIC_DIR, 'widget', 'demo.html');
-    await readFile(widgetDemo);
-    htmlFiles.push(widgetDemo);
-  } catch { /* optional */ }
+  const htmlFiles = await findHtmlFiles();
 
   let totalBusted = 0;
   for (const htmlFile of htmlFiles) {
     const count = await bustHtml(htmlFile, assetHashes);
-    const rel = htmlFile.slice(PUBLIC_DIR.length + 1);
+    const rel = relative(PUBLIC_DIR, htmlFile);
     if (count > 0) {
       console.log(`✓ ${rel}: ${count} ref(s) → path-hashed /h/*`);
       totalBusted += count;
@@ -135,7 +143,10 @@ async function main() {
   console.log(`\n→ ${totalBusted} path-hashed ref(s) across ${htmlFiles.length} HTML file(s)`);
 }
 
-main().catch((err) => {
-  console.error('Fatal:', err);
-  process.exit(1);
-});
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMain) {
+  main().catch((err) => {
+    console.error('Fatal:', err);
+    process.exit(1);
+  });
+}

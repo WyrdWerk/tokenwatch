@@ -105,13 +105,11 @@ jobs:
         if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
         run: node scripts/generate-seo.mjs
 
-      - name: Verify SEO integrity
+      - name: Verify generated SEO surface
         if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
-        run: |
-          grep -q 'class="seo-models"' public/index.html || { echo "generate-seo did not produce the seo-models section"; exit 1; }
-          test -s public/sitemap.xml || { echo "sitemap.xml is empty"; exit 1; }
+        run: node scripts/verify-seo.mjs
 
-      - name: Bust cache (content-hash ?v= tokens)
+      - name: Bust cache (content-hashed asset paths)
         if: steps.commit.outputs.changed == 'true' || github.event.inputs.force == 'true'
         run: node scripts/bust-cache.mjs
 
@@ -151,12 +149,10 @@ jobs:
       - name: Generate SEO (regenerate cheapest-models table + sitemap)
         run: node scripts/generate-seo.mjs
 
-      - name: Verify SEO integrity
-        run: |
-          grep -q 'class="seo-models"' public/index.html || { echo "generate-seo did not produce the seo-models section"; exit 1; }
-          test -s public/sitemap.xml || { echo "sitemap.xml is empty"; exit 1; }
+      - name: Verify generated SEO surface
+        run: node scripts/verify-seo.mjs
 
-      - name: Bust cache (content-hash ?v= tokens)
+      - name: Bust cache (content-hashed asset paths)
         run: node scripts/bust-cache.mjs
 
       - name: Minify JSON

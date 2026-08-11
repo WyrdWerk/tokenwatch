@@ -868,6 +868,9 @@ function showDetailModal(idx) {
   // Footer actions
   parts.push('<div class="detail-actions">');
   parts.push(`<button type="button" id="detailAddCompare">Add to compare</button>`);
+  parts.push(`<button type="button" id="detailDownloadCard" class="detail-download-btn">Download cost card</button>`);
+  parts.push(`<button type="button" id="detailShareCard" class="detail-share-btn">Share card</button>`);
+  parts.push(`<p class="detail-card-status" id="cardStatus" role="status" aria-live="polite"></p>`);
   parts.push('</div>');
 
   els.detailTitle.textContent = r.name || r.id;
@@ -877,8 +880,179 @@ function showDetailModal(idx) {
   // Wire footer actions + copy buttons
   const addBtn = document.getElementById('detailAddCompare');
   if (addBtn) addBtn.addEventListener('click', () => { closeDetailModal(); toggleCompare(r); });
+  const dlBtn = document.getElementById('detailDownloadCard');
+  if (dlBtn) dlBtn.addEventListener('click', () => downloadCostCard(r, dlBtn));
+  const shareBtn = document.getElementById('detailShareCard');
+  if (shareBtn) shareBtn.addEventListener('click', () => shareCostCard(r, shareBtn));
   for (const btn of els.detailBody.querySelectorAll('.copy-btn')) {
     btn.addEventListener('click', () => copyToClipboard(btn.dataset.copy, btn));
+  }
+}
+
+// ── Cost-card PNG export (single offering) ────────────────────────────────────
+//
+// Renders an offscreen, compare-card-structured snapshot of ONE offering against
+// the live calculator assumptions, then hands it to the shared domToPngBlob
+// renderer + downloadBlob. The card reuses the same compare-* class names so the
+// shared renderer paints it identically to the compare-image output. No cost
+// math is duplicated: getTokens / costFor / affordabilityFor + the same
+// modeMultiplier as computeAndRender derive the outcome.
+
+/** Deterministic, sanitized filename for a single-offering cost card. */
+function costCardFilename(r) {
+  const safe = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'model';
+  const prov = safe(r.provider);
+  const mod = safe((r.name && r.name !== r.id ? r.name : r.id).split('/').pop());
+  const stamp = new Date().toISOString().slice(0, 10);
+  return `tokenwatch-cost-${prov}-${mod}-${stamp}.png`;
+}
+
+/** Build an offscreen .compare-modal-content card populated from `r` and the
+ *  current calculator state. Returned element is NOT yet attached (caller
+ *  appends it so domToPngBlob can measure live layout). */
+function buildCostCard(r) {
+  const tokens = getTokens();
+  const monthly = state.costMode === 'monthly';
+  const budgetMode = state.computeBy === 'budget';
+  const modeMultiplier = monthly ? 30 : 1;            // mirrors computeAndRender
+  const budgetVal = budgetMode ? Math.max(0, parseFloat(els.budgetInput?.value) || 0) : 0;
+  const perSessionBudget = budgetMode ? budgetVal / modeMultiplier : 0;
+  const pricing = r.pricing || {};
+
+  // Outcome — exact same derivation as computeAndRender (no duplicated math).
+  const rawOutcome = budgetMode
+    ? affordabilityFor(pricing, tokens, perSessionBudget)
+    : costFor(pricing, tokens);
+  const outcome = rawOutcome == null ? null : rawOutcome * modeMultiplier;
+  const outcomeStr = budgetMode ? fmtAffordability(outcome) : fmtCost(outcome);
+  const outcomeLabel = (els.costColumnHeader?.textContent || (budgetMode ? 'Affordable tokens' : 'Total cost')).trim();
+
+  // Basis line — kept to a single readable line; the full mix + cache-write
+  // assumptions live in table rows so nothing is truncated by the renderer.
+  let basis;
+  if (budgetMode) {
+    basis = monthly ? `$${budgetVal.toLocaleString()} monthly budget` : `$${budgetVal.toLocaleString()} budget per session`;
+  } else {
+    const totalM = tokens.total / 1e6;
+    basis = monthly
+      ? `${totalM.toLocaleString()}M tokens/day (\u00d730 monthly)`
+      : `${totalM.toLocaleString()}M tokens per session`;
+  }
+
+  const modelName = r.name && r.name !== r.id ? r.name : r.id;
+  const mixVal = `In ${tokens.inputPct}% \u00b7 Cache ${tokens.cacheReadPct}% \u00b7 Out ${tokens.outputPct}%`;
+
+  // Blended $/M, ZDR, Speed — same sources as the compare modal; em-dash when
+  // no source data exists. Never inferred (matches compare-table semantics).
+  const blended = blendedCostFor(pricing, tokens);
+  const blendedVal = blended != null ? fmtPrice(blended) : '\u2014';
+  const zdrVal = r.zdr === true ? 'Yes' : r.zdr === false ? 'No' : '\u2014';
+  const perf = getPerfData({ model: r });
+  const tps = perf && perf.throughput ? perf.throughput.p50 : null;
+  const speedVal = tps == null ? '\u2014' : `${Math.round(tps * 10) / 10} tps`;
+
+  // Two-column metric/value table. All four published rates are always shown.
+  const rows = [
+    ['Provider', esc(providerName(r.provider, r.provider_display)), false, false],
+    ['Input $/M', fmtPrice(pricing.input), true, false],
+    ['Cache read $/M', fmtPrice(pricing.cache_read), true, false],
+    ['Output $/M', fmtPrice(pricing.output), true, false],
+    ['Cache write $/M', fmtPrice(pricing.cache_write), true, false],
+    ['Blended $/M', blendedVal, true, false],
+    ['Token mix', esc(mixVal), false, false],
+  ];
+  if (tokens.cacheWrite > 0) {
+    rows.push(['Cache-write tokens', `${(tokens.cacheWrite / 1e6).toLocaleString()}M \u00f7 ${tokens.amortizeN}`, true, false]);
+  }
+  rows.push(['ZDR', zdrVal, false, false]);
+  rows.push(['Speed', speedVal, true, false]);
+  // Headline outcome \u2014 accent (compare-cheapest) so it reads as the result.
+  rows.push([esc(outcomeLabel), outcomeStr, true, true]);
+  let body = '';
+  for (const [label, val, isNum, isBest] of rows) {
+    const cls = ['compare-value', isNum ? 'num' : '', isBest ? 'compare-cheapest' : ''].filter(Boolean).join(' ');
+    body += `<tr><td class="compare-label">${label}</td><td class="${cls}">${val}</td></tr>`;
+  }
+
+  const card = document.createElement('div');
+  card.className = 'compare-modal-content cost-card-export';
+  card.setAttribute('aria-hidden', 'true');
+  card.innerHTML =
+    `<div class="compare-modal-header">` +
+      `<div class="compare-brand">` +
+        `<span class="compare-brand-link">\uD83D\uDCB0 TokenWatch</span>` +
+        `<h2>Cost card</h2>` +
+      `</div>` +
+    `</div>` +
+    `<div class="compare-snapshot"><span class="snapshot-label">Basis:</span> ${esc(basis)}</div>` +
+    `<table class="compare-table cost-card-table"><thead><tr><th>Metric</th><th>${esc(modelName)}</th></tr></thead><tbody>${body}</tbody></table>`;
+  return card;
+}
+
+/** Generate + download a single-offering cost-card PNG. Disables the trigger
+ *  button while rendering, restores it afterward, and surfaces failures via an
+ *  aria-live status region — never leaving a hidden card behind. */
+async function downloadCostCard(r, btn) {
+  const status = document.getElementById('cardStatus');
+  const prev = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Rendering\u2026';
+  let card = null;
+  try {
+    card = buildCostCard(r);
+    document.body.appendChild(card);            // must be in DOM for layout metrics
+    card.offsetWidth;                            // force reflow so measurements are live
+    const blob = await TW.domToPngBlob(card);
+    if (!blob || blob.size === 0) throw new Error('renderer produced an empty image');
+    TW.downloadBlob(blob, costCardFilename(r));
+    if (status) { status.textContent = 'Cost card downloaded.'; status.className = 'detail-card-status ok'; }
+    btn.textContent = 'Downloaded \u2713';
+  } catch (err) {
+    console.warn('Cost card export failed:', err);
+    btn.textContent = 'Failed \u2014 retry';
+    if (status) { status.textContent = '\u26A0 Couldn\u2019t generate the cost card image. Please try again.'; status.className = 'detail-card-status error'; }
+  } finally {
+    if (card && card.parentNode) card.parentNode.removeChild(card);
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = prev;
+      if (status) setTimeout(() => { status.textContent = ''; status.className = 'detail-card-status'; }, 2600);
+    }, 1500);
+  }
+}
+
+/** Create a direct image URL containing the exact single-offering snapshot. */
+async function shareCostCard(r, btn) {
+  const status = document.getElementById('cardStatus');
+  const prev = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Sharing\u2026';
+  let card = null;
+  try {
+    card = buildCostCard(r);
+    document.body.appendChild(card);
+    const { result } = await TW.shareElementAsUrl(card, 'cost');
+    if (result === 'cancelled') {
+      btn.textContent = 'Cancelled';
+      if (status) { status.textContent = ''; status.className = 'detail-card-status'; }
+    } else {
+      btn.textContent = result === 'shared' ? 'Shared \u2713' : 'URL copied \u2713';
+      if (status) {
+        status.textContent = result === 'shared' ? 'Cost-card URL shared.' : 'Cost-card image URL copied.';
+        status.className = 'detail-card-status ok';
+      }
+    }
+  } catch (err) {
+    console.warn('Cost-card URL sharing failed:', err);
+    btn.textContent = 'Failed \u2014 retry';
+    if (status) { status.textContent = '\u26A0 Couldn\u2019t create the share URL. Please try again.'; status.className = 'detail-card-status error'; }
+  } finally {
+    if (card && card.parentNode) card.parentNode.removeChild(card);
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = prev;
+      if (status) setTimeout(() => { status.textContent = ''; status.className = 'detail-card-status'; }, 2600);
+    }, 1500);
   }
 }
 
@@ -913,7 +1087,7 @@ function showCompareModal() {
         const perf = getPerfData({ model: m });
         const tps = perf?.throughput?.p50;
         if (tps == null) return '<span class="missing">—</span>';
-        return `⚡${Math.round(tps * 10) / 10}tps`;
+        return `${Math.round(tps * 10) / 10} tps`;
       }, getRaw: m => getPerfData({ model: m })?.throughput?.p50 ?? null, bestHigh: true },
     { label: 'Blended $/M', getValue: m => {
         const b = blendedCostFor(m.pricing, tokens);
@@ -938,11 +1112,14 @@ function showCompareModal() {
     snapshot = `<strong>${totalLabel}</strong>${period} · mix: ${mixStr}${cw}`;
   }
   const snapshotHtml = `<div class="compare-snapshot"><span class="snapshot-label">Basis:</span> ${snapshot}</div>`;
+  const scrollHintHtml = '<p class="compare-scroll-hint" aria-hidden="true">Swipe horizontally to see every model \u2192</p>';
+  const tableWidth = 168 + models.length * 160;
 
-  let html = snapshotHtml + '<table class="compare-table"><thead><tr><th>Metric</th>';
+  let html = snapshotHtml + scrollHintHtml
+    + `<div class="compare-table-scroll" role="region" aria-label="Scrollable model comparison" tabindex="0"><table class="compare-table comparison-grid" style="width:${tableWidth}px"><thead><tr><th>Metric</th>`;
   for (const m of models) {
     const name = m.name && m.name !== m.id ? m.name : m.id;
-    html += `<th>${esc(name)}</th>`;
+    html += `<th title="${esc(name)}">${esc(name)}</th>`;
   }
   html += '</tr></thead><tbody>';
 
@@ -957,16 +1134,16 @@ function showCompareModal() {
       for (const m of models) {
         const v = row.getRaw(m);
         const isBest = best !== null && v !== null && v !== undefined && v === best;
-        html += `<td class="num${isBest ? ' compare-cheapest' : ''}">${row.getValue(m)}</td>`;
+        html += `<td class="compare-value num${isBest ? ' compare-cheapest' : ''}">${row.getValue(m)}</td>`;
       }
     } else {
       for (const m of models) {
-        html += `<td>${row.getValue(m)}</td>`;
+        html += `<td class="compare-value">${row.getValue(m)}</td>`;
       }
     }
     html += '</tr>';
   }
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
 
   els.compareBody.innerHTML = html;
   els.compareModal.style.display = '';

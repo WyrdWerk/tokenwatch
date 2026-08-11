@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#F8F5F0" />
+  <script>(function(){try{var t=localStorage.getItem('tw-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',t==='dark'?'#1a1612':'#F8F5F0')}catch(e){}})();</script>
+  <title>TokenWatch API Documentation — LLM Pricing JSON API</title>
+  <meta name="description" content="Query TokenWatch text, image, video, provider, organization, and catalog statistics through the public JSON API." />
+  <link rel="canonical" href="https://tokenwatch.wyrdwerk.com/docs/api/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="TokenWatch" />
+  <meta property="og:title" content="TokenWatch API Documentation — LLM Pricing JSON API" />
+  <meta property="og:description" content="Query TokenWatch text, image, video, provider, organization, and catalog statistics through the public JSON API." />
+  <meta property="og:url" content="https://tokenwatch.wyrdwerk.com/docs/api/" />
+  <meta property="og:image" content="https://tokenwatch.wyrdwerk.com/og/og-image.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="TokenWatch API Documentation — LLM Pricing JSON API" />
+  <meta name="twitter:description" content="Query TokenWatch text, image, video, provider, organization, and catalog statistics through the public JSON API." />
+  <meta name="twitter:image" content="https://tokenwatch.wyrdwerk.com/og/og-image.svg" />
+  <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/space-grotesk-600.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/styles.css?v=dev" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <script id="seo-structured-data" type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"TechArticle","url":"https://tokenwatch.wyrdwerk.com/docs/api/","headline":"TokenWatch API documentation","description":"Query TokenWatch text, image, video, provider, organization, and catalog statistics through the public JSON API."},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Text pricing","item":"https://tokenwatch.wyrdwerk.com/"},{"@type":"ListItem","position":2,"name":"API documentation","item":"https://tokenwatch.wyrdwerk.com/docs/api/"}]}]}</script>
+</head>
+<body>
+  <header><div class="header-row"><a class="brand-link site-brand" href="/">TokenWatch</a></div><h1 class="tagline">TokenWatch API documentation</h1><p class="subtitle">Public JSON endpoints for model, provider, image, and video pricing</p><nav class="tab-nav" aria-label="TokenWatch sections"><a class="tab-link" href="/">Text</a><a class="tab-link" href="/image">Image</a><a class="tab-link" href="/video">Video</a><a class="tab-link" href="/providers/">Providers</a><a class="tab-link" href="/docs/methodology/">Methodology</a><a class="tab-link" href="/docs/api/">API</a></nav></header>
+  <main class="seo-page-main">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Text pricing</a><span aria-hidden="true">/</span><a href="/docs/api/">API documentation</a></nav>
+    <article class="seo-prose">
+      <h2>Public JSON API</h2>
+      <p>All endpoints accept GET requests and return JSON with permissive CORS headers. List endpoints paginate with <code>limit</code> and <code>offset</code>; the limit is clamped to 1–500 and defaults to 100.</p>
+      <div class="table-wrap"><table><caption>TokenWatch API endpoints</caption><thead><tr><th scope="col">Endpoint</th><th scope="col">Response</th><th scope="col">Query parameters</th><th scope="col">Sort values</th></tr></thead><tbody><tr><td><code>/api/v1/</code></td><td>API metadata and endpoint directory</td><td>—</td><td>—</td></tr>
+<tr><td><code>/api/v1/models</code></td><td>List text-generation model offerings</td><td><code>org</code>, <code>provider</code>, <code>min_context</code>, <code>min_output</code>, <code>min_intelligence</code>, <code>quantization</code>, <code>cache_read</code>, <code>cache_write</code>, <code>promo</code>, <code>zdr</code>, <code>sub</code>, <code>benchmarked</code>, <code>search</code>, <code>sort</code>, <code>order</code>, <code>limit</code>, <code>offset</code></td><td><code>id</code>, <code>input</code>, <code>output</code>, <code>cache_read</code>, <code>cache_write</code>, <code>context</code>, <code>max_output</code>, <code>uptime</code>, <code>discount</code>, <code>intelligence</code>, <code>coding</code>, <code>agentic</code></td></tr>
+<tr><td><code>/api/v1/models/:canonicalId/providers</code></td><td>List providers for one canonical model, ordered by cost</td><td><code>tokens</code>, <code>mix</code></td><td>—</td></tr>
+<tr><td><code>/api/v1/stats</code></td><td>Return catalog, provider, organization, privacy, cache, and quantization counts</td><td>—</td><td>—</td></tr>
+<tr><td><code>/api/v1/orgs</code></td><td>List model organizations with offering counts</td><td>—</td><td>—</td></tr>
+<tr><td><code>/api/v1/providers</code></td><td>List provider metadata and policy fields</td><td><code>zdr</code></td><td>—</td></tr>
+<tr><td><code>/api/v1/images</code></td><td>List image-generation models</td><td><code>org</code>, <code>provider</code>, <code>search</code>, <code>sort</code>, <code>order</code>, <code>limit</code>, <code>offset</code></td><td><code>id</code>, <code>org</code>, <code>provider</code></td></tr>
+<tr><td><code>/api/v1/images/:id</code></td><td>Return one image model with its pricing variants</td><td>—</td><td>—</td></tr>
+<tr><td><code>/api/v1/videos</code></td><td>List video-generation models</td><td><code>org</code>, <code>provider</code>, <code>search</code>, <code>sort</code>, <code>order</code>, <code>limit</code>, <code>offset</code></td><td><code>id</code>, <code>org</code>, <code>provider</code></td></tr>
+<tr><td><code>/api/v1/videos/:id</code></td><td>Return one video model with its pricing variants</td><td>—</td><td>—</td></tr></tbody></table></div>
+      <h2>Examples</h2>
+      <pre><code>curl 'https://tokenwatch.wyrdwerk.com/api/v1/models?provider=aster&amp;sort=input&amp;limit=20'
+curl 'https://tokenwatch.wyrdwerk.com/api/v1/models/glm-5.2/providers?tokens=1000000&amp;mix=30,50,20'
+curl 'https://tokenwatch.wyrdwerk.com/api/v1/providers?zdr=true'
+curl 'https://tokenwatch.wyrdwerk.com/api/v1/videos?provider=fal&amp;limit=25'</code></pre>
+      <h2>Errors and freshness</h2>
+      <p>Malformed model-ID encoding returns HTTP 400, unknown routes return 404, and unavailable catalog assets return 503. Every catalog response includes its source generation timestamp. Raw API and JSON files are marked noindex; this page is the crawlable reference.</p>
+      <h2>Embeddable pricing cards</h2>
+      <p>The <a href="/widget/demo.html">widget demo</a> shows the Shadow DOM pricing card. Add <code>data-tw-model</code> to an element and load <code>https://tokenwatch.wyrdwerk.com/widget/embed.js</code>.</p>
+    </article>
+  </main>
+  <footer><p>Pricing changes. Verify rates and policy details with the provider before committing spend.</p><p class="footer-links"><a href="/providers/">Providers</a> · <a href="/docs/methodology/">Methodology</a> · <a href="/docs/api/">API docs</a> · <a href="https://github.com/WyrdWerk/tokenwatch">Source</a></p></footer>
+</body>
+</html>
