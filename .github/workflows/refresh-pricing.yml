@@ -131,9 +131,20 @@ jobs:
           first="$(ls public/h/*.js 2>/dev/null | head -n 1)"
           file="${first##*/}"
           if [ -z "$file" ]; then echo "no hashed JS in public/h/ — did bust-cache run?"; exit 1; fi
-          ct="$(curl -sSI "https://payg-inference-calculator.pages.dev/h/${file}" | grep -i '^content-type:' | tr -d '\r' | awk '{print $2}')"
-          echo "checking /h/${file} → content-type: ${ct:-<empty>}"
-          [ "$ct" = "application/javascript" ] || { echo "FAIL: /h/* served as ${ct:-empty} (broken SPA fallback)"; exit 1; }
+          origins="https://payg-inference-calculator.pages.dev https://tokenwatch.wyrdwerk.com"
+          max_attempts=12
+          failed=0
+          for origin in $origins; do
+            ok=0
+            for attempt in $(seq 1 "$max_attempts"); do
+              ct="$(curl -sSI "${origin}/h/${file}" | grep -i '^content-type:' | tr -d '\r' | awk '{print $2}')"
+              echo "attempt ${attempt}/${max_attempts} origin ${origin} /h/${file} → content-type: ${ct:-<empty>}"
+              if [ "$ct" = "application/javascript" ]; then ok=1; break; fi
+              sleep 5
+            done
+            if [ "$ok" -ne 1 ]; then echo "FAIL: ${origin}/h/${file} served ${ct:-empty} after ${max_attempts} attempts (broken SPA fallback)"; failed=1; fi
+          done
+          [ "$failed" -eq 0 ] || exit 1
 
   deploy:
     if: github.event_name == 'push' && github.actor != 'tokenwatch-data-bot[bot]'
@@ -170,6 +181,17 @@ jobs:
           first="$(ls public/h/*.js 2>/dev/null | head -n 1)"
           file="${first##*/}"
           if [ -z "$file" ]; then echo "no hashed JS in public/h/ — did bust-cache run?"; exit 1; fi
-          ct="$(curl -sSI "https://payg-inference-calculator.pages.dev/h/${file}" | grep -i '^content-type:' | tr -d '\r' | awk '{print $2}')"
-          echo "checking /h/${file} → content-type: ${ct:-<empty>}"
-          [ "$ct" = "application/javascript" ] || { echo "FAIL: /h/* served as ${ct:-empty} (broken SPA fallback)"; exit 1; }
+          origins="https://payg-inference-calculator.pages.dev https://tokenwatch.wyrdwerk.com"
+          max_attempts=12
+          failed=0
+          for origin in $origins; do
+            ok=0
+            for attempt in $(seq 1 "$max_attempts"); do
+              ct="$(curl -sSI "${origin}/h/${file}" | grep -i '^content-type:' | tr -d '\r' | awk '{print $2}')"
+              echo "attempt ${attempt}/${max_attempts} origin ${origin} /h/${file} → content-type: ${ct:-<empty>}"
+              if [ "$ct" = "application/javascript" ]; then ok=1; break; fi
+              sleep 5
+            done
+            if [ "$ok" -ne 1 ]; then echo "FAIL: ${origin}/h/${file} served ${ct:-empty} after ${max_attempts} attempts (broken SPA fallback)"; failed=1; fi
+          done
+          [ "$failed" -eq 0 ] || exit 1
