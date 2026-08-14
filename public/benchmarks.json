@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-14T14:45:15.632Z",
+  "generated_at": "2026-08-14T16:41:23.213Z",
   "mix": {
     "inputPct": 2.5,
     "cacheReadPct": 97,
@@ -891,14 +891,20 @@
     },
     {
       "id": "gemini-3.7-flash",
-      "name": "Google: Gemini 3.7 Flash",
+      "name": "google/gemini-3.7-flash",
       "org": "google",
-      "providers": 1,
+      "providers": 2,
       "from": {
         "provider": "Google",
         "blended_per_m": 0.055
       },
       "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.7499999999999999,
+          "output": 3.75,
+          "cache_read": null
+        },
         {
           "provider": "Google",
           "input": 0.375,
@@ -2957,6 +2963,12 @@
           "cache_read": 0.09
         },
         {
+          "provider": "StreamLake",
+          "input": 0.413772,
+          "output": 0.827544,
+          "cache_read": 0.034481000000000005
+        },
+        {
           "provider": "Baidu",
           "input": 0.4225,
           "output": 0.845,
@@ -2967,12 +2979,6 @@
           "input": 0.435,
           "output": 0.87,
           "cache_read": 0.003625
-        },
-        {
-          "provider": "StreamLake",
-          "input": 0.5133,
-          "output": 1.0266,
-          "cache_read": 0.042775
         },
         {
           "provider": "GMICloud",
@@ -3121,6 +3127,12 @@
           "cache_read": 0
         },
         {
+          "provider": "Decart",
+          "input": 0.5679,
+          "output": 2.3912,
+          "cache_read": 0.09559999999999999
+        },
+        {
           "provider": "Baidu",
           "input": 0.5795,
           "output": 2.44,
@@ -3131,12 +3143,6 @@
           "input": 0.58,
           "output": 3.4,
           "cache_read": 0.058
-        },
-        {
-          "provider": "Decart",
-          "input": 0.5865,
-          "output": 2.4696000000000002,
-          "cache_read": 0.0988
         },
         {
           "provider": "StreamLake",
@@ -3706,7 +3712,7 @@
       "org": "tencent",
       "providers": 7,
       "from": {
-        "provider": "GMICloud",
+        "provider": "Baidu",
         "blended_per_m": 0.037
       },
       "offerings": [
@@ -3717,16 +3723,16 @@
           "cache_read": 0.035
         },
         {
+          "provider": "Baidu",
+          "input": 0.12804,
+          "output": 0.51216,
+          "cache_read": 0.03201
+        },
+        {
           "provider": "GMICloud",
           "input": 0.1288,
           "output": 0.5336,
           "cache_read": 0.0322
-        },
-        {
-          "provider": "Baidu",
-          "input": 0.13068,
-          "output": 0.52272,
-          "cache_read": 0.03267
         },
         {
           "provider": "Tencent",
@@ -8486,6 +8492,29 @@
       }
     },
     {
+      "id": "deepseek-v3",
+      "name": "deepseek-ai/DeepSeek-V3",
+      "org": "deepseek",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.323
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.32,
+          "output": 0.8899999999999999,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 14.2,
+        "aa_coding": 23,
+        "aa_agentic": 1.6
+      }
+    },
+    {
       "id": "gemini-2.5-flash",
       "name": "google/gemini-2.5-flash",
       "org": "google",
@@ -8512,29 +8541,6 @@
         "aa_intelligence": 14.2,
         "design_arena_elo": 1156,
         "design_arena_category": "dataviz"
-      }
-    },
-    {
-      "id": "deepseek-v3",
-      "name": "deepseek-ai/DeepSeek-V3",
-      "org": "deepseek",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.323
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.32,
-          "output": 0.8899999999999999,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 14.2,
-        "aa_coding": 23,
-        "aa_agentic": 1.6
       }
     },
     {
@@ -9536,24 +9542,24 @@
       }
     },
     {
-      "id": "meta-llama-3.1-8b-instruct-turbo",
-      "name": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+      "id": "llama-3.3-70b-instruct-turbo",
+      "name": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
       "org": "meta",
       "providers": 1,
       "from": {
         "provider": "deepinfra",
-        "blended_per_m": 0.02
+        "blended_per_m": 0.101
       },
       "offerings": [
         {
           "provider": "deepinfra",
-          "input": 0.02,
-          "output": 0.04,
+          "input": 0.1,
+          "output": 0.32,
           "cache_read": null
         }
       ],
       "scores": {
-        "aa_coding": 5.4
+        "aa_coding": 11.9
       }
     },
     {
@@ -9597,27 +9603,6 @@
       }
     },
     {
-      "id": "llama-3.3-70b-instruct-turbo",
-      "name": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-      "org": "meta",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.101
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.1,
-          "output": 0.32,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "aa_coding": 11.9
-      }
-    },
-    {
       "id": "qwen3-30b-a3b",
       "name": "Qwen/Qwen3-30B-A3B",
       "org": "qwen",
@@ -9643,6 +9628,27 @@
       "scores": {
         "design_arena_elo": 987,
         "design_arena_category": "dataviz"
+      }
+    },
+    {
+      "id": "meta-llama-3.1-8b-instruct-turbo",
+      "name": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+      "org": "meta",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.02
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.02,
+          "output": 0.04,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "aa_coding": 5.4
       }
     },
     {
