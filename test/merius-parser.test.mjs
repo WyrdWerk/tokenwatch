@@ -259,7 +259,9 @@ test('merius provider is present in generated pricing.json', async () => {
   const raw = await readFile(new URL('../public/pricing.json', import.meta.url), 'utf8');
   const pricing = JSON.parse(raw);
   const rows = pricing.models.filter((m) => m.provider === 'merius');
-  assert.ok(rows.length === 4, `expected 4 merius rows in pricing.json, found ${rows.length}`);
+  // Floor, not exact count — Merius adds/removes models in their live catalog;
+  // this test guards presence + validity, not catalog size.
+  assert.ok(rows.length >= 4, `expected >=4 merius rows in pricing.json, found ${rows.length}`);
   for (const m of rows) {
     assert.ok(m.pricing.input > 0 && m.pricing.output > 0, `${m.id} has positive pricing`);
     assert.equal(m.zdr, true, `${m.id} should be ZDR`);
