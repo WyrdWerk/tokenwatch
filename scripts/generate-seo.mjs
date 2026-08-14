@@ -23,6 +23,7 @@ import {
   videoFaqItems,
   renderFaqSection,
   renderFaqPointerSection,
+  renderBenchmarksSeoSection,
   buildLlmsTxt,
   calculatorStructuredData,
   replaceStructuredData,
@@ -196,6 +197,16 @@ export async function main() {
   const methodology = renderMethodologyPage({ modelCount, providerCount, generatedAt: pricing.generated_at });
   const apiDocs = renderApiDocsPage();
   const faqPage = renderFaqPage({ modelCount, providerCount });
+
+  // /benchmarks crawlable snapshot — page is committed with marker sections;
+  // regenerate from benchmarks.json like the calculator pages.
+  const benchData = JSON.parse(await readFile(join(PUBLIC, 'benchmarks.json'), 'utf8'));
+  const benchmarksMarkup = await readFile(join(PUBLIC, 'benchmarks.html'), 'utf8');
+  let benchmarksOut = replaceSection(benchmarksMarkup, 'seo-models', renderBenchmarksSeoSection(benchData));
+  benchmarksOut = replaceSection(benchmarksOut, 'seo-faq', renderFaqPointerSection());
+  if (!benchmarksOut.includes('id="crawlable-benchmarks"') || !benchmarksOut.includes('href="/faq/')) {
+    throw new Error('generate-seo: benchmarks page missing crawlable content or FAQ pointer');
+  }
   const sitemapEntries = [
     { path: '/', lastmod: dates.text, changefreq: 'daily', priority: '1.0' },
     { path: '/image', lastmod: dates.image, changefreq: 'daily', priority: '0.8' },
@@ -218,6 +229,7 @@ export async function main() {
     writeAtomic(join(PUBLIC, 'docs', 'methodology', 'index.html'), methodology),
     writeAtomic(join(PUBLIC, 'docs', 'api', 'index.html'), apiDocs),
     writeAtomic(join(PUBLIC, 'faq', 'index.html'), faqPage),
+    writeAtomic(join(PUBLIC, 'benchmarks.html'), benchmarksOut),
     writeAtomic(join(PUBLIC, 'llms.txt'), buildLlmsTxt({
       modelCount, providerCount,
       imageCount: imagePricing.models.length,

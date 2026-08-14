@@ -82,6 +82,12 @@ export async function main() {
   ]);
   assertFaqPage(faqPage);
 
+  // /benchmarks interactive table is client-rendered — the generated crawlable
+  // snapshot must be present or the page is an empty shell to crawlers.
+  const benchmarksHtml = await readFile(join(PUBLIC, 'benchmarks.html'), 'utf8');
+  requireMatch(benchmarksHtml, /<section class="seo-models"[\s\S]*?crawlable-benchmarks[\s\S]*?<tbody>[\s\S]*?<tr>/, 'benchmarks.html has no crawlable benchmark rows');
+  requireMatch(benchmarksHtml, /href="\/faq\//, 'benchmarks.html must link the FAQ');
+
   assertCalculatorPage(index, 'index.html', 10);
   assertCalculatorPage(image, 'image.html', 6);
   assertCalculatorPage(video, 'video.html', 6);

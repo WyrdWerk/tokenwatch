@@ -688,7 +688,32 @@ curl '${SITE}/api/v1/videos?provider=fal&amp;limit=25'</code></pre>
 }
 
 export function renderExploreLinks() {
-  return `    <section class="seo-links" aria-label="Explore TokenWatch"><h2>Explore TokenWatch data</h2><p><a href="/providers/">Browse inference providers</a> · <a href="/docs/methodology/">Read the pricing methodology</a> · <a href="/docs/api/">Use the pricing API</a></p></section>`;
+  return `    <section class="seo-links" aria-label="Explore TokenWatch"><h2>Explore TokenWatch data</h2><p><a href="/benchmarks">Compare benchmarks by use case</a> · <a href="/providers/">Browse inference providers</a> · <a href="/docs/methodology/">Read the pricing methodology</a> · <a href="/docs/api/">Use the pricing API</a> · <a href="/faq/">Read the FAQ</a></p></section>`;
+}
+
+// Crawlable top-models table for /benchmarks — the page's interactive table is
+// client-rendered, so crawlers (and no-JS visitors) need a static snapshot.
+// Ranked by AA intelligence (fallback: LiveBench reasoning), with scores from
+// every source and the cheapest-provider blended price at the default mix.
+export function renderBenchmarksSeoSection(bench) {
+  const ranked = [...bench.models]
+    .filter((m) => m.scores.aa_intelligence != null || m.scores.livebench_reasoning != null)
+    .sort((a, b) =>
+      (b.scores.aa_intelligence ?? b.scores.livebench_reasoning ?? -1) -
+      (a.scores.aa_intelligence ?? a.scores.livebench_reasoning ?? -1))
+    .slice(0, 25);
+  const fmt = (v) => (v == null ? '—' : String(Math.round(v * 10) / 10));
+  const rows = ranked.map((m) => `          <tr><td>${esc(m.name)}</td><td>${esc(m.org || '—')}</td><td>${fmt(m.scores.aa_intelligence)}</td><td>${fmt(m.scores.aa_agentic)}</td><td>${fmt(m.scores.aa_coding)}</td><td>${fmt(m.scores.livebench_reasoning)}</td><td>${fmt(m.scores.design_arena_elo)}</td><td>$${m.from.blended_per_m}</td></tr>`).join('\n');
+  return `    <section class="seo-models" id="crawlable-benchmarks" aria-label="Top benchmarked models">
+      <h2>Top benchmarked models and their cheapest blended price</h2>
+      <p>Snapshot of the 25 highest-ranked models (Artificial Analysis Intelligence Index, ${bench.model_count} benchmarked models total). The interactive table above adds use-case tabs, live token-mix pricing, and capability-per-dollar value ranking.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th scope="col">Model</th><th scope="col">Creator</th><th scope="col" class="num">AA Intelligence</th><th scope="col" class="num">AA Agentic</th><th scope="col" class="num">AA Coding</th><th scope="col" class="num">LiveBench Reasoning</th><th scope="col" class="num">Design Arena Elo</th><th scope="col" class="num">From $/M</th></tr></thead>
+        <tbody>
+${rows}
+        </tbody></table></div>
+      <p class="seo-note">Scores from <a href="https://artificialanalysis.ai/" rel="noopener">Artificial Analysis</a>, <a href="https://livebench.ai/" rel="noopener">LiveBench</a> and <a href="https://www.designarena.ai/" rel="noopener">Design Arena</a>. "From $/M" is the cheapest provider's blended rate at a cached-heavy workload mix. See the <a href="/faq/#benchmarks">benchmark FAQ</a> for what each score measures.</p>
+    </section>`;
 }
 
 export function buildSitemap(entries) {
