@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#F8F5F0" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('tw-theme')
+          || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', t);
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute('content', t === 'dark' ? '#1a1612' : '#F8F5F0');
+      } catch (e) {}
+    })();
+  </script>
+  <title>LLM Benchmarks by Use Case — Agentic Coding, Reasoning & Real-World Evaluations | TokenWatch</title>
+  <meta name="description" content="Practical LLM benchmarks joined to pay-as-you-go pricing. Compare models on agentic coding, reasoning, knowledge work and UI quality — with blended cost per million tokens from the cheapest provider." />
+  <link rel="canonical" href="https://tokenwatch.wyrdwerk.com/benchmarks" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="TokenWatch" />
+  <meta property="og:title" content="LLM Benchmarks by Use Case | TokenWatch" />
+  <meta property="og:description" content="Practical benchmarks — agentic coding, reasoning, knowledge work — joined to real PAYG pricing." />
+  <meta property="og:url" content="https://tokenwatch.wyrdwerk.com/benchmarks" />
+  <meta property="og:image" content="https://tokenwatch.wyrdwerk.com/og/og-image.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles.css?v=dev" />
+  <style>
+    /* Benchmarks-page-specific styles (compose on styles.css primitives) */
+    .uc-tabs { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 1.25rem; }
+    .uc-tab {
+      padding: .45rem .9rem; border-radius: 999px; border: 1px solid var(--border, #d8d2c8);
+      background: transparent; color: inherit; font: inherit; font-size: .85rem; cursor: pointer;
+    }
+    .uc-tab:hover { border-color: var(--accent, #b3541e); }
+    .uc-tab.active { background: var(--accent, #b3541e); border-color: var(--accent, #b3541e); color: #fff; }
+    .value-bar { display: inline-block; height: 10px; border-radius: 5px; min-width: 2px;
+      background: linear-gradient(90deg, var(--accent, #b3541e), #e0954f); vertical-align: middle; }
+    .value-cell { min-width: 120px; }
+    .value-num { font-size: .72rem; opacity: .75; margin-left: .4rem; }
+    .bench-note { font-size: .8rem; opacity: .7; margin: .6rem 0 0; }
+    .score-pill { display: inline-block; min-width: 3.2em; text-align: center; padding: .15rem .45rem;
+      border-radius: 6px; font-variant-numeric: tabular-nums; }
+    .detail-sources { margin-top: .75rem; }
+    .detail-sources h4 { margin: .9rem 0 .35rem; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+    .detail-sources ul { list-style: none; padding: 0; margin: 0; }
+    .detail-sources li { display: flex; justify-content: space-between; gap: 1rem; padding: .3rem 0;
+      border-bottom: 1px dashed var(--border, #d8d2c8); font-size: .88rem; }
+    .detail-sources li span:first-child { opacity: .8; }
+    .link-to-pricing { display: inline-block; margin-top: 1rem; padding: .5rem .9rem; border-radius: 8px;
+      background: var(--accent, #b3541e); color: #fff; text-decoration: none; font-size: .88rem; }
+    .link-to-pricing:hover { filter: brightness(1.1); }
+    @media (max-width: 640px) {
+      .value-cell .value-bar { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-row">
+      <h1><a class="brand-link site-brand" href="/" aria-label="TokenWatch home">💰 TokenWatch</a></h1>
+      <a class="repo-link" href="https://wyrdwerk.com" target="_blank" rel="noopener">WyrdWerk</a>
+      <a class="repo-link" href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">GitHub</a>
+      <a class="repo-link" href="https://www.linkedin.com/in/yash-jain-65295511b/" target="_blank" rel="noopener">LinkedIn</a>
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle dark/light mode"></button>
+    </div>
+    <h2 class="tagline">Know what your AI actually costs before the bill arrives</h2>
+    <p class="subtitle">Practical benchmarks — agentic coding, reasoning, knowledge work — joined to real pay-as-you-go pricing. Scores measure the model; the price is the cheapest provider's blended rate at the agentic mix.</p>
+    <nav class="tab-nav" aria-label="TokenWatch sections">
+      <a class="tab-link" href="/">Text</a>
+      <a class="tab-link" href="/image">Image</a>
+      <a class="tab-link" href="/video">Video</a>
+      <a class="tab-link active" href="/benchmarks" aria-current="page">Benchmarks</a>
+      <a class="tab-link" href="/providers/">Providers</a>
+      <a class="tab-link" href="/docs/methodology/">Methodology</a>
+      <a class="tab-link" href="/docs/api/">API</a>
+      <a class="tab-link" href="/faq/">FAQ</a>
+    </nav>
+  </header>
+
+  <noscript><div class="noscript-note"><p>The benchmarks explorer is a JavaScript app. Enable JavaScript, or use the <a href="/docs/methodology/">methodology page</a> for source documentation.</p></div></noscript>
+
+  <main>
+    <section class="controls" id="controls">
+      <span class="section-label">BENCHMARKS</span>
+      <div class="control-group">
+        <label for="modelSearch">Search models</label>
+        <input type="text" id="modelSearch" placeholder="Type a model name… e.g. kimi k3" list="modelList" autocomplete="off" />
+        <datalist id="modelList"></datalist>
+      </div>
+      <div class="control-group">
+        <label for="orgFilter">Model creator</label>
+        <select id="orgFilter"><option value="">All organizations</option></select>
+      </div>
+      <div class="control-group">
+        <label for="sortSelect">Sort by</label>
+        <select id="sortSelect">
+          <option value="score">Top score</option>
+          <option value="value">Value (score per $)</option>
+          <option value="price">Cheapest first</option>
+          <option value="name">Name</option>
+        </select>
+      </div>
+    </section>
+
+    <p class="bench-note" id="mixNote" style="margin:.75rem 0 0"></p>
+
+    <nav class="uc-tabs" id="ucTabs" aria-label="Use case"></nav>
+
+    <div class="control-group" style="margin:.25rem 0 .75rem; display:flex; gap:.6rem; align-items:center; flex-wrap:wrap">
+      <label for="valueKeySelect" style="margin:0; font-size:.85rem">Value based on</label>
+      <select id="valueKeySelect"></select>
+    </div>
+
+    <div class="table-wrap">
+      <table class="pricing-table" id="benchTable">
+        <thead><tr id="benchHead"></tr></thead>
+        <tbody id="benchBody"></tbody>
+      </table>
+    </div>
+    <p class="bench-note" id="benchNote"></p>
+
+    <!-- Detail modal -->
+    <div class="modal-backdrop" id="detailModal" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+        <button class="modal-close" id="detailClose" aria-label="Close">&times;</button>
+        <h3 id="detailTitle"></h3>
+        <p id="detailSub" style="opacity:.75;margin:.25rem 0 0;font-size:.9rem"></p>
+        <div class="detail-sources" id="detailBody"></div>
+        <a class="link-to-pricing" id="detailPricingLink" href="/">See pricing across providers →</a>
+      </div>
+    </div>
+  </main>
+
+
+  <footer class="site-footer">
+    <p>Benchmarks measure models; prices are ours. Scores from <a href="https://artificialanalysis.ai/" rel="noopener">Artificial Analysis</a>, <a href="https://livebench.ai/" rel="noopener">LiveBench</a>, <a href="https://www.designarena.ai/" rel="noopener">Design Arena</a>. Blended $/M uses the agentic mix (2.5% input / 97% cached / 0.5% output) — same math as the <a href="/">Text tab</a>.</p>
+  </footer>
+
+  <script src="/shared-ui.js?v=dev" defer></script>
+  <script src="/benchmarks-app.js?v=dev" defer></script>
+</body>
+</html>

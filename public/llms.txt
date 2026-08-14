@@ -1,0 +1,23 @@
+# TokenWatch
+
+> Pay-as-you-go LLM API pricing and practical benchmarks: 1207 text offerings across 82 providers, 168 image models, 110 video models. Data generated 2026-08-14T06:11:13.910Z.
+
+## Pages
+
+- [Text pricing calculator](https://tokenwatch.wyrdwerk.com/): compare per-token prices across providers; enter a token mix or budget to compute costs
+- [Image generation pricing](https://tokenwatch.wyrdwerk.com/image): per-image, per-megapixel, and image-token units kept separate
+- [Video generation pricing](https://tokenwatch.wyrdwerk.com/video): per-second rates by resolution and audio mode
+- [Benchmarks by use case](https://tokenwatch.wyrdwerk.com/benchmarks): agentic coding, reasoning, knowledge work, and UI quality scores joined to cheapest-provider blended pricing
+- [Provider directory](https://tokenwatch.wyrdwerk.com/providers/): policy links, HQ, datacenters, and per-provider model catalogs
+- [Methodology](https://tokenwatch.wyrdwerk.com/docs/methodology/): sourcing, normalization, dedup, and cost-calculation rules
+- [API docs](https://tokenwatch.wyrdwerk.com/docs/api/): queryable JSON endpoints for all catalogs
+- [FAQ](https://tokenwatch.wyrdwerk.com/faq/): pricing, image/video billing, and plain-language benchmark explainers
+
+## API
+
+- JSON endpoints under https://tokenwatch.wyrdwerk.com/api/v1/ — models, providers, orgs, stats, images, videos (no auth, CORS enabled)
+
+## Data notes
+
+- Prices are USD per million tokens (images/video use native units). Direct-provider APIs take precedence, then OpenRouter de-aggregated, then maintained fallbacks.
+- Benchmark scores come from Artificial Analysis, LiveBench, and Design Arena; they measure models, not providers. "From $/M" on the benchmarks page is the cheapest provider's blended rate at a cached-heavy workload mix.

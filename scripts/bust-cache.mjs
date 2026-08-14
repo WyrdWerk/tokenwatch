@@ -39,6 +39,7 @@ const FINGERPRINT = new Set([
   'app.js',
   'image-app.js',
   'video-app.js',
+  'benchmarks-app.js',
   'shared-ui.js',
 ]);
 

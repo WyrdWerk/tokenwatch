@@ -183,6 +183,12 @@ export function videoFaqItems() {
   ];
 }
 
+// Pointer section used on calculator pages — full FAQ lists live on /faq/.
+// Unlike renderFaqSection, answers are NOT escaped (contains a real anchor).
+export function renderFaqPointerSection() {
+  return `    <section class="seo-faq" id="faq" aria-label="Frequently asked questions"><h2>Frequently asked questions</h2><details open><summary>Where are the full FAQ lists?</summary><p>All questions — text/token pricing, image and video generation pricing, and plain-language benchmark explainers — live on the consolidated <a href="/faq/">FAQ page</a>.</p></details></section>`;
+}
+
 export function renderFaqSection(title, items) {
   const details = items.map(([question, answer]) => `<details><summary>${esc(question)}</summary><p>${esc(answer)}</p></details>`).join('');
   return `    <section class="seo-faq" id="faq" aria-label="${esc(title)}"><h2>${esc(title)}</h2>${details}</section>`;
@@ -238,9 +244,9 @@ export function calculatorStructuredData({ page, title, description, faq, rows }
       name: title,
       description,
     },
-    faqSchema(faq),
     breadcrumbSchema(breadcrumbs),
   ];
+  if (faq?.length) graph.push(faqSchema(faq)); // calculator pages pass none — FAQPage lives on /faq/
   if (rows?.length) graph.push(itemListSchema(`${title} price list`, rows, path));
   if (page === 'text') {
     graph.splice(1, 0, {
@@ -413,7 +419,7 @@ export function collectProviderPages({ pricing, imagePricing, videoPricing }, mi
 }
 
 function pageNav() {
-  return '<nav class="tab-nav" aria-label="TokenWatch sections"><a class="tab-link" href="/">Text</a><a class="tab-link" href="/image">Image</a><a class="tab-link" href="/video">Video</a><a class="tab-link" href="/providers/">Providers</a><a class="tab-link" href="/docs/methodology/">Methodology</a><a class="tab-link" href="/docs/api/">API</a></nav>';
+  return '<nav class="tab-nav" aria-label="TokenWatch sections"><a class="tab-link" href="/">Text</a><a class="tab-link" href="/image">Image</a><a class="tab-link" href="/video">Video</a><a class="tab-link" href="/benchmarks">Benchmarks</a><a class="tab-link" href="/providers/">Providers</a><a class="tab-link" href="/docs/methodology/">Methodology</a><a class="tab-link" href="/docs/api/">API</a><a class="tab-link" href="/faq/">FAQ</a></nav>';
 }
 
 function visibleBreadcrumbs(items) {
@@ -448,12 +454,13 @@ export function renderStaticPage({ title, description, canonicalPath, heading, s
   ${renderJsonLd(structuredData)}
 </head>
 <body>
-  <header><div class="header-row"><a class="brand-link site-brand" href="/">TokenWatch</a></div><h1 class="tagline">${esc(heading)}</h1><p class="subtitle">${esc(subtitle)}</p>${pageNav()}</header>
+  <header><div class="header-row"><a class="brand-link site-brand" href="/" aria-label="TokenWatch home">💰 TokenWatch</a><a class="repo-link" href="https://wyrdwerk.com" target="_blank" rel="noopener">WyrdWerk</a><a class="repo-link" href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">GitHub</a><a class="repo-link" href="https://www.linkedin.com/in/yash-jain-65295511b/" target="_blank" rel="noopener">LinkedIn</a><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle dark/light mode"></button></div><h1 class="tagline">${esc(heading)}</h1><p class="subtitle">${esc(subtitle)}</p>${pageNav()}</header>
   <main class="seo-page-main">
     ${visibleBreadcrumbs(breadcrumbs)}
 ${body}
   </main>
   <footer><p>Pricing changes. Verify rates and policy details with the provider before committing spend.</p><p class="footer-links"><a href="/providers/">Providers</a> · <a href="/docs/methodology/">Methodology</a> · <a href="/docs/api/">API docs</a> · <a href="https://github.com/WyrdWerk/tokenwatch">Source</a></p></footer>
+  <script src="/shared-ui.js?v=dev" defer></script>
 </body>
 </html>
 `;
@@ -539,6 +546,82 @@ export function renderProviderDirectoryPage(providers) {
       ],
     },
   });
+}
+
+export function benchFaqItems() {
+  return [
+    // ── Score sources, one entry per benchmark shown on the page ──
+    ['What is the AA (Artificial Analysis) Intelligence Index?', 'A single 0-100 score from Artificial Analysis, an independent lab that runs the same evaluations on every model. It blends nine practical tests: real-world work tasks, terminal-based coding, tool use, scientific reasoning, knowledge, and long-context reasoning. Think of it as a general capability rating measured identically for everyone. A 60 is genuinely strong; solid workhorse models land in the mid-40s. It anchors the Reasoning & Knowledge and Chat & UI Quality tabs.'],
+    ['What is the AA Agentic Index?', 'A 0-100 zoom-in on autonomous multi-step work: using tools, navigating a terminal, recovering from errors without a human in the loop. It is the primary metric of the Agentic Coding tab because it measures the exact skill bots and automation need. A model can chat beautifully and still score poorly here.'],
+    ['What is the AA Coding Index?', 'A 0-100 measure of writing and fixing real code, from AA\'s own coding evaluations. Distinct from the Agentic Index: coding is "can it produce correct code", agentic is "can it complete a whole task on its own". Shown together on the Agentic Coding tab because real coding bots need both.'],
+    ['What is LiveBench?', 'A benchmark suite from an academic consortium that refreshes its questions every six months, so models cannot have memorized the answers from training data ("contamination") — a real problem for older benchmarks. Scores are objective right/wrong results, not opinions, and every model runs the same release. We publish the release date we use.'],
+    ['What is LiveBench Agentic Coding?', 'LiveBench\'s test of producing working code in JavaScript, TypeScript, and Python inside an agent harness — the model must iterate, run, and fix its own code. It anchors the Agentic Coding tab alongside the AA indices because it measures execution, not just code writing.'],
+    ['What is LiveBench Reasoning?', 'Theory-of-mind, spatial, logic-puzzle, and navigation-logic tasks — multi-step "think it through" problems with verifiable answers. Shown on the Reasoning & Knowledge tab; a good proxy for analysis and problem-solving workloads.'],
+    ['What is LiveBench Math?', 'Competition and olympiad mathematics plus integral solving. It stresses precise symbolic reasoning where a near-miss is still wrong. Useful when your workload cannot tolerate plausible-but-wrong derivations (financial models, scientific code).'],
+    ['What is LiveBench Data Analysis?', 'Joining tables, reformatting tabular data, and tracking events across records — the spreadsheet-and-database skills behind most knowledge-work automation. It anchors the Knowledge Work tab.'],
+    ['What is LiveBench Instruction Following?', 'Whether the model does exactly what was asked — paraphrasing under constraints, simplifying without losing meaning, hitting story and summary requirements. The difference between "a good answer" and "the answer you specified"; critical for repeatable workflows.'],
+    ['What is LiveBench Language?', 'Wordplay, connections, plot reconstruction, and typo detection — precision with language itself rather than world knowledge. Complements instruction following on the Knowledge Work tab.'],
+    ['What is Design Arena?', 'A head-to-head vote: two models build a website or UI from the same prompt, humans pick the better result, and Elo scores accumulate like chess ratings. Around 1300 is decent; 1450+ is excellent. It anchors the Chat & UI Quality tab and appears on Agentic Coding because frontend output quality is part of shipping. The model detail view also shows each model\'s best category (website, 3D, dataviz, and so on).'],
+    // ── Reading the page ──
+    ['What does "From $/M" mean on the benchmarks page?', 'The cheapest price for that model across tracked providers, as a blended rate per million tokens at the token mix from the Text calculator (cached-heavy by default). The benchmarks page recomputes this live from the mix you last used on the Text tab, since the cheapest provider can change with the mix.'],
+    ['What is the Value column?', 'Capability per dollar: the tab\'s primary score divided by the blended price, scaled so the best model in the current view equals 100. It answers "if I do not need the absolute best, what gives me the most capability per cent?" It is a relative ranking within the current tab and filters, not an absolute measure, and it is never compared across tabs.'],
+    ['Why do some models show "—" in certain columns?', 'No one has published that benchmark for that model yet, or the evaluation is newer than our data. New models typically receive scores within days to weeks of release. Only models purchasable through a tracked provider are listed — a score without a price cannot be comparison-shopped.'],
+    ['Which benchmark should I look at?', 'Pick the tab closest to your workload: agents or coding bots — Agentic Coding; analysis, research, or reasoning — Reasoning & Knowledge; documents, summaries, spreadsheets — Knowledge Work; anything visual — Chat & UI Quality. When two models are within a few points, treat them as tied; price and speed usually decide it.'],
+  ];
+}
+
+export function renderFaqPage({ modelCount, providerCount }) {
+  const path = '/faq/';
+  const description = 'Answers about LLM API pricing, cost calculation, image and video generation pricing, and what each benchmark actually measures — in plain language.';
+  const groups = [
+    { id: 'text-pricing', title: 'Text & token pricing questions', items: homeFaqItems(modelCount, providerCount) },
+    { id: 'image-pricing', title: 'Image generation pricing questions', items: imageFaqItems() },
+    { id: 'video-pricing', title: 'Video generation pricing questions', items: videoFaqItems() },
+    { id: 'benchmarks', title: 'Benchmarks — what the numbers mean', items: benchFaqItems() },
+  ];
+  const body = groups.map((g) => renderFaqSection(g.title, g.items).replace('id="faq"', `id="${g.id}"`)).join('\n');
+  const allItems = groups.flatMap((g) => g.items);
+  return renderStaticPage({
+    title: `LLM API Pricing & Benchmark FAQs | TokenWatch`,
+    description,
+    canonicalPath: path,
+    heading: 'Frequently asked questions',
+    subtitle: 'Pricing, cost calculation, image and video generation, and what the benchmarks measure',
+    breadcrumbs: [{ name: 'Text pricing', path: '/' }, { name: 'FAQ', path }],
+    body,
+    structuredData: { '@context': 'https://schema.org', '@graph': [
+      faqSchema(allItems),
+      breadcrumbSchema([{ name: 'Text pricing', path: '/' }, { name: 'FAQ', path }]),
+    ] },
+  });
+}
+
+// llms.txt — markdown manifest for LLM/agent crawlers (llmstxt.org convention).
+export function buildLlmsTxt({ modelCount, providerCount, imageCount, videoCount, generatedAt }) {
+  return `# TokenWatch
+
+> Pay-as-you-go LLM API pricing and practical benchmarks: ${modelCount} text offerings across ${providerCount} providers, ${imageCount} image models, ${videoCount} video models. Data generated ${generatedAt}.
+
+## Pages
+
+- [Text pricing calculator](https://tokenwatch.wyrdwerk.com/): compare per-token prices across providers; enter a token mix or budget to compute costs
+- [Image generation pricing](https://tokenwatch.wyrdwerk.com/image): per-image, per-megapixel, and image-token units kept separate
+- [Video generation pricing](https://tokenwatch.wyrdwerk.com/video): per-second rates by resolution and audio mode
+- [Benchmarks by use case](https://tokenwatch.wyrdwerk.com/benchmarks): agentic coding, reasoning, knowledge work, and UI quality scores joined to cheapest-provider blended pricing
+- [Provider directory](https://tokenwatch.wyrdwerk.com/providers/): policy links, HQ, datacenters, and per-provider model catalogs
+- [Methodology](https://tokenwatch.wyrdwerk.com/docs/methodology/): sourcing, normalization, dedup, and cost-calculation rules
+- [API docs](https://tokenwatch.wyrdwerk.com/docs/api/): queryable JSON endpoints for all catalogs
+- [FAQ](https://tokenwatch.wyrdwerk.com/faq/): pricing, image/video billing, and plain-language benchmark explainers
+
+## API
+
+- JSON endpoints under https://tokenwatch.wyrdwerk.com/api/v1/ — models, providers, orgs, stats, images, videos (no auth, CORS enabled)
+
+## Data notes
+
+- Prices are USD per million tokens (images/video use native units). Direct-provider APIs take precedence, then OpenRouter de-aggregated, then maintained fallbacks.
+- Benchmark scores come from Artificial Analysis, LiveBench, and Design Arena; they measure models, not providers. "From $/M" on the benchmarks page is the cheapest provider's blended rate at a cached-heavy workload mix.
+`;
 }
 
 export function renderMethodologyPage({ modelCount, providerCount, generatedAt }) {

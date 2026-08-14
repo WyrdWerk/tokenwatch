@@ -6,7 +6,9 @@ Compare pay-as-you-go LLM inference pricing across inference providers. Enter yo
 
 ## How it works
 
-1. **`scripts/fetch-pricing.mjs`** fetches text-generation pricing from 3 tiers: direct `/v1/models` providers (DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac, SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs), OpenRouter de-aggregated `/endpoints` (Fireworks, Together, Novita, SiliconFlow, etc.), plus CSV/hardcoded (Makora, Xiaomimimo, OpenCode Go) and manually maintained Umans pricing (`UMANS_MODELS` in the fetcher). Also fetches provider metadata, ZDR data, models.dev enrichment, and quality benchmarks. Normalizes all pricing to $/M tokens and writes `public/pricing.json`.
+0. **`scripts/fetch-benchmarks.mjs`** builds `public/benchmarks.json` — practical benchmark scores (Artificial Analysis indices, LiveBench per-release CSV from GitHub, Design Arena Elo) joined to per-provider prices, powering the `/benchmarks` use-case explorer. Model-creator orgs are resolved via a 4-layer scheme (clean org → provider-slug blocklist → variant-family inheritance → creator-prefix map), regression-pinned in `test/benchmarks-page.test.mjs`.
+
+1. **`scripts/fetch-pricing.mjs`** fetches text-generation pricing from 3 tiers: direct `/v1/models` providers (DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac, SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs), OpenRouter de-aggregated `/endpoints` (Fireworks, Together, Novita, SiliconFlow, etc.), plus CSV/hardcoded (Makora, Xiaomimimo), docs-page-scraped OpenCode Go pricing (`parseOpenCodeGoDocs` scrapes the opencode.ai/docs/go table; catalog endpoint has no prices), and manually maintained Umans pricing (`UMANS_MODELS` in the fetcher). Also fetches provider metadata, ZDR data, models.dev enrichment, and quality benchmarks. Normalizes all pricing to $/M tokens and writes `public/pricing.json`.
 2. **`scripts/fetch-images.mjs`** fetches image generation models from OpenRouter plus fal.ai (Tier-1 precedence). Handles flat per-image, per-megapixel, and per-token pricing. Writes `public/image-pricing.json` (~160 models).
 3. **`scripts/fetch-videos.mjs`** fetches video generation models from OpenRouter plus fal.ai (Tier-1 precedence). Normalizes per-second pricing with resolution and audio variants. Writes `public/video-pricing.json` (~100 models).
 4. **`public/`** is a zero-dependency static site (HTML/CSS/JS) with three tabs (Text/Image/Video), each loading its own pricing JSON and computing costs in-browser.
@@ -18,7 +20,7 @@ Compare pay-as-you-go LLM inference pricing across inference providers. Enter yo
 TokenWatch ships SEO infrastructure for a client-side-rendered SPA:
 
 - **`scripts/generate-seo.mjs`** (`npm run seo`) server-renders the **25 cheapest models** (by effective cost at the agentic mix 2.5/97/0.5) into `index.html` as a real HTML table — so Google's crawler sees pricing content in the raw HTML, not an empty JS-rendered shell. It also generates `sitemap.xml` (with `lastmod` from `generated_at`) and `robots.txt`. **Idempotent** — replaces the existing `class="seo-models"` section, never re-inserts.
-- All 3 HTML pages carry keyword-rich titles/descriptions, canonical tags, `og:image` (1200×630), `twitter:card=summary_large_image`, and JSON-LD structured data (`WebSite` + `SoftwareApplication` + `FAQPage` + `BreadcrumbList`).
+- All 3 HTML pages carry keyword-rich titles/descriptions, canonical tags, `og:image` (1200×630), `twitter:card=summary_large_image`, and JSON-LD structured data (`WebSite` + `SoftwareApplication` + `BreadcrumbList`; `FAQPage` lives on the consolidated `/faq/`). A generated `llms.txt` (markdown manifest for LLM/agent crawlers) is refreshed on every deploy alongside `sitemap.xml` (now including `/benchmarks` and `/faq/`).
 - `_headers` sets `X-Robots-Tag: noindex` on `/api/*` and the raw JSON data files so they don't compete with the HTML pages.
 - See [docs/conversations/20260803-seo-gsc-setup-public.md](docs/conversations/20260803-seo-gsc-setup-public.md) for the full setup record.
 
@@ -125,6 +127,8 @@ data/
 public/
   index.html                 # UI: dual search, usage inputs, 11-column results table (incl. Speed + Blended $/M), group-by, comparison modal, Export CSV, mobile sort. Also SEO head metadata + JSON-LD + FAQ + server-rendered table
   app.js                     # State, URL hash, search, cost computation, blendedCostFor, exportCsv, group-by, comparison (Speed + Blended rows), monthly mode, rendering
+  benchmarks.html            # /benchmarks: use-case tabs (agentic/reasoning/knowledge/UI), value-benchmark dropdown incl. "no filter", mix-aware From $/M (Text-page localStorage), org filter, FAQ → /faq/
+  benchmarks-app.js          # Benchmarks page app (mirrors blendedRate; value = score ÷ blended price normalized best-in-view = 100)
   styles.css                 # Dark/light theme, all badges, group headers, comparison modal, mode toggle, responsive (card layout, mobile sort). Includes .seo-faq/.seo-models/.noscript-note
   image.html                 # Image tab: search, count input, variant filter, sortable table, mobile sort
   image-app.js               # Image pricing calculator, typeahead search, unit-adaptive columns, mobile card layout

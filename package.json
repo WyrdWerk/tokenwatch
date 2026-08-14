@@ -1,7 +1,7 @@
 {
   "name": "tokenwatch",
   "version": "1.0.0",
-  "description": "TokenWatch — compare pay-as-you-go LLM inference pricing across providers",
+  "description": "TokenWatch \u2014 compare pay-as-you-go LLM inference pricing across providers",
   "scripts": {
     "fetch": "node scripts/fetch-pricing.mjs",
     "fetch:fal": "node scripts/fetch-fal.mjs",
@@ -9,12 +9,13 @@
     "fetch:videos": "node scripts/fetch-videos.mjs",
     "fetch:all": "node scripts/fetch-pricing.mjs && node scripts/fetch-images.mjs && node scripts/fetch-videos.mjs",
     "serve": "npx --yes serve public -l 3000",
-    "build:prod": "node scripts/fetch-pricing.mjs && node scripts/fetch-images.mjs && node scripts/fetch-videos.mjs && node scripts/generate-seo.mjs && node scripts/verify-seo.mjs && echo 'Static site in ./public'",
+    "build:prod": "node scripts/fetch-pricing.mjs && node scripts/fetch-images.mjs && node scripts/fetch-videos.mjs && node scripts/fetch-benchmarks.mjs && node scripts/generate-seo.mjs && node scripts/verify-seo.mjs && echo 'Static site in ./public'",
     "fetch:perf": "node scripts/fetch-performance.mjs",
     "test": "node --test test/*.test.mjs",
     "seo": "node scripts/generate-seo.mjs",
     "verify:seo": "node scripts/verify-seo.mjs",
-    "bust:cache": "node scripts/bust-cache.mjs"
+    "bust:cache": "node scripts/bust-cache.mjs",
+    "fetch:benchmarks": "node scripts/fetch-benchmarks.mjs"
   },
   "license": "MIT",
   "engines": {

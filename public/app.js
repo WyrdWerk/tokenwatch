@@ -142,6 +142,11 @@ function serializeState() {
   if (!mixDefault) {
     params.set('mix', `${inputPct.value},${cacheReadPct.value},${outputPct.value}`);
   }
+  // Cross-page mix sharing: the Benchmarks page reads this to compute blended
+  // $/M at the visitor's own workload mix (same text boxes, one source of truth).
+  try {
+    localStorage.setItem('tw-mix', `${inputPct.value},${cacheReadPct.value},${outputPct.value}`);
+  } catch (e) { /* private mode etc. — non-fatal */ }
 
   const provider = els.providerSearch.value.trim();
   if (provider) params.set('provider', provider);

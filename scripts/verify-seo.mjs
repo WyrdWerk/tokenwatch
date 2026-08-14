@@ -44,12 +44,19 @@ function assertCalculatorPage(html, label, minFaqs) {
     }
   }
   requireMatch(html, /<section class="seo-models"[\s\S]*?<tbody>[\s\S]*?<tr>/, `${label} has no crawlable pricing rows`);
+  // Full FAQ lists live on /faq/ — calculator pages carry a pointer section.
+  requireMatch(html, /<section class="seo-faq"[\s\S]*?href="\/faq\//, `${label} FAQ section must link to /faq/`);
+}
+
+// The consolidated FAQ page owns the FAQPage JSON-LD — visible details and
+// schema entries must match 1:1 there.
+function assertFaqPage(html) {
   const visibleFaqs = count(html, /<details>/g);
-  if (visibleFaqs < minFaqs) throw new Error(`verify-seo: ${label} has ${visibleFaqs} FAQs; expected at least ${minFaqs}`);
-  const data = parseStructuredData(html, label);
+  if (visibleFaqs < 20) throw new Error(`verify-seo: faq page has ${visibleFaqs} FAQs; expected at least 20`);
+  const data = parseStructuredData(html, 'faq page');
   const faq = data['@graph']?.find((node) => node['@type'] === 'FAQPage');
   if (!faq || faq.mainEntity?.length !== visibleFaqs) {
-    throw new Error(`verify-seo: ${label} visible FAQ and FAQPage JSON-LD counts differ`);
+    throw new Error(`verify-seo: faq page visible FAQ (${visibleFaqs}) and FAQPage JSON-LD (${faq?.mainEntity?.length}) counts differ`);
   }
 }
 
@@ -59,18 +66,21 @@ function localFileForUrl(url) {
   if (parsed.pathname === '/') return join(PUBLIC, 'index.html');
   if (parsed.pathname === '/image') return join(PUBLIC, 'image.html');
   if (parsed.pathname === '/video') return join(PUBLIC, 'video.html');
+  if (parsed.pathname === '/benchmarks') return join(PUBLIC, 'benchmarks.html');
   if (!parsed.pathname.endsWith('/')) throw new Error(`verify-seo: generated sitemap path must end in /: ${parsed.pathname}`);
   return join(PUBLIC, parsed.pathname.replace(/^\//, ''), 'index.html');
 }
 
 export async function main() {
-  const [index, image, video, sitemap, providerEntries] = await Promise.all([
+  const [index, image, video, faqPage, sitemap, providerEntries] = await Promise.all([
     readFile(join(PUBLIC, 'index.html'), 'utf8'),
     readFile(join(PUBLIC, 'image.html'), 'utf8'),
     readFile(join(PUBLIC, 'video.html'), 'utf8'),
+    readFile(join(PUBLIC, 'faq', 'index.html'), 'utf8'),
     readFile(join(PUBLIC, 'sitemap.xml'), 'utf8'),
     readdir(join(PUBLIC, 'providers'), { withFileTypes: true }),
   ]);
+  assertFaqPage(faqPage);
 
   assertCalculatorPage(index, 'index.html', 10);
   assertCalculatorPage(image, 'image.html', 6);
@@ -89,7 +99,7 @@ export async function main() {
 
   const urls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
   if (urls.length !== new Set(urls).size) throw new Error('verify-seo: sitemap contains duplicate URLs');
-  const expectedUrls = providerDirs.length + 6;
+  const expectedUrls = providerDirs.length + 8;
   if (urls.length !== expectedUrls) throw new Error(`verify-seo: sitemap has ${urls.length} URLs; expected ${expectedUrls}`);
   await Promise.all(urls.map((url) => assertFile(localFileForUrl(url), `sitemap target ${url}`)));
 

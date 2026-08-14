@@ -22,6 +22,8 @@ import {
   imageFaqItems,
   videoFaqItems,
   renderFaqSection,
+  renderFaqPointerSection,
+  buildLlmsTxt,
   calculatorStructuredData,
   replaceStructuredData,
   replaceSection,
@@ -33,6 +35,7 @@ import {
   renderProviderDirectoryPage,
   renderMethodologyPage,
   renderApiDocsPage,
+  renderFaqPage,
   renderExploreLinks,
   buildSitemap,
   buildRobots,
@@ -116,13 +119,12 @@ function renderHomepage(markup, pricing, rows, dates) {
   let out = renderCounts(markup, modelCount, providerCount);
   out = renderHomepageMeta(out, modelCount, providerCount);
   out = replaceSection(out, 'seo-models', renderSeoTable(rows, dates.text));
-  out = replaceSection(out, 'seo-faq', renderFaqSection('Frequently asked LLM API pricing questions', faq));
+  out = replaceSection(out, 'seo-faq', renderFaqPointerSection());
   out = replaceSection(out, 'seo-links', renderExploreLinks());
   out = replaceStructuredData(out, calculatorStructuredData({
     page: 'text',
     title: `LLM API Pricing Comparison — ${modelCount} Models Across ${providerCount} Providers`,
     description: `Compare pay-as-you-go LLM API pricing across ${providerCount} providers and ${modelCount} models using workload-specific token costs.`,
-    faq,
     rows,
   }));
   return out;
@@ -134,13 +136,12 @@ function renderImagePage(markup, imagePricing, dates) {
   const itemRows = [...groups.image, ...groups.megapixel, ...groups.token];
   let out = renderModalityMeta(markup, 'image', imagePricing.models.length);
   out = replaceSection(out, 'seo-models', renderImageSeoSection(groups, dates.image));
-  out = replaceSection(out, 'seo-faq', renderFaqSection('Image generation API pricing questions', faq));
+  out = replaceSection(out, 'seo-faq', renderFaqPointerSection());
   out = replaceSection(out, 'seo-links', renderExploreLinks());
   out = replaceStructuredData(out, calculatorStructuredData({
     page: 'image',
     title: `Image Generation API Pricing — ${imagePricing.models.length} Models`,
     description: 'Compare image API prices while keeping flat-image, megapixel, and image-token billing units separate.',
-    faq,
     rows: itemRows,
   }));
   return out;
@@ -150,13 +151,12 @@ function renderVideoPage(markup, videoPricing, rows, dates) {
   const faq = videoFaqItems();
   let out = renderModalityMeta(markup, 'video', videoPricing.models.length);
   out = replaceSection(out, 'seo-models', renderVideoSeoSection(rows, dates.video));
-  out = replaceSection(out, 'seo-faq', renderFaqSection('Video generation API pricing questions', faq));
+  out = replaceSection(out, 'seo-faq', renderFaqPointerSection());
   out = replaceSection(out, 'seo-links', renderExploreLinks());
   out = replaceStructuredData(out, calculatorStructuredData({
     page: 'video',
     title: `Video Generation API Pricing — ${videoPricing.models.length} Models`,
     description: 'Compare video API prices by per-second rate, resolution, audio mode, and total duration.',
-    faq,
     rows,
   }));
   return out;
@@ -195,14 +195,17 @@ export async function main() {
   const providerCount = new Set(pricing.models.map((model) => model.provider)).size;
   const methodology = renderMethodologyPage({ modelCount, providerCount, generatedAt: pricing.generated_at });
   const apiDocs = renderApiDocsPage();
+  const faqPage = renderFaqPage({ modelCount, providerCount });
   const sitemapEntries = [
     { path: '/', lastmod: dates.text, changefreq: 'daily', priority: '1.0' },
     { path: '/image', lastmod: dates.image, changefreq: 'daily', priority: '0.8' },
     { path: '/video', lastmod: dates.video, changefreq: 'daily', priority: '0.8' },
     { path: '/providers/', lastmod: newestDate(Object.values(dates)), changefreq: 'daily', priority: '0.8' },
     ...providerPages.map((provider) => ({ path: `/providers/${provider.slug}/`, lastmod: providerLastmod(provider, dates), changefreq: 'daily', priority: '0.7' })),
+    { path: '/benchmarks', lastmod: dates.text, changefreq: 'daily', priority: '0.8' },
     { path: '/docs/methodology/', lastmod: dates.text, changefreq: 'monthly', priority: '0.6' },
     { path: '/docs/api/', changefreq: 'monthly', priority: '0.6' },
+    { path: '/faq/', lastmod: dates.text, changefreq: 'weekly', priority: '0.6' },
   ];
   const sitemap = buildSitemap(sitemapEntries);
   const robots = buildRobots();
@@ -214,6 +217,13 @@ export async function main() {
     writeAtomic(join(PUBLIC, 'video.html'), rendered.video),
     writeAtomic(join(PUBLIC, 'docs', 'methodology', 'index.html'), methodology),
     writeAtomic(join(PUBLIC, 'docs', 'api', 'index.html'), apiDocs),
+    writeAtomic(join(PUBLIC, 'faq', 'index.html'), faqPage),
+    writeAtomic(join(PUBLIC, 'llms.txt'), buildLlmsTxt({
+      modelCount, providerCount,
+      imageCount: imagePricing.models.length,
+      videoCount: videoPricing.models.length,
+      generatedAt: pricing.generated_at,
+    })),
     writeAtomic(join(PUBLIC, 'sitemap.xml'), sitemap),
     writeAtomic(join(PUBLIC, 'robots.txt'), robots),
   ]);
