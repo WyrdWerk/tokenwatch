@@ -138,6 +138,91 @@ export function parseAster(data) {
   });
 }
 
+// ── OpenCode Go (docs-page scraping) ──────────────────────────────────────────
+// OpenCode Zen exposes the model catalog at /zen/go/v1/models but WITHOUT
+// pricing. The $/M prices live only in the docs page's pricing table
+// (https://opencode.ai/docs/go/#models: "Model | Input | Output | Cached Read |
+// Cached Write | Usage"). parseOpenCodeGoDocs scrapes that table. Context
+// lengths stay manual (OPENCODE_GO_CONTEXT in fetch-pricing.mjs) — the docs
+// page doesn't publish them.
+
+/**
+ * Parse "$X" / "-" price cell text to a $/M number or null.
+ * @param {string} raw cell text like "$2.00", "-", "—"
+ * @returns {number|null}
+ */
+function parseOpenCodePriceCell(raw) {
+  const s = (raw || '').trim();
+  if (!s || s === '-' || s === '—' || s === '–') return null;
+  const m = s.match(/\$\s*([\d.]+)/);
+  return m ? parseFloat(m[1]) : null;
+}
+
+/**
+ * Display name → catalog id. Lowercase + hyphenate; tiered variants:
+ * "Qwen3.7 Plus (≤ 256K tokens)" → "qwen3.7-plus" (base, lower tier)
+ * "Qwen3.7 Plus (> 256K tokens)" → "qwen3.7-plus-long" (higher tier, matches
+ * the legacy hardcoded ids and the canonicalId quant-suffix convention).
+ * @param {string} name e.g. "GPT 5.6 Luna (≤ 272K tokens)"
+ * @returns {string|null} catalog id, or null when the name carries no variant
+ *   info we can map (caller decides how to treat it)
+ */
+export function openCodeGoIdFromName(name) {
+  const raw = (name || '').trim();
+  if (!raw) return null;
+  const gt = raw.match(/\(>\s*[\d.]+K?\s*tokens?\)/i);
+  const base = raw.replace(/\((≤|>)\s*[\d.]+K?\s*tokens?\)\s*$/i, '').trim();
+  if (!base) return null;
+  const id = base.toLowerCase().replace(/\s+/g, '-');
+  return gt ? `${id}-long` : id;
+}
+
+/**
+ * Scrape the OpenCode Go docs pricing table into price rows.
+ * Pure function over the HTML string.
+ * @param {string} html docs page HTML
+ * @returns {Array<{id: string, name: string, input: number, output: number,
+ *   cache_read: number|null, cache_write: number|null}>}
+ */
+export function parseOpenCodeGoDocs(html) {
+  const rows = [];
+  // Identify the pricing table by its header row (contains "Cached Read") —
+  // the docs page has several other tables (request estimates etc.).
+  const tables = html.match(/<table[\s\S]*?<\/table>/gi) || [];
+  const tableHtml = tables.find((tb) => /<th[\s\S]*?<\/th>/i.test(tb) && /Cached\s+Read/i.test(tb));
+  if (!tableHtml) return rows;
+
+  const tbody = tableHtml.match(/<tbody[\s\S]*?<\/tbody>/i);
+  if (!tbody) return rows;
+
+  const trRe = /<tr[\s\S]*?<\/tr>/gi;
+  let m;
+  while ((m = trRe.exec(tbody[0]))) {
+    const cells = [...m[0].matchAll(/<td[\s\S]*?<\/td>/gi)].map(
+      (tm) => tm[0].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    );
+    if (cells.length < 4) continue;
+    // Column layout: Model | Input | Output | Cached Read | Cached Write | Usage
+    const name = cells[0];
+    if (!name) continue;
+    const id = openCodeGoIdFromName(name);
+    if (!id) continue;
+    const input = parseOpenCodePriceCell(cells[1]);
+    const output = parseOpenCodePriceCell(cells[2]);
+    // Zero/negative or missing prices → skip (data-filter convention)
+    if (!input || !output) continue;
+    rows.push({
+      id,
+      name: name.replace(/\((≤|>)\s*[\d.]+K?\s*tokens?\)\s*$/i, '').trim(),
+      input,
+      output,
+      cache_read: parseOpenCodePriceCell(cells[3]),
+      cache_write: parseOpenCodePriceCell(cells[4]),
+    });
+  }
+  return rows;
+}
+
 /** Filter out non-text models by ID pattern. */
 export const NON_TEXT_ID = /(?:^|[-/])(embed|embedding|embeddinggemma|clip|bge|tts|bark|parler|kokoro|openvoice)(?:[-/]|$)/i;
 export function isTextModel(id) {

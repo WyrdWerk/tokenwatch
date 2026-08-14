@@ -35,6 +35,7 @@
 import { readFile } from 'node:fs/promises';
 import {
   perTokToPerM, centsToDollars, passthrough, parseSference, parseNeuralwatt, parseMerius, parseAster,
+  parseOpenCodeGoDocs,
   NON_TEXT_ID, isTextModel,
   ORG_ALIASES, PROVIDER_NAME_MAP,
   orgFromId, orgFromName,
@@ -768,6 +769,51 @@ function parseOpenCodeGo() {
   }));
 }
 
+// Context lengths stay manual — the docs pricing table doesn't publish them.
+// Keyed by catalog id (incl. '-long' tiered variants). models.dev enrichment
+// fills nulls where it can.
+const OPENCODE_GO_CONTEXT = new Map(
+  OPENCODE_GO_MODELS.map((m) => [m.id, m.context_length || null])
+);
+
+const OPENCODE_DOCS_URL = 'https://opencode.ai/docs/go/';
+
+/**
+ * Fetch OpenCode Go pricing by scraping the docs pricing table (primary),
+ * with fallback to the legacy hardcoded array. The /zen/go/v1/models catalog
+ * endpoint lists models but carries no pricing — prices live only in the docs.
+ * @returns {Array} model records (same shape as parseOpenCodeGo())
+ */
+async function fetchOpenCodeGoPricing() {
+  let rows = null;
+  try {
+    const resp = await fetch(OPENCODE_DOCS_URL, { redirect: 'follow' });
+    if (resp.ok) {
+      const html = await resp.text();
+      const parsed = parseOpenCodeGoDocs(html);
+      // Sanity floor: a half-parsed table is worse than the (stale) fallback.
+      if (parsed.length >= 10) rows = parsed;
+      else console.warn(`⚠ OpenCode Go docs scrape found only ${parsed.length} priced rows — falling back to hardcoded pricing`);
+    } else {
+      console.warn(`⚠ OpenCode Go docs fetch HTTP ${resp.status} — falling back to hardcoded pricing`);
+    }
+  } catch (err) {
+    console.warn(`⚠ OpenCode Go docs fetch failed: ${err.message} — falling back to hardcoded pricing`);
+  }
+
+  if (!rows) return parseOpenCodeGo();
+
+  return rows.map((m) => ({
+    id: m.id,
+    name: m.name,
+    provider: 'opencode',
+    quantization: null,
+    discount: 0,
+    context_length: OPENCODE_GO_CONTEXT.get(m.id) ?? null,
+    pricing: { input: m.input, output: m.output, cache_read: m.cache_read, cache_write: m.cache_write },
+  }));
+}
+
   // ── Umans AI (hardcoded pricing) ──────────────────────────────────────────────
   // Manually maintained — update when Umans changes pricing at https://api.code.umans.ai/v1/models
 
@@ -855,7 +901,7 @@ async function main() {
   }
 
   try {
-    const ocModels = parseOpenCodeGo();
+    const ocModels = await fetchOpenCodeGoPricing();
     out.providers.push({ key: 'opencode', name: 'OpenCode Go', model_count: ocModels.length, status: 'ok' });
     tieredModels.push(...ocModels);
     console.log(`✓ OpenCode Go: ${ocModels.length} models`);

@@ -5,6 +5,53 @@
   <h1>Energy Pricing</h1>
   <p>Neuralwatt currently charges <strong>$10.00/kWh</strong> on pay-as-you-go.</p>
 
+  <!-- Per-model summary table (added 2026-08): sits BEFORE the band grid.
+       First cell bundles the size-band subtitle; the name lives in title="".
+       The parser must skip this table and find the band grid by its headers. -->
+  <table>
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>Right now</th>
+        <th>7-day typical</th>
+        <th>vs 7-day</th>
+        <th>48h trend</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="px-4 py-3">
+          <div title="GLM-5.2">GLM-5.2</div>
+          <div class="subtitle"><span title="Energy figures are averages over real traffic, which ran at a 85% cache-hit rate at this request size.">64k–256k &middot; 96% cache</span></div>
+        </td>
+        <td>1.71 Wh</td>
+        <td>~2.09 Wh</td>
+        <td><div>▲ 66% above 7-day avg</div></td>
+        <td>2.44 Wh 1.32 Wh</td>
+      </tr>
+      <tr>
+        <td class="px-4 py-3">
+          <div title="DeepSeek V4 Flash">DeepSeek V4 Flash</div>
+          <div class="subtitle"><span title="Energy figures are averages over real traffic, which ran at a 91% cache-hit rate at this request size.">16k–64k &middot; 89% cache</span></div>
+        </td>
+        <td>294.39 mWh</td>
+        <td>~184.15 mWh</td>
+        <td><div>▼ 12% below 7-day avg</div></td>
+        <td>383.00 mWh 146.99 mWh</td>
+      </tr>
+      <tr>
+        <td class="px-4 py-3">
+          <div title="Kimi K3">Kimi K3</div>
+          <div class="subtitle"><span title="Energy figures are averages over real traffic, which ran at a 94% cache-hit rate at this request size.">64k–256k &middot; 94% cache</span></div>
+        </td>
+        <td>9.55 Wh</td>
+        <td>~7.12 Wh</td>
+        <td><div>▲ 45% above 7-day avg</div></td>
+        <td>15.01 Wh 3.68 Wh</td>
+      </tr>
+    </tbody>
+  </table>
+
   <table>
     <thead>
       <tr>
@@ -76,6 +123,20 @@
         <td>Gathering data</td>
         <td>Gathering data</td>
         <td>Gathering data</td>
+      </tr>
+      <tr>
+        <td>Kimi K3</td>
+        <td title="Kimi K3 at 0–256: 3% cache-hit rate at this request size">
+          405.2 mWh<br>9.1% of reqs
+        </td>
+        <td title="Kimi K3 at 256–1k: 44% cache-hit rate at this request size">
+          6.11 Wh<br>31.7% of reqs
+        </td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
       </tr>
     </tbody>
   </table>

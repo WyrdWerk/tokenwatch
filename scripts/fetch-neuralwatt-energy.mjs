@@ -37,6 +37,8 @@ const DISPLAY_TO_ID = new Map([
   ['Kimi K2.6 Fast', 'kimi-k2.6-fast'],
   ['Kimi K2.7 Code', 'kimi-k2.7-code'],
   ['Kimi K2.7 Code Fast', 'kimi-k2.7-code-fast'],
+  ['Kimi K3', 'kimi-k3'],
+  ['Kimi K3 Fast', 'kimi-k3-fast'],
   ['Qwen3.5 397B', 'qwen3.5-397b'],
   ['Qwen3.5 397B Fast', 'qwen3.5-397b-fast'],
   ['Qwen3.6 35B', 'qwen3.6-35b'],
@@ -98,11 +100,17 @@ function parseSharePercent(raw) {
 export function parseNeuralwattEnergyHtml(html) {
   const result = new Map();
 
-  // ── Extract table ────────────────────────────────────────────────────────
-  const tableMatch = html.match(/<table[\s\S]*?<\/table>/i);
-  if (!tableMatch) return result; // no table = nothing to parse
-
-  const tableHtml = tableMatch[0];
+  // ── Extract the band table ───────────────────────────────────────────────
+  // The page has TWO tables: a per-model summary (Model | Right now | 7-day
+  // typical | vs 7-day | 48h trend) followed by the per-size band grid we need
+  // (Model | 0–256 | 256–1k | …). Identify the band table by its headers —
+  // never assume it's the first <table> in the document.
+  const allTables = html.match(/<table[\s\S]*?<\/table>/gi) || [];
+  const tableHtml = allTables.find((tb) => {
+    const thead = tb.match(/<thead[\s\S]*?<\/thead>/i);
+    return thead && thead[0].includes('0–256');
+  });
+  if (!tableHtml) return result; // no band table = nothing to parse
 
   // Parse headers — first <th> is "Model", the rest are band keys
   const theadMatch = tableHtml.match(/<thead[\s\S]*?<\/thead>/i);
@@ -139,8 +147,22 @@ export function parseNeuralwattEnergyHtml(html) {
 
     if (cells.length < 2) continue;
 
-    // First cell = model display name
-    const modelName = cells[0].text;
+    // First cell = model display name. Scope extraction to the FIRST <td> block
+    // only: its title="<name>" attribute when present, else its first text run.
+    // (The visible cell may bundle the size-band subtitle, and later cells carry
+    // tooltip title attrs that must not be mistaken for the model name.)
+    const firstTd = trHtml.match(/<td[\s\S]*?<\/td>/i);
+    let modelName = '';
+    if (firstTd) {
+      const nameTitle = firstTd[0].match(/title="([^"]+)"/);
+      if (nameTitle) {
+        modelName = decodeEntities(nameTitle[1]).trim();
+      } else {
+        // First innermost <div> text = the name line (subtitle lives in a sibling div)
+        const nameDiv = firstTd[0].match(/<div[^>]*>([^<]*)<\/div>/);
+        modelName = nameDiv ? decodeEntities(nameDiv[1]).trim() : cells[0].text;
+      }
+    }
     if (!modelName) continue;
 
     // Map display name → catalog id; skip unknown
@@ -202,7 +224,9 @@ export function parseNeuralwattEnergyHtml(html) {
     if (!existing) continue;
     // Bounded slice — card content sits within a few KB of the title anchor.
     const seg = html.slice(a.idx, a.idx + 4000);
-    const cacheM = seg.match(/measured at a ([\d.]+)%\s*avg cache-hit rate/i);
+    // Cache-hit wording varies by page generation: "measured at a X% avg
+    // cache-hit rate" (cards) vs "ran at a X% cache-hit rate" (summary table).
+    const cacheM = seg.match(/(\d+(?:\.\d+)?)%\s*(?:avg\s+)?cache-hit/i);
     existing.avg_cache_hit_pct = cacheM ? parseFloat(cacheM[1]) : null;
     const trendM = seg.match(/(\d+)%\s*(above|below)\s*7-day\s*avg/i);
     if (trendM) {

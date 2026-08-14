@@ -31,7 +31,7 @@ function parse(html) {
 test('parseNeuralwattEnergyHtml returns Map with correct catalogId keys', () => {
   const map = parse(fixture);
   assert.ok(map instanceof Map, 'should return a Map');
-  assert.equal(map.size, 3, 'should have 3 models (GLM-5.2, DeepSeek V4 Flash, Kimi K2.7 Code Fast)');
+  assert.equal(map.size, 4, 'should have 4 models (GLM-5.2, DeepSeek V4 Flash, Kimi K2.7 Code Fast, Kimi K3)');
   assert.ok(map.has('glm-5.2'), 'should map GLM-5.2 → glm-5.2');
   assert.ok(map.has('deepseek-v4-flash'), 'should map DeepSeek V4 Flash → deepseek-v4-flash');
   assert.ok(map.has('kimi-k2.7-code-fast'), 'should map Kimi K2.7 Code Fast → kimi-k2.7-code-fast');
@@ -143,7 +143,7 @@ test('parseNeuralwattEnergyHtml includes rate observation + warns on disagreemen
   try {
     // Fixture with $10.00/kWh matches config → no warning
     const map = parseNeuralwattEnergyHtml(fixture);
-    assert.equal(map.size, 3, 'should parse 3 models');
+    assert.equal(map.size, 4, 'should parse 4 models');
     assert.equal(warnings.length, 0, 'no warning when rate matches config');
   } finally {
     console.warn = originalWarn;
@@ -166,7 +166,7 @@ test('parseNeuralwattEnergyHtml includes rate observation + warns on disagreemen
 
   try {
     const map2 = parseNeuralwattEnergyHtml(htmlWithDifferentRate);
-    assert.equal(map2.size, 3, 'should still parse 3 models');
+    assert.equal(map2.size, 4, 'should still parse 4 models');
     assert.ok(warnings2.length > 0, 'should warn when rate disagrees with config');
     assert.ok(
       warnings2[0].includes('$15.00'),
@@ -319,4 +319,33 @@ test('$/Mtok energy computation: wh_per_mtok × rate / 1000', () => {
   const usdPerMtok = ds.wh_per_mtok * rate / 1000;
   // 3.142... × 10 / 1000 = 0.0314...
   assert.ok(usdPerMtok > 0.03 && usdPerMtok < 0.032, `$${usdPerMtok.toFixed(6)}/Mtok expected ~0.0314`);
+});
+
+// ── 2026-08 page-structure regression tests ──────────────────────────────────
+// The live page now renders a per-model summary table (Model | Right now |
+// 7-day typical | vs 7-day | 48h trend) BEFORE the band grid. The parser must
+// select the band grid by its headers, not document order, and must read the
+// model name from the first <td>'s title attr / first div (not the bundled
+// subtitle text). Kimi K3 / K3 Fast joined the roster in this redesign.
+
+test('band table is found by headers even when a summary table precedes it', () => {
+  // Fixture has 2 tables; only the second has 0–256 band headers.
+  const map = parse(fixture);
+  assert.equal(map.size, 4, 'summary table rows must not be parsed as bands');
+  assert.ok(map.has('kimi-k3'), 'Kimi K3 (2026-08 roster addition) must map');
+});
+
+test('summary-table first cell does not leak subtitle into model name', () => {
+  const map = parse(fixture);
+  for (const id of map.keys()) {
+    assert.ok(!/cache|k–|reqs/i.test(id), `catalogId "${id}" must be a clean id`);
+  }
+});
+
+test('Kimi K3 band values parse (mWh → Wh, share percent points)', () => {
+  const kimi = parse(fixture).get('kimi-k3');
+  assert.equal(kimi.bands['0–256'].wh, 0.4052, '405.2 mWh → 0.4052 Wh');
+  assert.equal(kimi.bands['0–256'].share, 9.1, '9.1% → 9.1');
+  assert.equal(kimi.bands['256–1k'].wh, 6.11, '6.11 Wh passthrough');
+  assert.equal(kimi.bands['1k–4k'].wh, null, '— → null');
 });
