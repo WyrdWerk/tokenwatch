@@ -100,9 +100,10 @@
       label: 'Chat & UI Quality',
       columns: [
         { key: 'design_arena_elo', label: 'Design Arena Elo', scale: 'Elo' },
+        { key: 'arena_elo', label: 'Arena AI Elo', scale: 'Elo' },
         { key: 'aa_intelligence', label: 'AA Intelligence', scale: '0–100' },
       ],
-      valueFrom: (s) => s.design_arena_elo,
+      valueFrom: (s) => s.design_arena_elo ?? s.arena_elo,
     },
   };
 
@@ -280,6 +281,7 @@
       'Reasoning & Knowledge': ['aa_intelligence', 'livebench_reasoning', 'livebench_math'],
       'Knowledge Work': ['livebench_data_analysis', 'livebench_instruction_following', 'livebench_language'],
       'UI & Design': ['design_arena_elo'],
+      'Chat Preference': ['arena_elo'],
     };
     const LABELS = {
       aa_agentic: 'AA Agentic Index', aa_coding: 'AA Coding Index', aa_intelligence: 'AA Intelligence Index',
@@ -287,6 +289,7 @@
       livebench_reasoning: 'LiveBench Reasoning', livebench_math: 'LiveBench Mathematics',
       livebench_data_analysis: 'LiveBench Data Analysis', livebench_instruction_following: 'LiveBench Instruction Following',
       livebench_language: 'LiveBench Language', design_arena_elo: 'Design Arena Elo',
+      arena_elo: 'Arena AI Elo',
     };
     let html = '';
     for (const [group, keys] of Object.entries(groups)) {

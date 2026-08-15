@@ -23,6 +23,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { canonicalId } from '../shared/normalize.mjs';
 import { blendedRate, AGENTIC_MIX } from '../shared/cost.mjs';
+import { readArenaIndex } from './fetch-arena.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PRICING_JSON = join(__dirname, '..', 'public', 'pricing.json');
@@ -118,6 +119,8 @@ async function fetchLiveBench(log) {
 async function main() {
   const pricing = JSON.parse(await readFile(PRICING_JSON, 'utf8'));
   const livebench = await fetchLiveBench(console);
+  const arena = await readArenaIndex();
+  let arenaMatched = 0;
 
   // 1. Group provider offerings by canonical model id
   const byCanonical = new Map(); // canonicalId → { name, org, offerings: [model rows] }
@@ -220,6 +223,19 @@ async function main() {
       }
     }
 
+    // Arena AI — human-preference Elo (local-only enrichment; null in CI).
+    // Looked up by alphanumeric key (same normalization as LiveBench) so
+    // `qwen3.8-max` (dots) and `claude-opus-4.7` (hyphens) both join exact.
+    if (arena) {
+      const a = arena.get(catalogKey(cid));
+      if (a) {
+        arenaMatched++;
+        scores.arena_elo = a.arena_elo;
+        scores.arena_votes = a.arena_votes;
+        scores.arena_ci = a.arena_ci;
+      }
+    }
+
     const hasScores = Object.keys(scores).some((k) => !k.startsWith('design_arena_category'));
     if (!hasScores) continue;
 
@@ -262,20 +278,25 @@ async function main() {
     (a.scores.aa_intelligence ?? a.scores.livebench_reasoning ?? -1)
   );
 
+  const sources = {
+    artificial_analysis: { name: 'Artificial Analysis', url: 'https://artificialanalysis.ai/', fields: ['aa_intelligence', 'aa_coding', 'aa_agentic'], scale: '0–100 index' },
+    livebench: { name: 'LiveBench', url: 'https://livebench.ai/', release: LIVEBENCH_RELEASE.replace(/_/g, '-'), prefix: 'livebench_', scale: '0–100, contamination-free' },
+    design_arena: { name: 'Design Arena', url: 'https://www.designarena.ai/', fields: ['design_arena_elo'], scale: 'Elo' },
+  };
+  if (arenaMatched > 0) {
+    sources.arena_ai = { name: 'Arena AI (local-only)', url: 'https://arena.ai/leaderboard/text', fields: ['arena_elo', 'arena_votes', 'arena_ci'], scale: 'Elo' };
+  }
+
   const out = {
     generated_at: new Date().toISOString(),
     mix: AGENTIC_MIX,
     model_count: models.length,
-    sources: {
-      artificial_analysis: { name: 'Artificial Analysis', url: 'https://artificialanalysis.ai/', fields: ['aa_intelligence', 'aa_coding', 'aa_agentic'], scale: '0–100 index' },
-      livebench: { name: 'LiveBench', url: 'https://livebench.ai/', release: LIVEBENCH_RELEASE.replace(/_/g, '-'), prefix: 'livebench_', scale: '0–100, contamination-free' },
-      design_arena: { name: 'Design Arena', url: 'https://www.designarena.ai/', fields: ['design_arena_elo'], scale: 'Elo' },
-    },
+    sources,
     models,
   };
 
   await writeFile(OUT_JSON, JSON.stringify(out, null, 2));
-  console.log(`→ Wrote public/benchmarks.json (${models.length} models, LiveBench matched ${lbMatched}/${livebench.size})`);
+  console.log(`→ Wrote public/benchmarks.json (${models.length} models, LiveBench matched ${lbMatched}/${livebench.size}, Arena matched ${arenaMatched})`);
 }
 
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
