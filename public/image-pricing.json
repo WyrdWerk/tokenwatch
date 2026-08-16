@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-15T12:17:02.453Z",
+  "generated_at": "2026-08-16T06:09:02.101Z",
   "models": [
     {
       "id": "flux-schnell",
@@ -3789,6 +3789,20 @@
         "text"
       ],
       "supported_parameters": {
+        "aspect_ratio": {
+          "type": "enum",
+          "values": [
+            "1:1",
+            "3:2",
+            "2:3",
+            "4:3",
+            "3:4",
+            "16:9",
+            "9:16",
+            "21:9",
+            "auto"
+          ]
+        },
         "quality": {
           "type": "enum",
           "values": [
@@ -4235,6 +4249,15 @@
         "text"
       ],
       "supported_parameters": {
+        "aspect_ratio": {
+          "type": "enum",
+          "values": [
+            "1:1",
+            "3:2",
+            "2:3",
+            "auto"
+          ]
+        },
         "quality": {
           "type": "enum",
           "values": [
@@ -4287,6 +4310,15 @@
         "text"
       ],
       "supported_parameters": {
+        "aspect_ratio": {
+          "type": "enum",
+          "values": [
+            "1:1",
+            "3:2",
+            "2:3",
+            "auto"
+          ]
+        },
         "quality": {
           "type": "enum",
           "values": [
