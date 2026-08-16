@@ -76,21 +76,21 @@ test('null-only models stay visible under "Without / no audio"', async () => {
   }
 });
 
-test('flagship null-only models are present and visible', async () => {
+test('every null-only model stays visible under "Without / no audio" (no exact-ID pins)', async () => {
   const data = JSON.parse(await readFile(VIDEO_JSON, 'utf-8'));
-  const expected = [
-    'openai/sora-2-pro',
-    'x-ai/grok-imagine-video',
-    'alibaba/wan-2.6',
-    'alibaba/wan-2.7',
-    'minimax/hailuo-2.3',
-  ];
-  for (const id of expected) {
-    const m = data.models.find(x => x.id === id);
-    assert.ok(m, `${id} not found in video-pricing.json`);
+  // The original regression named five flagship IDs (Sora 2 Pro, Grok Imagine,
+  // Wan 2.6/2.7, Hailuo 2.3). Exact IDs are fragile to upstream churn — when a
+  // provider retires/renames a model the pin breaks the CI gate for a data-only
+  // change. The real invariant is structural: every null-only model (one whose
+  // pricing is entirely audio===null) must remain visible under "Without audio".
+  const nullOnlyModels = data.models.filter(m =>
+    m.pricing.length > 0 && m.pricing.every(p => p.audio === null)
+  );
+  assert.ok(nullOnlyModels.length > 0, 'expected at least one null-only model');
+  for (const m of nullOnlyModels) {
     const visible = m.pricing.filter(p => audioMatches(p.audio, 'false'));
     assert.ok(visible.length > 0,
-      `${id} has 0 entries visible under "Without / no audio"`);
+      `${m.id} has 0 entries visible under "Without / no audio" (used to vanish)`);
   }
 });
 

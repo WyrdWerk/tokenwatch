@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { parseLiveBenchCsv } from '../scripts/fetch-benchmarks.mjs';
+import { familyKey, resolveOrg, makeCleanOrg, orgFromPrefix, buildOrgIndex } from '../shared/benchmark-org.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const BENCH_JSON = join(__dirname, '..', 'public', 'benchmarks.json');
@@ -30,21 +31,81 @@ test('no model has a hosting provider slug as its creator org', () => {
     'org extraction fallback leaked provider names as creators');
 });
 
-test('variant models inherit the base model creator (kimi-k3-fast → moonshot, glm-5.2-fast → z-ai)', () => {
-  const org = (id) => bench.models.find((m) => m.id === id)?.org;
-  assert.equal(org('kimi-k3-fast'), org('kimi-k3'));
-  assert.equal(org('glm-5.2-fast'), org('glm-5.2'));
-  assert.equal(org('glm5.2-fast'), org('glm-5.2'), 'dash-less spelling shares the family');
-  assert.equal(org('kimi-k3-fast'), 'moonshot');
-  assert.equal(org('glm-5.2'), 'z-ai');
+// ── Org resolution: hermetic unit tests (no live-data ID pins) ──────────────
+// The 4-layer resolver (clean org → provider-slug blocklist → family inheritance
+// → leading-token map) lives in shared/benchmark-org.mjs and is tested here
+// with synthetic inputs. This replaces the old exact-ID pins into the committed
+// benchmarks.json, which broke whenever an upstream provider renamed a slug
+// (2026-08-16: Wafer renamed "glm5.2-fast", and the pin went to undefined).
+
+test('familyKey strips variant/quant suffixes and reseller prefix, dash-insensitive', () => {
+  assert.equal(familyKey('kimi-k3-fast'), familyKey('kimi-k3'));
+  assert.equal(familyKey('glm-5.2-fast'), familyKey('glm-5.2'));
+  assert.equal(familyKey('glm5.2-fast'), familyKey('glm-5.2'), 'dash-less spelling shares the family');
+  assert.equal(familyKey('glm-5.2'), 'glm5.2');
+  assert.equal(familyKey('umans-glm-5.2'), familyKey('glm-5.2'));
+  assert.equal(familyKey('gpt-oss-120b-fast'), familyKey('gpt-oss-120b'));
+  assert.equal(familyKey('glm-5.2-nvfp4'), familyKey('glm-5.2'), 'quant suffix is a family variant');
 });
 
-test('well-known creators resolve even when every offering failed org extraction', () => {
-  const org = (id) => bench.models.find((m) => m.id === id)?.org;
-  const grok = bench.models.find((m) => m.id.startsWith('grok-4'));
-  if (grok) assert.ok(['x-ai', 'xai'].includes(grok.org), `grok org=${grok.org}`);
-  const gemini = bench.models.find((m) => m.id.startsWith('gemini-3'));
-  if (gemini) assert.equal(gemini.org, 'google');
+test('variant models inherit the base model creator', () => {
+  const index = buildOrgIndex(new Map([
+    ['glm-5.2',       [{ org: 'z-ai', provider: 'crof' }]],
+    ['glm-5.2-fast',  [{ org: 'neuralwatt', provider: 'neuralwatt' }]], // provider leaked as org
+    ['glm5.2-fast',   [{ org: 'wafer', provider: 'wafer' }]],           // dash-less spelling
+    ['kimi-k3',       [{ org: 'moonshot', provider: 'hyper' }]],
+    ['kimi-k3-fast',  [{ org: 'neuralwatt', provider: 'neuralwatt' }]],
+    ['grok-4.6',      [{ org: null, provider: 'openrouter' }]],         // all offering orgs failed
+  ]), ['neuralwatt', 'wafer', 'crof', 'hyper', 'openrouter']);
+
+  assert.equal(index.get('glm-5.2'), 'z-ai');
+  assert.equal(index.get('glm-5.2-fast'), 'z-ai');   // inherits base via family
+  assert.equal(index.get('glm5.2-fast'), 'z-ai');    // dash-less inherits via family
+  assert.equal(index.get('kimi-k3'), 'moonshot');
+  assert.equal(index.get('kimi-k3-fast'), 'moonshot');
+  assert.equal(index.get('grok-4.6'), 'x-ai');       // leading-token map fallback
+});
+
+test('resolveOrg rejects an org that equals its own or any provider slug', () => {
+  assert.equal(resolveOrg([
+    { org: 'neuralwatt', provider: 'neuralwatt' },
+    { org: 'z-ai', provider: 'ember' },
+  ]), 'z-ai');
+  assert.equal(resolveOrg([{ org: 'wafer', provider: 'wafer' }]), null);
+
+  const clean = makeCleanOrg(['neuralwatt', 'wafer']);
+  assert.equal(clean('neuralwatt'), null, 'provider slug org must never surface');
+  assert.equal(clean('z-ai'), 'z-ai');
+});
+
+test('orgFromPrefix maps leading canonical tokens to creators', () => {
+  assert.equal(orgFromPrefix('grok-4.6'), 'x-ai');
+  assert.equal(orgFromPrefix('gemini-3.6-flash'), 'google');
+  assert.equal(orgFromPrefix('kimi-k3'), 'moonshot');
+  assert.equal(orgFromPrefix('unknown-model'), null);
+});
+
+// ── Org resolution: dynamic invariants against committed benchmarks.json ──────
+// No exact IDs — these assert structural properties of the emitted artifact, so
+// they hold regardless of which providers host which models.
+
+test('models sharing a family key agree on creator org', () => {
+  const byFamily = new Map();
+  for (const m of bench.models) {
+    const fk = familyKey(m.id);
+    if (!byFamily.has(fk)) byFamily.set(fk, new Set());
+    byFamily.get(fk).add(m.org);
+  }
+  const conflicts = [...byFamily.entries()]
+    .filter(([, orgs]) => orgs.size > 1)
+    .map(([fk, orgs]) => `${fk}: [${[...orgs].join(', ')}]`);
+  assert.deepEqual(conflicts, [],
+    'same family resolved to conflicting creators');
+});
+
+test('created orgs are always string or null (never a raw provider object)', () => {
+  const bad = bench.models.filter((m) => m.org !== null && typeof m.org !== 'string');
+  assert.deepEqual(bad.map((m) => `${m.id}→${JSON.stringify(m.org)}`), []);
 });
 
 // ── Data integrity ────────────────────────────────────────────────────────────
