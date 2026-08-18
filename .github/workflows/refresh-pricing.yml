@@ -90,6 +90,9 @@ jobs:
       - name: Fetch benchmarks data (scores + price join)
         run: node scripts/fetch-benchmarks.mjs
 
+      - name: Build advisor knowledge base (pricing + benchmarks + ZDR join)
+        run: node scripts/build-advisor-knowledge.mjs
+
       - name: Commit pricing + performance data
         id: commit
         run: |

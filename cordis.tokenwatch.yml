@@ -1,0 +1,38 @@
+# Read-only runtime composition for TokenWatch Advisor
+# Terminal (bash) and file-writing plugins are completely stripped out.
+# Model-facing tools: read-only pricing, benchmark and documentation lookup.
+
+- id: sdk-jsonrpc-server
+  name: '@deepseek-ai/dsh-sdk-jsonrpc-server'
+  config:
+    maxTokensAsSuccess: true
+
+- id: llm-openai-compatible
+  name: '@deepseek-ai/dsh-llm-deepseek'
+  config:
+    thinking: enabled
+    reasoningEffort: medium
+
+- id: agent-spine
+  name: '@deepseek-ai/dsh-agent-spine-demo'
+  config:
+    persona: 'You are the TokenWatch AI Advisor. You provide concise, accurate model pricing guidance. You have no bash terminal and no file modification capabilities.'
+    workspaceContext: false
+    skills:
+      enabled: false
+    toolBash: false
+    toolJobs: false
+
+- id: fs-local-readonly
+  name: '@deepseek-ai/dsh-fs-local'
+  config:
+    cwd: !!js process.env.DSH_CWD ?? '/home/yash/Agent/project/tokenwatch/public'
+
+- id: tool-fs-readonly
+  name: '@deepseek-ai/dsh-tool-fs'
+  config:
+    allowWrite: false
+    allowEdit: false
+
+- id: token-meter
+  name: '@deepseek-ai/dsh-token-meter'

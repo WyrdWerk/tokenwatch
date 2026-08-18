@@ -13,7 +13,9 @@ Compare pay-as-you-go LLM inference pricing across inference providers. Enter yo
 3. **`scripts/fetch-videos.mjs`** fetches video generation models from OpenRouter plus fal.ai (Tier-1 precedence). Normalizes per-second pricing with resolution and audio variants. Writes `public/video-pricing.json` (~100 models).
 4. **`public/`** is a zero-dependency static site (HTML/CSS/JS) with three tabs (Text/Image/Video), each loading its own pricing JSON and computing costs in-browser.
 5. **`functions/api/v1/`** provides a queryable API via Cloudflare Pages Functions for all three catalogs (text, image, video).
-6. **GitHub Actions** refreshes pricing + performance on a 2-hourly cron, commits updated JSON, and deploys to Cloudflare Pages.
+6. **`functions/api/advisor.js`** powers the on-site conversational AI Advisor (using Nemotron / InferX via OpenAI-compatible API) with dynamic knowledge base ingestion and edge rate-limiting (4 queries / 24h per IP).
+7. **`scripts/build-advisor-knowledge.mjs`** builds `public/advisor-knowledge.json` joining live model pricing, benchmarks, and provider policy URLs for the advisor bot.
+8. **GitHub Actions** refreshes pricing + performance on a 2-hourly cron, commits updated JSON, and deploys to Cloudflare Pages.
 
 ## SEO
 
@@ -145,8 +147,10 @@ public/
     embed.js                 # Embeddable widget (Shadow DOM, auto-detect, theme support)
     demo.html                # Widget demo page
 functions/
-  api/v1/
-    [[route]].js             # Cloudflare Pages Functions API
+  api/
+    advisor.js               # Conversational AI Advisor API (Laggingway / InferX, IP rate-limited)
+    v1/
+      [[route]].js           # Cloudflare Pages Functions API
 .github/workflows/
   refresh-pricing.yml        # 2-hourly cron (fetch+deploy) + push-to-main (deploy-only)
 ```

@@ -454,7 +454,7 @@ export function renderStaticPage({ title, description, canonicalPath, heading, s
   ${renderJsonLd(structuredData)}
 </head>
 <body>
-  <header><div class="header-row"><a class="brand-link site-brand" href="/" aria-label="TokenWatch home">💰 TokenWatch</a><a class="repo-link" href="https://wyrdwerk.com" target="_blank" rel="noopener">WyrdWerk</a><a class="repo-link" href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">GitHub</a><a class="repo-link" href="https://www.linkedin.com/in/yash-jain-65295511b/" target="_blank" rel="noopener">LinkedIn</a><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle dark/light mode"></button></div><h1 class="tagline">${esc(heading)}</h1><p class="subtitle">${esc(subtitle)}</p>${pageNav()}</header>
+  <header><div class="header-row"><a class="brand-link site-brand" href="/" aria-label="TokenWatch home">💰 TokenWatch</a><a class="repo-link" href="https://wyrdwerk.com" target="_blank" rel="noopener">WyrdWerk</a><a class="repo-link" href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">GitHub</a><a class="repo-link" href="https://www.linkedin.com/in/yash-jain-65295511b/" target="_blank" rel="noopener">LinkedIn</a><a class="repo-link" href="https://x.com/thelaggingway" target="_blank" rel="noopener">X</a><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle dark/light mode"></button></div><h1 class="tagline">${esc(heading)}</h1><p class="subtitle">${esc(subtitle)}</p>${pageNav()}</header>
   <main class="seo-page-main">
     ${visibleBreadcrumbs(breadcrumbs)}
 ${body}

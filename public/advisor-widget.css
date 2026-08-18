@@ -1,0 +1,25 @@
+
+/* TokenWatch AI Advisor Widget Styles */
+.tw-advisor-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+.tw-advisor-bubble { display: flex; align-items: center; gap: 8px; background: var(--accent, #1E6E8E); color: #FFFFFF; padding: 10px 18px; border-radius: 999px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16); cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: transform 0.2s ease, box-shadow 0.2s ease; user-select: none; }
+.tw-advisor-bubble:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22); }
+.tw-advisor-icon { font-size: 1.1rem; }
+.tw-advisor-panel { position: absolute; bottom: 56px; right: 0; width: 360px; max-width: calc(100vw - 32px); height: 480px; max-height: calc(100vh - 120px); background: var(--surface, #FFFFFF); border: 1px solid var(--border, #E0D6CA); border-radius: 16px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); display: flex; flex-direction: column; overflow: hidden; }
+.tw-advisor-panel.hidden { display: none; }
+.tw-advisor-header { padding: 12px 16px; background: var(--surface-2, #F3F7FB); border-bottom: 1px solid var(--border, #E0D6CA); display: flex; justify-content: space-between; align-items: center; }
+.tw-advisor-title { font-weight: 700; font-size: 0.95rem; color: var(--text, #0D1725); display: flex; align-items: center; gap: 6px; }
+.tw-advisor-badge { font-size: 0.65rem; text-transform: uppercase; background: var(--accent-faint, rgba(30,110,142,0.12)); color: var(--accent, #1E6E8E); padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+.tw-advisor-close { background: transparent; border: none; font-size: 1.3rem; line-height: 1; color: var(--text-dim, #486680); cursor: pointer; padding: 0 4px; }
+.tw-advisor-close:hover { color: var(--text, #0D1725); }
+.tw-advisor-meta { padding: 6px 16px; background: var(--surface-2, #F3F7FB); border-bottom: 1px dashed var(--border, #E0D6CA); font-size: 0.75rem; color: var(--text-dim, #486680); }
+.tw-advisor-messages { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; font-size: 0.88rem; line-height: 1.45; }
+.tw-msg { padding: 8px 12px; border-radius: 12px; max-width: 88%; word-break: break-word; white-space: pre-wrap; }
+.tw-msg-user { align-self: flex-end; background: var(--accent, #1E6E8E); color: #FFFFFF; border-bottom-right-radius: 2px; }
+.tw-msg-assistant { align-self: flex-start; background: var(--surface-2, #F3F7FB); color: var(--text, #0D1725); border-bottom-left-radius: 2px; border: 1px solid var(--border, #E0D6CA); }
+.tw-msg-system { align-self: center; font-size: 0.8rem; color: var(--text-dim, #486680); background: transparent; border: 1px dashed var(--border, #E0D6CA); border-radius: 8px; padding: 6px 10px; text-align: center; }
+.tw-msg-loading { font-style: italic; opacity: 0.8; }
+.tw-advisor-input-row { padding: 10px 12px; border-top: 1px solid var(--border, #E0D6CA); background: var(--surface, #FFFFFF); display: flex; gap: 8px; }
+.tw-advisor-input-row input { flex: 1; padding: 8px 12px; border: 1px solid var(--border, #E0D6CA); border-radius: 8px; background: var(--bg, #F8F5F0); color: var(--text, #0D1725); font-size: 0.85rem; outline: none; }
+.tw-advisor-input-row input:focus { border-color: var(--accent, #1E6E8E); }
+.tw-advisor-input-row button { padding: 8px 14px; background: var(--accent, #1E6E8E); color: #FFFFFF; border: none; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+.tw-advisor-input-row button:disabled, .tw-advisor-input-row input:disabled { opacity: 0.6; cursor: not-allowed; }

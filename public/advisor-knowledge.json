@@ -1,0 +1,4215 @@
+{
+  "generated_at": "2026-08-18T13:33:58.340Z",
+  "stats": {
+    "total_text_models": 1217,
+    "total_zdr_models": 688,
+    "total_providers": 122,
+    "tracked_benchmarks": 265
+  },
+  "providers": [
+    {
+      "id": "crof",
+      "headquarters": "US",
+      "privacy": "https://crof.ai/privacy",
+      "tos": "https://crof.ai/tos",
+      "status": null,
+      "zdr": true,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "ember",
+      "headquarters": "Global",
+      "privacy": "https://www.embercloud.ai/privacy",
+      "tos": "https://www.embercloud.ai/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "hyper",
+      "headquarters": "US",
+      "privacy": "https://hyper.charm.land/privacy",
+      "tos": "https://hyper.charm.land/terms",
+      "status": null,
+      "zdr": true,
+      "may_train": false,
+      "retention_days": 30
+    },
+    {
+      "id": "lilac",
+      "headquarters": "US",
+      "privacy": "https://getlilac.com/privacy",
+      "tos": "https://getlilac.com/terms",
+      "status": null,
+      "zdr": true,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "makora",
+      "headquarters": "US",
+      "privacy": "https://www.makora.com/privacy-policy",
+      "tos": "https://www.makora.com/terms-of-service",
+      "status": null,
+      "zdr": true,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "synthetic",
+      "headquarters": "US",
+      "privacy": "https://synthetic.new/policies/privacy",
+      "tos": "https://synthetic.new/policies/terms-of-service",
+      "status": null,
+      "zdr": true,
+      "may_train": false,
+      "retention_days": 0
+    },
+    {
+      "id": "opencode",
+      "headquarters": "US",
+      "privacy": "https://opencode.ai/legal/privacy-policy",
+      "tos": "https://opencode.ai/legal/terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "xiaomimimo",
+      "headquarters": "NL",
+      "privacy": "https://privacy.mi.com/XiaomiMiMoPlatform/en_GB/",
+      "tos": "https://mimo.mi.com/docs/quick-start/terms/user-agreement",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "sference",
+      "headquarters": "Global",
+      "privacy": "https://sference.com/privacy",
+      "tos": "https://sference.com/terms",
+      "status": null,
+      "zdr": true,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "umans",
+      "headquarters": "Global",
+      "privacy": "https://app.umans.ai/offers/code/legal/privacy-policy",
+      "tos": "https://app.umans.ai/offers/code/legal/terms-of-use",
+      "status": "https://status.umans.ai/status",
+      "zdr": true,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "merius",
+      "headquarters": "Global",
+      "privacy": "https://merius.ai/privacy",
+      "tos": "https://merius.ai/terms",
+      "status": "https://status.merius.ai",
+      "zdr": true,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "neuralwatt",
+      "headquarters": "Global",
+      "privacy": "https://portal.neuralwatt.com/privacy",
+      "tos": "https://portal.neuralwatt.com/terms",
+      "status": "https://neuralwatt.betteruptime.com",
+      "zdr": true,
+      "may_train": false,
+      "retention_days": 1
+    },
+    {
+      "id": "aster",
+      "headquarters": "US",
+      "privacy": "https://www.asterlab.ai/privacy",
+      "tos": "https://www.asterlab.ai/terms",
+      "status": null,
+      "zdr": true,
+      "may_train": false,
+      "retention_days": 0
+    },
+    {
+      "id": "cerebras",
+      "headquarters": "US",
+      "privacy": "https://www.cerebras.ai/privacy-policy",
+      "tos": "https://www.cerebras.ai/terms-of-service",
+      "status": "https://status.cerebras.ai/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "deepgram",
+      "headquarters": "Global",
+      "privacy": "https://deepgram.com/privacy",
+      "tos": "https://deepgram.com/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "voyageai",
+      "headquarters": "Global",
+      "privacy": "https://www.voyageai.com/privacy",
+      "tos": "https://www.voyageai.com/tos",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "stepfun",
+      "headquarters": "Global",
+      "privacy": null,
+      "tos": null,
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "black-forest-labs",
+      "headquarters": "Global",
+      "privacy": "https://bfl.ai/legal/privacy-policy",
+      "tos": "https://bfl.ai/legal/terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "moonshotai",
+      "headquarters": "SG",
+      "privacy": "https://platform.moonshot.ai/docs/agreement/userprivacy",
+      "tos": "https://platform.moonshot.ai/docs/agreement/modeluse",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "stealth",
+      "headquarters": "Global",
+      "privacy": null,
+      "tos": "https://openrouter.ai/terms/stealth",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "morph",
+      "headquarters": "US",
+      "privacy": "https://morphllm.com/privacy",
+      "tos": "https://www.morphllm.com/privacy/tos",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "reka",
+      "headquarters": "Global",
+      "privacy": "https://reka.ai/legal/privacy-policy",
+      "tos": "https://reka.ai/legal/terms-of-use",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "z-ai",
+      "headquarters": "SG",
+      "privacy": "https://chat.z.ai/legal-agreement/privacy-policy",
+      "tos": "https://chat.z.ai/legal-agreement/terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "arcee-ai",
+      "headquarters": "US",
+      "privacy": null,
+      "tos": null,
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "sambanova",
+      "headquarters": "US",
+      "privacy": "https://sambanova.ai/privacy-policy",
+      "tos": "https://sambanova.ai/terms-and-conditions",
+      "status": "https://status.sambanova.ai/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "ai21",
+      "headquarters": "IL",
+      "privacy": "https://www.ai21.com/privacy-policy/",
+      "tos": "https://www.ai21.com/terms-of-service/",
+      "status": "https://status.ai21.com/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "minimax",
+      "headquarters": "SG",
+      "privacy": "https://www.minimax.io/platform/protocol/privacy-policy",
+      "tos": "https://www.minimax.io/platform/protocol/terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "io-net",
+      "headquarters": "US",
+      "privacy": "https://io.net/privacy",
+      "tos": "https://io.net/terms",
+      "status": "https://status.io.net/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "ionstream",
+      "headquarters": "US",
+      "privacy": "https://ionstream.ai/privacy-policy/",
+      "tos": "https://ionstream.ai/terms-and-conditions/",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "cohere",
+      "headquarters": "US",
+      "privacy": "https://cohere.com/privacy",
+      "tos": "https://cohere.com/terms-of-use",
+      "status": "https://status.cohere.ai/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "ncompass",
+      "headquarters": "Global",
+      "privacy": "https://ncompass.tech/privacy",
+      "tos": "https://ncompass.tech/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "claude-on-aws",
+      "headquarters": "US",
+      "privacy": "https://www.anthropic.com/legal/privacy",
+      "tos": "https://www.anthropic.com/legal/commercial-terms",
+      "status": "https://status.anthropic.com/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "baseten",
+      "headquarters": "US",
+      "privacy": "https://www.baseten.co/privacy-policy",
+      "tos": "https://www.baseten.co/terms-and-conditions",
+      "status": "https://status.baseten.co/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "groq",
+      "headquarters": "US",
+      "privacy": "https://groq.com/privacy-policy/",
+      "tos": "https://groq.com/terms-of-use/",
+      "status": "https://status.groq.com/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "crusoe",
+      "headquarters": "US",
+      "privacy": "https://legal.crusoe.ai/open-router#cloud-privacy-policy",
+      "tos": "https://legal.crusoe.ai/open-router#managed-inference-tos-open-router",
+      "status": "https://status.crusoecloud.com/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "modal",
+      "headquarters": "US",
+      "privacy": "https://modal.com/legal/privacy-policy",
+      "tos": "https://modal.com/legal/terms",
+      "status": "https://status.modal.com/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "deepseek",
+      "headquarters": "CN",
+      "privacy": "https://chat.deepseek.com/downloads/DeepSeek%20Privacy%20Policy.html",
+      "tos": "https://chat.deepseek.com/downloads/DeepSeek%20Terms%20of%20Use.html",
+      "status": "https://status.deepseek.com/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "darkbloom",
+      "headquarters": "Global",
+      "privacy": "https://www.darkbloom.dev/privacy.html",
+      "tos": "https://www.darkbloom.dev/terms.html",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "mancer",
+      "headquarters": "Global",
+      "privacy": "https://mancer.tech/privacy",
+      "tos": "https://mancer.tech/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "nextbit",
+      "headquarters": "ES",
+      "privacy": "https://www.nextbit256.com/docs/privacy-policy",
+      "tos": "https://www.nextbit256.com/docs/terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "infermatic",
+      "headquarters": "Global",
+      "privacy": "https://infermatic.ai/privacy-policy/",
+      "tos": "https://infermatic.ai/terms-and-conditions/",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "avian",
+      "headquarters": "US",
+      "privacy": "https://avian.io/privacy",
+      "tos": "https://avian.io/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "switchpoint",
+      "headquarters": "US",
+      "privacy": null,
+      "tos": null,
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "deepinfra",
+      "headquarters": "US",
+      "privacy": "https://deepinfra.com/privacy",
+      "tos": "https://deepinfra.com/terms",
+      "status": "https://status.deepinfra.com/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "inflection",
+      "headquarters": "Global",
+      "privacy": "https://inflection.ai/privacy-policy",
+      "tos": "https://developers.inflection.ai/tos",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "tencent",
+      "headquarters": "CN",
+      "privacy": "https://www.tencentcloud.com/en/document/product/1300/78952",
+      "tos": "https://www.tencentcloud.com/en/document/product/301/78869",
+      "status": "https://status.tencentcloud.com",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "sail-research",
+      "headquarters": "US",
+      "privacy": "https://www.sailresearch.com/privacy",
+      "tos": "https://www.sailresearch.com/terms",
+      "status": "https://status.sailresearch.com/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "xai",
+      "headquarters": "US",
+      "privacy": "https://x.ai/legal/privacy-policy",
+      "tos": "https://x.ai/legal/terms-of-service-enterprise",
+      "status": "https://status.x.ai/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "krea",
+      "headquarters": "US",
+      "privacy": "https://www.krea.ai/privacy-policy",
+      "tos": "https://www.krea.ai/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "amazon-nova",
+      "headquarters": "US",
+      "privacy": null,
+      "tos": null,
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "mara",
+      "headquarters": "US",
+      "privacy": "https://www.mara.com/mara-legals/ai-policies#cloud-pp",
+      "tos": "https://www.mara.com/mara-legals/ai-policies#cloud-toc",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "xiaomi",
+      "headquarters": "CN",
+      "privacy": "https://platform.xiaomimimo.com/#/docs/terms/privacy-policy",
+      "tos": "https://platform.xiaomimimo.com/#/docs/terms/user-agreement",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "azure",
+      "headquarters": "US",
+      "privacy": "https://www.microsoft.com/en-us/privacy/privacystatement",
+      "tos": "https://www.microsoft.com/en-us/legal/terms-of-use?oneroute=true",
+      "status": "https://status.azure.com/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "inference-net",
+      "headquarters": "US",
+      "privacy": "https://inference.net/privacy-policy",
+      "tos": "https://inference.net/terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "perceptron",
+      "headquarters": "US",
+      "privacy": "https://www.perceptron.inc/privacy-policy",
+      "tos": "https://www.perceptron.inc/terms-of-use",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "sourceful",
+      "headquarters": "Global",
+      "privacy": "https://www.sourceful.com/legal/privacy-policy",
+      "tos": "https://www.sourceful.com/legal/spring-terms-of-use",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "fish-audio",
+      "headquarters": "Global",
+      "privacy": "https://fish.audio/privacy",
+      "tos": "https://fish.audio/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "cloudflare",
+      "headquarters": "US",
+      "privacy": "https://developers.cloudflare.com/workers-ai/privacy",
+      "tos": "https://www.cloudflare.com/service-specific-terms-developer-platform/#developer-platform-terms",
+      "status": "https://www.cloudflarestatus.com/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "crucible",
+      "headquarters": "Global",
+      "privacy": null,
+      "tos": null,
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "nebius",
+      "headquarters": "NL",
+      "privacy": "https://docs.nebius.com/legal/studio/privacy/",
+      "tos": "https://docs.nebius.com/legal/studio/terms-of-use/",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "aion-labs",
+      "headquarters": "IL",
+      "privacy": "https://www.aionlabs.ai/privacy-policy/",
+      "tos": "https://www.aionlabs.ai/terms/",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "liquid",
+      "headquarters": "Global",
+      "privacy": "https://www.liquid.ai/privacy-policy",
+      "tos": "https://www.liquid.ai/terms-conditions",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "decart",
+      "headquarters": "US",
+      "privacy": "https://cogito.decart.ai/legal/privacy",
+      "tos": "https://cogito.decart.ai/legal/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "recraft",
+      "headquarters": "Global",
+      "privacy": null,
+      "tos": null,
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "meta",
+      "headquarters": "US",
+      "privacy": "https://www.facebook.com/privacy/policy/",
+      "tos": "https://ai.developer.meta.com/legal/terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "seed",
+      "headquarters": "SG",
+      "privacy": "https://docs.byteplus.com/en/docs/legal/docs-privacy-policy",
+      "tos": "https://docs.byteplus.com/en/docs/legal/docs-terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "coreweave",
+      "headquarters": "US",
+      "privacy": "https://docs.coreweave.com/policies/terms-of-service/privacy-policy",
+      "tos": "https://docs.coreweave.com/policies/terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "dekallm",
+      "headquarters": "ID",
+      "privacy": "https://www.cloudeka.id/id/privacy-policy/",
+      "tos": "https://docs.cloudeka.ai/service-portal-ai/end-user-license-agreement",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "phala",
+      "headquarters": "US",
+      "privacy": "https://redpill.ai/privacy",
+      "tos": "https://redpill.ai/terms",
+      "status": "https://status.phala.network/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "siliconflow",
+      "headquarters": "SG",
+      "privacy": "https://docs.siliconflow.com/en/legals/privacy-policy",
+      "tos": "https://docs.siliconflow.com/en/legals/terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "openai",
+      "headquarters": "US",
+      "privacy": "https://openai.com/policies/privacy-policy/",
+      "tos": "https://openai.com/policies/row-terms-of-use/",
+      "status": "https://status.openai.com/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "poolside",
+      "headquarters": "Global",
+      "privacy": "https://poolside.ai/legal/privacy",
+      "tos": "http://poolside.ai/legal",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "relace",
+      "headquarters": "Global",
+      "privacy": "https://www.relace.ai/privacy-policy",
+      "tos": "https://www.relace.ai/terms-of-use",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "modelrun",
+      "headquarters": "US",
+      "privacy": "https://www.modular.com/legal/privacy",
+      "tos": "https://www.modular.com/legal/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "modular",
+      "headquarters": "US",
+      "privacy": "https://www.runmodelrun.com/privacy-policy.html",
+      "tos": "https://www.runmodelrun.com/TOS.html",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "cirrascale",
+      "headquarters": "Global",
+      "privacy": "https://www.cirrascale.com/privacy-policy",
+      "tos": "https://www.cirrascale.com/terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "ambient",
+      "headquarters": "Global",
+      "privacy": null,
+      "tos": null,
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "anthropic",
+      "headquarters": "US",
+      "privacy": "https://www.anthropic.com/legal/privacy",
+      "tos": "https://www.anthropic.com/legal/commercial-terms",
+      "status": "https://status.anthropic.com/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "baidu",
+      "headquarters": "CN",
+      "privacy": "https://intl.cloud.baidu.com/en/doc/Agreements/s/Plr0fi68q-intl-en",
+      "tos": "https://intl.cloud.baidu.com/en/doc/Agreements/s/bmesahnjh-intl-en",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "atlas-cloud",
+      "headquarters": "US",
+      "privacy": "https://www.atlascloud.ai/privacy",
+      "tos": null,
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "together",
+      "headquarters": "US",
+      "privacy": "https://www.together.ai/privacy",
+      "tos": "https://www.together.ai/terms-of-service",
+      "status": "https://status.together.ai/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "fake-provider",
+      "headquarters": "US",
+      "privacy": null,
+      "tos": null,
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "runway",
+      "headquarters": "US",
+      "privacy": "https://runwayml.com/privacy-policy",
+      "tos": "https://runwayml.com/terms-of-use",
+      "status": "https://status.runwayml.com",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "amazon-bedrock",
+      "headquarters": "US",
+      "privacy": "https://aws.amazon.com/privacy",
+      "tos": "https://aws.amazon.com/service-terms/",
+      "status": "https://health.aws.amazon.com/health/status",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "digitalocean",
+      "headquarters": "Global",
+      "privacy": "https://www.digitalocean.com/legal/privacy-policy",
+      "tos": "https://www.digitalocean.com/legal/terms-of-service-agreement",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "nex-agi",
+      "headquarters": "CN",
+      "privacy": "https://api.nex-agi.cn/privacy-policy",
+      "tos": null,
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "chutes",
+      "headquarters": "US",
+      "privacy": "https://chutes.ai/privacy",
+      "tos": "https://chutes.ai/tos",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "inceptron",
+      "headquarters": "SE",
+      "privacy": "https://www.inceptron.io/privacy",
+      "tos": "https://www.inceptron.io/termsofservice",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "thinkingmachines",
+      "headquarters": "Global",
+      "privacy": null,
+      "tos": null,
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "upstage",
+      "headquarters": "Global",
+      "privacy": "https://www.upstage.ai/privacy-policy",
+      "tos": "https://www.upstage.ai/terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "google-ai-studio",
+      "headquarters": "US",
+      "privacy": "https://cloud.google.com/terms/cloud-privacy-notice",
+      "tos": "https://cloud.google.com/terms/",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "google-vertex",
+      "headquarters": "US",
+      "privacy": "https://cloud.google.com/terms/cloud-privacy-notice",
+      "tos": "https://cloud.google.com/terms/",
+      "status": "https://status.cloud.google.com/products/sdXM79fz1FS6ekNpu37K/history",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "parasail",
+      "headquarters": "US",
+      "privacy": "https://www.parasail.io/legal/privacy-policy",
+      "tos": "https://parasail.io/legal/terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "open-inference",
+      "headquarters": "US",
+      "privacy": "https://www.openinference.ai/privacy",
+      "tos": "https://www.openinference.ai/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "nvidia",
+      "headquarters": "US",
+      "privacy": "https://www.nvidia.com/en-us/about-nvidia/privacy-policy/",
+      "tos": "https://assets.ngc.nvidia.com/products/api-catalog/legal/NVIDIA%20API%20Trial%20Terms%20of%20Service.pdf",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "featherless",
+      "headquarters": "US",
+      "privacy": "https://featherless.ai/privacy",
+      "tos": "https://featherless.ai/terms",
+      "status": "https://featherless.ai/status",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "databricks",
+      "headquarters": "US",
+      "privacy": "https://www.databricks.com/legal/privacynotice",
+      "tos": "https://www.databricks.com/terms-of-use",
+      "status": "https://status.databricks.com",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "alibaba",
+      "headquarters": "SG",
+      "privacy": "https://www.alibabacloud.com/help/en/legal/latest/alibaba-cloud-international-website-privacy-policy",
+      "tos": "https://www.alibabacloud.com/help/en/legal/latest/alibaba-cloud-international-website-product-terms-of-service-v-3-8-0",
+      "status": "https://status.alibabacloud.com/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "clarifai",
+      "headquarters": "US",
+      "privacy": "https://www.clarifai.com/company/privacy-policy",
+      "tos": "https://www.clarifai.com/company/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "quiver",
+      "headquarters": "Global",
+      "privacy": null,
+      "tos": null,
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "streamlake",
+      "headquarters": "CN",
+      "privacy": "https://www.streamlake.ai/document/DOC/mgkci47q13qr66h9i54",
+      "tos": "https://www.streamlake.ai/document/DOC/mgkchnd89grpt1961fw",
+      "status": "https://status.streamlake.ai/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "venice",
+      "headquarters": "US",
+      "privacy": "https://venice.ai/legal/privacy-policy",
+      "tos": "https://venice.ai/legal/tos",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "sakana",
+      "headquarters": "Global",
+      "privacy": "https://console.sakana.ai/privacy-policy",
+      "tos": "https://console.sakana.ai/terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "wafer",
+      "headquarters": "US",
+      "privacy": "https://www.wafer.ai/privacy-policy",
+      "tos": "https://www.wafer.ai/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "inferact-vllm",
+      "headquarters": "Global",
+      "privacy": null,
+      "tos": null,
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "friendli",
+      "headquarters": "US",
+      "privacy": "https://friendli.ai/privacypolicy",
+      "tos": "https://friendli.ai/terms-of-service",
+      "status": "https://status.friendli.ai/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "akashml",
+      "headquarters": "Global",
+      "privacy": "https://akashml.com/privacy",
+      "tos": "https://akashml.com/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "heygen",
+      "headquarters": "US",
+      "privacy": "https://www.heygen.com/privacy",
+      "tos": "https://www.heygen.com/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "inception",
+      "headquarters": "Global",
+      "privacy": "https://www.inceptionlabs.ai/terms#privacy-policy",
+      "tos": "https://www.inceptionlabs.ai/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "perplexity",
+      "headquarters": "US",
+      "privacy": "https://www.perplexity.ai/hub/legal/privacy-policy",
+      "tos": "https://www.perplexity.ai/hub/legal/perplexity-api-terms-of-service",
+      "status": "https://status.perplexity.ai/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "tenstorrent",
+      "headquarters": "US",
+      "privacy": "https://tenstorrent.com/privacy",
+      "tos": "https://tenstorrent.com/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "gmicloud",
+      "headquarters": "US",
+      "privacy": "https://docs.gmicloud.ai/privacy",
+      "tos": "https://www.gmicloud.ai/terms-and-conditions",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "fireworks",
+      "headquarters": "US",
+      "privacy": "https://fireworks.ai/privacy-policy",
+      "tos": "https://fireworks.ai/terms-of-service",
+      "status": "https://status.fireworks.ai/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "mistral",
+      "headquarters": "FR",
+      "privacy": "https://mistral.ai/terms/#privacy-policy",
+      "tos": "https://mistral.ai/terms/#terms-of-use",
+      "status": "https://status.mistral.ai/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "novita",
+      "headquarters": "US",
+      "privacy": "https://novita.ai/legal/privacy-policy",
+      "tos": "https://novita.ai/legal/terms-of-service",
+      "status": "https://status.novita.ai/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "embercloud",
+      "headquarters": "Global",
+      "privacy": "https://www.embercloud.ai/privacy",
+      "tos": "https://www.embercloud.ai/terms",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "z.ai",
+      "headquarters": "SG",
+      "privacy": "https://chat.z.ai/legal-agreement/privacy-policy",
+      "tos": "https://chat.z.ai/legal-agreement/terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "sakana ai",
+      "headquarters": "Global",
+      "privacy": "https://console.sakana.ai/privacy-policy",
+      "tos": "https://console.sakana.ai/terms-of-service",
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "aster labs",
+      "headquarters": "US",
+      "privacy": "https://www.asterlab.ai/privacy",
+      "tos": "https://www.asterlab.ai/terms",
+      "status": null,
+      "zdr": true,
+      "may_train": false,
+      "retention_days": 0
+    },
+    {
+      "id": "nex agi",
+      "headquarters": "CN",
+      "privacy": "https://api.nex-agi.cn/privacy-policy",
+      "tos": null,
+      "status": null,
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "x-ai",
+      "headquarters": "US",
+      "privacy": "https://x.ai/legal/privacy-policy",
+      "tos": "https://x.ai/legal/terms-of-service-enterprise",
+      "status": "https://status.x.ai/",
+      "zdr": false,
+      "may_train": false,
+      "retention_days": null
+    },
+    {
+      "id": "umans ai",
+      "headquarters": "Global",
+      "privacy": "https://app.umans.ai/offers/code/legal/privacy-policy",
+      "tos": "https://app.umans.ai/offers/code/legal/terms-of-use",
+      "status": "https://status.umans.ai/status",
+      "zdr": true,
+      "may_train": false,
+      "retention_days": null
+    }
+  ],
+  "top_zdr_models": [
+    {
+      "id": "inclusionai/ling-2.6-flash",
+      "name": "inclusionAI: Ling-2.6-flash",
+      "org": "inclusionai",
+      "provider": "novita",
+      "input": 0.01,
+      "output": 0.03,
+      "cache_read": 0.002,
+      "blended": 0.02,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 14.2,
+        "coding": 25.3,
+        "agentic_coding": 2.3
+      }
+    },
+    {
+      "id": "mistralai/mistral-nemo",
+      "name": "Mistral: Mistral Nemo",
+      "org": "mistral",
+      "provider": "deepinfra",
+      "input": 0.019000000000000003,
+      "output": 0.03,
+      "cache_read": null,
+      "blended": 0.0245,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "meta-llama/llama-3.1-8b-instruct",
+      "name": "Meta: Llama 3.1 8B Instruct",
+      "org": "meta",
+      "provider": "deepinfra",
+      "input": 0.02,
+      "output": 0.04,
+      "cache_read": null,
+      "blended": 0.03,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": null,
+        "coding": 5.4,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "mistralai/mistral-nemo",
+      "name": "Mistral: Mistral Nemo",
+      "org": "mistral",
+      "provider": "parasail",
+      "input": 0.03,
+      "output": 0.03,
+      "cache_read": null,
+      "blended": 0.03,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "meta-llama/llama-3.1-8b-instruct",
+      "name": "Meta: Llama 3.1 8B Instruct",
+      "org": "meta",
+      "provider": "novita",
+      "input": 0.02,
+      "output": 0.049999999999999996,
+      "cache_read": null,
+      "blended": 0.035,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": null,
+        "coding": 5.4,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "inclusionai/ling-3.0-flash",
+      "name": "Ling-3.0-flash",
+      "org": "inclusionai",
+      "provider": "novita",
+      "input": 0.020999999999999998,
+      "output": 0.063,
+      "cache_read": 0.004200000000000001,
+      "blended": 0.042,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 37.8,
+        "coding": 50.6,
+        "agentic_coding": 29.3
+      }
+    },
+    {
+      "id": "sao10k/l3-lunaris-8b",
+      "name": "Sao10K: Llama 3 8B Lunaris",
+      "org": "sao10k",
+      "provider": "deepinfra",
+      "input": 0.04,
+      "output": 0.049999999999999996,
+      "cache_read": null,
+      "blended": 0.045,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "sao10k/l3-lunaris-8b",
+      "name": "Sao10K: Llama 3 8B Lunaris",
+      "org": "sao10k",
+      "provider": "parasail",
+      "input": 0.04,
+      "output": 0.049999999999999996,
+      "cache_read": null,
+      "blended": 0.045,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "sao10k/l3-lunaris-8b",
+      "name": "Sao10K: Llama 3 8B Lunaris",
+      "org": "sao10k",
+      "provider": "novita",
+      "input": 0.049999999999999996,
+      "output": 0.049999999999999996,
+      "cache_read": null,
+      "blended": 0.05,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "gryphe/mythomax-l2-13b",
+      "name": "MythoMax 13B",
+      "org": "gryphe",
+      "provider": "nextbit",
+      "input": 0.06,
+      "output": 0.06,
+      "cache_read": null,
+      "blended": 0.06,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "mistralai/Mistral-Small-24B-Instruct-2501",
+      "name": "mistralai/Mistral-Small-24B-Instruct-2501",
+      "org": "mistral",
+      "provider": "deepinfra",
+      "input": 0.05,
+      "output": 0.08,
+      "cache_read": null,
+      "blended": 0.065,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "meta-llama/llama-3.1-8b-instruct",
+      "name": "Meta: Llama 3.1 8B Instruct",
+      "org": "meta",
+      "provider": "groq",
+      "input": 0.049999999999999996,
+      "output": 0.08,
+      "cache_read": 0.024999999999999998,
+      "blended": 0.065,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": null,
+        "coding": 5.4,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "google/gemma-3-4b-it",
+      "name": "google/gemma-3-4b-it",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 0.05,
+      "output": 0.1,
+      "cache_read": null,
+      "blended": 0.075,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": null,
+        "coding": 2.7,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "ibm-granite/granite-4.1-8b",
+      "name": "IBM: Granite 4.1 8B",
+      "org": "ibm",
+      "provider": "coreweave",
+      "input": 0.049999999999999996,
+      "output": 0.09999999999999999,
+      "cache_read": 0.049999999999999996,
+      "blended": 0.075,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 6.4,
+        "coding": 9.5,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "openai/gpt-oss-20b",
+      "name": "OpenAI: gpt-oss-20b",
+      "org": "openai",
+      "provider": "coreweave",
+      "input": 0.03,
+      "output": 0.13,
+      "cache_read": 0.03,
+      "blended": 0.08,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 15.2,
+        "coding": 20.7,
+        "agentic_coding": 3.1
+      }
+    },
+    {
+      "id": "openai/gpt-oss-20b",
+      "name": "openai/gpt-oss-20b",
+      "org": "openai",
+      "provider": "deepinfra",
+      "input": 0.030000000000000002,
+      "output": 0.14,
+      "cache_read": null,
+      "blended": 0.085,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 15.2,
+        "coding": 20.7,
+        "agentic_coding": 3.1
+      }
+    },
+    {
+      "id": "amazon/nova-micro-v1",
+      "name": "Amazon: Nova Micro 1.0",
+      "org": "amazon",
+      "provider": "amazon",
+      "input": 0.035,
+      "output": 0.14,
+      "cache_read": 0.00875,
+      "blended": 0.0875,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "openai/gpt-oss-20b",
+      "name": "OpenAI: gpt-oss-20b",
+      "org": "openai",
+      "provider": "parasail",
+      "input": 0.03,
+      "output": 0.15,
+      "cache_read": 0.02,
+      "blended": 0.09,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 15.2,
+        "coding": 20.7,
+        "agentic_coding": 3.1
+      }
+    },
+    {
+      "id": "google/gemma-3n-e4b-it",
+      "name": "Google: Gemma 3n 4B",
+      "org": "google",
+      "provider": "together",
+      "input": 0.06,
+      "output": 0.12,
+      "cache_read": null,
+      "blended": 0.09,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": null,
+        "coding": 3.2,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "qwen3.5-9b",
+      "name": "Qwen: Qwen3.5 9B",
+      "org": "qwen",
+      "provider": "crof",
+      "input": 0.04,
+      "output": 0.15,
+      "cache_read": 0.008,
+      "blended": 0.095,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 21.8,
+        "coding": 28.7,
+        "agentic_coding": 7
+      }
+    },
+    {
+      "id": "openai/gpt-oss-20b",
+      "name": "OpenAI: gpt-oss-20b",
+      "org": "openai",
+      "provider": "novita",
+      "input": 0.04,
+      "output": 0.15,
+      "cache_read": null,
+      "blended": 0.095,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 15.2,
+        "coding": 20.7,
+        "agentic_coding": 3.1
+      }
+    },
+    {
+      "id": "openai/gpt-oss-20b",
+      "name": "OpenAI: gpt-oss-20b",
+      "org": "openai",
+      "provider": "phala",
+      "input": 0.04,
+      "output": 0.15,
+      "cache_read": null,
+      "blended": 0.095,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 15.2,
+        "coding": 20.7,
+        "agentic_coding": 3.1
+      }
+    },
+    {
+      "id": "gryphe/mythomax-l2-13b",
+      "name": "MythoMax 13B",
+      "org": "gryphe",
+      "provider": "parasail",
+      "input": 0.08,
+      "output": 0.11,
+      "cache_read": null,
+      "blended": 0.095,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "google/gemma-3-12b-it",
+      "name": "google/gemma-3-12b-it",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 0.05,
+      "output": 0.15,
+      "cache_read": null,
+      "blended": 0.1,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 5.5,
+        "coding": 5.8,
+        "agentic_coding": 0.3
+      }
+    },
+    {
+      "id": "hf:openai/gpt-oss-120b",
+      "name": "openai/gpt-oss-120b",
+      "org": "openai",
+      "provider": "synthetic",
+      "input": 0.09999999999999999,
+      "output": 0.09999999999999999,
+      "cache_read": 0.02,
+      "blended": 0.1,
+      "zdr": true,
+      "subscription": true,
+      "scores": {
+        "intelligence": 24.1,
+        "coding": 30.4,
+        "agentic_coding": 13.4
+      }
+    },
+    {
+      "id": "rekaai/reka-edge",
+      "name": "Reka Edge",
+      "org": "rekaai",
+      "provider": "reka",
+      "input": 0.09999999999999999,
+      "output": 0.09999999999999999,
+      "cache_read": null,
+      "blended": 0.1,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "openai/gpt-oss-120b",
+      "name": "OpenAI: gpt-oss-120b",
+      "org": "openai",
+      "provider": "coreweave",
+      "input": 0.03,
+      "output": 0.16999999999999998,
+      "cache_read": 0.03,
+      "blended": 0.1,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 24.1,
+        "coding": 30.4,
+        "agentic_coding": 13.4
+      }
+    },
+    {
+      "id": "mistralai/mistral-nemo",
+      "name": "Mistral: Mistral Nemo",
+      "org": "mistral",
+      "provider": "io-net",
+      "input": 0.041999999999999996,
+      "output": 0.16,
+      "cache_read": 0.022,
+      "blended": 0.101,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "deepseek/deepseek-v4-flash-0731",
+      "name": "DeepSeek: DeepSeek V4 Flash 0731",
+      "org": "deepseek",
+      "provider": "decart",
+      "input": 0.0675,
+      "output": 0.135,
+      "cache_read": 0.0135,
+      "blended": 0.1013,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "openai/gpt-oss-120b",
+      "name": "openai/gpt-oss-120b",
+      "org": "openai",
+      "provider": "deepinfra",
+      "input": 0.037,
+      "output": 0.16999999999999998,
+      "cache_read": null,
+      "blended": 0.1035,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 24.1,
+        "coding": 30.4,
+        "agentic_coding": 13.4
+      }
+    },
+    {
+      "id": "microsoft/phi-4",
+      "name": "microsoft/phi-4",
+      "org": "microsoft",
+      "provider": "deepinfra",
+      "input": 0.07,
+      "output": 0.14,
+      "cache_read": null,
+      "blended": 0.105,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 4.6,
+        "coding": null,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "mistralai/mistral-nemo",
+      "name": "Mistral: Mistral Nemo",
+      "org": "mistral",
+      "provider": "novita",
+      "input": 0.04,
+      "output": 0.16999999999999998,
+      "cache_read": null,
+      "blended": 0.105,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "greg-1-mini",
+      "name": "Crof: Greg 1 Mini",
+      "org": "crof",
+      "provider": "crof",
+      "input": 0.07,
+      "output": 0.15,
+      "cache_read": 0.01,
+      "blended": 0.11,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "openai/gpt-oss-20b",
+      "name": "OpenAI: gpt-oss-20b",
+      "org": "openai",
+      "provider": "siliconflow",
+      "input": 0.04,
+      "output": 0.18,
+      "cache_read": null,
+      "blended": 0.11,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 15.2,
+        "coding": 20.7,
+        "agentic_coding": 3.1
+      }
+    },
+    {
+      "id": "openai/gpt-oss-20b",
+      "name": "OpenAI: gpt-oss-20b",
+      "org": "openai",
+      "provider": "amazon",
+      "input": 0.07,
+      "output": 0.15,
+      "cache_read": null,
+      "blended": 0.11,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 15.2,
+        "coding": 20.7,
+        "agentic_coding": 3.1
+      }
+    },
+    {
+      "id": "deepseek/deepseek-v4-flash",
+      "name": "DeepSeek: DeepSeek V4 Flash 0423",
+      "org": "deepseek",
+      "provider": "digitalocean",
+      "input": 0.0679,
+      "output": 0.16799999999999998,
+      "cache_read": 0.016800000000000002,
+      "blended": 0.1179,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "inclusionAI/Ling-3.0-flash",
+      "name": "inclusionAI/Ling-3.0-flash",
+      "org": "inclusionai",
+      "provider": "deepinfra",
+      "input": 0.060000000000000005,
+      "output": 0.18,
+      "cache_read": 0.012000000000000002,
+      "blended": 0.12,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 37.8,
+        "coding": 50.6,
+        "agentic_coding": 29.3
+      }
+    },
+    {
+      "id": "google/gemma-3-27b-it",
+      "name": "google/gemma-3-27b-it",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 0.08,
+      "output": 0.16,
+      "cache_read": null,
+      "blended": 0.12,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 7.4,
+        "coding": 10.1,
+        "agentic_coding": 0.3
+      }
+    },
+    {
+      "id": "nvidia/Nemotron-3-Nano-30B-A3B",
+      "name": "nvidia/Nemotron-3-Nano-30B-A3B",
+      "org": "nvidia",
+      "provider": "deepinfra",
+      "input": 0.05,
+      "output": 0.2,
+      "cache_read": 0.025,
+      "blended": 0.125,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 14.5,
+        "coding": 14.4,
+        "agentic_coding": 2
+      }
+    },
+    {
+      "id": "Qwen/Qwen3.5-9B",
+      "name": "Qwen/Qwen3.5-9B",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.1,
+      "output": 0.15,
+      "cache_read": null,
+      "blended": 0.125,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 21.8,
+        "coding": 28.7,
+        "agentic_coding": 7
+      }
+    },
+    {
+      "id": "qwen/qwen3.5-9b",
+      "name": "Qwen: Qwen3.5-9B",
+      "org": "qwen",
+      "provider": "siliconflow",
+      "input": 0.09999999999999999,
+      "output": 0.15,
+      "cache_read": null,
+      "blended": 0.125,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 21.8,
+        "coding": 28.7,
+        "agentic_coding": 7
+      }
+    },
+    {
+      "id": "qwen/qwen3.5-9b",
+      "name": "Qwen: Qwen3.5-9B",
+      "org": "qwen",
+      "provider": "venice",
+      "input": 0.09999999999999999,
+      "output": 0.15,
+      "cache_read": null,
+      "blended": 0.125,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 21.8,
+        "coding": 28.7,
+        "agentic_coding": 7
+      }
+    },
+    {
+      "id": "nvidia/nemotron-3-nano-30b-a3b",
+      "name": "NVIDIA: Nemotron 3 Nano 30B A3B",
+      "org": "nvidia",
+      "provider": "crusoe",
+      "input": 0.049999999999999996,
+      "output": 0.19999999999999998,
+      "cache_read": 0.03,
+      "blended": 0.125,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 14.5,
+        "coding": 14.4,
+        "agentic_coding": 2
+      }
+    },
+    {
+      "id": "nvidia/nemotron-3-nano-30b-a3b",
+      "name": "NVIDIA: Nemotron 3 Nano 30B A3B",
+      "org": "nvidia",
+      "provider": "novita",
+      "input": 0.049999999999999996,
+      "output": 0.19999999999999998,
+      "cache_read": null,
+      "blended": 0.125,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 14.5,
+        "coding": 14.4,
+        "agentic_coding": 2
+      }
+    },
+    {
+      "id": "openai/gpt-oss-20b",
+      "name": "OpenAI: gpt-oss-20b",
+      "org": "openai",
+      "provider": "together",
+      "input": 0.049999999999999996,
+      "output": 0.19999999999999998,
+      "cache_read": null,
+      "blended": 0.125,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 15.2,
+        "coding": 20.7,
+        "agentic_coding": 3.1
+      }
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V4-Flash-0731",
+      "name": "deepseek-ai/DeepSeek-V4-Flash-0731",
+      "org": "deepseek",
+      "provider": "deepinfra",
+      "input": 0.08,
+      "output": 0.18,
+      "cache_read": 0.016,
+      "blended": 0.13,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 51.8,
+        "coding": 69.1,
+        "agentic_coding": 48.4
+      }
+    },
+    {
+      "id": "deepseek/deepseek-v4-flash-0731",
+      "name": "DeepSeek: DeepSeek V4 Flash 0731",
+      "org": "deepseek",
+      "provider": "openinference",
+      "input": 0.08,
+      "output": 0.18,
+      "cache_read": 0.028,
+      "blended": 0.13,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V4-Flash",
+      "name": "deepseek-ai/DeepSeek-V4-Flash",
+      "org": "deepseek",
+      "provider": "deepinfra",
+      "input": 0.09,
+      "output": 0.18,
+      "cache_read": 0.018,
+      "blended": 0.135,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 51.8,
+        "coding": 69.2,
+        "agentic_coding": 37.6
+      }
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V4-Flash",
+      "name": "DeepSeek V4 Flash",
+      "org": "deepseek",
+      "provider": "merius",
+      "input": 0.09,
+      "output": 0.18,
+      "cache_read": 0.02,
+      "blended": 0.135,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 51.8,
+        "coding": 69.2,
+        "agentic_coding": 37.6
+      }
+    },
+    {
+      "id": "deepseek/deepseek-v4-flash-0731",
+      "name": "DeepSeek: DeepSeek V4 Flash 0731",
+      "org": "deepseek",
+      "provider": "sail-research",
+      "input": 0.09,
+      "output": 0.18,
+      "cache_read": 0.02,
+      "blended": 0.135,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    }
+  ],
+  "top_models": [
+    {
+      "id": "google/gemini-3.7-flash",
+      "name": "google/gemini-3.7-flash",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 0.7499999999999999,
+      "output": 3.75,
+      "cache_read": null,
+      "blended": 2.25,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 56,
+        "coding": 76.1,
+        "agentic_coding": 45.1
+      }
+    },
+    {
+      "id": "mistralai/Mistral-Small-24B-Instruct-2501",
+      "name": "mistralai/Mistral-Small-24B-Instruct-2501",
+      "org": "mistral",
+      "provider": "deepinfra",
+      "input": 0.05,
+      "output": 0.08,
+      "cache_read": null,
+      "blended": 0.065,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "anthropic/claude-fable-5",
+      "name": "anthropic/claude-fable-5",
+      "org": "anthropic",
+      "provider": "deepinfra",
+      "input": 10,
+      "output": 50,
+      "cache_read": null,
+      "blended": 30,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 62.1,
+        "coding": 76.5,
+        "agentic_coding": 56.6
+      }
+    },
+    {
+      "id": "moonshotai/Kimi-K3",
+      "name": "moonshotai/Kimi-K3",
+      "org": "moonshot",
+      "provider": "deepinfra",
+      "input": 2.8499999999999996,
+      "output": 14.25,
+      "cache_read": 0.285,
+      "blended": 8.55,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 59.7,
+        "coding": 76.2,
+        "agentic_coding": 54.3
+      }
+    },
+    {
+      "id": "google/gemma-4-E4B-it",
+      "name": "google/gemma-4-E4B-it",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 0.02,
+      "output": 0.1,
+      "cache_read": null,
+      "blended": 0.06,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "google/gemini-2.5-pro",
+      "name": "google/gemini-2.5-pro",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 1.25,
+      "output": 10,
+      "cache_read": null,
+      "blended": 5.625,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 25.9,
+        "coding": 33.3,
+        "agentic_coding": 7.2
+      }
+    },
+    {
+      "id": "ByteDance/Seed-2.0-pro",
+      "name": "ByteDance/Seed-2.0-pro",
+      "org": "bytedance",
+      "provider": "deepinfra",
+      "input": 0.5,
+      "output": 2.9999999999999996,
+      "cache_read": 0.1,
+      "blended": 1.75,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "google/gemini-2.5-flash",
+      "name": "google/gemini-2.5-flash",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 0.3,
+      "output": 2.5,
+      "cache_read": null,
+      "blended": 1.4,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 14.2,
+        "coding": null,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "Qwen/Qwen3.5-397B-A17B",
+      "name": "Qwen/Qwen3.5-397B-A17B",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.45,
+      "output": 2.9999999999999996,
+      "cache_read": 0.22000000050000001,
+      "blended": 1.725,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 34.3,
+        "coding": 48.2,
+        "agentic_coding": 19.8
+      }
+    },
+    {
+      "id": "XiaomiMiMo/MiMo-V2.5-Pro",
+      "name": "XiaomiMiMo/MiMo-V2.5-Pro",
+      "org": "xiaomi",
+      "provider": "deepinfra",
+      "input": 1,
+      "output": 2.9999999999999996,
+      "cache_read": 0.2,
+      "blended": 2,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 42.9,
+        "coding": 60.2,
+        "agentic_coding": 29.5
+      }
+    },
+    {
+      "id": "openai/gpt-oss-120b",
+      "name": "openai/gpt-oss-120b",
+      "org": "openai",
+      "provider": "deepinfra",
+      "input": 0.037,
+      "output": 0.16999999999999998,
+      "cache_read": null,
+      "blended": 0.1035,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 24.1,
+        "coding": 30.4,
+        "agentic_coding": 13.4
+      }
+    },
+    {
+      "id": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "name": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "org": "meta",
+      "provider": "deepinfra",
+      "input": 0.2,
+      "output": 0.8,
+      "cache_read": null,
+      "blended": 0.5,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "nvidia/Nemotron-3-Nano-30B-A3B",
+      "name": "nvidia/Nemotron-3-Nano-30B-A3B",
+      "org": "nvidia",
+      "provider": "deepinfra",
+      "input": 0.05,
+      "output": 0.2,
+      "cache_read": 0.025,
+      "blended": 0.125,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 14.5,
+        "coding": 14.4,
+        "agentic_coding": 2
+      }
+    },
+    {
+      "id": "Gryphe/MythoMax-L2-13b",
+      "name": "Gryphe/MythoMax-L2-13b",
+      "org": "gryphe",
+      "provider": "deepinfra",
+      "input": 0.4,
+      "output": 0.4,
+      "cache_read": null,
+      "blended": 0.4,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "anthropic/claude-opus-4-8",
+      "name": "anthropic/claude-opus-4-8",
+      "org": "anthropic",
+      "provider": "deepinfra",
+      "input": 5,
+      "output": 25,
+      "cache_read": null,
+      "blended": 15,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "anthropic/claude-sonnet-5",
+      "name": "anthropic/claude-sonnet-5",
+      "org": "anthropic",
+      "provider": "deepinfra",
+      "input": 2,
+      "output": 10,
+      "cache_read": null,
+      "blended": 6,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 55.3,
+        "coding": 71.5,
+        "agentic_coding": 49.7
+      }
+    },
+    {
+      "id": "zai-org/GLM-5",
+      "name": "zai-org/GLM-5",
+      "org": "z-ai",
+      "provider": "deepinfra",
+      "input": 0.6,
+      "output": 2.08,
+      "cache_read": 0.12,
+      "blended": 1.34,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 40.6,
+        "coding": null,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "inclusionAI/Ling-3.0-flash",
+      "name": "inclusionAI/Ling-3.0-flash",
+      "org": "inclusionai",
+      "provider": "deepinfra",
+      "input": 0.060000000000000005,
+      "output": 0.18,
+      "cache_read": 0.012000000000000002,
+      "blended": 0.12,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 37.8,
+        "coding": 50.6,
+        "agentic_coding": 29.3
+      }
+    },
+    {
+      "id": "google/gemma-3-27b-it",
+      "name": "google/gemma-3-27b-it",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 0.08,
+      "output": 0.16,
+      "cache_read": null,
+      "blended": 0.12,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 7.4,
+        "coding": 10.1,
+        "agentic_coding": 0.3
+      }
+    },
+    {
+      "id": "google/gemma-4-26B-A4B-it",
+      "name": "google/gemma-4-26B-A4B-it",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 0.07,
+      "output": 0.33999999999999997,
+      "cache_read": null,
+      "blended": 0.205,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 26.1,
+        "coding": 39.3,
+        "agentic_coding": 11
+      }
+    },
+    {
+      "id": "Qwen/Qwen3.5-122B-A10B",
+      "name": "Qwen/Qwen3.5-122B-A10B",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.29,
+      "output": 2.4,
+      "cache_read": null,
+      "blended": 1.345,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 32.8,
+        "coding": 45.7,
+        "agentic_coding": 21.3
+      }
+    },
+    {
+      "id": "anthropic/claude-opus-4-7",
+      "name": "anthropic/claude-opus-4-7",
+      "org": "anthropic",
+      "provider": "deepinfra",
+      "input": 5,
+      "output": 25,
+      "cache_read": null,
+      "blended": 15,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "openai/gpt-oss-20b",
+      "name": "openai/gpt-oss-20b",
+      "org": "openai",
+      "provider": "deepinfra",
+      "input": 0.030000000000000002,
+      "output": 0.14,
+      "cache_read": null,
+      "blended": 0.085,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 15.2,
+        "coding": 20.7,
+        "agentic_coding": 3.1
+      }
+    },
+    {
+      "id": "google/gemma-3-4b-it",
+      "name": "google/gemma-3-4b-it",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 0.05,
+      "output": 0.1,
+      "cache_read": null,
+      "blended": 0.075,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": null,
+        "coding": 2.7,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "mistralai/Mistral-Nemo-Instruct-2407",
+      "name": "mistralai/Mistral-Nemo-Instruct-2407",
+      "org": "mistral",
+      "provider": "deepinfra",
+      "input": 0.019000000000000003,
+      "output": 0.030000000000000002,
+      "cache_read": null,
+      "blended": 0.0245,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "thinkingmachines/Inkling-Small",
+      "name": "thinkingmachines/Inkling-Small",
+      "org": "thinkingmachines",
+      "provider": "deepinfra",
+      "input": 0.45,
+      "output": 1.2,
+      "cache_read": 0.099999999,
+      "blended": 0.825,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 41.2,
+        "coding": 52.9,
+        "agentic_coding": 31.9
+      }
+    },
+    {
+      "id": "Qwen/Qwen3-Max",
+      "name": "Qwen/Qwen3-Max",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 1.2,
+      "output": 5.999999999999999,
+      "cache_read": 0.24,
+      "blended": 3.6,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 24.5,
+        "coding": null,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "Qwen/Qwen3.8-2.4T-A95B",
+      "name": "Qwen/Qwen3.8-2.4T-A95B",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 2,
+      "output": 5.999999999999999,
+      "cache_read": 0.2,
+      "blended": 4,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "google/gemma-4-31B-it",
+      "name": "google/gemma-4-31B-it",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 0.13,
+      "output": 0.38,
+      "cache_read": null,
+      "blended": 0.255,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 29.7,
+        "coding": 43.4,
+        "agentic_coding": 14.4
+      }
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-R1-0528",
+      "name": "deepseek-ai/DeepSeek-R1-0528",
+      "org": "deepseek",
+      "provider": "deepinfra",
+      "input": 0.5,
+      "output": 2.15,
+      "cache_read": 0.35,
+      "blended": 1.325,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": null,
+        "coding": null,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "google/gemini-3.1-pro",
+      "name": "google/gemini-3.1-pro",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 2,
+      "output": 11.999999999999998,
+      "cache_read": null,
+      "blended": 7,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 47.7,
+        "coding": 76.5,
+        "agentic_coding": 45.4
+      }
+    },
+    {
+      "id": "Qwen/Qwen3-Next-80B-A3B-Instruct",
+      "name": "Qwen/Qwen3-Next-80B-A3B-Instruct",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.09,
+      "output": 1.1,
+      "cache_read": null,
+      "blended": 0.595,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 16.9,
+        "coding": 17.4,
+        "agentic_coding": 2.1
+      }
+    },
+    {
+      "id": "Sao10K/L3-8B-Lunaris-v1-Turbo",
+      "name": "Sao10K/L3-8B-Lunaris-v1-Turbo",
+      "org": "sao10k",
+      "provider": "deepinfra",
+      "input": 0.04,
+      "output": 0.05,
+      "cache_read": null,
+      "blended": 0.045,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "Qwen/Qwen3-30B-A3B",
+      "name": "Qwen/Qwen3-30B-A3B",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.12000000000000001,
+      "output": 0.5,
+      "cache_read": null,
+      "blended": 0.31,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": null,
+        "coding": null,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "NousResearch/Hermes-3-Llama-3.1-70B",
+      "name": "NousResearch/Hermes-3-Llama-3.1-70B",
+      "org": "nous",
+      "provider": "deepinfra",
+      "input": 0.7,
+      "output": 0.7,
+      "cache_read": null,
+      "blended": 0.7,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 4.8,
+        "coding": null,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "meta-llama/Llama-Guard-4-12B",
+      "name": "meta-llama/Llama-Guard-4-12B",
+      "org": "meta",
+      "provider": "deepinfra",
+      "input": 0.18,
+      "output": 0.18,
+      "cache_read": null,
+      "blended": 0.18,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "moonshotai/Kimi-K2.7-Code",
+      "name": "moonshotai/Kimi-K2.7-Code",
+      "org": "moonshot",
+      "provider": "deepinfra",
+      "input": 0.6799999999999999,
+      "output": 3.4,
+      "cache_read": 0.13599999999999998,
+      "blended": 2.04,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 43,
+        "coding": 74,
+        "agentic_coding": 45.7
+      }
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V3.2",
+      "name": "deepseek-ai/DeepSeek-V3.2",
+      "org": "deepseek",
+      "provider": "deepinfra",
+      "input": 0.26,
+      "output": 0.38,
+      "cache_read": 0.13,
+      "blended": 0.32,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 25.1,
+        "coding": 44.2,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V4-Pro-0813",
+      "name": "deepseek-ai/DeepSeek-V4-Pro-0813",
+      "org": "deepseek",
+      "provider": "deepinfra",
+      "input": 1.2999999999999998,
+      "output": 2.5999999999999996,
+      "cache_read": 0.10000000399999999,
+      "blended": 1.95,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 53.2,
+        "coding": 68.8,
+        "agentic_coding": 49.6
+      }
+    },
+    {
+      "id": "MiniMaxAI/MiniMax-M3",
+      "name": "MiniMaxAI/MiniMax-M3",
+      "org": "minimax",
+      "provider": "deepinfra",
+      "input": 0.28,
+      "output": 1.1,
+      "cache_read": 0.05600000000000001,
+      "blended": 0.69,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 45.4,
+        "coding": 68.2,
+        "agentic_coding": 40.7
+      }
+    },
+    {
+      "id": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+      "name": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+      "org": "meta",
+      "provider": "deepinfra",
+      "input": 0.4,
+      "output": 0.4,
+      "cache_read": null,
+      "blended": 0.4,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "microsoft/phi-4",
+      "name": "microsoft/phi-4",
+      "org": "microsoft",
+      "provider": "deepinfra",
+      "input": 0.07,
+      "output": 0.14,
+      "cache_read": null,
+      "blended": 0.105,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 4.6,
+        "coding": null,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "zai-org/GLM-4.7",
+      "name": "zai-org/GLM-4.7",
+      "org": "z-ai",
+      "provider": "deepinfra",
+      "input": 0.4,
+      "output": 1.75,
+      "cache_read": 0.08000000000000002,
+      "blended": 1.075,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 34.5,
+        "coding": 45.3,
+        "agentic_coding": 26.2
+      }
+    },
+    {
+      "id": "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
+      "name": "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.3,
+      "output": 1,
+      "cache_read": 0.09999999899999999,
+      "blended": 0.65,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 18.2,
+        "coding": null,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "Qwen/Qwen3.6-27B",
+      "name": "Qwen/Qwen3.6-27B",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.32,
+      "output": 3.2,
+      "cache_read": null,
+      "blended": 1.76,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 37.7,
+        "coding": 71.8,
+        "agentic_coding": 39.3
+      }
+    },
+    {
+      "id": "Sao10K/L3.1-70B-Euryale-v2.2",
+      "name": "Sao10K/L3.1-70B-Euryale-v2.2",
+      "org": "sao10k",
+      "provider": "deepinfra",
+      "input": 0.85,
+      "output": 0.85,
+      "cache_read": null,
+      "blended": 0.85,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "google/gemma-4-31B-it-turbo",
+      "name": "google/gemma-4-31B-it-turbo",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 0.09,
+      "output": 0.33999999999999997,
+      "cache_read": 0.050000000399999994,
+      "blended": 0.215,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 29.7,
+        "coding": 43.4,
+        "agentic_coding": 14.4
+      }
+    },
+    {
+      "id": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "name": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "org": "meta",
+      "provider": "deepinfra",
+      "input": 0.1,
+      "output": 0.32,
+      "cache_read": null,
+      "blended": 0.21,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": null,
+        "coding": 11.9,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
+      "name": "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B",
+      "org": "nvidia",
+      "provider": "deepinfra",
+      "input": 0.08499999999999999,
+      "output": 0.4,
+      "cache_read": null,
+      "blended": 0.2425,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 25.7,
+        "coding": 37.7,
+        "agentic_coding": 8.8
+      }
+    },
+    {
+      "id": "tencent/Hy3",
+      "name": "tencent/Hy3",
+      "org": "tencent",
+      "provider": "deepinfra",
+      "input": 0.14,
+      "output": 0.58,
+      "cache_read": 0.035,
+      "blended": 0.36,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 42.2,
+        "coding": 58.8,
+        "agentic_coding": 31.4
+      }
+    },
+    {
+      "id": "Qwen/Qwen3.7-Max",
+      "name": "Qwen/Qwen3.7-Max",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 2.5,
+      "output": 7.5,
+      "cache_read": 0.5,
+      "blended": 5,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 46.7,
+        "coding": 74.2,
+        "agentic_coding": 43.6
+      }
+    },
+    {
+      "id": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+      "name": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+      "org": "meta",
+      "provider": "deepinfra",
+      "input": 0.02,
+      "output": 0.04,
+      "cache_read": null,
+      "blended": 0.03,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": null,
+        "coding": 5.4,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "meta-models/Muse-Glimmer-30B",
+      "name": "meta-models/Muse-Glimmer-30B",
+      "org": "meta-models",
+      "provider": "deepinfra",
+      "input": 0.3,
+      "output": 1.2,
+      "cache_read": 0.039999999,
+      "blended": 0.75,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "ByteDance/Seed-2.0-code",
+      "name": "ByteDance/Seed-2.0-code",
+      "org": "bytedance",
+      "provider": "deepinfra",
+      "input": 0.5,
+      "output": 2.9999999999999996,
+      "cache_read": 0.1,
+      "blended": 1.75,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "zai-org/GLM-5.2",
+      "name": "zai-org/GLM-5.2",
+      "org": "z-ai",
+      "provider": "deepinfra",
+      "input": 0.7499999999999999,
+      "output": 2.4,
+      "cache_read": 0.1400000025,
+      "blended": 1.575,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 52.6,
+        "coding": 79.7,
+        "agentic_coding": 51.9
+      }
+    },
+    {
+      "id": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+      "name": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.09,
+      "output": 0.55,
+      "cache_read": null,
+      "blended": 0.32,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "anthropic/claude-haiku-4-5",
+      "name": "anthropic/claude-haiku-4-5",
+      "org": "anthropic",
+      "provider": "deepinfra",
+      "input": 1,
+      "output": 5,
+      "cache_read": null,
+      "blended": 3,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "openai/gpt-oss-120b-Turbo",
+      "name": "openai/gpt-oss-120b-Turbo",
+      "org": "openai",
+      "provider": "deepinfra",
+      "input": 0.15,
+      "output": 0.6,
+      "cache_read": null,
+      "blended": 0.375,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 24.1,
+        "coding": 30.4,
+        "agentic_coding": 13.4
+      }
+    },
+    {
+      "id": "Qwen/Qwen3-14B",
+      "name": "Qwen/Qwen3-14B",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.12000000000000001,
+      "output": 0.24000000000000002,
+      "cache_read": null,
+      "blended": 0.18,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 10.4,
+        "coding": 13.8,
+        "agentic_coding": 1.9
+      }
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V3",
+      "name": "deepseek-ai/DeepSeek-V3",
+      "org": "deepseek",
+      "provider": "deepinfra",
+      "input": 0.32,
+      "output": 0.8899999999999999,
+      "cache_read": null,
+      "blended": 0.605,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 14.2,
+        "coding": 23,
+        "agentic_coding": 1.6
+      }
+    },
+    {
+      "id": "zai-org/GLM-4.7-Flash",
+      "name": "zai-org/GLM-4.7-Flash",
+      "org": "z-ai",
+      "provider": "deepinfra",
+      "input": 0.060000000000000005,
+      "output": 0.4,
+      "cache_read": 0.0100000002,
+      "blended": 0.23,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 23.3,
+        "coding": null,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "MiniMaxAI/MiniMax-M2.7-Turbo",
+      "name": "MiniMaxAI/MiniMax-M2.7-Turbo",
+      "org": "minimax",
+      "provider": "deepinfra",
+      "input": 0.38,
+      "output": 1.7,
+      "cache_read": 0.07000000140000001,
+      "blended": 1.04,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 38.9,
+        "coding": 52.6,
+        "agentic_coding": 25.9
+      }
+    },
+    {
+      "id": "Qwen/Qwen3.5-9B",
+      "name": "Qwen/Qwen3.5-9B",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.1,
+      "output": 0.15,
+      "cache_read": null,
+      "blended": 0.125,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 21.8,
+        "coding": 28.7,
+        "agentic_coding": 7
+      }
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V4-Flash",
+      "name": "deepseek-ai/DeepSeek-V4-Flash",
+      "org": "deepseek",
+      "provider": "deepinfra",
+      "input": 0.09,
+      "output": 0.18,
+      "cache_read": 0.018,
+      "blended": 0.135,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 51.8,
+        "coding": 69.2,
+        "agentic_coding": 37.6
+      }
+    },
+    {
+      "id": "XiaomiMiMo/MiMo-V2.5",
+      "name": "XiaomiMiMo/MiMo-V2.5",
+      "org": "xiaomi",
+      "provider": "deepinfra",
+      "input": 0.4,
+      "output": 2,
+      "cache_read": 0.08000000000000002,
+      "blended": 1.2,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 38,
+        "coding": 56.8,
+        "agentic_coding": 24.4
+      }
+    },
+    {
+      "id": "google/gemini-3.1-flash-lite",
+      "name": "google/gemini-3.1-flash-lite",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 0.25,
+      "output": 1.4999999999999998,
+      "cache_read": null,
+      "blended": 0.875,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 25.6,
+        "coding": 34.7,
+        "agentic_coding": 6.5
+      }
+    },
+    {
+      "id": "google/gemma-4-31B-it-Ultra",
+      "name": "google/gemma-4-31B-it-Ultra",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 0.27,
+      "output": 0.76,
+      "cache_read": null,
+      "blended": 0.515,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "anthropic/claude-opus-5",
+      "name": "anthropic/claude-opus-5",
+      "org": "anthropic",
+      "provider": "deepinfra",
+      "input": 5,
+      "output": 25,
+      "cache_read": null,
+      "blended": 15,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 63.1,
+        "coding": 78,
+        "agentic_coding": 59.2
+      }
+    },
+    {
+      "id": "Qwen/Qwen3-Max-Thinking",
+      "name": "Qwen/Qwen3-Max-Thinking",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 1.2,
+      "output": 5.999999999999999,
+      "cache_read": 0.24,
+      "blended": 3.6,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 32.5,
+        "coding": null,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "Qwen/Qwen3.5-27B",
+      "name": "Qwen/Qwen3.5-27B",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.26,
+      "output": 2.5999999999999996,
+      "cache_read": null,
+      "blended": 1.43,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 34.6,
+        "coding": null,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "ByteDance/Seed-1.8",
+      "name": "ByteDance/Seed-1.8",
+      "org": "bytedance",
+      "provider": "deepinfra",
+      "input": 0.25,
+      "output": 2,
+      "cache_read": 0.05,
+      "blended": 1.125,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+      "name": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+      "org": "meta",
+      "provider": "deepinfra",
+      "input": 0.1,
+      "output": 0.3,
+      "cache_read": null,
+      "blended": 0.2,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "nvidia/NVIDIA-Nemotron-3.5-Lightning",
+      "name": "nvidia/NVIDIA-Nemotron-3.5-Lightning",
+      "org": "nvidia",
+      "provider": "deepinfra",
+      "input": 0.08,
+      "output": 0.2,
+      "cache_read": 0.04,
+      "blended": 0.14,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 23.6,
+        "coding": 26.8,
+        "agentic_coding": 13.8
+      }
+    },
+    {
+      "id": "moonshotai/Kimi-K2.5",
+      "name": "moonshotai/Kimi-K2.5",
+      "org": "moonshot",
+      "provider": "deepinfra",
+      "input": 0.45,
+      "output": 2.25,
+      "cache_read": 0.070000002,
+      "blended": 1.35,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 36,
+        "coding": 46.8,
+        "agentic_coding": 21.7
+      }
+    },
+    {
+      "id": "thinkingmachines/Inkling",
+      "name": "thinkingmachines/Inkling",
+      "org": "thinkingmachines",
+      "provider": "deepinfra",
+      "input": 0.95,
+      "output": 4.05,
+      "cache_read": 0.1599999975,
+      "blended": 2.5,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 42.3,
+        "coding": 52.1,
+        "agentic_coding": 34.1
+      }
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V4-Flash-0731",
+      "name": "deepseek-ai/DeepSeek-V4-Flash-0731",
+      "org": "deepseek",
+      "provider": "deepinfra",
+      "input": 0.08,
+      "output": 0.18,
+      "cache_read": 0.016,
+      "blended": 0.13,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 51.8,
+        "coding": 69.1,
+        "agentic_coding": 48.4
+      }
+    },
+    {
+      "id": "openai/gpt-oss-120b-Ultra",
+      "name": "openai/gpt-oss-120b-Ultra",
+      "org": "openai",
+      "provider": "deepinfra",
+      "input": 0.2,
+      "output": 0.95,
+      "cache_read": null,
+      "blended": 0.575,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "Qwen/Qwen3.5-35B-A3B",
+      "name": "Qwen/Qwen3.5-35B-A3B",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.14,
+      "output": 1,
+      "cache_read": 0.05000000040000001,
+      "blended": 0.57,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 24.3,
+        "coding": 37,
+        "agentic_coding": 11.8
+      }
+    },
+    {
+      "id": "MiniMaxAI/MiniMax-M2.7",
+      "name": "MiniMaxAI/MiniMax-M2.7",
+      "org": "minimax",
+      "provider": "deepinfra",
+      "input": 0.25,
+      "output": 1,
+      "cache_read": 0.05,
+      "blended": 0.625,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 38.9,
+        "coding": 52.6,
+        "agentic_coding": 25.9
+      }
+    },
+    {
+      "id": "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B",
+      "name": "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B",
+      "org": "nvidia",
+      "provider": "deepinfra",
+      "input": 0.5,
+      "output": 2.2,
+      "cache_read": 0.1,
+      "blended": 1.35,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 38.3,
+        "coding": 49.3,
+        "agentic_coding": 27.5
+      }
+    },
+    {
+      "id": "Qwen/Qwen3-32B",
+      "name": "Qwen/Qwen3-32B",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.08,
+      "output": 0.28,
+      "cache_read": null,
+      "blended": 0.18,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 11.4,
+        "coding": 15.3,
+        "agentic_coding": 1.8
+      }
+    },
+    {
+      "id": "zai-org/GLM-5.1",
+      "name": "zai-org/GLM-5.1",
+      "org": "z-ai",
+      "provider": "deepinfra",
+      "input": 1.05,
+      "output": 3.5,
+      "cache_read": 0.205000005,
+      "blended": 2.275,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 41,
+        "coding": 55.8,
+        "agentic_coding": 30.6
+      }
+    },
+    {
+      "id": "Qwen/Qwen3-VL-30B-A3B-Instruct",
+      "name": "Qwen/Qwen3-VL-30B-A3B-Instruct",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.15,
+      "output": 0.6,
+      "cache_read": null,
+      "blended": 0.375,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 9.9,
+        "coding": null,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "NousResearch/Hermes-3-Llama-3.1-405B",
+      "name": "NousResearch/Hermes-3-Llama-3.1-405B",
+      "org": "nous",
+      "provider": "deepinfra",
+      "input": 1,
+      "output": 1,
+      "cache_read": null,
+      "blended": 1,
+      "zdr": true,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V3.1",
+      "name": "deepseek-ai/DeepSeek-V3.1",
+      "org": "deepseek",
+      "provider": "deepinfra",
+      "input": 0.25,
+      "output": 0.95,
+      "cache_read": 0.13,
+      "blended": 0.6,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 21.4,
+        "coding": null,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "stepfun-ai/Step-3.7-Flash",
+      "name": "stepfun-ai/Step-3.7-Flash",
+      "org": "stepfun",
+      "provider": "deepinfra",
+      "input": 0.2,
+      "output": 1.15,
+      "cache_read": 0.04000000000000001,
+      "blended": 0.675,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 30.9,
+        "coding": 39.6,
+        "agentic_coding": 21.7
+      }
+    },
+    {
+      "id": "anthropic/claude-sonnet-4-6",
+      "name": "anthropic/claude-sonnet-4-6",
+      "org": "anthropic",
+      "provider": "deepinfra",
+      "input": 2.9999999999999996,
+      "output": 15,
+      "cache_read": null,
+      "blended": 9,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 84.8,
+        "coding": 79.3,
+        "agentic_coding": 42.6
+      }
+    },
+    {
+      "id": "Qwen/Qwen3.8-Max",
+      "name": "Qwen/Qwen3.8-Max",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 1.6500000000000001,
+      "output": 4.9510000000000005,
+      "cache_read": 0.20599999200000002,
+      "blended": 3.3005,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 58.1,
+        "coding": 71.8,
+        "agentic_coding": 58.4
+      }
+    },
+    {
+      "id": "moonshotai/Kimi-K2.6",
+      "name": "moonshotai/Kimi-K2.6",
+      "org": "moonshot",
+      "provider": "deepinfra",
+      "input": 0.7499999999999999,
+      "output": 3.5,
+      "cache_read": 0.15,
+      "blended": 2.125,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 45.1,
+        "coding": 78.6,
+        "agentic_coding": 46.9
+      }
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V3-0324",
+      "name": "deepseek-ai/DeepSeek-V3-0324",
+      "org": "deepseek",
+      "provider": "deepinfra",
+      "input": 0.24000000000000002,
+      "output": 0.9,
+      "cache_read": 0.135,
+      "blended": 0.57,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "deepseek-ai/DeepSeek-V4-Pro",
+      "name": "deepseek-ai/DeepSeek-V4-Pro",
+      "org": "deepseek",
+      "provider": "deepinfra",
+      "input": 1.2999999999999998,
+      "output": 2.5999999999999996,
+      "cache_read": 0.10000000399999999,
+      "blended": 1.95,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 45.3,
+        "coding": 70,
+        "agentic_coding": 42.6
+      }
+    },
+    {
+      "id": "google/gemini-3.5-flash",
+      "name": "google/gemini-3.5-flash",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 1.4999999999999998,
+      "output": 9,
+      "cache_read": null,
+      "blended": 5.25,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 52,
+        "coding": 78.2,
+        "agentic_coding": 49
+      }
+    },
+    {
+      "id": "ByteDance/Seed-2.0-mini",
+      "name": "ByteDance/Seed-2.0-mini",
+      "org": "bytedance",
+      "provider": "deepinfra",
+      "input": 0.1,
+      "output": 0.4,
+      "cache_read": 0.020000000000000004,
+      "blended": 0.25,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "Qwen/Qwen3-235B-A22B-Thinking-2507",
+      "name": "Qwen/Qwen3-235B-A22B-Thinking-2507",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.22999999999999998,
+      "output": 2.3,
+      "cache_read": 0.20000000059999998,
+      "blended": 1.265,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 19.9,
+        "coding": 22.1,
+        "agentic_coding": 3.8
+      }
+    },
+    {
+      "id": "mistralai/Mistral-Small-3.2-24B-Instruct-2506",
+      "name": "mistralai/Mistral-Small-3.2-24B-Instruct-2506",
+      "org": "mistral",
+      "provider": "deepinfra",
+      "input": 0.075,
+      "output": 0.2,
+      "cache_read": null,
+      "blended": 0.1375,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "Qwen/Qwen2.5-72B-Instruct",
+      "name": "Qwen/Qwen2.5-72B-Instruct",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.36,
+      "output": 0.4,
+      "cache_read": null,
+      "blended": 0.38,
+      "zdr": false,
+      "subscription": false,
+      "scores": {
+        "intelligence": 9.4,
+        "coding": null,
+        "agentic_coding": null
+      }
+    },
+    {
+      "id": "nvidia/Nemotron-Content-Safety-3.5",
+      "name": "nvidia/Nemotron-Content-Safety-3.5",
+      "org": "nvidia",
+      "provider": "deepinfra",
+      "input": 0.2,
+      "output": 0.2,
+      "cache_read": null,
+      "blended": 0.2,
+      "zdr": false,
+      "subscription": false,
+      "scores": null
+    },
+    {
+      "id": "Qwen/Qwen3.6-35B-A3B",
+      "name": "Qwen/Qwen3.6-35B-A3B",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.1,
+      "output": 0.95,
+      "cache_read": null,
+      "blended": 0.525,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 32.1,
+        "coding": 41.9,
+        "agentic_coding": 21.6
+      }
+    },
+    {
+      "id": "google/gemma-3-12b-it",
+      "name": "google/gemma-3-12b-it",
+      "org": "google",
+      "provider": "deepinfra",
+      "input": 0.05,
+      "output": 0.15,
+      "cache_read": null,
+      "blended": 0.1,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 5.5,
+        "coding": 5.8,
+        "agentic_coding": 0.3
+      }
+    },
+    {
+      "id": "Qwen/Qwen3-VL-235B-A22B-Instruct",
+      "name": "Qwen/Qwen3-VL-235B-A22B-Instruct",
+      "org": "qwen",
+      "provider": "deepinfra",
+      "input": 0.2,
+      "output": 0.8799999999999999,
+      "cache_read": 0.11000000000000001,
+      "blended": 0.54,
+      "zdr": true,
+      "subscription": false,
+      "scores": {
+        "intelligence": 14.4,
+        "coding": null,
+        "agentic_coding": null
+      }
+    }
+  ],
+  "top_benchmarks": [
+    {
+      "id": "claude-sonnet-4-6",
+      "name": "anthropic/claude-sonnet-4-6",
+      "org": "anthropic",
+      "best_blended_per_m": 3.06,
+      "best_provider": "deepinfra",
+      "scores": {
+        "intelligence": 84.8,
+        "coding": 79.3,
+        "agentic_coding": 42.6
+      }
+    },
+    {
+      "id": "claude-opus-5",
+      "name": "anthropic/claude-opus-5",
+      "org": "anthropic",
+      "best_blended_per_m": 0.735,
+      "best_provider": "Amazon Bedrock",
+      "scores": {
+        "intelligence": 63.1,
+        "coding": 78,
+        "agentic_coding": 59.2
+      }
+    },
+    {
+      "id": "claude-opus-5-fast",
+      "name": "Claude Opus 5 (Fast)",
+      "org": "anthropic",
+      "best_blended_per_m": 1.47,
+      "best_provider": "Anthropic",
+      "scores": {
+        "intelligence": 63.1,
+        "coding": 78,
+        "agentic_coding": 59.2
+      }
+    },
+    {
+      "id": "claude-opus-5:batch",
+      "name": "Claude Opus 5 (batch)",
+      "org": "anthropic",
+      "best_blended_per_m": 0.735,
+      "best_provider": "Amazon Bedrock",
+      "scores": {
+        "intelligence": 63.1,
+        "coding": 78,
+        "agentic_coding": 59.2
+      }
+    },
+    {
+      "id": "claude-fable-5",
+      "name": "anthropic/claude-fable-5",
+      "org": "anthropic",
+      "best_blended_per_m": 1.47,
+      "best_provider": "Amazon Bedrock",
+      "scores": {
+        "intelligence": 62.1,
+        "coding": 76.5,
+        "agentic_coding": 56.6
+      }
+    },
+    {
+      "id": "claude-fable-5:batch",
+      "name": "Anthropic: Claude Fable 5 (batch)",
+      "org": "anthropic",
+      "best_blended_per_m": 1.47,
+      "best_provider": "Amazon Bedrock",
+      "scores": {
+        "intelligence": 62.1,
+        "coding": 76.5,
+        "agentic_coding": 56.6
+      }
+    },
+    {
+      "id": "grok-4.6",
+      "name": "SpaceXAI: Grok 4.6",
+      "org": "x-ai",
+      "best_blended_per_m": 0.565,
+      "best_provider": "xAI",
+      "scores": {
+        "intelligence": 60.9,
+        "coding": 76.8,
+        "agentic_coding": 58.7
+      }
+    },
+    {
+      "id": "gpt-5.6-sol",
+      "name": "OpenAI: GPT-5.6 Sol",
+      "org": "openai",
+      "best_blended_per_m": 0.76,
+      "best_provider": "OpenAI",
+      "scores": {
+        "intelligence": 60.9,
+        "coding": 77.4,
+        "agentic_coding": 57.8
+      }
+    },
+    {
+      "id": "gpt-5.6-sol:batch",
+      "name": "OpenAI: GPT-5.6 Sol (batch)",
+      "org": "openai",
+      "best_blended_per_m": 0.76,
+      "best_provider": "OpenAI",
+      "scores": {
+        "intelligence": 60.9,
+        "coding": 77.4,
+        "agentic_coding": 57.8
+      }
+    },
+    {
+      "id": "kimi-k3",
+      "name": "moonshotai/Kimi-K3",
+      "org": "moonshot",
+      "best_blended_per_m": 0.331,
+      "best_provider": "sference",
+      "scores": {
+        "intelligence": 59.7,
+        "coding": 76.2,
+        "agentic_coding": 54.3
+      }
+    },
+    {
+      "id": "kimi-k3-fast",
+      "name": "Kimi-K3-Fast",
+      "org": "moonshot",
+      "best_blended_per_m": 0.441,
+      "best_provider": "neuralwatt",
+      "scores": {
+        "intelligence": 59.7,
+        "coding": 76.2,
+        "agentic_coding": 54.3
+      }
+    },
+    {
+      "id": "qwen3.8-max",
+      "name": "Qwen/Qwen3.8-Max",
+      "org": "qwen",
+      "best_blended_per_m": 0.266,
+      "best_provider": "deepinfra",
+      "scores": {
+        "intelligence": 58.1,
+        "coding": 71.8,
+        "agentic_coding": 58.4
+      }
+    },
+    {
+      "id": "claude-opus-4.8-fast",
+      "name": "Anthropic: Claude Opus 4.8 (Fast)",
+      "org": "anthropic",
+      "best_blended_per_m": 1.47,
+      "best_provider": "Anthropic",
+      "scores": {
+        "intelligence": 57.3,
+        "coding": 74.3,
+        "agentic_coding": 49.4
+      }
+    },
+    {
+      "id": "claude-opus-4.8",
+      "name": "Anthropic: Claude Opus 4.8",
+      "org": "anthropic",
+      "best_blended_per_m": 0.735,
+      "best_provider": "Amazon Bedrock",
+      "scores": {
+        "intelligence": 57.3,
+        "coding": 74.3,
+        "agentic_coding": 49.4
+      }
+    },
+    {
+      "id": "claude-opus-4.8:batch",
+      "name": "Anthropic: Claude Opus 4.8 (batch)",
+      "org": "anthropic",
+      "best_blended_per_m": 0.735,
+      "best_provider": "Amazon Bedrock",
+      "scores": {
+        "intelligence": 57.3,
+        "coding": 74.3,
+        "agentic_coding": 49.4
+      }
+    },
+    {
+      "id": "muse-spark-1.2",
+      "name": "Meta: Muse Spark 1.2",
+      "org": null,
+      "best_blended_per_m": 0.198,
+      "best_provider": "Meta",
+      "scores": {
+        "intelligence": 56.8,
+        "coding": 72.2,
+        "agentic_coding": 49.3
+      }
+    },
+    {
+      "id": "gpt-5.6-terra",
+      "name": "OpenAI: GPT-5.6 Terra",
+      "org": "openai",
+      "best_blended_per_m": 0.152,
+      "best_provider": "OpenAI",
+      "scores": {
+        "intelligence": 56.6,
+        "coding": 76.7,
+        "agentic_coding": 50.2
+      }
+    },
+    {
+      "id": "gpt-5.6-terra:batch",
+      "name": "OpenAI: GPT-5.6 Terra (batch)",
+      "org": "openai",
+      "best_blended_per_m": 0.152,
+      "best_provider": "OpenAI",
+      "scores": {
+        "intelligence": 56.6,
+        "coding": 76.7,
+        "agentic_coding": 50.2
+      }
+    },
+    {
+      "id": "gpt-5.5",
+      "name": "OpenAI: GPT-5.5",
+      "org": "openai",
+      "best_blended_per_m": 0.76,
+      "best_provider": "OpenAI",
+      "scores": {
+        "intelligence": 56.3,
+        "coding": 80,
+        "agentic_coding": 46.8
+      }
+    },
+    {
+      "id": "gpt-5.5:batch",
+      "name": "OpenAI: GPT-5.5 (batch)",
+      "org": "openai",
+      "best_blended_per_m": 0.76,
+      "best_provider": "OpenAI",
+      "scores": {
+        "intelligence": 56.3,
+        "coding": 74.9,
+        "agentic_coding": 47.4
+      }
+    },
+    {
+      "id": "gemini-3.7-flash",
+      "name": "google/gemini-3.7-flash",
+      "org": "google",
+      "best_blended_per_m": 0.055,
+      "best_provider": "Google",
+      "scores": {
+        "intelligence": 56,
+        "coding": 76.1,
+        "agentic_coding": 45.1
+      }
+    },
+    {
+      "id": "gemini-3.7-flash:batch",
+      "name": "Google: Gemini 3.7 Flash (batch)",
+      "org": "google",
+      "best_blended_per_m": 0.055,
+      "best_provider": "Google",
+      "scores": {
+        "intelligence": 56,
+        "coding": 76.1,
+        "agentic_coding": 45.1
+      }
+    },
+    {
+      "id": "grok-4.5",
+      "name": "SpaceXAI: Grok 4.5",
+      "org": "xai",
+      "best_blended_per_m": 0.371,
+      "best_provider": "xAI",
+      "scores": {
+        "intelligence": 55.8,
+        "coding": 72.4,
+        "agentic_coding": 48.9
+      }
+    },
+    {
+      "id": "claude-sonnet-5",
+      "name": "anthropic/claude-sonnet-5",
+      "org": "anthropic",
+      "best_blended_per_m": 0.294,
+      "best_provider": "Amazon Bedrock",
+      "scores": {
+        "intelligence": 55.3,
+        "coding": 71.5,
+        "agentic_coding": 49.7
+      }
+    },
+    {
+      "id": "claude-sonnet-5:batch",
+      "name": "Anthropic: Claude Sonnet 5 (batch)",
+      "org": "anthropic",
+      "best_blended_per_m": 0.294,
+      "best_provider": "Amazon Bedrock",
+      "scores": {
+        "intelligence": 55.3,
+        "coding": 71.5,
+        "agentic_coding": 49.7
+      }
+    },
+    {
+      "id": "claude-opus-4.7-fast",
+      "name": "Anthropic: Claude Opus 4.7 (Fast)",
+      "org": "anthropic",
+      "best_blended_per_m": 4.41,
+      "best_provider": "Anthropic",
+      "scores": {
+        "intelligence": 55,
+        "coding": 73.6,
+        "agentic_coding": 46.3
+      }
+    },
+    {
+      "id": "claude-opus-4.7",
+      "name": "Anthropic: Claude Opus 4.7",
+      "org": "anthropic",
+      "best_blended_per_m": 0.735,
+      "best_provider": "Amazon Bedrock",
+      "scores": {
+        "intelligence": 55,
+        "coding": 73.6,
+        "agentic_coding": 46.3
+      }
+    },
+    {
+      "id": "claude-opus-4.7:batch",
+      "name": "Anthropic: Claude Opus 4.7 (batch)",
+      "org": "anthropic",
+      "best_blended_per_m": 0.735,
+      "best_provider": "Amazon Bedrock",
+      "scores": {
+        "intelligence": 55,
+        "coding": 73.6,
+        "agentic_coding": 46.3
+      }
+    },
+    {
+      "id": "deepseek-v4-pro-0813",
+      "name": "deepseek-ai/DeepSeek-V4-Pro-0813",
+      "org": "deepseek",
+      "best_blended_per_m": 0.019,
+      "best_provider": "DeepSeek",
+      "scores": {
+        "intelligence": 53.2,
+        "coding": 68.8,
+        "agentic_coding": 49.6
+      }
+    },
+    {
+      "id": "muse-spark-1.1",
+      "name": "Meta: Muse Spark 1.1",
+      "org": null,
+      "best_blended_per_m": 0.198,
+      "best_provider": "Meta",
+      "scores": {
+        "intelligence": 53.2,
+        "coding": 71.3,
+        "agentic_coding": 39.7
+      }
+    },
+    {
+      "id": "gpt-5.4",
+      "name": "OpenAI: GPT-5.4",
+      "org": "openai",
+      "best_blended_per_m": 0.38,
+      "best_provider": "OpenAI",
+      "scores": {
+        "intelligence": 53.1,
+        "coding": 71.1,
+        "agentic_coding": 44.2
+      }
+    },
+    {
+      "id": "gpt-5.4:batch",
+      "name": "OpenAI: GPT-5.4 (batch)",
+      "org": "openai",
+      "best_blended_per_m": 0.38,
+      "best_provider": "OpenAI",
+      "scores": {
+        "intelligence": 53.1,
+        "coding": 71.1,
+        "agentic_coding": 44.2
+      }
+    },
+    {
+      "id": "glm-5.2",
+      "name": "zai-org/GLM-5.2",
+      "org": "z-ai",
+      "best_blended_per_m": 0.026,
+      "best_provider": "crof",
+      "scores": {
+        "intelligence": 52.6,
+        "coding": 79.7,
+        "agentic_coding": 51.9
+      }
+    },
+    {
+      "id": "glm5.2-fast",
+      "name": "GLM5.2-Fast",
+      "org": "z-ai",
+      "best_blended_per_m": 0.289,
+      "best_provider": "wafer",
+      "scores": {
+        "intelligence": 52.6,
+        "coding": 68.8,
+        "agentic_coding": 45.7
+      }
+    },
+    {
+      "id": "glm-5.2-fast",
+      "name": "GLM-5.2 (fast)",
+      "org": "z-ai",
+      "best_blended_per_m": 0.199,
+      "best_provider": "neuralwatt",
+      "scores": {
+        "intelligence": 52.6,
+        "coding": 68.8,
+        "agentic_coding": 45.7
+      }
+    },
+    {
+      "id": "glm-5.2:batch",
+      "name": "Z.ai: GLM 5.2 (batch)",
+      "org": "z-ai",
+      "best_blended_per_m": 0.068,
+      "best_provider": "StreamLake",
+      "scores": {
+        "intelligence": 52.6,
+        "coding": 68.8,
+        "agentic_coding": 45.7
+      }
+    },
+    {
+      "id": "glm-5.2-fp8",
+      "name": "GLM-5.2-FP8",
+      "org": "z-ai",
+      "best_blended_per_m": 0.212,
+      "best_provider": "makora",
+      "scores": {
+        "intelligence": 52.6,
+        "coding": 68.8,
+        "agentic_coding": 45.7
+      }
+    },
+    {
+      "id": "glm-5.2-nvfp4",
+      "name": "GLM-5.2-NVFP4",
+      "org": "z-ai",
+      "best_blended_per_m": 0.146,
+      "best_provider": "makora",
+      "scores": {
+        "intelligence": 52.6,
+        "coding": 68.8,
+        "agentic_coding": 45.7
+      }
+    },
+    {
+      "id": "umans-glm-5.2",
+      "name": "Umans GLM 5.2",
+      "org": "z-ai",
+      "best_blended_per_m": 0.309,
+      "best_provider": "umans",
+      "scores": {
+        "intelligence": 52.6,
+        "coding": 68.8,
+        "agentic_coding": 45.7
+      }
+    },
+    {
+      "id": "gpt-5.6-luna",
+      "name": "OpenAI: GPT-5.6 Luna",
+      "org": "openai",
+      "best_blended_per_m": 0.015,
+      "best_provider": "OpenAI",
+      "scores": {
+        "intelligence": 52.3,
+        "coding": 71.4,
+        "agentic_coding": 46.9
+      }
+    },
+    {
+      "id": "gpt-5.6-luna:batch",
+      "name": "OpenAI: GPT-5.6 Luna (batch)",
+      "org": "openai",
+      "best_blended_per_m": 0.015,
+      "best_provider": "OpenAI",
+      "scores": {
+        "intelligence": 52.3,
+        "coding": 71.4,
+        "agentic_coding": 46.9
+      }
+    },
+    {
+      "id": "gemini-3.5-flash",
+      "name": "google/gemini-3.5-flash",
+      "org": "google",
+      "best_blended_per_m": 0.228,
+      "best_provider": "Google",
+      "scores": {
+        "intelligence": 52,
+        "coding": 78.2,
+        "agentic_coding": 49
+      }
+    },
+    {
+      "id": "gemini-3.5-flash:batch",
+      "name": "Google: Gemini 3.5 Flash (batch)",
+      "org": "google",
+      "best_blended_per_m": 0.228,
+      "best_provider": "Google",
+      "scores": {
+        "intelligence": 52,
+        "coding": 70.1,
+        "agentic_coding": 39.7
+      }
+    },
+    {
+      "id": "deepseek-v4-flash",
+      "name": "deepseek-ai/DeepSeek-V4-Flash",
+      "org": "deepseek",
+      "best_blended_per_m": 0.007,
+      "best_provider": "crof",
+      "scores": {
+        "intelligence": 51.8,
+        "coding": 69.2,
+        "agentic_coding": 37.6
+      }
+    },
+    {
+      "id": "deepseek-v4-flash-0731",
+      "name": "deepseek-ai/DeepSeek-V4-Flash-0731",
+      "org": "deepseek",
+      "best_blended_per_m": 0.007,
+      "best_provider": "crof",
+      "scores": {
+        "intelligence": 51.8,
+        "coding": 69.1,
+        "agentic_coding": 48.4
+      }
+    },
+    {
+      "id": "deepseek-v4-flash-0731-fast",
+      "name": "DeepSeek-V4-Flash-0731-Fast",
+      "org": "deepseek",
+      "best_blended_per_m": 0.078,
+      "best_provider": "wafer",
+      "scores": {
+        "intelligence": 51.8,
+        "coding": 69.1,
+        "agentic_coding": 48.4
+      }
+    },
+    {
+      "id": "gemini-3.6-flash",
+      "name": "Google: Gemini 3.6 Flash",
+      "org": "google",
+      "best_blended_per_m": 0.11,
+      "best_provider": "Google",
+      "scores": {
+        "intelligence": 51.6,
+        "coding": 69.2,
+        "agentic_coding": 40.5
+      }
+    },
+    {
+      "id": "gemini-3.6-flash:batch",
+      "name": "Google: Gemini 3.6 Flash (batch)",
+      "org": "google",
+      "best_blended_per_m": 0.11,
+      "best_provider": "Google",
+      "scores": {
+        "intelligence": 51.6,
+        "coding": 69.2,
+        "agentic_coding": 40.5
+      }
+    },
+    {
+      "id": "claude-sonnet-4.6",
+      "name": "Anthropic: Claude Sonnet 4.6",
+      "org": "anthropic",
+      "best_blended_per_m": 0.441,
+      "best_provider": "Azure",
+      "scores": {
+        "intelligence": 48.4,
+        "coding": 79.3,
+        "agentic_coding": 42.6
+      }
+    },
+    {
+      "id": "claude-sonnet-4.6:batch",
+      "name": "Anthropic: Claude Sonnet 4.6 (batch)",
+      "org": "anthropic",
+      "best_blended_per_m": 0.441,
+      "best_provider": "Azure",
+      "scores": {
+        "intelligence": 48.4,
+        "coding": 63,
+        "agentic_coding": 42.1
+      }
+    }
+  ]
+}

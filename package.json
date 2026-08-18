@@ -9,7 +9,7 @@
     "fetch:videos": "node scripts/fetch-videos.mjs",
     "fetch:all": "node scripts/fetch-pricing.mjs && node scripts/fetch-images.mjs && node scripts/fetch-videos.mjs",
     "serve": "npx --yes serve public -l 3000",
-    "build:prod": "node scripts/fetch-pricing.mjs && node scripts/fetch-images.mjs && node scripts/fetch-videos.mjs && node scripts/fetch-benchmarks.mjs && node scripts/generate-seo.mjs && node scripts/verify-seo.mjs && echo 'Static site in ./public'",
+    "build:prod": "node scripts/fetch-pricing.mjs && node scripts/fetch-images.mjs && node scripts/fetch-videos.mjs && node scripts/fetch-benchmarks.mjs && node scripts/build-advisor-knowledge.mjs && node scripts/generate-seo.mjs && node scripts/verify-seo.mjs && echo 'Static site in ./public'",
     "fetch:perf": "node scripts/fetch-performance.mjs",
     "test": "node --test test/*.test.mjs",
     "seo": "node scripts/generate-seo.mjs",
