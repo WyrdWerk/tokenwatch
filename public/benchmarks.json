@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-20T14:26:15.012Z",
+  "generated_at": "2026-08-20T16:24:03.301Z",
   "mix": {
     "inputPct": 2.5,
     "cacheReadPct": 97,
@@ -67,7 +67,7 @@
       "org": "anthropic",
       "providers": 6,
       "from": {
-        "provider": "Amazon Bedrock",
+        "provider": "Claude Platform on AWS",
         "blended_per_m": 0.735
       },
       "offerings": [
@@ -76,12 +76,6 @@
           "input": 5,
           "output": 25,
           "cache_read": null
-        },
-        {
-          "provider": "Amazon Bedrock",
-          "input": 5,
-          "output": 25,
-          "cache_read": 0.5
         },
         {
           "provider": "Claude Platform on AWS",
@@ -103,6 +97,12 @@
         },
         {
           "provider": "Google",
+          "input": 5,
+          "output": 25,
+          "cache_read": 0.5
+        },
+        {
+          "provider": "Amazon Bedrock",
           "input": 5,
           "output": 25,
           "cache_read": 0.5
@@ -147,16 +147,10 @@
       "org": "anthropic",
       "providers": 5,
       "from": {
-        "provider": "Amazon Bedrock",
+        "provider": "Claude Platform on AWS",
         "blended_per_m": 0.735
       },
       "offerings": [
-        {
-          "provider": "Amazon Bedrock",
-          "input": 5,
-          "output": 25,
-          "cache_read": 0.5
-        },
         {
           "provider": "Claude Platform on AWS",
           "input": 5,
@@ -177,6 +171,12 @@
         },
         {
           "provider": "Google",
+          "input": 5,
+          "output": 25,
+          "cache_read": 0.5
+        },
+        {
+          "provider": "Amazon Bedrock",
           "input": 5,
           "output": 25,
           "cache_read": 0.5
@@ -196,7 +196,7 @@
       "org": "anthropic",
       "providers": 6,
       "from": {
-        "provider": "Claude Platform on AWS",
+        "provider": "Amazon Bedrock",
         "blended_per_m": 1.47
       },
       "offerings": [
@@ -205,12 +205,6 @@
           "input": 10,
           "output": 50,
           "cache_read": null
-        },
-        {
-          "provider": "Claude Platform on AWS",
-          "input": 10,
-          "output": 50,
-          "cache_read": 1
         },
         {
           "provider": "Amazon Bedrock",
@@ -225,13 +219,19 @@
           "cache_read": 1
         },
         {
-          "provider": "Anthropic",
+          "provider": "Claude Platform on AWS",
           "input": 10,
           "output": 50,
           "cache_read": 1
         },
         {
           "provider": "Google",
+          "input": 10,
+          "output": 50,
+          "cache_read": 1
+        },
+        {
+          "provider": "Anthropic",
           "input": 10,
           "output": 50,
           "cache_read": 1
@@ -251,16 +251,10 @@
       "org": "anthropic",
       "providers": 5,
       "from": {
-        "provider": "Claude Platform on AWS",
+        "provider": "Amazon Bedrock",
         "blended_per_m": 1.47
       },
       "offerings": [
-        {
-          "provider": "Claude Platform on AWS",
-          "input": 10,
-          "output": 50,
-          "cache_read": 1
-        },
         {
           "provider": "Amazon Bedrock",
           "input": 10,
@@ -274,13 +268,19 @@
           "cache_read": 1
         },
         {
-          "provider": "Anthropic",
+          "provider": "Claude Platform on AWS",
           "input": 10,
           "output": 50,
           "cache_read": 1
         },
         {
           "provider": "Google",
+          "input": 10,
+          "output": 50,
+          "cache_read": 1
+        },
+        {
+          "provider": "Anthropic",
           "input": 10,
           "output": 50,
           "cache_read": 1
@@ -472,13 +472,7 @@
           "cache_read": 0.28500000000000003
         },
         {
-          "provider": "Fireworks",
-          "input": 3,
-          "output": 15,
-          "cache_read": 0.3
-        },
-        {
-          "provider": "Chutes",
+          "provider": "BaseTen",
           "input": 3,
           "output": 15,
           "cache_read": 0.3
@@ -496,22 +490,28 @@
           "cache_read": 0.3
         },
         {
+          "provider": "Phala",
+          "input": 3,
+          "output": 15,
+          "cache_read": 1.5
+        },
+        {
+          "provider": "Fireworks",
+          "input": 3,
+          "output": 15,
+          "cache_read": 0.3
+        },
+        {
           "provider": "Modal",
           "input": 3,
           "output": 15,
           "cache_read": 0.3
         },
         {
-          "provider": "BaseTen",
+          "provider": "Chutes",
           "input": 3,
           "output": 15,
           "cache_read": 0.3
-        },
-        {
-          "provider": "Phala",
-          "input": 3,
-          "output": 15,
-          "cache_read": 1.5
         },
         {
           "provider": "makora",
@@ -648,6 +648,12 @@
           "cache_read": 0.2
         },
         {
+          "provider": "SiliconFlow",
+          "input": 2,
+          "output": 6,
+          "cache_read": 0.25
+        },
+        {
           "provider": "DigitalOcean",
           "input": 2,
           "output": 6,
@@ -655,12 +661,6 @@
         },
         {
           "provider": "Modal",
-          "input": 2,
-          "output": 6,
-          "cache_read": 0.25
-        },
-        {
-          "provider": "SiliconFlow",
           "input": 2,
           "output": 6,
           "cache_read": 0.25
@@ -721,12 +721,12 @@
       "org": "anthropic",
       "providers": 5,
       "from": {
-        "provider": "Amazon Bedrock",
+        "provider": "Google",
         "blended_per_m": 0.735
       },
       "offerings": [
         {
-          "provider": "Amazon Bedrock",
+          "provider": "Google",
           "input": 5,
           "output": 25,
           "cache_read": 0.5
@@ -738,7 +738,7 @@
           "cache_read": 0.5
         },
         {
-          "provider": "Google",
+          "provider": "Amazon Bedrock",
           "input": 5,
           "output": 25,
           "cache_read": 0.5
@@ -770,12 +770,12 @@
       "org": "anthropic",
       "providers": 5,
       "from": {
-        "provider": "Amazon Bedrock",
+        "provider": "Google",
         "blended_per_m": 0.735
       },
       "offerings": [
         {
-          "provider": "Amazon Bedrock",
+          "provider": "Google",
           "input": 5,
           "output": 25,
           "cache_read": 0.5
@@ -787,7 +787,7 @@
           "cache_read": 0.5
         },
         {
-          "provider": "Google",
+          "provider": "Amazon Bedrock",
           "input": 5,
           "output": 25,
           "cache_read": 0.5
@@ -844,18 +844,18 @@
       "org": "openai",
       "providers": 3,
       "from": {
-        "provider": "Azure",
+        "provider": "OpenAI",
         "blended_per_m": 0.304
       },
       "offerings": [
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 2,
           "output": 12,
           "cache_read": 0.19999999999999998
         },
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 2,
           "output": 12,
           "cache_read": 0.19999999999999998
@@ -879,18 +879,18 @@
       "org": "openai",
       "providers": 3,
       "from": {
-        "provider": "Azure",
+        "provider": "OpenAI",
         "blended_per_m": 0.304
       },
       "offerings": [
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 2,
           "output": 12,
           "cache_read": 0.19999999999999998
         },
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 2,
           "output": 12,
           "cache_read": 0.19999999999999998
@@ -914,18 +914,18 @@
       "org": "openai",
       "providers": 3,
       "from": {
-        "provider": "OpenAI",
+        "provider": "Azure",
         "blended_per_m": 0.76
       },
       "offerings": [
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 5,
           "output": 30,
           "cache_read": 0.5
         },
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 5,
           "output": 30,
           "cache_read": 0.5
@@ -958,18 +958,18 @@
       "org": "openai",
       "providers": 3,
       "from": {
-        "provider": "OpenAI",
+        "provider": "Azure",
         "blended_per_m": 0.76
       },
       "offerings": [
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 5,
           "output": 30,
           "cache_read": 0.5
         },
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 5,
           "output": 30,
           "cache_read": 0.5
@@ -1082,7 +1082,7 @@
       "org": "anthropic",
       "providers": 6,
       "from": {
-        "provider": "Claude Platform on AWS",
+        "provider": "Anthropic",
         "blended_per_m": 0.294
       },
       "offerings": [
@@ -1091,6 +1091,12 @@
           "input": 2,
           "output": 10,
           "cache_read": null
+        },
+        {
+          "provider": "Anthropic",
+          "input": 2,
+          "output": 10,
+          "cache_read": 0.19999999999999998
         },
         {
           "provider": "Claude Platform on AWS",
@@ -1105,19 +1111,13 @@
           "cache_read": 0.19999999999999998
         },
         {
-          "provider": "Anthropic",
+          "provider": "Google",
           "input": 2,
           "output": 10,
           "cache_read": 0.19999999999999998
         },
         {
           "provider": "Amazon Bedrock",
-          "input": 2,
-          "output": 10,
-          "cache_read": 0.19999999999999998
-        },
-        {
-          "provider": "Google",
           "input": 2,
           "output": 10,
           "cache_read": 0.19999999999999998
@@ -1137,10 +1137,16 @@
       "org": "anthropic",
       "providers": 5,
       "from": {
-        "provider": "Claude Platform on AWS",
+        "provider": "Anthropic",
         "blended_per_m": 0.294
       },
       "offerings": [
+        {
+          "provider": "Anthropic",
+          "input": 2,
+          "output": 10,
+          "cache_read": 0.19999999999999998
+        },
         {
           "provider": "Claude Platform on AWS",
           "input": 2,
@@ -1154,19 +1160,13 @@
           "cache_read": 0.19999999999999998
         },
         {
-          "provider": "Anthropic",
+          "provider": "Google",
           "input": 2,
           "output": 10,
           "cache_read": 0.19999999999999998
         },
         {
           "provider": "Amazon Bedrock",
-          "input": 2,
-          "output": 10,
-          "cache_read": 0.19999999999999998
-        },
-        {
-          "provider": "Google",
           "input": 2,
           "output": 10,
           "cache_read": 0.19999999999999998
@@ -1228,13 +1228,13 @@
           "cache_read": 0.5
         },
         {
-          "provider": "Anthropic",
+          "provider": "Claude Platform on AWS",
           "input": 5,
           "output": 25,
           "cache_read": 0.5
         },
         {
-          "provider": "Claude Platform on AWS",
+          "provider": "Anthropic",
           "input": 5,
           "output": 25,
           "cache_read": 0.5
@@ -1277,13 +1277,13 @@
           "cache_read": 0.5
         },
         {
-          "provider": "Anthropic",
+          "provider": "Claude Platform on AWS",
           "input": 5,
           "output": 25,
           "cache_read": 0.5
         },
         {
-          "provider": "Claude Platform on AWS",
+          "provider": "Anthropic",
           "input": 5,
           "output": 25,
           "cache_read": 0.5
@@ -1350,37 +1350,7 @@
           "cache_read": 0.039599999999999996
         },
         {
-          "provider": "BaseTen",
-          "input": 1.32,
-          "output": 3.9600000000000004,
-          "cache_read": 0.13199999999999998
-        },
-        {
-          "provider": "SiliconFlow",
-          "input": 1.32,
-          "output": 3.9600000000000004,
-          "cache_read": 0.44
-        },
-        {
-          "provider": "Novita",
-          "input": 1.32,
-          "output": 3.9600000000000004,
-          "cache_read": 0.13199999999999998
-        },
-        {
           "provider": "StreamLake",
-          "input": 1.32,
-          "output": 3.9600000000000004,
-          "cache_read": 0.044
-        },
-        {
-          "provider": "Parasail",
-          "input": 1.32,
-          "output": 3.9600000000000004,
-          "cache_read": 0.044
-        },
-        {
-          "provider": "Fireworks",
           "input": 1.32,
           "output": 3.9600000000000004,
           "cache_read": 0.044
@@ -1392,6 +1362,30 @@
           "cache_read": 0.13
         },
         {
+          "provider": "Novita",
+          "input": 1.32,
+          "output": 3.9600000000000004,
+          "cache_read": 0.13199999999999998
+        },
+        {
+          "provider": "Parasail",
+          "input": 1.32,
+          "output": 3.9600000000000004,
+          "cache_read": 0.044
+        },
+        {
+          "provider": "SiliconFlow",
+          "input": 1.32,
+          "output": 3.9600000000000004,
+          "cache_read": 0.44
+        },
+        {
+          "provider": "BaseTen",
+          "input": 1.32,
+          "output": 3.9600000000000004,
+          "cache_read": 0.13199999999999998
+        },
+        {
           "provider": "DigitalOcean",
           "input": 1.32,
           "output": 3.9600000000000004,
@@ -1399,6 +1393,12 @@
         },
         {
           "provider": "Cloudflare",
+          "input": 1.32,
+          "output": 3.9600000000000004,
+          "cache_read": 0.044
+        },
+        {
+          "provider": "Fireworks",
           "input": 1.32,
           "output": 3.9600000000000004,
           "cache_read": 0.044
@@ -1586,6 +1586,12 @@
           "cache_read": 0.2
         },
         {
+          "provider": "StreamLake",
+          "input": 0.28,
+          "output": 0.88,
+          "cache_read": 0.052000000000000005
+        },
+        {
           "provider": "Baidu",
           "input": 0.49,
           "output": 1.54,
@@ -1614,12 +1620,6 @@
           "input": 0.7,
           "output": 2.2,
           "cache_read": 0.105
-        },
-        {
-          "provider": "StreamLake",
-          "input": 0.7335999999999999,
-          "output": 2.3056,
-          "cache_read": 0.13624
         },
         {
           "provider": "Novita",
@@ -1676,12 +1676,6 @@
           "cache_read": 0.234
         },
         {
-          "provider": "Z.AI",
-          "input": 1.4,
-          "output": 4.4,
-          "cache_read": 0.26
-        },
-        {
           "provider": "Fireworks",
           "input": 1.4,
           "output": 4.4,
@@ -1694,19 +1688,13 @@
           "cache_read": 0.26
         },
         {
-          "provider": "Friendli",
+          "provider": "Z.AI",
           "input": 1.4,
           "output": 4.4,
           "cache_read": 0.26
         },
         {
           "provider": "Parasail",
-          "input": 1.4,
-          "output": 4.4,
-          "cache_read": 0.26
-        },
-        {
-          "provider": "Venice",
           "input": 1.4,
           "output": 4.4,
           "cache_read": 0.26
@@ -1728,6 +1716,18 @@
           "input": 1.4,
           "output": 4.4,
           "cache_read": 0.14
+        },
+        {
+          "provider": "Venice",
+          "input": 1.4,
+          "output": 4.4,
+          "cache_read": 0.26
+        },
+        {
+          "provider": "Friendli",
+          "input": 1.4,
+          "output": 4.4,
+          "cache_read": 0.26
         },
         {
           "provider": "opencode",
@@ -1782,10 +1782,16 @@
       "org": "z-ai",
       "providers": 26,
       "from": {
-        "provider": "Baidu",
-        "blended_per_m": 0.108
+        "provider": "StreamLake",
+        "blended_per_m": 0.062
       },
       "offerings": [
+        {
+          "provider": "StreamLake",
+          "input": 0.28,
+          "output": 0.88,
+          "cache_read": 0.052000000000000005
+        },
         {
           "provider": "Baidu",
           "input": 0.49,
@@ -1815,12 +1821,6 @@
           "input": 0.7,
           "output": 2.2,
           "cache_read": 0.105
-        },
-        {
-          "provider": "StreamLake",
-          "input": 0.7335999999999999,
-          "output": 2.3056,
-          "cache_read": 0.13624
         },
         {
           "provider": "Novita",
@@ -1877,22 +1877,16 @@
           "cache_read": 0.22
         },
         {
-          "provider": "Wafer",
-          "input": 1.26,
-          "output": 3.9600000000000004,
-          "cache_read": 0.234
-        },
-        {
           "provider": "AtlasCloud",
           "input": 1.26,
           "output": 3.9600000000000004,
           "cache_read": 0.234
         },
         {
-          "provider": "Z.AI",
-          "input": 1.4,
-          "output": 4.4,
-          "cache_read": 0.26
+          "provider": "Wafer",
+          "input": 1.26,
+          "output": 3.9600000000000004,
+          "cache_read": 0.234
         },
         {
           "provider": "Fireworks",
@@ -1907,19 +1901,13 @@
           "cache_read": 0.26
         },
         {
-          "provider": "Friendli",
+          "provider": "Z.AI",
           "input": 1.4,
           "output": 4.4,
           "cache_read": 0.26
         },
         {
           "provider": "Parasail",
-          "input": 1.4,
-          "output": 4.4,
-          "cache_read": 0.26
-        },
-        {
-          "provider": "Venice",
           "input": 1.4,
           "output": 4.4,
           "cache_read": 0.26
@@ -1941,6 +1929,18 @@
           "input": 1.4,
           "output": 4.4,
           "cache_read": 0.14
+        },
+        {
+          "provider": "Venice",
+          "input": 1.4,
+          "output": 4.4,
+          "cache_read": 0.26
+        },
+        {
+          "provider": "Friendli",
+          "input": 1.4,
+          "output": 4.4,
+          "cache_read": 0.26
         }
       ],
       "scores": {
@@ -2032,18 +2032,18 @@
       "org": "openai",
       "providers": 4,
       "from": {
-        "provider": "OpenAI",
+        "provider": "Azure",
         "blended_per_m": 0.03
       },
       "offerings": [
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 0.19999999999999998,
           "output": 1.2,
           "cache_read": 0.02
         },
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 0.19999999999999998,
           "output": 1.2,
           "cache_read": 0.02
@@ -2073,18 +2073,18 @@
       "org": "openai",
       "providers": 3,
       "from": {
-        "provider": "OpenAI",
+        "provider": "Azure",
         "blended_per_m": 0.03
       },
       "offerings": [
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 0.19999999999999998,
           "output": 1.2,
           "cache_read": 0.02
         },
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 0.19999999999999998,
           "output": 1.2,
           "cache_read": 0.02
@@ -2100,44 +2100,6 @@
         "aa_intelligence": 52.3,
         "aa_coding": 71.4,
         "aa_agentic": 46.9
-      }
-    },
-    {
-      "id": "gemini-3.5-flash",
-      "name": "google/gemini-3.5-flash",
-      "org": "google",
-      "providers": 2,
-      "from": {
-        "provider": "Google",
-        "blended_per_m": 0.228
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 1.4999999999999998,
-          "output": 9,
-          "cache_read": null
-        },
-        {
-          "provider": "Google",
-          "input": 1.5,
-          "output": 9,
-          "cache_read": 0.15
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 52,
-        "aa_coding": 70.1,
-        "aa_agentic": 39.7,
-        "design_arena_elo": 1307,
-        "design_arena_category": "gamedev",
-        "livebench_math": 88.2,
-        "livebench_coding": 78.2,
-        "livebench_language": 84.6,
-        "livebench_data_analysis": 64.9,
-        "livebench_agentic_coding": 49,
-        "livebench_reasoning": 82,
-        "livebench_instruction_following": 75.6
       }
     },
     {
@@ -2169,7 +2131,7 @@
           "cache_read": 0.04
         },
         {
-          "provider": "AkashML",
+          "provider": "Reka",
           "input": 0.44999999999999996,
           "output": 3.1999999999999997,
           "cache_read": 0.049999999999999996
@@ -2187,7 +2149,7 @@
           "cache_read": null
         },
         {
-          "provider": "Reka",
+          "provider": "AkashML",
           "input": 0.44999999999999996,
           "output": 3.1999999999999997,
           "cache_read": 0.049999999999999996
@@ -2212,17 +2174,55 @@
       }
     },
     {
+      "id": "gemini-3.5-flash",
+      "name": "google/gemini-3.5-flash",
+      "org": "google",
+      "providers": 2,
+      "from": {
+        "provider": "Google AI Studio",
+        "blended_per_m": 0.228
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 1.4999999999999998,
+          "output": 9,
+          "cache_read": null
+        },
+        {
+          "provider": "Google AI Studio",
+          "input": 1.5,
+          "output": 9,
+          "cache_read": 0.15
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 52,
+        "aa_coding": 70.1,
+        "aa_agentic": 39.7,
+        "design_arena_elo": 1307,
+        "design_arena_category": "gamedev",
+        "livebench_math": 88.2,
+        "livebench_coding": 78.2,
+        "livebench_language": 84.6,
+        "livebench_data_analysis": 64.9,
+        "livebench_agentic_coding": 49,
+        "livebench_reasoning": 82,
+        "livebench_instruction_following": 75.6
+      }
+    },
+    {
       "id": "gemini-3.5-flash:batch",
       "name": "Google: Gemini 3.5 Flash (batch)",
       "org": "google",
       "providers": 1,
       "from": {
-        "provider": "Google",
+        "provider": "Google AI Studio",
         "blended_per_m": 0.228
       },
       "offerings": [
         {
-          "provider": "Google",
+          "provider": "Google AI Studio",
           "input": 1.5,
           "output": 9,
           "cache_read": 0.15
@@ -2325,16 +2325,16 @@
           "cache_read": 0.028
         },
         {
-          "provider": "CoreWeave",
-          "input": 0.13,
-          "output": 0.28,
-          "cache_read": 0.07
-        },
-        {
           "provider": "Inceptron",
           "input": 0.13,
           "output": 0.28,
           "cache_read": 0.03
+        },
+        {
+          "provider": "CoreWeave",
+          "input": 0.13,
+          "output": 0.28,
+          "cache_read": 0.07
         },
         {
           "provider": "Morph",
@@ -2343,34 +2343,16 @@
           "cache_read": 0.07
         },
         {
-          "provider": "Fireworks",
-          "input": 0.14,
-          "output": 0.28,
-          "cache_read": 0.028
-        },
-        {
           "provider": "AkashML",
           "input": 0.14,
           "output": 0.28,
           "cache_read": 0.02
         },
         {
-          "provider": "Novita",
+          "provider": "Fireworks",
           "input": 0.14,
           "output": 0.28,
           "cache_read": 0.028
-        },
-        {
-          "provider": "Together",
-          "input": 0.14,
-          "output": 0.28,
-          "cache_read": 0.03
-        },
-        {
-          "provider": "Parasail",
-          "input": 0.14,
-          "output": 0.28,
-          "cache_read": 0.07
         },
         {
           "provider": "AtlasCloud",
@@ -2379,13 +2361,31 @@
           "cache_read": 0.028
         },
         {
-          "provider": "SiliconFlow",
+          "provider": "Parasail",
+          "input": 0.14,
+          "output": 0.28,
+          "cache_read": 0.07
+        },
+        {
+          "provider": "Together",
+          "input": 0.14,
+          "output": 0.28,
+          "cache_read": 0.03
+        },
+        {
+          "provider": "Ambient",
           "input": 0.14,
           "output": 0.28,
           "cache_read": 0.028
         },
         {
-          "provider": "Ambient",
+          "provider": "Novita",
+          "input": 0.14,
+          "output": 0.28,
+          "cache_read": 0.028
+        },
+        {
+          "provider": "SiliconFlow",
           "input": 0.14,
           "output": 0.28,
           "cache_read": 0.028
@@ -2484,12 +2484,12 @@
       "org": "google",
       "providers": 1,
       "from": {
-        "provider": "Google",
+        "provider": "Google AI Studio",
         "blended_per_m": 0.11
       },
       "offerings": [
         {
-          "provider": "Google",
+          "provider": "Google AI Studio",
           "input": 0.75,
           "output": 3.75,
           "cache_read": 0.075
@@ -2509,12 +2509,12 @@
       "org": "google",
       "providers": 1,
       "from": {
-        "provider": "Google",
+        "provider": "Google AI Studio",
         "blended_per_m": 0.11
       },
       "offerings": [
         {
-          "provider": "Google",
+          "provider": "Google AI Studio",
           "input": 0.75,
           "output": 3.75,
           "cache_read": 0.075
@@ -2534,12 +2534,12 @@
       "org": "anthropic",
       "providers": 5,
       "from": {
-        "provider": "Azure",
+        "provider": "Google",
         "blended_per_m": 0.441
       },
       "offerings": [
         {
-          "provider": "Google",
+          "provider": "Claude Platform on AWS",
           "input": 3,
           "output": 15,
           "cache_read": 0.3
@@ -2557,13 +2557,13 @@
           "cache_read": 0.3
         },
         {
-          "provider": "Claude Platform on AWS",
+          "provider": "Azure",
           "input": 3,
           "output": 15,
           "cache_read": 0.3
         },
         {
-          "provider": "Azure",
+          "provider": "Google",
           "input": 3,
           "output": 15,
           "cache_read": 0.3
@@ -2590,12 +2590,12 @@
       "org": "anthropic",
       "providers": 5,
       "from": {
-        "provider": "Azure",
+        "provider": "Google",
         "blended_per_m": 0.441
       },
       "offerings": [
         {
-          "provider": "Google",
+          "provider": "Claude Platform on AWS",
           "input": 3,
           "output": 15,
           "cache_read": 0.3
@@ -2613,13 +2613,13 @@
           "cache_read": 0.3
         },
         {
-          "provider": "Claude Platform on AWS",
+          "provider": "Azure",
           "input": 3,
           "output": 15,
           "cache_read": 0.3
         },
         {
-          "provider": "Azure",
+          "provider": "Google",
           "input": 3,
           "output": 15,
           "cache_read": 0.3
@@ -2639,7 +2639,7 @@
       "org": "google",
       "providers": 2,
       "from": {
-        "provider": "Google",
+        "provider": "Google AI Studio",
         "blended_per_m": 0.304
       },
       "offerings": [
@@ -2650,7 +2650,7 @@
           "cache_read": null
         },
         {
-          "provider": "Google",
+          "provider": "Google AI Studio",
           "input": 2,
           "output": 12,
           "cache_read": 0.19999999999999998
@@ -2677,12 +2677,12 @@
       "org": "google",
       "providers": 1,
       "from": {
-        "provider": "Google",
+        "provider": "Google AI Studio",
         "blended_per_m": 0.304
       },
       "offerings": [
         {
-          "provider": "Google",
+          "provider": "Google AI Studio",
           "input": 2,
           "output": 12,
           "cache_read": 0.19999999999999998
@@ -2822,37 +2822,7 @@
           "cache_read": 0.048
         },
         {
-          "provider": "Novita",
-          "input": 0.3,
-          "output": 1.2,
-          "cache_read": 0.06
-        },
-        {
-          "provider": "Venice",
-          "input": 0.3,
-          "output": 1.2,
-          "cache_read": 0.06
-        },
-        {
-          "provider": "Minimax",
-          "input": 0.3,
-          "output": 1.2,
-          "cache_read": 0.06
-        },
-        {
           "provider": "AtlasCloud",
-          "input": 0.3,
-          "output": 1.2,
-          "cache_read": 0.06
-        },
-        {
-          "provider": "Together",
-          "input": 0.3,
-          "output": 1.2,
-          "cache_read": 0.06
-        },
-        {
-          "provider": "StreamLake",
           "input": 0.3,
           "output": 1.2,
           "cache_read": 0.06
@@ -2864,10 +2834,40 @@
           "cache_read": 0.06
         },
         {
+          "provider": "Novita",
+          "input": 0.3,
+          "output": 1.2,
+          "cache_read": 0.06
+        },
+        {
+          "provider": "StreamLake",
+          "input": 0.3,
+          "output": 1.2,
+          "cache_read": 0.06
+        },
+        {
+          "provider": "Together",
+          "input": 0.3,
+          "output": 1.2,
+          "cache_read": 0.06
+        },
+        {
+          "provider": "Venice",
+          "input": 0.3,
+          "output": 1.2,
+          "cache_read": 0.06
+        },
+        {
           "provider": "Morph",
           "input": 0.3,
           "output": 1.2,
           "cache_read": null
+        },
+        {
+          "provider": "Minimax",
+          "input": 0.3,
+          "output": 1.2,
+          "cache_read": 0.06
         },
         {
           "provider": "ModelRun",
@@ -2926,37 +2926,7 @@
           "cache_read": 0.056
         },
         {
-          "provider": "Novita",
-          "input": 0.3,
-          "output": 1.2,
-          "cache_read": 0.06
-        },
-        {
-          "provider": "Venice",
-          "input": 0.3,
-          "output": 1.2,
-          "cache_read": 0.06
-        },
-        {
-          "provider": "Minimax",
-          "input": 0.3,
-          "output": 1.2,
-          "cache_read": 0.06
-        },
-        {
           "provider": "AtlasCloud",
-          "input": 0.3,
-          "output": 1.2,
-          "cache_read": 0.06
-        },
-        {
-          "provider": "Together",
-          "input": 0.3,
-          "output": 1.2,
-          "cache_read": 0.06
-        },
-        {
-          "provider": "StreamLake",
           "input": 0.3,
           "output": 1.2,
           "cache_read": 0.06
@@ -2968,10 +2938,40 @@
           "cache_read": 0.06
         },
         {
+          "provider": "Novita",
+          "input": 0.3,
+          "output": 1.2,
+          "cache_read": 0.06
+        },
+        {
+          "provider": "StreamLake",
+          "input": 0.3,
+          "output": 1.2,
+          "cache_read": 0.06
+        },
+        {
+          "provider": "Together",
+          "input": 0.3,
+          "output": 1.2,
+          "cache_read": 0.06
+        },
+        {
+          "provider": "Venice",
+          "input": 0.3,
+          "output": 1.2,
+          "cache_read": 0.06
+        },
+        {
           "provider": "Morph",
           "input": 0.3,
           "output": 1.2,
           "cache_read": null
+        },
+        {
+          "provider": "Minimax",
+          "input": 0.3,
+          "output": 1.2,
+          "cache_read": 0.06
         },
         {
           "provider": "ModelRun",
@@ -3035,16 +3035,16 @@
           "cache_read": 0.174
         },
         {
-          "provider": "StreamLake",
-          "input": 1.0292100000000002,
-          "output": 2.0584200000000004,
-          "cache_read": 0.08576750000000001
+          "provider": "Baidu",
+          "input": 0.9971,
+          "output": 1.9942,
+          "cache_read": 0.08259999999999999
         },
         {
-          "provider": "Baidu",
-          "input": 1.0309,
-          "output": 2.0618,
-          "cache_read": 0.0854
+          "provider": "StreamLake",
+          "input": 1.012332,
+          "output": 2.024664,
+          "cache_read": 0.08436099999999999
         },
         {
           "provider": "GMICloud",
@@ -3095,10 +3095,10 @@
           "cache_read": 0.13
         },
         {
-          "provider": "Parasail",
+          "provider": "Together",
           "input": 1.74,
           "output": 3.48,
-          "cache_read": 0.09999999999999999
+          "cache_read": 0.19999999999999998
         },
         {
           "provider": "BaseTen",
@@ -3107,16 +3107,16 @@
           "cache_read": 0.145
         },
         {
-          "provider": "Together",
-          "input": 1.74,
-          "output": 3.48,
-          "cache_read": 0.19999999999999998
-        },
-        {
           "provider": "Fireworks",
           "input": 1.74,
           "output": 3.48,
           "cache_read": 0.145
+        },
+        {
+          "provider": "Parasail",
+          "input": 1.74,
+          "output": 3.48,
+          "cache_read": 0.09999999999999999
         },
         {
           "provider": "Azure",
@@ -3187,6 +3187,12 @@
           "cache_read": 0.174208
         },
         {
+          "provider": "Decart",
+          "input": 0.5679,
+          "output": 2.3912,
+          "cache_read": 0.09559999999999999
+        },
+        {
           "provider": "Baidu",
           "input": 0.5795,
           "output": 2.44,
@@ -3197,12 +3203,6 @@
           "input": 0.58,
           "output": 3.4,
           "cache_read": 0.058
-        },
-        {
-          "provider": "Decart",
-          "input": 0.5865,
-          "output": 2.4696000000000002,
-          "cache_read": 0.0988
         },
         {
           "provider": "StreamLake",
@@ -3229,13 +3229,13 @@
           "cache_read": 0.35
         },
         {
-          "provider": "Parasail",
+          "provider": "Venice",
           "input": 0.75,
           "output": 3.5,
           "cache_read": 0.16
         },
         {
-          "provider": "Venice",
+          "provider": "Parasail",
           "input": 0.75,
           "output": 3.5,
           "cache_read": 0.16
@@ -3259,7 +3259,7 @@
           "cache_read": 0.16
         },
         {
-          "provider": "AtlasCloud",
+          "provider": "Cloudflare",
           "input": 0.95,
           "output": 4,
           "cache_read": 0.16
@@ -3271,7 +3271,7 @@
           "cache_read": 0.16
         },
         {
-          "provider": "Cloudflare",
+          "provider": "AtlasCloud",
           "input": 0.95,
           "output": 4,
           "cache_read": 0.16
@@ -3289,13 +3289,13 @@
           "cache_read": 0.37
         },
         {
-          "provider": "BaseTen",
+          "provider": "Fireworks",
           "input": 0.95,
           "output": 4,
           "cache_read": 0.16
         },
         {
-          "provider": "Fireworks",
+          "provider": "BaseTen",
           "input": 0.95,
           "output": 4,
           "cache_read": 0.16
@@ -3328,18 +3328,18 @@
       "org": "openai",
       "providers": 2,
       "from": {
-        "provider": "Azure",
+        "provider": "OpenAI",
         "blended_per_m": 0.284
       },
       "offerings": [
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 1.75,
           "output": 14,
           "cache_read": 0.175
         },
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 1.75,
           "output": 14,
           "cache_read": 0.175
@@ -3434,13 +3434,19 @@
           "cache_read": 0.18239999999999998
         },
         {
-          "provider": "Moonshot AI",
+          "provider": "GMICloud",
           "input": 0.95,
           "output": 4,
           "cache_read": 0.19
         },
         {
           "provider": "Cloudflare",
+          "input": 0.95,
+          "output": 4,
+          "cache_read": 0.19
+        },
+        {
+          "provider": "Moonshot AI",
           "input": 0.95,
           "output": 4,
           "cache_read": 0.19
@@ -3453,12 +3459,6 @@
         },
         {
           "provider": "Alibaba",
-          "input": 0.95,
-          "output": 4,
-          "cache_read": 0.19
-        },
-        {
-          "provider": "GMICloud",
           "input": 0.95,
           "output": 4,
           "cache_read": 0.19
@@ -3575,13 +3575,19 @@
           "cache_read": 0.18239999999999998
         },
         {
-          "provider": "Moonshot AI",
+          "provider": "GMICloud",
           "input": 0.95,
           "output": 4,
           "cache_read": 0.19
         },
         {
           "provider": "Cloudflare",
+          "input": 0.95,
+          "output": 4,
+          "cache_read": 0.19
+        },
+        {
+          "provider": "Moonshot AI",
           "input": 0.95,
           "output": 4,
           "cache_read": 0.19
@@ -3594,12 +3600,6 @@
         },
         {
           "provider": "Alibaba",
-          "input": 0.95,
-          "output": 4,
-          "cache_read": 0.19
-        },
-        {
-          "provider": "GMICloud",
           "input": 0.95,
           "output": 4,
           "cache_read": 0.19
@@ -3703,13 +3703,13 @@
           "cache_read": 0.1599999975
         },
         {
-          "provider": "BaseTen",
+          "provider": "Together",
           "input": 1,
           "output": 4.05,
           "cache_read": 0.16999999999999998
         },
         {
-          "provider": "Together",
+          "provider": "BaseTen",
           "input": 1,
           "output": 4.05,
           "cache_read": 0.16999999999999998
@@ -3740,13 +3740,13 @@
           "cache_read": 0.16
         },
         {
-          "provider": "BaseTen",
+          "provider": "Together",
           "input": 1,
           "output": 4.05,
           "cache_read": 0.16999999999999998
         },
         {
-          "provider": "Together",
+          "provider": "BaseTen",
           "input": 1,
           "output": 4.05,
           "cache_read": 0.16999999999999998
@@ -3873,15 +3873,15 @@
         },
         {
           "provider": "StreamLake",
-          "input": 0.0868,
-          "output": 0.1736,
-          "cache_read": 0.01736
+          "input": 0.0812,
+          "output": 0.1624,
+          "cache_read": 0.016239999999999997
         },
         {
           "provider": "Baidu",
-          "input": 0.0882,
-          "output": 0.1764,
-          "cache_read": 0.01764
+          "input": 0.08259999999999999,
+          "output": 0.16519999999999999,
+          "cache_read": 0.01652
         },
         {
           "provider": "Sail Research",
@@ -3914,10 +3914,10 @@
           "cache_read": 0.028
         },
         {
-          "provider": "Parasail",
+          "provider": "AtlasCloud",
           "input": 0.14,
           "output": 0.28,
-          "cache_read": 0.07
+          "cache_read": 0.028
         },
         {
           "provider": "Novita",
@@ -3926,13 +3926,13 @@
           "cache_read": 0.028
         },
         {
-          "provider": "AtlasCloud",
+          "provider": "CoreWeave",
           "input": 0.14,
           "output": 0.28,
-          "cache_read": 0.028
+          "cache_read": 0.07
         },
         {
-          "provider": "CoreWeave",
+          "provider": "Parasail",
           "input": 0.14,
           "output": 0.28,
           "cache_read": 0.07
@@ -4138,7 +4138,7 @@
       "providers": 21,
       "from": {
         "provider": "hyper",
-        "blended_per_m": 0.055
+        "blended_per_m": 0.056
       },
       "offerings": [
         {
@@ -4161,8 +4161,8 @@
         },
         {
           "provider": "hyper",
-          "input": 1.332,
-          "output": 4.312,
+          "input": 1.36,
+          "output": 4.4,
           "cache_read": 0
         },
         {
@@ -4238,6 +4238,12 @@
           "cache_read": null
         },
         {
+          "provider": "Z.AI",
+          "input": 1.4,
+          "output": 4.4,
+          "cache_read": 0.26
+        },
+        {
           "provider": "Parasail",
           "input": 1.4,
           "output": 4.4,
@@ -4245,12 +4251,6 @@
         },
         {
           "provider": "Friendli",
-          "input": 1.4,
-          "output": 4.4,
-          "cache_read": 0.26
-        },
-        {
-          "provider": "Z.AI",
           "input": 1.4,
           "output": 4.4,
           "cache_read": 0.26
@@ -4282,18 +4282,18 @@
       "org": "openai",
       "providers": 2,
       "from": {
-        "provider": "Azure",
+        "provider": "OpenAI",
         "blended_per_m": 0.114
       },
       "offerings": [
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 0.75,
           "output": 4.5,
           "cache_read": 0.075
         },
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 0.75,
           "output": 4.5,
           "cache_read": 0.075
@@ -4311,18 +4311,18 @@
       "org": "openai",
       "providers": 2,
       "from": {
-        "provider": "Azure",
+        "provider": "OpenAI",
         "blended_per_m": 0.114
       },
       "offerings": [
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 0.75,
           "output": 4.5,
           "cache_read": 0.075
         },
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 0.75,
           "output": 4.5,
           "cache_read": 0.075
@@ -4371,7 +4371,7 @@
       "providers": 13,
       "from": {
         "provider": "hyper",
-        "blended_per_m": 0.036
+        "blended_per_m": 0.034
       },
       "offerings": [
         {
@@ -4388,18 +4388,18 @@
         },
         {
           "provider": "hyper",
-          "input": 0.86,
-          "output": 2.806,
+          "input": 0.83,
+          "output": 2.558,
           "cache_read": 0
         },
         {
-          "provider": "StreamLake",
+          "provider": "GMICloud",
           "input": 0.6,
           "output": 1.92,
           "cache_read": 0.12
         },
         {
-          "provider": "GMICloud",
+          "provider": "StreamLake",
           "input": 0.6,
           "output": 1.92,
           "cache_read": 0.12
@@ -4429,13 +4429,7 @@
           "cache_read": 0.19
         },
         {
-          "provider": "Amazon Bedrock",
-          "input": 1,
-          "output": 3.1999999999999997,
-          "cache_read": null
-        },
-        {
-          "provider": "Novita",
+          "provider": "Venice",
           "input": 1,
           "output": 3.1999999999999997,
           "cache_read": 0.19999999999999998
@@ -4447,10 +4441,16 @@
           "cache_read": 0.19999999999999998
         },
         {
-          "provider": "Venice",
+          "provider": "Novita",
           "input": 1,
           "output": 3.1999999999999997,
           "cache_read": 0.19999999999999998
+        },
+        {
+          "provider": "Amazon Bedrock",
+          "input": 1,
+          "output": 3.1999999999999997,
+          "cache_read": null
         }
       ],
       "scores": {
@@ -4532,18 +4532,18 @@
       "org": "openai",
       "providers": 2,
       "from": {
-        "provider": "OpenAI",
+        "provider": "Azure",
         "blended_per_m": 0.031
       },
       "offerings": [
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 0.19999999999999998,
           "output": 1.25,
           "cache_read": 0.02
         },
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 0.19999999999999998,
           "output": 1.25,
           "cache_read": 0.02
@@ -4561,18 +4561,18 @@
       "org": "openai",
       "providers": 2,
       "from": {
-        "provider": "OpenAI",
+        "provider": "Azure",
         "blended_per_m": 0.031
       },
       "offerings": [
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 0.19999999999999998,
           "output": 1.25,
           "cache_read": 0.02
         },
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 0.19999999999999998,
           "output": 1.25,
           "cache_read": 0.02
@@ -4622,31 +4622,6 @@
       }
     },
     {
-      "id": "minimax-m2.7-turbo",
-      "name": "MiniMaxAI/MiniMax-M2.7-Turbo",
-      "org": "minimax",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.086
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.38,
-          "output": 1.7,
-          "cache_read": 0.07000000140000001
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 38.9,
-        "aa_coding": 52.6,
-        "aa_agentic": 25.9,
-        "design_arena_elo": 1258,
-        "design_arena_category": "website"
-      }
-    },
-    {
       "id": "minimax-m2.7",
       "name": "MiniMaxAI/MiniMax-M2.7",
       "org": "minimax",
@@ -4670,8 +4645,8 @@
         },
         {
           "provider": "hyper",
-          "input": 0.41,
-          "output": 1.52,
+          "input": 0.408,
+          "output": 1.512,
           "cache_read": 0
         },
         {
@@ -4693,13 +4668,13 @@
           "cache_read": 0.054
         },
         {
-          "provider": "Minimax",
+          "provider": "AtlasCloud",
           "input": 0.3,
           "output": 1.2,
           "cache_read": 0.06
         },
         {
-          "provider": "AtlasCloud",
+          "provider": "Minimax",
           "input": 0.3,
           "output": 1.2,
           "cache_read": 0.06
@@ -4732,21 +4707,40 @@
       }
     },
     {
+      "id": "minimax-m2.7-turbo",
+      "name": "MiniMaxAI/MiniMax-M2.7-Turbo",
+      "org": "minimax",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.086
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.38,
+          "output": 1.7,
+          "cache_read": 0.07000000140000001
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 38.9,
+        "aa_coding": 52.6,
+        "aa_agentic": 25.9,
+        "design_arena_elo": 1258,
+        "design_arena_category": "website"
+      }
+    },
+    {
       "id": "claude-opus-4.6",
       "name": "Anthropic: Claude Opus 4.6",
       "org": "anthropic",
       "providers": 5,
       "from": {
-        "provider": "Amazon Bedrock",
+        "provider": "Azure",
         "blended_per_m": 0.735
       },
       "offerings": [
-        {
-          "provider": "Amazon Bedrock",
-          "input": 5,
-          "output": 25,
-          "cache_read": 0.5
-        },
         {
           "provider": "Azure",
           "input": 5,
@@ -4755,6 +4749,12 @@
         },
         {
           "provider": "Google",
+          "input": 5,
+          "output": 25,
+          "cache_read": 0.5
+        },
+        {
+          "provider": "Amazon Bedrock",
           "input": 5,
           "output": 25,
           "cache_read": 0.5
@@ -5250,24 +5250,18 @@
       "org": "anthropic",
       "providers": 5,
       "from": {
-        "provider": "Azure",
+        "provider": "Anthropic",
         "blended_per_m": 0.441
       },
       "offerings": [
         {
-          "provider": "Amazon Bedrock",
-          "input": 3,
-          "output": 15,
-          "cache_read": 0.3
-        },
-        {
-          "provider": "Anthropic",
-          "input": 3,
-          "output": 15,
-          "cache_read": 0.3
-        },
-        {
           "provider": "Google",
+          "input": 3,
+          "output": 15,
+          "cache_read": 0.3
+        },
+        {
+          "provider": "Azure",
           "input": 3,
           "output": 15,
           "cache_read": 0.3
@@ -5279,7 +5273,13 @@
           "cache_read": 0.3
         },
         {
-          "provider": "Azure",
+          "provider": "Amazon Bedrock",
+          "input": 3,
+          "output": 15,
+          "cache_read": 0.3
+        },
+        {
+          "provider": "Anthropic",
           "input": 3,
           "output": 15,
           "cache_read": 0.3
@@ -5299,24 +5299,18 @@
       "org": "anthropic",
       "providers": 5,
       "from": {
-        "provider": "Azure",
+        "provider": "Anthropic",
         "blended_per_m": 0.441
       },
       "offerings": [
         {
-          "provider": "Amazon Bedrock",
-          "input": 3,
-          "output": 15,
-          "cache_read": 0.3
-        },
-        {
-          "provider": "Anthropic",
-          "input": 3,
-          "output": 15,
-          "cache_read": 0.3
-        },
-        {
           "provider": "Google",
+          "input": 3,
+          "output": 15,
+          "cache_read": 0.3
+        },
+        {
+          "provider": "Azure",
           "input": 3,
           "output": 15,
           "cache_read": 0.3
@@ -5328,7 +5322,13 @@
           "cache_read": 0.3
         },
         {
-          "provider": "Azure",
+          "provider": "Amazon Bedrock",
+          "input": 3,
+          "output": 15,
+          "cache_read": 0.3
+        },
+        {
+          "provider": "Anthropic",
           "input": 3,
           "output": 15,
           "cache_read": 0.3
@@ -5349,7 +5349,7 @@
       "providers": 12,
       "from": {
         "provider": "hyper",
-        "blended_per_m": 0.027
+        "blended_per_m": 0.028
       },
       "offerings": [
         {
@@ -5366,8 +5366,8 @@
         },
         {
           "provider": "hyper",
-          "input": 0.5204,
-          "output": 2.735,
+          "input": 0.5504,
+          "output": 2.885,
           "cache_read": 0
         },
         {
@@ -5407,16 +5407,16 @@
           "cache_read": 0.095
         },
         {
-          "provider": "Moonshot AI",
-          "input": 0.6,
-          "output": 3,
-          "cache_read": 0.09999999999999999
-        },
-        {
           "provider": "Amazon Bedrock",
           "input": 0.6,
           "output": 3,
           "cache_read": null
+        },
+        {
+          "provider": "Moonshot AI",
+          "input": 0.6,
+          "output": 3,
+          "cache_read": 0.09999999999999999
         },
         {
           "provider": "Phala",
@@ -5439,10 +5439,22 @@
       "org": "anthropic",
       "providers": 5,
       "from": {
-        "provider": "Anthropic",
+        "provider": "Claude Platform on AWS",
         "blended_per_m": 0.735
       },
       "offerings": [
+        {
+          "provider": "Claude Platform on AWS",
+          "input": 5,
+          "output": 25,
+          "cache_read": 0.5
+        },
+        {
+          "provider": "Azure",
+          "input": 5,
+          "output": 25,
+          "cache_read": 0.5
+        },
         {
           "provider": "Anthropic",
           "input": 5,
@@ -5457,18 +5469,6 @@
         },
         {
           "provider": "Google",
-          "input": 5,
-          "output": 25,
-          "cache_read": 0.5
-        },
-        {
-          "provider": "Azure",
-          "input": 5,
-          "output": 25,
-          "cache_read": 0.5
-        },
-        {
-          "provider": "Claude Platform on AWS",
           "input": 5,
           "output": 25,
           "cache_read": 0.5
@@ -5539,18 +5539,18 @@
       "org": "openai",
       "providers": 2,
       "from": {
-        "provider": "OpenAI",
+        "provider": "Azure",
         "blended_per_m": 0.203
       },
       "offerings": [
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 1.25,
           "output": 10,
           "cache_read": 0.125
         },
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 1.25,
           "output": 10,
           "cache_read": 0.125
@@ -5570,18 +5570,18 @@
       "org": "openai",
       "providers": 2,
       "from": {
-        "provider": "OpenAI",
+        "provider": "Azure",
         "blended_per_m": 0.203
       },
       "offerings": [
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 1.25,
           "output": 10,
           "cache_read": 0.125
         },
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 1.25,
           "output": 10,
           "cache_read": 0.125
@@ -5630,16 +5630,16 @@
           "cache_read": 0.27
         },
         {
-          "provider": "Novita",
-          "input": 0.3,
-          "output": 2.4,
-          "cache_read": null
-        },
-        {
           "provider": "Phala",
           "input": 0.3,
           "output": 2.4,
           "cache_read": 0.15
+        },
+        {
+          "provider": "Novita",
+          "input": 0.3,
+          "output": 2.4,
+          "cache_read": null
         }
       ],
       "scores": {
@@ -5760,19 +5760,13 @@
           "cache_read": 0.06
         },
         {
-          "provider": "Friendli",
-          "input": 0.3,
-          "output": 1.2,
-          "cache_read": 0.06
-        },
-        {
-          "provider": "Minimax",
+          "provider": "Novita",
           "input": 0.3,
           "output": 1.2,
           "cache_read": 0.03
         },
         {
-          "provider": "Novita",
+          "provider": "Minimax",
           "input": 0.3,
           "output": 1.2,
           "cache_read": 0.03
@@ -5782,6 +5776,12 @@
           "input": 0.3,
           "output": 1.2,
           "cache_read": 0.03
+        },
+        {
+          "provider": "Friendli",
+          "input": 0.3,
+          "output": 1.2,
+          "cache_read": 0.06
         },
         {
           "provider": "opencode",
@@ -5855,16 +5855,16 @@
           "cache_read": null
         },
         {
-          "provider": "StreamLake",
-          "input": 0.6,
-          "output": 3.5999999999999996,
-          "cache_read": 0.12
-        },
-        {
           "provider": "GMICloud",
           "input": 0.6,
           "output": 3.5999999999999996,
           "cache_read": null
+        },
+        {
+          "provider": "StreamLake",
+          "input": 0.6,
+          "output": 3.5999999999999996,
+          "cache_read": 0.12
         },
         {
           "provider": "Venice",
@@ -6064,7 +6064,7 @@
       "id": "qwen3.6-35b-a3b",
       "name": "Qwen/Qwen3.6-35B-A3B",
       "org": "qwen",
-      "providers": 10,
+      "providers": 11,
       "from": {
         "provider": "AkashML",
         "blended_per_m": 0.057
@@ -6081,6 +6081,12 @@
           "input": 0.2,
           "output": 1.25,
           "cache_read": 0.05
+        },
+        {
+          "provider": "Darkbloom",
+          "input": 0.08,
+          "output": 0.75,
+          "cache_read": null
         },
         {
           "provider": "Venice",
@@ -6200,16 +6206,16 @@
       },
       "offerings": [
         {
-          "provider": "SiliconFlow",
-          "input": 0.27,
-          "output": 1,
-          "cache_read": null
-        },
-        {
           "provider": "Novita",
           "input": 0.27,
           "output": 1,
           "cache_read": 0.135
+        },
+        {
+          "provider": "SiliconFlow",
+          "input": 0.27,
+          "output": 1,
+          "cache_read": null
         },
         {
           "provider": "AtlasCloud",
@@ -6344,18 +6350,18 @@
       "org": "anthropic",
       "providers": 4,
       "from": {
-        "provider": "Google",
+        "provider": "Anthropic",
         "blended_per_m": 0.147
       },
       "offerings": [
         {
-          "provider": "Google",
+          "provider": "Anthropic",
           "input": 1,
           "output": 5,
           "cache_read": 0.09999999999999999
         },
         {
-          "provider": "Anthropic",
+          "provider": "Google",
           "input": 1,
           "output": 5,
           "cache_read": 0.09999999999999999
@@ -6387,18 +6393,18 @@
       "org": "anthropic",
       "providers": 4,
       "from": {
-        "provider": "Google",
+        "provider": "Anthropic",
         "blended_per_m": 0.147
       },
       "offerings": [
         {
-          "provider": "Google",
+          "provider": "Anthropic",
           "input": 1,
           "output": 5,
           "cache_read": 0.09999999999999999
         },
         {
-          "provider": "Anthropic",
+          "provider": "Google",
           "input": 1,
           "output": 5,
           "cache_read": 0.09999999999999999
@@ -6520,10 +6526,10 @@
           "cache_read": null
         },
         {
-          "provider": "Novita",
+          "provider": "Crusoe",
           "input": 0.14,
           "output": 0.39999999999999997,
-          "cache_read": null
+          "cache_read": 0.14
         },
         {
           "provider": "Friendli",
@@ -6532,10 +6538,10 @@
           "cache_read": null
         },
         {
-          "provider": "Crusoe",
+          "provider": "Novita",
           "input": 0.14,
           "output": 0.39999999999999997,
-          "cache_read": 0.14
+          "cache_read": null
         },
         {
           "provider": "Parasail",
@@ -6632,13 +6638,13 @@
           "cache_read": 0.11
         },
         {
-          "provider": "Z.AI",
+          "provider": "AtlasCloud",
           "input": 0.6,
           "output": 2.2,
           "cache_read": 0.11
         },
         {
-          "provider": "AtlasCloud",
+          "provider": "Z.AI",
           "input": 0.6,
           "output": 2.2,
           "cache_read": 0.11
@@ -6669,16 +6675,16 @@
           "cache_read": null
         },
         {
-          "provider": "Google",
-          "input": 0.3,
-          "output": 1.2,
-          "cache_read": null
-        },
-        {
           "provider": "Novita",
           "input": 0.3,
           "output": 1.2,
           "cache_read": 0.03
+        },
+        {
+          "provider": "Google",
+          "input": 0.3,
+          "output": 1.2,
+          "cache_read": null
         }
       ],
       "scores": {
@@ -6756,7 +6762,7 @@
       "id": "gemma-4-26b-a4b-it",
       "name": "google/gemma-4-26B-A4B-it",
       "org": "google",
-      "providers": 9,
+      "providers": 10,
       "from": {
         "provider": "hyper",
         "blended_per_m": 0.005
@@ -6773,6 +6779,12 @@
           "input": 0.12,
           "output": 0.42,
           "cache_read": 0
+        },
+        {
+          "provider": "Darkbloom",
+          "input": 0.03,
+          "output": 0.165,
+          "cache_read": null
         },
         {
           "provider": "Cloudflare",
@@ -6799,13 +6811,13 @@
           "cache_read": null
         },
         {
-          "provider": "Parasail",
+          "provider": "Venice",
           "input": 0.13,
           "output": 0.39999999999999997,
           "cache_read": 0.049999999999999996
         },
         {
-          "provider": "Venice",
+          "provider": "Parasail",
           "input": 0.13,
           "output": 0.39999999999999997,
           "cache_read": 0.049999999999999996
@@ -6913,16 +6925,16 @@
       },
       "offerings": [
         {
-          "provider": "OpenAI",
-          "input": 0.25,
-          "output": 2,
-          "cache_read": 0.024999999999999998
-        },
-        {
           "provider": "Azure",
           "input": 0.25,
           "output": 2,
           "cache_read": 0.03
+        },
+        {
+          "provider": "OpenAI",
+          "input": 0.25,
+          "output": 2,
+          "cache_read": 0.024999999999999998
         }
       ],
       "scores": {
@@ -6944,16 +6956,16 @@
       },
       "offerings": [
         {
-          "provider": "OpenAI",
-          "input": 0.25,
-          "output": 2,
-          "cache_read": 0.024999999999999998
-        },
-        {
           "provider": "Azure",
           "input": 0.25,
           "output": 2,
           "cache_read": 0.03
+        },
+        {
+          "provider": "OpenAI",
+          "input": 0.25,
+          "output": 2,
+          "cache_read": 0.024999999999999998
         }
       ],
       "scores": {
@@ -7267,31 +7279,6 @@
       }
     },
     {
-      "id": "gpt-oss-120b-turbo",
-      "name": "openai/gpt-oss-120b-Turbo",
-      "org": "openai",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.152
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.15,
-          "output": 0.6,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 24.1,
-        "aa_coding": 30.4,
-        "aa_agentic": 13.4,
-        "design_arena_elo": 1031,
-        "design_arena_category": "gamedev"
-      }
-    },
-    {
       "id": "gpt-oss-120b",
       "name": "openai/gpt-oss-120b",
       "org": "openai",
@@ -7392,6 +7379,18 @@
           "cache_read": null
         },
         {
+          "provider": "Groq",
+          "input": 0.15,
+          "output": 0.6,
+          "cache_read": 0.075
+        },
+        {
+          "provider": "Phala",
+          "input": 0.15,
+          "output": 0.6,
+          "cache_read": null
+        },
+        {
           "provider": "Together",
           "input": 0.15,
           "output": 0.6,
@@ -7404,18 +7403,6 @@
           "cache_read": 0.015
         },
         {
-          "provider": "Phala",
-          "input": 0.15,
-          "output": 0.6,
-          "cache_read": null
-        },
-        {
-          "provider": "Groq",
-          "input": 0.15,
-          "output": 0.6,
-          "cache_read": 0.075
-        },
-        {
           "provider": "Mara",
           "input": 0.15,
           "output": 0.75,
@@ -7426,6 +7413,31 @@
           "input": 0.35,
           "output": 0.75,
           "cache_read": 0.35
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 24.1,
+        "aa_coding": 30.4,
+        "aa_agentic": 13.4,
+        "design_arena_elo": 1031,
+        "design_arena_category": "gamedev"
+      }
+    },
+    {
+      "id": "gpt-oss-120b-turbo",
+      "name": "openai/gpt-oss-120b-Turbo",
+      "org": "openai",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.152
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.15,
+          "output": 0.6,
+          "cache_read": null
         }
       ],
       "scores": {
@@ -7774,16 +7786,16 @@
       },
       "offerings": [
         {
-          "provider": "OpenAI",
-          "input": 0.049999999999999996,
-          "output": 0.39999999999999997,
-          "cache_read": 0.005
-        },
-        {
           "provider": "Azure",
           "input": 0.049999999999999996,
           "output": 0.39999999999999997,
           "cache_read": 0.01
+        },
+        {
+          "provider": "OpenAI",
+          "input": 0.049999999999999996,
+          "output": 0.39999999999999997,
+          "cache_read": 0.005
         }
       ],
       "scores": {
@@ -7923,18 +7935,18 @@
       "org": "openai",
       "providers": 2,
       "from": {
-        "provider": "Azure",
+        "provider": "OpenAI",
         "blended_per_m": 0.575
       },
       "offerings": [
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 2,
           "output": 8,
           "cache_read": 0.5
         },
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 2,
           "output": 8,
           "cache_read": 0.5
@@ -8148,6 +8160,12 @@
       },
       "offerings": [
         {
+          "provider": "Alibaba",
+          "input": 0.15,
+          "output": 1.2,
+          "cache_read": null
+        },
+        {
           "provider": "Nebius",
           "input": 0.15,
           "output": 1.2,
@@ -8155,12 +8173,6 @@
         },
         {
           "provider": "Google",
-          "input": 0.15,
-          "output": 1.2,
-          "cache_read": null
-        },
-        {
-          "provider": "Alibaba",
           "input": 0.15,
           "output": 1.2,
           "cache_read": null
@@ -8313,13 +8325,13 @@
           "cache_read": 0.02
         },
         {
-          "provider": "Novita",
+          "provider": "Phala",
           "input": 0.04,
           "output": 0.15,
           "cache_read": null
         },
         {
-          "provider": "Phala",
+          "provider": "Novita",
           "input": 0.04,
           "output": 0.15,
           "cache_read": null
@@ -8422,18 +8434,18 @@
       "org": "openai",
       "providers": 2,
       "from": {
-        "provider": "Azure",
+        "provider": "OpenAI",
         "blended_per_m": 0.115
       },
       "offerings": [
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 0.39999999999999997,
           "output": 1.5999999999999999,
           "cache_read": 0.09999999999999999
         },
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 0.39999999999999997,
           "output": 1.5999999999999999,
           "cache_read": 0.09999999999999999
@@ -8453,18 +8465,18 @@
       "org": "openai",
       "providers": 2,
       "from": {
-        "provider": "Azure",
+        "provider": "OpenAI",
         "blended_per_m": 0.115
       },
       "offerings": [
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 0.39999999999999997,
           "output": 1.5999999999999999,
           "cache_read": 0.09999999999999999
         },
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 0.39999999999999997,
           "output": 1.5999999999999999,
           "cache_read": 0.09999999999999999
@@ -8545,16 +8557,16 @@
           "cache_read": 0.025
         },
         {
-          "provider": "Crusoe",
-          "input": 0.049999999999999996,
-          "output": 0.19999999999999998,
-          "cache_read": 0.03
-        },
-        {
           "provider": "Novita",
           "input": 0.049999999999999996,
           "output": 0.19999999999999998,
           "cache_read": null
+        },
+        {
+          "provider": "Crusoe",
+          "input": 0.049999999999999996,
+          "output": 0.19999999999999998,
+          "cache_read": 0.03
         }
       ],
       "scores": {
@@ -8681,6 +8693,29 @@
       }
     },
     {
+      "id": "deepseek-v3",
+      "name": "deepseek-ai/DeepSeek-V3",
+      "org": "deepseek",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.323
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.32,
+          "output": 0.8899999999999999,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 14.2,
+        "aa_coding": 23,
+        "aa_agentic": 1.6
+      }
+    },
+    {
       "id": "gemini-2.5-flash",
       "name": "google/gemini-2.5-flash",
       "org": "google",
@@ -8707,29 +8742,6 @@
         "aa_intelligence": 14.2,
         "design_arena_elo": 1154,
         "design_arena_category": "dataviz"
-      }
-    },
-    {
-      "id": "deepseek-v3",
-      "name": "deepseek-ai/DeepSeek-V3",
-      "org": "deepseek",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.323
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.32,
-          "output": 0.8899999999999999,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 14.2,
-        "aa_coding": 23,
-        "aa_agentic": 1.6
       }
     },
     {
@@ -9117,16 +9129,16 @@
       },
       "offerings": [
         {
-          "provider": "OpenAI",
-          "input": 0.09999999999999999,
-          "output": 0.39999999999999997,
-          "cache_read": 0.024999999999999998
-        },
-        {
           "provider": "Azure",
           "input": 0.09999999999999999,
           "output": 0.39999999999999997,
           "cache_read": 0.03
+        },
+        {
+          "provider": "OpenAI",
+          "input": 0.09999999999999999,
+          "output": 0.39999999999999997,
+          "cache_read": 0.024999999999999998
         }
       ],
       "scores": {
@@ -9148,16 +9160,16 @@
       },
       "offerings": [
         {
-          "provider": "OpenAI",
-          "input": 0.09999999999999999,
-          "output": 0.39999999999999997,
-          "cache_read": 0.024999999999999998
-        },
-        {
           "provider": "Azure",
           "input": 0.09999999999999999,
           "output": 0.39999999999999997,
           "cache_read": 0.03
+        },
+        {
+          "provider": "OpenAI",
+          "input": 0.09999999999999999,
+          "output": 0.39999999999999997,
+          "cache_read": 0.024999999999999998
         }
       ],
       "scores": {
@@ -9704,31 +9716,45 @@
       }
     },
     {
-      "id": "qwen3-30b-a3b",
-      "name": "Qwen/Qwen3-30B-A3B",
-      "org": "qwen",
-      "providers": 2,
+      "id": "gemma-3-4b-it",
+      "name": "google/gemma-3-4b-it",
+      "org": "google",
+      "providers": 1,
       "from": {
         "provider": "deepinfra",
-        "blended_per_m": 0.122
+        "blended_per_m": 0.05
       },
       "offerings": [
         {
           "provider": "deepinfra",
-          "input": 0.12000000000000001,
-          "output": 0.5,
-          "cache_read": null
-        },
-        {
-          "provider": "Alibaba",
-          "input": 0.13,
-          "output": 0.52,
+          "input": 0.05,
+          "output": 0.1,
           "cache_read": null
         }
       ],
       "scores": {
-        "design_arena_elo": 985,
-        "design_arena_category": "dataviz"
+        "aa_coding": 2.7
+      }
+    },
+    {
+      "id": "llama-3.3-70b-instruct-turbo",
+      "name": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "org": "meta",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.101
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.1,
+          "output": 0.32,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "aa_coding": 11.9
       }
     },
     {
@@ -9772,6 +9798,34 @@
       }
     },
     {
+      "id": "qwen3-30b-a3b",
+      "name": "Qwen/Qwen3-30B-A3B",
+      "org": "qwen",
+      "providers": 2,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.122
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.12000000000000001,
+          "output": 0.5,
+          "cache_read": null
+        },
+        {
+          "provider": "Alibaba",
+          "input": 0.13,
+          "output": 0.52,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "design_arena_elo": 985,
+        "design_arena_category": "dataviz"
+      }
+    },
+    {
       "id": "meta-llama-3.1-8b-instruct-turbo",
       "name": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
       "org": "meta",
@@ -9790,48 +9844,6 @@
       ],
       "scores": {
         "aa_coding": 5.4
-      }
-    },
-    {
-      "id": "llama-3.3-70b-instruct-turbo",
-      "name": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-      "org": "meta",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.101
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.1,
-          "output": 0.32,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "aa_coding": 11.9
-      }
-    },
-    {
-      "id": "gemma-3-4b-it",
-      "name": "google/gemma-3-4b-it",
-      "org": "google",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.05
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.05,
-          "output": 0.1,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "aa_coding": 2.7
       }
     },
     {
@@ -9867,8 +9879,8 @@
       "offerings": [
         {
           "provider": "hyper",
-          "input": 0.598,
-          "output": 0.738,
+          "input": 0.638,
+          "output": 0.768,
           "cache_read": 0
         },
         {
@@ -9976,16 +9988,10 @@
       "org": "anthropic",
       "providers": 5,
       "from": {
-        "provider": "Amazon Bedrock",
+        "provider": "Azure",
         "blended_per_m": 0.735
       },
       "offerings": [
-        {
-          "provider": "Amazon Bedrock",
-          "input": 5,
-          "output": 25,
-          "cache_read": 0.5
-        },
         {
           "provider": "Azure",
           "input": 5,
@@ -9994,6 +10000,12 @@
         },
         {
           "provider": "Google",
+          "input": 5,
+          "output": 25,
+          "cache_read": 0.5
+        },
+        {
+          "provider": "Amazon Bedrock",
           "input": 5,
           "output": 25,
           "cache_read": 0.5
@@ -10066,18 +10078,18 @@
       "org": "openai",
       "providers": 2,
       "from": {
-        "provider": "Azure",
+        "provider": "OpenAI",
         "blended_per_m": 0.284
       },
       "offerings": [
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 1.75,
           "output": 14,
           "cache_read": 0.175
         },
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 1.75,
           "output": 14,
           "cache_read": 0.175
@@ -10115,10 +10127,22 @@
       "org": "anthropic",
       "providers": 5,
       "from": {
-        "provider": "Anthropic",
+        "provider": "Claude Platform on AWS",
         "blended_per_m": 0.735
       },
       "offerings": [
+        {
+          "provider": "Claude Platform on AWS",
+          "input": 5,
+          "output": 25,
+          "cache_read": 0.5
+        },
+        {
+          "provider": "Azure",
+          "input": 5,
+          "output": 25,
+          "cache_read": 0.5
+        },
         {
           "provider": "Anthropic",
           "input": 5,
@@ -10133,18 +10157,6 @@
         },
         {
           "provider": "Google",
-          "input": 5,
-          "output": 25,
-          "cache_read": 0.5
-        },
-        {
-          "provider": "Azure",
-          "input": 5,
-          "output": 25,
-          "cache_read": 0.5
-        },
-        {
-          "provider": "Claude Platform on AWS",
           "input": 5,
           "output": 25,
           "cache_read": 0.5
@@ -10250,16 +10262,16 @@
           "cache_read": 0.13
         },
         {
-          "provider": "Novita",
-          "input": 0.27,
-          "output": 1,
-          "cache_read": 0.135
-        },
-        {
           "provider": "SiliconFlow",
           "input": 0.27,
           "output": 1,
           "cache_read": null
+        },
+        {
+          "provider": "Novita",
+          "input": 0.27,
+          "output": 1,
+          "cache_read": 0.135
         },
         {
           "provider": "AtlasCloud",
@@ -10274,13 +10286,13 @@
           "cache_read": 0.55
         },
         {
-          "provider": "Google",
+          "provider": "Mara",
           "input": 0.6,
           "output": 1.7,
           "cache_read": null
         },
         {
-          "provider": "Mara",
+          "provider": "Google",
           "input": 0.6,
           "output": 1.7,
           "cache_read": null
@@ -10308,16 +10320,16 @@
       },
       "offerings": [
         {
-          "provider": "OpenAI",
-          "input": 0.049999999999999996,
-          "output": 0.39999999999999997,
-          "cache_read": 0.005
-        },
-        {
           "provider": "Azure",
           "input": 0.049999999999999996,
           "output": 0.39999999999999997,
           "cache_read": 0.01
+        },
+        {
+          "provider": "OpenAI",
+          "input": 0.049999999999999996,
+          "output": 0.39999999999999997,
+          "cache_read": 0.005
         }
       ],
       "scores": {
@@ -10331,18 +10343,18 @@
       "org": "anthropic",
       "providers": 2,
       "from": {
-        "provider": "Google",
+        "provider": "Amazon Bedrock",
         "blended_per_m": 2.205
       },
       "offerings": [
         {
-          "provider": "Google",
+          "provider": "Amazon Bedrock",
           "input": 15,
           "output": 75,
           "cache_read": 1.5
         },
         {
-          "provider": "Amazon Bedrock",
+          "provider": "Google",
           "input": 15,
           "output": 75,
           "cache_read": 1.5
@@ -10359,18 +10371,18 @@
       "org": "anthropic",
       "providers": 2,
       "from": {
-        "provider": "Google",
+        "provider": "Amazon Bedrock",
         "blended_per_m": 2.205
       },
       "offerings": [
         {
-          "provider": "Google",
+          "provider": "Amazon Bedrock",
           "input": 15,
           "output": 75,
           "cache_read": 1.5
         },
         {
-          "provider": "Amazon Bedrock",
+          "provider": "Google",
           "input": 15,
           "output": 75,
           "cache_read": 1.5
@@ -10696,18 +10708,18 @@
       "org": "openai",
       "providers": 2,
       "from": {
-        "provider": "Azure",
+        "provider": "OpenAI",
         "blended_per_m": 0.575
       },
       "offerings": [
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 2,
           "output": 8,
           "cache_read": 0.5
         },
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 2,
           "output": 8,
           "cache_read": 0.5
@@ -10874,18 +10886,18 @@
       "org": "openai",
       "providers": 2,
       "from": {
-        "provider": "Azure",
+        "provider": "OpenAI",
         "blended_per_m": 1.325
       },
       "offerings": [
         {
-          "provider": "Azure",
+          "provider": "OpenAI",
           "input": 2.5,
           "output": 10,
           "cache_read": 1.25
         },
         {
-          "provider": "OpenAI",
+          "provider": "Azure",
           "input": 2.5,
           "output": 10,
           "cache_read": 1.25
