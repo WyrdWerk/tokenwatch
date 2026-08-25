@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-25T10:22:15.522Z",
+  "generated_at": "2026-08-25T12:26:09.346Z",
   "mix": {
     "inputPct": 2.5,
     "cacheReadPct": 97,
@@ -112,8 +112,8 @@
         "aa_intelligence": 63.1,
         "aa_coding": 78,
         "aa_agentic": 59.2,
-        "design_arena_elo": 1382,
-        "design_arena_category": "gamedev"
+        "design_arena_elo": 1392,
+        "design_arena_category": "asciiart"
       }
     },
     {
@@ -137,8 +137,8 @@
         "aa_intelligence": 63.1,
         "aa_coding": 78,
         "aa_agentic": 59.2,
-        "design_arena_elo": 1382,
-        "design_arena_category": "gamedev"
+        "design_arena_elo": 1392,
+        "design_arena_category": "asciiart"
       }
     },
     {
@@ -186,8 +186,8 @@
         "aa_intelligence": 63.1,
         "aa_coding": 78,
         "aa_agentic": 59.2,
-        "design_arena_elo": 1382,
-        "design_arena_category": "gamedev"
+        "design_arena_elo": 1392,
+        "design_arena_category": "asciiart"
       }
     },
     {
@@ -315,7 +315,7 @@
         "aa_intelligence": 60.9,
         "aa_coding": 76.8,
         "aa_agentic": 58.7,
-        "design_arena_elo": 1341,
+        "design_arena_elo": 1342,
         "design_arena_category": "uicomponent"
       }
     },
@@ -627,7 +627,7 @@
         "aa_intelligence": 58.1,
         "aa_coding": 71.8,
         "aa_agentic": 58.4,
-        "design_arena_elo": 1376,
+        "design_arena_elo": 1375,
         "design_arena_category": "3d"
       }
     },
@@ -828,7 +828,7 @@
         "aa_intelligence": 56.8,
         "aa_coding": 72.2,
         "aa_agentic": 49.3,
-        "design_arena_elo": 1369,
+        "design_arena_elo": 1370,
         "design_arena_category": "dataviz"
       }
     },
@@ -1066,8 +1066,8 @@
         "aa_intelligence": 55.8,
         "aa_coding": 72.4,
         "aa_agentic": 48.9,
-        "design_arena_elo": 1309,
-        "design_arena_category": "uicomponent"
+        "design_arena_elo": 1308,
+        "design_arena_category": "3d"
       }
     },
     {
@@ -2145,44 +2145,6 @@
       }
     },
     {
-      "id": "gemini-3.5-flash",
-      "name": "google/gemini-3.5-flash",
-      "org": "google",
-      "providers": 2,
-      "from": {
-        "provider": "Google AI Studio",
-        "blended_per_m": 0.228
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 1.4999999999999998,
-          "output": 9,
-          "cache_read": null
-        },
-        {
-          "provider": "Google AI Studio",
-          "input": 1.5,
-          "output": 9,
-          "cache_read": 0.15
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 52,
-        "aa_coding": 70.1,
-        "aa_agentic": 39.7,
-        "design_arena_elo": 1302,
-        "design_arena_category": "gamedev",
-        "livebench_math": 88.2,
-        "livebench_coding": 78.2,
-        "livebench_language": 84.6,
-        "livebench_data_analysis": 64.9,
-        "livebench_agentic_coding": 49,
-        "livebench_reasoning": 82,
-        "livebench_instruction_following": 75.6
-      }
-    },
-    {
       "id": "qwen3.8-27b",
       "name": "Qwen/Qwen3.8-27B",
       "org": "qwen",
@@ -2281,6 +2243,44 @@
         "aa_intelligence": 52,
         "aa_coding": 68.1,
         "aa_agentic": 50.9
+      }
+    },
+    {
+      "id": "gemini-3.5-flash",
+      "name": "google/gemini-3.5-flash",
+      "org": "google",
+      "providers": 2,
+      "from": {
+        "provider": "Google AI Studio",
+        "blended_per_m": 0.228
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 1.4999999999999998,
+          "output": 9,
+          "cache_read": null
+        },
+        {
+          "provider": "Google AI Studio",
+          "input": 1.5,
+          "output": 9,
+          "cache_read": 0.15
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 52,
+        "aa_coding": 70.1,
+        "aa_agentic": 39.7,
+        "design_arena_elo": 1302,
+        "design_arena_category": "gamedev",
+        "livebench_math": 88.2,
+        "livebench_coding": 78.2,
+        "livebench_language": 84.6,
+        "livebench_data_analysis": 64.9,
+        "livebench_agentic_coding": 49,
+        "livebench_reasoning": 82,
+        "livebench_instruction_following": 75.6
       }
     },
     {
@@ -2439,16 +2439,16 @@
           "cache_read": 0.035
         },
         {
+          "provider": "StreamLake",
+          "input": 0.19360000000000002,
+          "output": 0.5808,
+          "cache_read": 0.0061600000000000005
+        },
+        {
           "provider": "Phala",
           "input": 0.19999999999999998,
           "output": 0.39999999999999997,
           "cache_read": 0.07
-        },
-        {
-          "provider": "StreamLake",
-          "input": 0.20240000000000002,
-          "output": 0.6072,
-          "cache_read": 0.00644
         },
         {
           "provider": "Io Net",
@@ -2559,7 +2559,7 @@
         "aa_intelligence": 51.6,
         "aa_coding": 69.2,
         "aa_agentic": 40.5,
-        "design_arena_elo": 1331,
+        "design_arena_elo": 1330,
         "design_arena_category": "uicomponent"
       }
     },
@@ -2584,7 +2584,7 @@
         "aa_intelligence": 51.6,
         "aa_coding": 69.2,
         "aa_agentic": 40.5,
-        "design_arena_elo": 1331,
+        "design_arena_elo": 1330,
         "design_arena_category": "uicomponent"
       }
     },
@@ -3541,7 +3541,7 @@
         "aa_coding": 60.8,
         "aa_agentic": 30.3,
         "design_arena_elo": 1292,
-        "design_arena_category": "uicomponent",
+        "design_arena_category": "website",
         "livebench_math": 79.6,
         "livebench_coding": 74,
         "livebench_language": 77.9,
@@ -3573,7 +3573,7 @@
         "aa_coding": 60.8,
         "aa_agentic": 30.3,
         "design_arena_elo": 1292,
-        "design_arena_category": "uicomponent"
+        "design_arena_category": "website"
       }
     },
     {
@@ -3676,7 +3676,7 @@
         "aa_coding": 60.8,
         "aa_agentic": 30.3,
         "design_arena_elo": 1292,
-        "design_arena_category": "uicomponent"
+        "design_arena_category": "website"
       }
     },
     {
@@ -3785,7 +3785,7 @@
         "aa_intelligence": 42.3,
         "aa_coding": 52.1,
         "aa_agentic": 34.1,
-        "design_arena_elo": 1226,
+        "design_arena_elo": 1227,
         "design_arena_category": "website"
       }
     },
@@ -3822,7 +3822,7 @@
         "aa_intelligence": 42.3,
         "aa_coding": 52.1,
         "aa_agentic": 34.1,
-        "design_arena_elo": 1226,
+        "design_arena_elo": 1227,
         "design_arena_category": "website"
       }
     },
@@ -4107,7 +4107,7 @@
         "aa_intelligence": 41.6,
         "aa_coding": 52.7,
         "aa_agentic": 33.6,
-        "design_arena_elo": 1188,
+        "design_arena_elo": 1190,
         "design_arena_category": "3d"
       }
     },
@@ -4878,7 +4878,7 @@
         "aa_intelligence": 38.3,
         "aa_coding": 49.3,
         "aa_agentic": 27.5,
-        "design_arena_elo": 1179,
+        "design_arena_elo": 1178,
         "design_arena_category": "3d"
       }
     },
@@ -4921,7 +4921,7 @@
         "aa_intelligence": 38.3,
         "aa_coding": 49.3,
         "aa_agentic": 27.5,
-        "design_arena_elo": 1179,
+        "design_arena_elo": 1178,
         "design_arena_category": "3d"
       }
     },
@@ -4964,7 +4964,7 @@
         "aa_intelligence": 38.3,
         "aa_coding": 49.3,
         "aa_agentic": 27.5,
-        "design_arena_elo": 1179,
+        "design_arena_elo": 1178,
         "design_arena_category": "3d"
       }
     },
@@ -5361,7 +5361,7 @@
         "aa_intelligence": 37.4,
         "aa_coding": 52.1,
         "aa_agentic": 26.4,
-        "design_arena_elo": 1232,
+        "design_arena_elo": 1231,
         "design_arena_category": "asciiart"
       }
     },
@@ -5410,7 +5410,7 @@
         "aa_intelligence": 37.4,
         "aa_coding": 52.1,
         "aa_agentic": 26.4,
-        "design_arena_elo": 1232,
+        "design_arena_elo": 1231,
         "design_arena_category": "asciiart"
       }
     },
@@ -5501,7 +5501,7 @@
         "aa_intelligence": 36,
         "aa_coding": 46.8,
         "aa_agentic": 21.7,
-        "design_arena_elo": 1269,
+        "design_arena_elo": 1270,
         "design_arena_category": "website"
       }
     },
@@ -5578,7 +5578,7 @@
       ],
       "scores": {
         "aa_intelligence": 35.6,
-        "design_arena_elo": 1264,
+        "design_arena_elo": 1265,
         "design_arena_category": "uicomponent"
       }
     },
@@ -6415,7 +6415,7 @@
         "aa_intelligence": 29.9,
         "aa_coding": 43.9,
         "aa_agentic": 16.5,
-        "design_arena_elo": 1167,
+        "design_arena_elo": 1166,
         "design_arena_category": "asciiart"
       }
     },
@@ -6458,7 +6458,7 @@
         "aa_intelligence": 29.9,
         "aa_coding": 43.9,
         "aa_agentic": 16.5,
-        "design_arena_elo": 1167,
+        "design_arena_elo": 1166,
         "design_arena_category": "asciiart"
       }
     },
@@ -7089,7 +7089,7 @@
         "aa_intelligence": 25.6,
         "aa_coding": 34.7,
         "aa_agentic": 6.5,
-        "design_arena_elo": 1194,
+        "design_arena_elo": 1193,
         "design_arena_category": "asciiart"
       }
     },
@@ -7811,7 +7811,7 @@
       ],
       "scores": {
         "aa_intelligence": 20.1,
-        "design_arena_elo": 1121,
+        "design_arena_elo": 1122,
         "design_arena_category": "website"
       }
     },
@@ -8274,7 +8274,7 @@
         "aa_intelligence": 15.9,
         "aa_coding": 20.1,
         "aa_agentic": 5.5,
-        "design_arena_elo": 1182,
+        "design_arena_elo": 1183,
         "design_arena_category": "website"
       }
     },
@@ -8570,7 +8570,7 @@
         "aa_intelligence": 14.6,
         "aa_coding": 12.1,
         "aa_agentic": 1.8,
-        "design_arena_elo": 950,
+        "design_arena_elo": 951,
         "design_arena_category": "website"
       }
     },
@@ -8821,7 +8821,7 @@
       ],
       "scores": {
         "aa_intelligence": 13.6,
-        "design_arena_elo": 1107,
+        "design_arena_elo": 1108,
         "design_arena_category": "website"
       }
     },
@@ -9704,7 +9704,7 @@
           "provider": "Reka",
           "input": 0.09999999999999999,
           "output": 0.19999999999999998,
-          "cache_read": null
+          "cache_read": 0.09999999999999999
         }
       ],
       "scores": {
@@ -9733,52 +9733,24 @@
       }
     },
     {
-      "id": "gemma-3-4b-it",
-      "name": "google/gemma-3-4b-it",
-      "org": "google",
+      "id": "llama-3.3-70b-instruct-turbo",
+      "name": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "org": "meta",
       "providers": 1,
       "from": {
         "provider": "deepinfra",
-        "blended_per_m": 0.05
+        "blended_per_m": 0.101
       },
       "offerings": [
         {
           "provider": "deepinfra",
-          "input": 0.05,
-          "output": 0.1,
+          "input": 0.1,
+          "output": 0.32,
           "cache_read": null
         }
       ],
       "scores": {
-        "aa_coding": 2.7
-      }
-    },
-    {
-      "id": "qwen3-30b-a3b",
-      "name": "Qwen/Qwen3-30B-A3B",
-      "org": "qwen",
-      "providers": 2,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.122
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.12000000000000001,
-          "output": 0.5,
-          "cache_read": null
-        },
-        {
-          "provider": "Alibaba",
-          "input": 0.13,
-          "output": 0.52,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "design_arena_elo": 986,
-        "design_arena_category": "dataviz"
+        "aa_coding": 11.9
       }
     },
     {
@@ -9822,24 +9794,31 @@
       }
     },
     {
-      "id": "llama-3.3-70b-instruct-turbo",
-      "name": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-      "org": "meta",
-      "providers": 1,
+      "id": "qwen3-30b-a3b",
+      "name": "Qwen/Qwen3-30B-A3B",
+      "org": "qwen",
+      "providers": 2,
       "from": {
         "provider": "deepinfra",
-        "blended_per_m": 0.101
+        "blended_per_m": 0.122
       },
       "offerings": [
         {
           "provider": "deepinfra",
-          "input": 0.1,
-          "output": 0.32,
+          "input": 0.12000000000000001,
+          "output": 0.5,
+          "cache_read": null
+        },
+        {
+          "provider": "Alibaba",
+          "input": 0.13,
+          "output": 0.52,
           "cache_read": null
         }
       ],
       "scores": {
-        "aa_coding": 11.9
+        "design_arena_elo": 986,
+        "design_arena_category": "dataviz"
       }
     },
     {
@@ -9861,6 +9840,27 @@
       ],
       "scores": {
         "aa_coding": 5.4
+      }
+    },
+    {
+      "id": "gemma-3-4b-it",
+      "name": "google/gemma-3-4b-it",
+      "org": "google",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.05
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.05,
+          "output": 0.1,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "aa_coding": 2.7
       }
     },
     {
@@ -10372,7 +10372,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 1121,
+        "design_arena_elo": 1122,
         "design_arena_category": "website"
       }
     },
