@@ -31,6 +31,8 @@ flowchart TD
       T1J["Neuralwatt /v1/models"]
       T1K["Merius /v1/models"]
       T1L["Aster Labs /v1/models"]
+      T1M["SingularityAPI /v1/models (auth)"]
+      T1N["RunInfra /v1/models (auth)"]
     end
         subgraph T2T["Tier 2 — OpenRouter de-aggregated"]
             T2A["/v1/models aggregate"]

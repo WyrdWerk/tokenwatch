@@ -6,8 +6,10 @@
  * inference provider), normalizes to $/M tokens, and writes public/pricing.json.
  *
  * Tier 1 — Direct providers: DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac,
- *          SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs
- *          (authoritative source for their own offerings)
+ *          SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs,
+ *          SingularityAPI, RunInfra
+ *          (authoritative source for their own offerings; Singularity + RunInfra
+ *          are auth-gated via SINGULARITY_API_KEY / RUNINFRA_API_KEY)
  * Tier 2 — OpenRouter /endpoints: de-aggregated per-backend pricing
  *          (each backend like Fireworks, Together, Novita becomes its own row)
  * Tier 3 — CSV-sourced: Makora, Xiaomimimo (manual-pricing.csv)
@@ -35,6 +37,7 @@
 import { readFile } from 'node:fs/promises';
 import {
   perTokToPerM, centsToDollars, passthrough, parseSference, parseNeuralwatt, parseMerius, parseAster,
+  parseSingularity, parseRuninfra,
   parseOpenCodeGoDocs,
   NON_TEXT_ID, isTextModel,
   ORG_ALIASES, PROVIDER_NAME_MAP,
@@ -127,6 +130,20 @@ const DIRECT_PROVIDERS = [
     name: 'Aster Labs',
     url: 'https://api.asterlab.ai/v1/models',
     parse: parseAster,
+  },
+  {
+    key: 'singularity',
+    name: 'SingularityAPI',
+    url: 'https://api.singularityapi.dev/v1/models',
+    parse: parseSingularity,
+    apiKeyEnv: 'SINGULARITY_API_KEY',
+  },
+  {
+    key: 'runinfra',
+    name: 'RunInfra',
+    url: 'https://api.runinfra.ai/v1/models',
+    parse: parseRuninfra,
+    apiKeyEnv: 'RUNINFRA_API_KEY',
   },
   ];
 
@@ -274,6 +291,27 @@ const MANUAL_PROVIDER_META = {
     retains_prompts: false,  // Inference FAQ: zero data retention by default — prompts/outputs run in memory and are never stored
     may_train: null,         // Terms/privacy make no explicit no-training promise for the inference API; cannot claim false
     retention_days: 0,       // Inference FAQ: ZDR by default — token counts are the only thing retained (for billing)
+  },
+  singularity: {
+    privacy_policy_url: 'https://www.singularityapi.dev/privacy',
+    terms_of_service_url: 'https://www.singularityapi.dev/terms',
+    status_page_url: null,
+    headquarters: 'US',
+    datacenters: null,
+    // Own processing is ZDR by default (logging opt-in). Upstream model hosts may retain — we tag Singularity's own posture.
+    retains_prompts: false,  // Privacy §2/§3: prompts/responses discarded after routing unless workspace logging is enabled
+    may_train: false,         // Privacy §4: "We do not use your prompts or model outputs to train or fine-tune models"
+    retention_days: 0,        // Default: never written to durable storage. Opt-in logs retained 30 days (privacy §7)
+  },
+  runinfra: {
+    privacy_policy_url: 'https://runinfra.ai/privacy-policy',
+    terms_of_service_url: 'https://runinfra.ai/terms-of-service',
+    status_page_url: 'https://status.runinfra.ai/',
+    headquarters: 'US',
+    datacenters: ['US'],
+    retains_prompts: false,  // Privacy §X-A Model API: prompt content held in memory only for the request, then discarded
+    may_train: false,         // Privacy §X-A: no train/fine-tune/distill/evaluate on prompts or completions
+    retention_days: 1,        // Narrow exception: non-streaming Idempotency-Key replay cache up to 24h (privacy §X-A)
   },
 };
 
@@ -856,7 +894,12 @@ async function main() {
   // ── Tier 1: Direct providers ──
   for (const prov of DIRECT_PROVIDERS) {
     try {
-      const data = await fetchJson(prov.url);
+      if (prov.apiKeyEnv && !process.env[prov.apiKeyEnv]) {
+        out.providers.push({ key: prov.key, name: prov.name, model_count: 0, status: `skipped: missing ${prov.apiKeyEnv}` });
+        console.warn(`⚠ ${prov.name}: ${prov.apiKeyEnv} not set — skipping`);
+        continue;
+      }
+      const data = await fetchJson(prov.url, prov.apiKeyEnv ? { apiKey: process.env[prov.apiKeyEnv] } : {});
       const models = prov.parse(data).filter((m) =>
         !m.id.endsWith(':free') &&
         isTextModel(m.id) &&

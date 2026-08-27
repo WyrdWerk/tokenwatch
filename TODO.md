@@ -68,8 +68,8 @@ See `docs/superpowers/plans/` (historical). Live: `scripts/fetch-fal.mjs`, `shar
 - Sort direction auto-flips when on cost column; exclusion filter symmetric with forward mode (drops offerings that can't serve the requested token mix)
 - URL hash persistence (`#by=budget`, `#budget=N`)
 
-### Auth-gated direct providers (A1 — postponed)
-Cerebras, Groq, Together, SiliconFlow, Fireworks, Baseten, Hyperbolic, Replicate, Mistral all have auth-gated `/v1/models` endpoints. All are already covered as OpenRouter backends (Tier 2). Direct fetch would give Tier-1 precedence + fresher data, not new model coverage. Postponed until user has API keys.
+### Auth-gated direct providers
+SingularityAPI and RunInfra are wired as Tier-1 fetches behind `SINGULARITY_API_KEY` / `RUNINFRA_API_KEY`. If a key is missing the provider is skipped (non-fatal). Remaining candidates (Cerebras, Groq, Together, SiliconFlow, Fireworks, Baseten, Hyperbolic, Replicate, Mistral) are still postponed — they are already covered as OpenRouter backends.
 
 ### Historical price tracking (A7 — not started)
 Store daily pricing.json snapshots to enable price-drop alerts, trend charts, and "cheapest this model has ever been" features. Would require a `pricing-history/` archive or Cloudflare D1/KV storage.

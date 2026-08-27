@@ -1,0 +1,221 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "deepseek-v3.2",
+      "object": "model",
+      "created": 1784708052,
+      "owned_by": "singularityapi",
+      "capabilities": [
+        {
+          "endpoint": "/v1/chat/completions",
+          "context_window_tokens": 128000,
+          "maximum_output_tokens": 128000,
+          "default_output_tokens": 4096,
+          "pricing": {
+            "input_per_million_usd": "0.186000000000",
+            "output_per_million_usd": "0.280000000000",
+            "cached_input_per_million_usd": null,
+            "free_until": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "deepseek-v4-flash",
+      "object": "model",
+      "created": 1784708052,
+      "owned_by": "singularityapi",
+      "capabilities": [
+        {
+          "endpoint": "/v1/chat/completions",
+          "context_window_tokens": 1000000,
+          "maximum_output_tokens": 384000,
+          "default_output_tokens": 8192,
+          "pricing": {
+            "input_per_million_usd": "0.081000000000",
+            "output_per_million_usd": "0.162000000000",
+            "cached_input_per_million_usd": "0.007000000000",
+            "free_until": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "deepseek-v4-flash-0731",
+      "object": "model",
+      "created": 1787233160,
+      "owned_by": "singularityapi",
+      "capabilities": [
+        {
+          "endpoint": "/v1/chat/completions",
+          "context_window_tokens": 1048576,
+          "maximum_output_tokens": 384000,
+          "default_output_tokens": 8192,
+          "pricing": {
+            "input_per_million_usd": "0.200000000000",
+            "output_per_million_usd": "0.500000000000",
+            "cached_input_per_million_usd": "0.007000000000",
+            "free_until": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "deepseek-v4-pro",
+      "object": "model",
+      "created": 1784708052,
+      "owned_by": "singularityapi",
+      "capabilities": [
+        {
+          "endpoint": "/v1/chat/completions",
+          "context_window_tokens": 1000000,
+          "maximum_output_tokens": 384000,
+          "default_output_tokens": 8192,
+          "pricing": {
+            "input_per_million_usd": "0.392000000000",
+            "output_per_million_usd": "0.783000000000",
+            "cached_input_per_million_usd": "0.128000000000",
+            "free_until": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "gpt-5.6-luna",
+      "object": "model",
+      "created": 1784708052,
+      "owned_by": "singularityapi",
+      "capabilities": [
+        {
+          "endpoint": "/v1/chat/completions",
+          "context_window_tokens": 1000000,
+          "maximum_output_tokens": 128000,
+          "default_output_tokens": 8192,
+          "pricing": {
+            "input_per_million_usd": "0.180000000000",
+            "output_per_million_usd": "1.100000000000",
+            "cached_input_per_million_usd": "0.020000000000",
+            "free_until": null
+          }
+        },
+        {
+          "endpoint": "/v1/responses",
+          "context_window_tokens": 1000000,
+          "maximum_output_tokens": 128000,
+          "default_output_tokens": 8192,
+          "pricing": {
+            "input_per_million_usd": "0.180000000000",
+            "output_per_million_usd": "1.100000000000",
+            "cached_input_per_million_usd": "0.020000000000",
+            "free_until": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "gpt-5.6-sol",
+      "object": "model",
+      "created": 1784708052,
+      "owned_by": "singularityapi",
+      "capabilities": [
+        {
+          "endpoint": "/v1/chat/completions",
+          "context_window_tokens": 1000000,
+          "maximum_output_tokens": 128000,
+          "default_output_tokens": 8192,
+          "pricing": {
+            "input_per_million_usd": "2.400000000000",
+            "output_per_million_usd": "14.000000000000",
+            "cached_input_per_million_usd": "0.200000000000",
+            "free_until": null
+          }
+        },
+        {
+          "endpoint": "/v1/responses",
+          "context_window_tokens": 1000000,
+          "maximum_output_tokens": 128000,
+          "default_output_tokens": 8192,
+          "pricing": {
+            "input_per_million_usd": "2.400000000000",
+            "output_per_million_usd": "14.000000000000",
+            "cached_input_per_million_usd": "0.200000000000",
+            "free_until": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "gpt-5.6-terra",
+      "object": "model",
+      "created": 1784708052,
+      "owned_by": "singularityapi",
+      "capabilities": [
+        {
+          "endpoint": "/v1/chat/completions",
+          "context_window_tokens": 1000000,
+          "maximum_output_tokens": 128000,
+          "default_output_tokens": 8192,
+          "pricing": {
+            "input_per_million_usd": "1.800000000000",
+            "output_per_million_usd": "10.000000000000",
+            "cached_input_per_million_usd": "0.200000000000",
+            "free_until": null
+          }
+        },
+        {
+          "endpoint": "/v1/responses",
+          "context_window_tokens": 1000000,
+          "maximum_output_tokens": 128000,
+          "default_output_tokens": 8192,
+          "pricing": {
+            "input_per_million_usd": "1.800000000000",
+            "output_per_million_usd": "10.000000000000",
+            "cached_input_per_million_usd": "0.200000000000",
+            "free_until": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "kimi-k2.6",
+      "object": "model",
+      "created": 1784708052,
+      "owned_by": "singularityapi",
+      "capabilities": [
+        {
+          "endpoint": "/v1/chat/completions",
+          "context_window_tokens": 262144,
+          "maximum_output_tokens": 262144,
+          "default_output_tokens": 8192,
+          "pricing": {
+            "input_per_million_usd": "0.581000000000",
+            "output_per_million_usd": "2.448000000000",
+            "cached_input_per_million_usd": "0.128000000000",
+            "free_until": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "kimi-k2.7-code",
+      "object": "model",
+      "created": 1784708052,
+      "owned_by": "singularityapi",
+      "capabilities": [
+        {
+          "endpoint": "/v1/chat/completions",
+          "context_window_tokens": 262144,
+          "maximum_output_tokens": 262144,
+          "default_output_tokens": 8192,
+          "pricing": {
+            "input_per_million_usd": "0.639000000000",
+            "output_per_million_usd": "3.150000000000",
+            "cached_input_per_million_usd": "0.152000000000",
+            "free_until": null
+          }
+        }
+      ]
+    }
+  ]
+}
