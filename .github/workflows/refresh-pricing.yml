@@ -63,6 +63,9 @@ jobs:
         run: node --test test/*.test.mjs
 
       - name: Fetch & normalize text pricing
+        env:
+          SINGULARITY_API_KEY: ${{ secrets.SINGULARITY_API_KEY }}
+          RUNINFRA_API_KEY: ${{ secrets.RUNINFRA_API_KEY }}
         run: node scripts/fetch-pricing.mjs
 
       - name: Prefetch fal.ai catalog (shared by image + video pipelines)

@@ -1,0 +1,195 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "deepseek-v4-flash",
+      "object": "model",
+      "owned_by": "runinfra",
+      "created": 1785679270,
+      "availability": "available",
+      "max_request_bytes": 3670016,
+      "modality": "llm",
+      "session_affinity_idle_ttl_seconds": 900,
+      "context_window": 1048576,
+      "context_length": 1048576,
+      "max_output_tokens": 1048576,
+      "response_time_ceiling_seconds": 740,
+      "pricing": {
+        "input": 0.13,
+        "output": 0.27
+      },
+      "cached_input_price_usd_per_mtok": 0.01,
+      "cached_input_price": 0.01,
+      "cache_isolation": "isolated",
+      "cache_tiers": [
+        "gpu"
+      ],
+      "cache_retention": "best_effort",
+      "max_concurrent_requests_per_api_key": 16,
+      "max_tokens_per_minute_per_workspace": 4000000
+    },
+    {
+      "id": "deepseek-v4-pro",
+      "object": "model",
+      "owned_by": "runinfra",
+      "created": 1786927077,
+      "availability": "available",
+      "max_request_bytes": 3670016,
+      "modality": "llm",
+      "session_affinity_idle_ttl_seconds": 900,
+      "context_window": 1048576,
+      "context_length": 1048576,
+      "max_output_tokens": 1048576,
+      "response_time_ceiling_seconds": 740,
+      "pricing": {
+        "input": 0.6,
+        "output": 1.9
+      },
+      "cached_input_price_usd_per_mtok": 0.03,
+      "cached_input_price": 0.03,
+      "cache_isolation": "isolated",
+      "cache_tiers": [
+        "gpu",
+        "host_ram"
+      ],
+      "cache_retention": "tiered_host_memory",
+      "max_concurrent_requests_per_api_key": 12,
+      "max_tokens_per_minute_per_workspace": 4000000
+    },
+    {
+      "id": "glm-5-3-flash",
+      "object": "model",
+      "owned_by": "runinfra",
+      "created": 1787764943,
+      "availability": "available",
+      "max_request_bytes": 3670016,
+      "modality": "llm",
+      "session_affinity_idle_ttl_seconds": 900,
+      "context_window": 1048576,
+      "context_length": 1048576,
+      "max_output_tokens": 1048576,
+      "response_time_ceiling_seconds": 740,
+      "pricing": {
+        "input": 0.1,
+        "output": 0.4
+      },
+      "cached_input_price_usd_per_mtok": 0.01,
+      "cached_input_price": 0.01,
+      "cache_isolation": "isolated",
+      "cache_tiers": [
+        "gpu"
+      ],
+      "cache_retention": "best_effort",
+      "max_concurrent_requests_per_api_key": 16,
+      "max_tokens_per_minute_per_workspace": 4000000
+    },
+    {
+      "id": "nemotron-3-5-lightning-30b",
+      "object": "model",
+      "owned_by": "runinfra",
+      "created": 1786619239,
+      "availability": "available",
+      "max_request_bytes": 3670016,
+      "modality": "llm",
+      "session_affinity_idle_ttl_seconds": 900,
+      "context_window": 262144,
+      "context_length": 262144,
+      "max_output_tokens": 262144,
+      "response_time_ceiling_seconds": 740,
+      "pricing": {
+        "input": 0.05,
+        "output": 0.15
+      },
+      "cached_input_price_usd_per_mtok": 0.01,
+      "cached_input_price": 0.01,
+      "cache_isolation": "isolated",
+      "cache_tiers": [
+        "gpu"
+      ],
+      "cache_retention": "best_effort",
+      "max_concurrent_requests_per_api_key": 16,
+      "max_tokens_per_minute_per_workspace": 4000000
+    },
+    {
+      "id": "ornith-1-5-35b",
+      "object": "model",
+      "owned_by": "runinfra",
+      "created": 1787186746,
+      "availability": "available",
+      "max_request_bytes": 3670016,
+      "modality": "llm",
+      "session_affinity_idle_ttl_seconds": 900,
+      "context_window": 262144,
+      "context_length": 262144,
+      "max_output_tokens": 262144,
+      "response_time_ceiling_seconds": 740,
+      "pricing": {
+        "input": 0.1,
+        "output": 0.4
+      },
+      "cached_input_price_usd_per_mtok": 0.01,
+      "cached_input_price": 0.01,
+      "cache_isolation": "isolated",
+      "cache_tiers": [
+        "gpu"
+      ],
+      "cache_retention": "best_effort",
+      "max_concurrent_requests_per_api_key": 16,
+      "max_tokens_per_minute_per_workspace": 4000000
+    },
+    {
+      "id": "qwen3-8-2-4t-a95b",
+      "object": "model",
+      "owned_by": "runinfra",
+      "created": 1786734868,
+      "availability": "available",
+      "max_request_bytes": 3670016,
+      "modality": "llm",
+      "session_affinity_idle_ttl_seconds": 900,
+      "context_window": 262144,
+      "context_length": 262144,
+      "max_output_tokens": 262144,
+      "response_time_ceiling_seconds": 740,
+      "pricing": {
+        "input": 2,
+        "output": 6
+      },
+      "cached_input_price_usd_per_mtok": 0.2,
+      "cached_input_price": 0.2,
+      "cache_isolation": "isolated",
+      "cache_tiers": [
+        "gpu"
+      ],
+      "cache_retention": "best_effort",
+      "max_concurrent_requests_per_api_key": 16,
+      "max_tokens_per_minute_per_workspace": 4000000
+    },
+    {
+      "id": "qwen3-8-27b",
+      "object": "model",
+      "owned_by": "runinfra",
+      "created": 1786794237,
+      "availability": "available",
+      "max_request_bytes": 3670016,
+      "modality": "llm",
+      "session_affinity_idle_ttl_seconds": 900,
+      "context_window": 262144,
+      "context_length": 262144,
+      "max_output_tokens": 262144,
+      "response_time_ceiling_seconds": 740,
+      "pricing": {
+        "input": 0.1,
+        "output": 0.4
+      },
+      "cached_input_price_usd_per_mtok": 0.01,
+      "cached_input_price": 0.01,
+      "cache_isolation": "isolated",
+      "cache_tiers": [
+        "gpu"
+      ],
+      "cache_retention": "best_effort",
+      "max_concurrent_requests_per_api_key": 10,
+      "max_tokens_per_minute_per_workspace": 4000000
+    }
+  ]
+}

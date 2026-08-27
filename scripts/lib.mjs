@@ -138,6 +138,91 @@ export function parseAster(data) {
   });
 }
 
+/** Infer model-creator org from a bare (unprefixed) catalog id. */
+function orgFromBareModelId(id) {
+  if (!id || typeof id !== 'string') return null;
+  if (id.includes('/')) return orgFromId(id);
+  const s = id.toLowerCase();
+  if (s.startsWith('deepseek')) return 'deepseek';
+  if (s.startsWith('gpt-') || s.startsWith('chatgpt') || s.startsWith('o1-') || s.startsWith('o3-') || s.startsWith('o4-')) return 'openai';
+  if (s.startsWith('kimi')) return 'moonshot';
+  if (s.startsWith('glm')) return 'z-ai';
+  if (s.startsWith('qwen')) return 'qwen';
+  if (s.startsWith('nemotron')) return 'nvidia';
+  if (s.startsWith('ornith')) return 'ornith';
+  if (s.startsWith('llama')) return 'meta';
+  if (s.startsWith('claude')) return 'anthropic';
+  if (s.startsWith('gemini')) return 'google';
+  return null;
+}
+
+function singularityChatCapability(m) {
+  const caps = Array.isArray(m.capabilities) ? m.capabilities : [];
+  return caps.find((c) => c?.endpoint === '/v1/chat/completions')
+    || caps.find((c) => c?.pricing)
+    || null;
+}
+
+/** SingularityAPI https://api.singularityapi.dev/v1/models → text records (prices already $/M). */
+export function parseSingularity(data) {
+  const models = Array.isArray(data?.data) ? data.data : [];
+  return models.flatMap((m) => {
+    if (!m || typeof m.id !== 'string' || !m.id) return [];
+    const cap = singularityChatCapability(m);
+    if (!cap) return [];
+    const p = cap.pricing || {};
+    const input = passthrough(p.input_per_million_usd);
+    const output = passthrough(p.output_per_million_usd);
+    if (input === null && output === null) return [];
+    return [{
+      id: m.id,
+      name: m.display_name || m.id,
+      org: orgFromBareModelId(m.id),
+      provider: 'singularity',
+      quantization: null,
+      discount: 0,
+      context_length: cap.context_window_tokens ?? null,
+      max_completion_tokens: cap.maximum_output_tokens ?? null,
+      pricing: {
+        input,
+        output,
+        cache_read: passthrough(p.cached_input_per_million_usd),
+        cache_write: null,
+      },
+    }];
+  });
+}
+
+/** RunInfra https://api.runinfra.ai/v1/models → text records (prices already $/M). */
+export function parseRuninfra(data) {
+  const models = Array.isArray(data?.data) ? data.data : [];
+  return models.flatMap((m) => {
+    if (!m || typeof m.id !== 'string' || !m.id) return [];
+    if (m.availability === 'paused') return [];
+    if (m.modality && m.modality !== 'llm') return [];
+    const p = m.pricing || {};
+    const input = passthrough(p.input);
+    const output = passthrough(p.output);
+    if (input === null && output === null) return [];
+    return [{
+      id: m.id,
+      name: m.display_name || m.id,
+      org: orgFromBareModelId(m.id),
+      provider: 'runinfra',
+      quantization: null,
+      discount: 0,
+      context_length: m.context_length ?? m.context_window ?? null,
+      max_completion_tokens: m.max_output_tokens ?? null,
+      pricing: {
+        input,
+        output,
+        cache_read: passthrough(m.cached_input_price ?? m.cached_input_price_usd_per_mtok),
+        cache_write: null,
+      },
+    }];
+  });
+}
+
 // ── OpenCode Go (docs-page scraping) ──────────────────────────────────────────
 // OpenCode Zen exposes the model catalog at /zen/go/v1/models but WITHOUT
 // pricing. The $/M prices live only in the docs page's pricing table
@@ -333,6 +418,11 @@ export const PROVIDER_NAME_MAP = {
   'neuralwatt': 'neuralwatt',
   'aster': 'aster',
   'aster labs': 'aster',
+  'singularity': 'singularity',
+  'singularityapi': 'singularity',
+  'singularity api': 'singularity',
+  'runinfra': 'runinfra',
+  'run infra': 'runinfra',
   'inception': 'inception',
   'infermatic': 'infermatic',
   'mara': 'mara',

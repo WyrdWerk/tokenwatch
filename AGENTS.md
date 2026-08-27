@@ -26,7 +26,7 @@ Static site comparing pay-as-you-go LLM API pricing across inference providers. 
 ## Architecture
 
 - **Data pipeline**: `scripts/fetch-pricing.mjs` fetches pricing from 3 tiers:
-- **Tier 1 — Direct providers** (authoritative): DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac, SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs — fetched via their own `/v1/models` endpoints
+- **Tier 1 — Direct providers** (authoritative): DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac, SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs, SingularityAPI, RunInfra — fetched via their own `/v1/models` endpoints. SingularityAPI and RunInfra require `SINGULARITY_API_KEY` / `RUNINFRA_API_KEY` (skipped with a warning if unset).
 - **Tier 2 — OpenRouter de-aggregated**: `/v1/models` lists models, then `/endpoints` per model returns per-backend pricing. Each backend (Fireworks, Together, Novita, SiliconFlow, etc.) becomes its own row — NOT "OpenRouter"
 - **Tier 3 — CSV/hardcoded/scraped**: Makora, Xiaomimimo (CSV), OpenCode Go (docs-page scrape: `parseOpenCodeGoDocs()` in `scripts/lib.mjs` scrapes the pricing table at `https://opencode.ai/docs/go/` — the `/zen/go/v1/models` catalog endpoint lists models but has no prices; context lengths stay manual via `OPENCODE_GO_CONTEXT`; legacy hardcoded array is the fallback), Umans (manually maintained `UMANS_MODELS` / `parseUmansHardcoded()` — not a live `/v1/models` fetch; status.umans.ai SSR is for performance data only)
   - **3-tier precedence**: dedup key is `canonicalId(m.id) | normalized_provider` (`scripts/lib.mjs:282-284`). Direct wins over OpenRouter, which wins over CSV/hardcoded; first-seen/highest-tier wins among identical keys. **Quantization IS part of the dedup key** — `canonicalId()` preserves quant suffixes (`shared/normalize.mjs:34-47`), so different quants of the same model+provider produce distinct keys and stay distinct rows (`test/canonicalization.test.mjs:88-97`). (Note: `orgLookupKey` strips quant for org resolution only — `normalize.mjs:54-58` — and is NOT the dedup key; see `docs/canonicalization-edge-cases.md` §2.)
@@ -37,7 +37,7 @@ Static site comparing pay-as-you-go LLM API pricing across inference providers. 
 - **ZDR (Zero Data Retention)**: Two-stage tagging in `main()`:
   1. **Endpoint-level**: `fetchZdrEndpoints()` fetches `/api/v1/endpoints/zdr` (documented, no auth) and builds a Set of `dedupKey()` strings. Models matching the set get `zdr: true`.
   2. **Provider-level fallback**: models not tagged at endpoint level are checked against `providers_meta[provider].retains_prompts === false`.
-  - `MANUAL_PROVIDER_META` stores URLs + `retains_prompts`/`may_train`/`retention_days` (where reviewed) for 13 manual providers (aster, crof, ember, hyper, lilac, makora, merius, neuralwatt, opencode, sference, synthetic, umans, xiaomimimo). ZDR verdicts: Aster Labs full ZDR (prompts/outputs processed in memory and never stored or trained on). Merius full ZDR (no logging/storing). HyperCharm ZDR-by-default (retains_prompts:false, retention_days:30 — "not stored by default"; conditional retention up to 30 days for debugging/abuse/legal). Neuralwatt (retains_prompts:false, retention_days:1 — 24h volatile purge; anonymized semantic representations retained for cache). Sference (DPA https://sference.com/legal/dpa — Annex 1 transient retention, Annex 2 Pt 10 excluded from backups, Clause 2.6 no-train). EmberCloud ZDR/retention undetermined (URL-only metadata, no public policy evidence).
+  - `MANUAL_PROVIDER_META` stores URLs + `retains_prompts`/`may_train`/`retention_days` (where reviewed) for 15 manual providers (aster, crof, ember, hyper, lilac, makora, merius, neuralwatt, opencode, runinfra, sference, singularity, synthetic, umans, xiaomimimo). ZDR verdicts: Aster Labs full ZDR (prompts/outputs processed in memory and never stored or trained on). Merius full ZDR (no logging/storing). HyperCharm ZDR-by-default (retains_prompts:false, retention_days:30 — "not stored by default"; conditional retention up to 30 days for debugging/abuse/legal). Neuralwatt (retains_prompts:false, retention_days:1 — 24h volatile purge; anonymized semantic representations retained for cache). Sference (DPA https://sference.com/legal/dpa — Annex 1 transient retention, Annex 2 Pt 10 excluded from backups, Clause 2.6 no-train). SingularityAPI own-processing ZDR by default (logging opt-in; upstream model hosts may retain). RunInfra Model API: prompts in-memory only, 24h idempotency replay cache for non-streaming completions. EmberCloud ZDR/retention undetermined (URL-only metadata, no public policy evidence).
 - **Provider metadata**: `fetchProviderMeta()` fetches 3 sources: (1) `MANUAL_PROVIDER_META` (manual, includes ZDR fields), (2) OpenRouter `/api/v1/providers` (policy URLs, HQ, datacenters — guarded to not overwrite manual entries), (3) `/api/frontend/all-providers` (undocumented, non-fatal enrichment for `dataPolicy.retainsPrompts`, `training`, `retentionDays`). Alias resolution via `PROVIDER_NAME_MAP` (e.g. `xiaomimimo` inherits `xiaomi` metadata).
 - **Benchmarks pipeline**: `scripts/fetch-benchmarks.mjs` builds `public/benchmarks.json` — per-model use-case-tagged scores (AA intelligence/coding/agentic + Design Arena from pricing.json enrichment; LiveBench per-release CSV from the LiveBench/livebench.github.io GitHub repo, no key, 2026-06-25 release) joined to per-provider prices. Model-creator org resolution is 4-layer (clean org → global provider-slug blocklist → variant-family inheritance incl. dash-less/reseller spellings → leading-token creator map); pinned by `test/benchmarks-page.test.mjs` (provider-slug leak regression). The benchmarks page recomputes "cheapest provider blended $/M" CLIENT-SIDE at the visitor's mix — the Text calculator persists its mix to `localStorage['tw-mix']` (app.js) and `benchmarks-app.js` mirrors `blendedRate()` (parity-pinned). Value column = primary score ÷ blended price, normalized best-in-view = 100 (never raw ratio — scale-mixing bug fixed 2026-08-14).
 - **Consolidated FAQ**: `renderFaqPage()` in seo-pages generates `public/faq/index.html` (text + image + video + benchmark FAQ groups, owns the FAQPage JSON-LD). Calculator pages carry only a pointer section linking /faq/. `llms.txt` generated per refresh (buildLlmsTxt). Nav order: Text · Image · Video · Benchmarks · Providers · Methodology · API · FAQ. verify-seo: sitemap = providers + 8; FAQ/JSON-LD parity enforced on /faq/ only.
@@ -59,7 +59,7 @@ Static site comparing pay-as-you-go LLM API pricing across inference providers. 
 All prices are stored as **USD per million tokens ($/M)**. Conversion by source:
 - OpenRouter `/endpoints`: $/token → ×1e6
 - SambaNova / EmberCloud / Lilac: $/token → ×1e6
-- DeepInfra / Crof / HyperCharm / Aster Labs / Makora / Xiaomimimo / OpenCode Go: $/M (passthrough)
+- DeepInfra / Crof / HyperCharm / Aster Labs / Makora / Xiaomimimo / OpenCode Go / SingularityAPI / RunInfra: $/M (passthrough)
 - Wafer: cents/M → ÷100
 - Synthetic: $/token → ×1e6, cache_read = input × 0.20 (per spec, not from API)
 
@@ -95,12 +95,12 @@ Only text-generation models are included (output must be text). Filtering by sou
 - `datacenters` — array of region codes
 - `source` — `openrouter` or `manual`
 
-Manual entries (`MANUAL_PROVIDER_META` in fetch-pricing.mjs) cover providers not in OR: aster, crof, ember, hyper, lilac, makora, merius, neuralwatt, opencode, sference, synthetic, umans, xiaomimimo (13 total). **Manual entries take precedence** — OR data only fills missing URL fields when the slug matches a manual entry; manual ZDR/policy fields are never overwritten.
+Manual entries (`MANUAL_PROVIDER_META` in fetch-pricing.mjs) cover providers not in OR: aster, crof, ember, hyper, lilac, makora, merius, neuralwatt, opencode, runinfra, sference, singularity, synthetic, umans, xiaomimimo (15 total). **Manual entries take precedence** — OR data only fills missing URL fields when the slug matches a manual entry; manual ZDR/policy fields are never overwritten.
 
 ### Org extraction
 
 The `org` field identifies the underlying model creator (not the inference provider):
-1. From parser-set org (Synthetic from `hugging_face_id`, SambaNova from leading ID segments via `ORG_ALIASES`, Aster from verified model-family mappings)
+1. From parser-set org (Synthetic from `hugging_face_id`, SambaNova from leading ID segments via `ORG_ALIASES`, Aster/Singularity/RunInfra from verified model-family mappings)
 2. From model ID prefix: `anthropic/claude-sonnet-5` → `anthropic`
 3. Cross-reference via `orgLookupKey()`: quantization suffixes (`-fp8`, `-nvfp4`, `-int4`) stripped for org lookup
 4. From model name: `DeepSeek: DeepSeek V4 Pro` → `deepseek`
@@ -199,7 +199,7 @@ Cloudflare Pages project: `payg-inference-calculator`
 - Custom domain: https://tokenwatch.wyrdwerk.com (also at https://payg-inference-calculator.pages.dev)
 - Production branch: `main`
 - Build output: `public/`
-- GitHub secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `DATA_BOT_APP_ID`, `DATA_BOT_PRIVATE_KEY`, `FAL_API_KEY`, `OPENROUTER_API_KEY`, `ARTIFICIAL_ANALYSIS_API_KEY` (7 total)
+- GitHub secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `DATA_BOT_APP_ID`, `DATA_BOT_PRIVATE_KEY`, `FAL_API_KEY`, `OPENROUTER_API_KEY`, `ARTIFICIAL_ANALYSIS_API_KEY`, `SINGULARITY_API_KEY`, `RUNINFRA_API_KEY` (9 total)
 - Auto-deploy on push to main (deploy-only) + 2-hourly cron (fetch+commit+deploy)
 
 Manual deploy: `npx wrangler pages deploy public --project-name payg-inference-calculator --branch main --commit-dirty true`
@@ -271,7 +271,7 @@ All three JSON files (`pricing.json`, `image-pricing.json`, `video-pricing.json`
 ## Next steps
 
 1. **Subscription pricing details**: Show subscription plan pricing (monthly cost, token quotas) for the 13 subscription providers. Would need integration with codingplans.cc or manual CSV maintenance.
-2. **Auth-gated providers**: Cerebras, Groq, Together, SiliconFlow, Fireworks, Baseten, Hyperbolic, Replicate, Mistral have auth-gated `/v1/models` endpoints. Would need API keys as GitHub Actions secrets. All are already covered via OpenRouter `/endpoints` backends — direct fetch would give Tier-1 precedence + fresher data, not new coverage.
+2. **Auth-gated providers**: SingularityAPI and RunInfra are wired (`SINGULARITY_API_KEY`, `RUNINFRA_API_KEY`). Cerebras, Groq, Together, SiliconFlow, Fireworks, Baseten, Hyperbolic, Replicate, Mistral remain postponed — already covered via OpenRouter `/endpoints` backends.
 3. **CSV maintenance**: `data/manual-pricing.csv` needs periodic manual updates for Makora/Xiaomimimo pricing. If these models appear in OpenRouter backends, the CSV could be dropped.
 4. **Turbo/preview grouping**: Currently turbo and preview variants are kept separate. Could add UI to group them with their base model.
 5. **Historical price tracking**: Store daily snapshots to surface price-drop alerts or trend charts.
