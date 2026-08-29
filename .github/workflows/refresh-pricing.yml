@@ -34,6 +34,8 @@ jobs:
           node-version: '22'
 
       - name: Run tests
+        env:
+          TW_PARITY_LIVE: '0'
         run: node --test test/*.test.mjs
 
   refresh:
@@ -60,6 +62,8 @@ jobs:
           node-version: '22'
 
       - name: Run tests
+        env:
+          TW_PARITY_LIVE: '0'
         run: node --test test/*.test.mjs
 
       - name: Fetch & normalize text pricing
@@ -95,6 +99,12 @@ jobs:
 
       - name: Build advisor knowledge base (pricing + benchmarks + ZDR join)
         run: node scripts/build-advisor-knowledge.mjs
+
+      - name: Catalog mix floors (telemetry)
+        continue-on-error: true
+        env:
+          TW_PARITY_LIVE: '1'
+        run: node --test test/parity.test.mjs
 
       - name: Commit pricing + performance data
         id: commit

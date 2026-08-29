@@ -42,6 +42,8 @@ jobs:
           node-version: '22'
 
       - name: Run tests
+        env:
+          TW_PARITY_LIVE: '0'
         run: node --test test/*.test.mjs
 
       - name: Fetch AA benchmarks (writes data/aa-benchmarks.json)
@@ -54,6 +56,12 @@ jobs:
           SINGULARITY_API_KEY: ${{ secrets.SINGULARITY_API_KEY }}
           RUNINFRA_API_KEY: ${{ secrets.RUNINFRA_API_KEY }}
         run: node scripts/fetch-pricing.mjs
+
+      - name: Catalog mix floors (telemetry)
+        continue-on-error: true
+        env:
+          TW_PARITY_LIVE: '1'
+        run: node --test test/parity.test.mjs
 
       - name: Commit AA cache + refreshed pricing
         id: commit

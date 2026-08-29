@@ -19,4 +19,6 @@ jobs:
           node-version: '22'
 
       - name: Run tests
+        env:
+          TW_PARITY_LIVE: '0'
         run: node --test test/*.test.mjs
