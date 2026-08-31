@@ -7,6 +7,8 @@ concurrency:
 on:
   schedule:
     # every 2 hours at minute 30 (offset from pricing refresh at 00:00)
+    # RE-ARM 2026-08-31: GitHub stopped delivering schedule events for this
+    # workflow (data stalled >5h). Re-registering the cron; see session fix.
     - cron: '30 */2 * * *'
   workflow_dispatch:
     inputs:

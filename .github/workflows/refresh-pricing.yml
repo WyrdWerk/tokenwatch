@@ -7,6 +7,8 @@ concurrency:
 on:
   schedule:
     # every 2 hours
+    # RE-ARM 2026-08-31: GitHub stopped delivering schedule events for this
+    # workflow (data stalled >5h). Re-registering the cron; see session fix.
     - cron: '0 */2 * * *'
   workflow_dispatch:
     inputs:
