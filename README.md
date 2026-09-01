@@ -46,6 +46,8 @@ TokenWatch ships SEO infrastructure for a client-side-rendered SPA:
 - **Speed**: Throughput p50 (tokens/sec) from performance data — table column + comparison modal row (blank when unavailable).
 - **Column customization**: Drag the ⠿ handle on any of the 9 middle column headers (Org … Blended $/M) to reorder them; the # and Total Cost columns stay locked first/last. Use the **Hide Columns** button to show/hide any middle column via per-column checkboxes + a Reset button. Order + visibility persist in the URL hash.
 
+- **WebMCP (text tab)**: In ChatGPT's in-app browser or Chrome with WebMCP enabled, the text calculator registers **site tools** so an agent can set the mix, filter ZDR, compare offerings, and explain ranking **on the table you are looking at**. Tools live at the same origin; without WebMCP the site is unchanged. See [docs/WEBMCP.md](docs/WEBMCP.md).
+
 - **Image tab**: Enter number of images, optionally filter by resolution variant. Search by provider or model using the typeahead inputs. Flat per-image models show total cost; token-priced and megapixel-priced models show per-unit rates (cost varies by generation complexity).
 - **Video tab**: Enter video duration in seconds, filter by resolution and audio. Search by provider or model using the typeahead inputs. All models show per-second pricing with computed total cost.
 - **Tab navigation**: Use the Text/Image/Video tabs at the top to switch between modalities.
@@ -174,4 +176,4 @@ GitHub secrets required: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `SINGU
 
 ## License
 
-MIT
+MIT. See [LICENSE](LICENSE).
