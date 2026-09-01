@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-09-01T02:32:15.200Z",
+  "generated_at": "2026-09-01T09:00:09.469Z",
   "mix": {
     "inputPct": 2.5,
     "cacheReadPct": 97,
     "outputPct": 0.5
   },
-  "model_count": 279,
+  "model_count": 274,
   "sources": {
     "artificial_analysis": {
       "name": "Artificial Analysis",
@@ -1085,12 +1085,6 @@
           "cache_read": 0.07
         },
         {
-          "provider": "Relace",
-          "input": 0.07125000000000001,
-          "output": 0.2375,
-          "cache_read": 0.01425
-        },
-        {
           "provider": "Z.AI",
           "input": 0.075,
           "output": 0.25,
@@ -1175,6 +1169,12 @@
           "cache_read": 0.029
         },
         {
+          "provider": "StreamLake",
+          "input": 0.15,
+          "output": 0.5,
+          "cache_read": 0.03
+        },
+        {
           "provider": "Cloudflare",
           "input": 0.15,
           "output": 0.5,
@@ -1221,12 +1221,6 @@
         "blended_per_m": 0.016
       },
       "offerings": [
-        {
-          "provider": "Relace",
-          "input": 0.07125000000000001,
-          "output": 0.2375,
-          "cache_read": 0.01425
-        },
         {
           "provider": "Z.AI",
           "input": 0.075,
@@ -1322,6 +1316,12 @@
           "input": 0.15,
           "output": 0.5,
           "cache_read": 0.029
+        },
+        {
+          "provider": "StreamLake",
+          "input": 0.15,
+          "output": 0.5,
+          "cache_read": 0.03
         },
         {
           "provider": "Cloudflare",
@@ -1752,8 +1752,8 @@
       "offerings": [
         {
           "provider": "deepinfra",
-          "input": 2,
-          "output": 10,
+          "input": 2.9999999999999996,
+          "output": 15,
           "cache_read": null
         },
         {
@@ -2411,6 +2411,12 @@
           "cache_read": 0.114
         },
         {
+          "provider": "StreamLake",
+          "input": 0.693,
+          "output": 2.178,
+          "cache_read": 0.1287
+        },
+        {
           "provider": "DigitalOcean",
           "input": 0.7,
           "output": 2.2,
@@ -2421,12 +2427,6 @@
           "input": 0.71,
           "output": 2.35,
           "cache_read": 0.12
-        },
-        {
-          "provider": "StreamLake",
-          "input": 0.735,
-          "output": 2.31,
-          "cache_read": 0.1365
         },
         {
           "provider": "Novita",
@@ -5451,31 +5451,6 @@
       }
     },
     {
-      "id": "minimax-m2.7-turbo",
-      "name": "MiniMaxAI/MiniMax-M2.7-Turbo",
-      "org": "minimax",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.086
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.38,
-          "output": 1.7,
-          "cache_read": 0.07000000140000001
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 38.9,
-        "aa_coding": 52.6,
-        "aa_agentic": 25.9,
-        "design_arena_elo": 1265,
-        "design_arena_category": "website"
-      }
-    },
-    {
       "id": "minimax-m2.7",
       "name": "MiniMaxAI/MiniMax-M2.7",
       "org": "minimax",
@@ -5544,6 +5519,31 @@
           "input": 0.3,
           "output": 1.2,
           "cache_read": 0.06
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 38.9,
+        "aa_coding": 52.6,
+        "aa_agentic": 25.9,
+        "design_arena_elo": 1265,
+        "design_arena_category": "website"
+      }
+    },
+    {
+      "id": "minimax-m2.7-turbo",
+      "name": "MiniMaxAI/MiniMax-M2.7-Turbo",
+      "org": "minimax",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.086
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.38,
+          "output": 1.7,
+          "cache_read": 0.07000000140000001
         }
       ],
       "scores": {
@@ -7232,29 +7232,6 @@
       }
     },
     {
-      "id": "gemma-4-31b-it-turbo",
-      "name": "google/gemma-4-31B-it-turbo",
-      "org": "google",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.052
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.09,
-          "output": 0.33999999999999997,
-          "cache_read": 0.050000000399999994
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 29.7,
-        "aa_coding": 43.4,
-        "aa_agentic": 14.4
-      }
-    },
-    {
       "id": "gemma-4-31b-it",
       "name": "google/gemma-4-31B-it",
       "org": "google",
@@ -7359,6 +7336,29 @@
           "input": 0.9900000000000001,
           "output": 1.49,
           "cache_read": 0.9900000000000001
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 29.7,
+        "aa_coding": 43.4,
+        "aa_agentic": 14.4
+      }
+    },
+    {
+      "id": "gemma-4-31b-it-turbo",
+      "name": "google/gemma-4-31B-it-turbo",
+      "org": "google",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.052
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.09,
+          "output": 0.33999999999999997,
+          "cache_read": 0.050000000399999994
         }
       ],
       "scores": {
@@ -8897,35 +8897,6 @@
       }
     },
     {
-      "id": "mistral-small-2603:batch",
-      "name": "Mistral: Mistral Small 4 (batch)",
-      "org": "mistral",
-      "providers": 2,
-      "from": {
-        "provider": "Mistral",
-        "blended_per_m": 0.021
-      },
-      "offerings": [
-        {
-          "provider": "Mistral",
-          "input": 0.15,
-          "output": 0.6,
-          "cache_read": 0.015
-        },
-        {
-          "provider": "Venice",
-          "input": 0.1875,
-          "output": 0.75,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 19.7,
-        "aa_coding": 26.6,
-        "aa_agentic": 4.6
-      }
-    },
-    {
       "id": "kimi-k2",
       "name": "MoonshotAI: Kimi K2 0711",
       "org": "moonshot",
@@ -9311,31 +9282,6 @@
       }
     },
     {
-      "id": "mistral-large-2512:batch",
-      "name": "Mistral: Mistral Large 3 2512 (batch)",
-      "org": "mistral",
-      "providers": 1,
-      "from": {
-        "provider": "Mistral",
-        "blended_per_m": 0.068
-      },
-      "offerings": [
-        {
-          "provider": "Mistral",
-          "input": 0.5,
-          "output": 1.5,
-          "cache_read": 0.049999999999999996
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 15.9,
-        "aa_coding": 20.1,
-        "aa_agentic": 5.5,
-        "design_arena_elo": 1182,
-        "design_arena_category": "website"
-      }
-    },
-    {
       "id": "o3-mini-high",
       "name": "OpenAI: o3 Mini High",
       "org": "openai",
@@ -9646,31 +9592,6 @@
     {
       "id": "mistral-medium-3.1",
       "name": "Mistral: Mistral Medium 3.1",
-      "org": "mistral",
-      "providers": 1,
-      "from": {
-        "provider": "Mistral",
-        "blended_per_m": 0.059
-      },
-      "offerings": [
-        {
-          "provider": "Mistral",
-          "input": 0.39999999999999997,
-          "output": 2,
-          "cache_read": 0.04
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 14.7,
-        "aa_coding": 20.5,
-        "aa_agentic": 6.1,
-        "design_arena_elo": 1166,
-        "design_arena_category": "dataviz"
-      }
-    },
-    {
-      "id": "mistral-medium-3.1:batch",
-      "name": "Mistral: Mistral Medium 3.1 (batch)",
       "org": "mistral",
       "providers": 1,
       "from": {
@@ -10019,7 +9940,7 @@
       "id": "qwen3-32b",
       "name": "Qwen/Qwen3-32B",
       "org": "qwen",
-      "providers": 4,
+      "providers": 3,
       "from": {
         "provider": "Nebius",
         "blended_per_m": 0.014
@@ -10042,12 +9963,6 @@
           "input": 0.14,
           "output": 0.5700000000000001,
           "cache_read": null
-        },
-        {
-          "provider": "Groq",
-          "input": 0.29,
-          "output": 0.59,
-          "cache_read": 0.145
         }
       ],
       "scores": {
@@ -10197,10 +10112,10 @@
       "id": "llama-4-scout",
       "name": "Meta: Llama 4 Scout",
       "org": "meta",
-      "providers": 4,
+      "providers": 3,
       "from": {
-        "provider": "Groq",
-        "blended_per_m": 0.058
+        "provider": "DeepInfra",
+        "blended_per_m": 0.101
       },
       "offerings": [
         {
@@ -10208,12 +10123,6 @@
           "input": 0.09999999999999999,
           "output": 0.3,
           "cache_read": null
-        },
-        {
-          "provider": "Groq",
-          "input": 0.11,
-          "output": 0.33999999999999997,
-          "cache_read": 0.055
         },
         {
           "provider": "Novita",
@@ -10240,10 +10149,10 @@
       "id": "qwen3-vl-30b-a3b-instruct",
       "name": "Qwen/Qwen3-VL-30B-A3B-Instruct",
       "org": "qwen",
-      "providers": 6,
+      "providers": 5,
       "from": {
-        "provider": "Darkbloom",
-        "blended_per_m": 0.092
+        "provider": "sference",
+        "blended_per_m": 0.117
       },
       "offerings": [
         {
@@ -10257,12 +10166,6 @@
           "input": 0.4,
           "output": 2,
           "cache_read": 0.1
-        },
-        {
-          "provider": "Darkbloom",
-          "input": 0.09,
-          "output": 0.39999999999999997,
-          "cache_read": null
         },
         {
           "provider": "Alibaba",
@@ -10436,31 +10339,6 @@
     {
       "id": "ministral-8b-2512",
       "name": "Mistral: Ministral 3 8B 2512",
-      "org": "mistral",
-      "providers": 1,
-      "from": {
-        "provider": "Mistral",
-        "blended_per_m": 0.019
-      },
-      "offerings": [
-        {
-          "provider": "Mistral",
-          "input": 0.15,
-          "output": 0.15,
-          "cache_read": 0.015
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 9,
-        "aa_coding": 9.7,
-        "aa_agentic": 1.2,
-        "design_arena_elo": 1084,
-        "design_arena_category": "website"
-      }
-    },
-    {
-      "id": "ministral-8b-2512:batch",
-      "name": "Mistral: Ministral 3 8B 2512 (batch)",
       "org": "mistral",
       "providers": 1,
       "from": {
@@ -10946,24 +10824,24 @@
       }
     },
     {
-      "id": "meta-llama-3.1-8b-instruct-turbo",
-      "name": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+      "id": "llama-3.3-70b-instruct-turbo",
+      "name": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
       "org": "meta",
       "providers": 1,
       "from": {
         "provider": "deepinfra",
-        "blended_per_m": 0.02
+        "blended_per_m": 0.101
       },
       "offerings": [
         {
           "provider": "deepinfra",
-          "input": 0.02,
-          "output": 0.04,
+          "input": 0.1,
+          "output": 0.32,
           "cache_read": null
         }
       ],
       "scores": {
-        "aa_coding": 5.4
+        "aa_coding": 11.9
       }
     },
     {
@@ -11007,6 +10885,27 @@
       }
     },
     {
+      "id": "meta-llama-3.1-8b-instruct-turbo",
+      "name": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+      "org": "meta",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.02
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.02,
+          "output": 0.04,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "aa_coding": 5.4
+      }
+    },
+    {
       "id": "qwen3-30b-a3b",
       "name": "Qwen/Qwen3-30B-A3B",
       "org": "qwen",
@@ -11032,27 +10931,6 @@
       "scores": {
         "design_arena_elo": 986,
         "design_arena_category": "dataviz"
-      }
-    },
-    {
-      "id": "llama-3.3-70b-instruct-turbo",
-      "name": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-      "org": "meta",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.101
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.1,
-          "output": 0.32,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "aa_coding": 11.9
       }
     },
     {
@@ -11661,28 +11539,6 @@
     {
       "id": "codestral-2508",
       "name": "Mistral: Codestral 2508",
-      "org": "mistral",
-      "providers": 1,
-      "from": {
-        "provider": "Mistral",
-        "blended_per_m": 0.041
-      },
-      "offerings": [
-        {
-          "provider": "Mistral",
-          "input": 0.3,
-          "output": 0.8999999999999999,
-          "cache_read": 0.03
-        }
-      ],
-      "scores": {
-        "design_arena_elo": 1062,
-        "design_arena_category": "3d"
-      }
-    },
-    {
-      "id": "codestral-2508:batch",
-      "name": "Mistral: Codestral 2508 (batch)",
       "org": "mistral",
       "providers": 1,
       "from": {
