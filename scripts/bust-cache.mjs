@@ -41,6 +41,7 @@ const FINGERPRINT = new Set([
   'video-app.js',
   'benchmarks-app.js',
   'shared-ui.js',
+  'webmcp.js',
 ]);
 
 // href/src="..." capturing the path (with optional ?query)
