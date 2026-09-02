@@ -10,6 +10,7 @@ const APP_JS = join(__dirname, '..', 'public', 'app.js');
 const REQUIRED_METHODS = [
   'getView',
   'getModel',
+  'setSort',
   'explainRanking',
   'listPresets',
   'getShareUrl',
@@ -71,4 +72,34 @@ test('TWCatalog does not duplicate mix math: setWorkload / explainRanking call e
   assert.match(facade, /costBreakdown\(/, 'explainRanking must use costBreakdown, not a forked formula');
   assert.match(facade, /computeAndRender\(\)/, 'writes must re-render the live table');
   assert.match(src, /function costFor\(pricing, tokens\) \{\s*return costBreakdown\(pricing, tokens\)\.total;/);
+});
+
+test('getView exposes the active sort used for top-ranked rows', async () => {
+  const src = await readFile(APP_JS, 'utf8');
+  const getViewStart = src.indexOf('function getView(input)');
+  const getViewEnd = src.indexOf('\n}\n\nfunction getModel', getViewStart);
+  assert.notEqual(getViewStart, -1, 'getView must exist');
+  assert.notEqual(getViewEnd, -1, 'getView boundary must exist');
+  const body = src.slice(getViewStart, getViewEnd);
+  assert.match(body, /sort:\s*\{\s*by:\s*state\.sortBy,\s*dir:\s*state\.sortDir,\s*\}/);
+});
+
+test('explainRanking uses the active sort metric instead of assuming cost', async () => {
+  const src = await readFile(APP_JS, 'utf8');
+  const start = src.indexOf('function explainRanking()');
+  const end = src.indexOf('\n}\n\nfunction listPresets', start);
+  assert.notEqual(start, -1, 'explainRanking must exist');
+  assert.notEqual(end, -1, 'explainRanking boundary must exist');
+  const body = src.slice(start, end);
+  assert.match(body, /rankingMetric\(\)/);
+  assert.match(body, /sortValue\(winner, ranking\.by\)/);
+  assert.match(body, /rankingValueFormatted/);
+  assert.match(body, /sort: ranking/);
+});
+
+test('TWCatalog exposes setSort and uses the same sortable columns as the table', async () => {
+  const src = await readFile(APP_JS, 'utf8');
+  assert.match(src, /const SORT_COLUMNS = \['org', 'provider', 'model', 'input', 'output', 'cache_read', 'context', 'speed', 'blended', 'cost'\]/);
+  assert.match(src, /function setSort\(input\)/);
+  assert.match(src, /setSort,\s*setCacheWrite/);
 });

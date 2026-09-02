@@ -9,7 +9,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "get_view",
     "title": "Get current results",
-    "description": "Read-only snapshot of the TokenWatch text calculator the human is looking at: current mix, modes, filters, compare tray, rowCount, and the top ranked offerings (rank, provider, id, name, cost, blended $/M, zdr, speedP50). Use this after any write so you describe the live table, not a stale one. Row identity is {provider, id}, never a row number.",
+    "description": "Read-only snapshot of the TokenWatch text calculator the human is looking at: current mix, modes, filters, active sort, compare tray, rowCount, and the top ranked offerings (rank, provider, id, name, cost, blended $/M, zdr, speedP50). By default, top is sorted by total session cost ascending; use set_sort to change the field and direction programmatically. Use this after any write so you describe the live table, not a stale one. Row identity is {provider, id}, never a row number.",
     "annotations": { "readOnlyHint": true },
     "inputSchema": {
       "type": "object",
@@ -35,9 +35,24 @@ const TEXT_TOOL_DEFS = JSON.parse(`
     }
   },
   {
+    "name": "set_sort",
+    "title": "Sort results",
+    "description": "Sets the active table sort and direction, then re-renders the same results. Sortable columns: org, provider, model, input, output, cache_read, context, speed, blended, and cost. Text fields sort alphabetically; numeric fields sort ascending or descending. Returns a fresh get_view snapshot.",
+    "annotations": { "readOnlyHint": false },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "by": { "type": "string", "enum": ["org", "provider", "model", "input", "output", "cache_read", "context", "speed", "blended", "cost"], "description": "Column to sort by." },
+        "dir": { "type": "string", "enum": ["asc", "desc"], "description": "asc = low/alphabetical first; desc = high/reverse-alphabetical first." }
+      },
+      "required": ["by", "dir"],
+      "additionalProperties": false
+    }
+  },
+  {
     "name": "explain_ranking",
     "title": "Explain why #1 beats #2",
-    "description": "Read-only deterministic explanation of why the current #1 beats #2 at the current mix: component costs (input, cache-read, output, cache-write) and how many offerings were excluded because they cannot serve the requested mix. Does not change the table.",
+    "description": "Read-only deterministic explanation of why the current #1 ranks ahead of #2 using the table's active sort and direction (cost, blended rate, speed, prices, context, provider, org, or model name). Includes the active ranking metric, ranking values, cost components, and how many offerings were excluded because they cannot serve the requested mix. Does not change the table.",
     "annotations": { "readOnlyHint": true },
     "inputSchema": {
       "type": "object",
@@ -275,6 +290,93 @@ const TEXT_TOOL_DEFS = JSON.parse(`
 ]
 `);
 
+const MEDIA_TOOL_DEFS = JSON.parse(`
+{
+  "image": [
+    {
+      "name": "get_view",
+      "title": "Get current image results",
+      "description": "Read-only snapshot of the TokenWatch image calculator: current image count or budget mode, filters, active sort, rowCount, and the top ranked image offerings. By default, top is sorted by total cost ascending; use set_sort to change any table column and direction. Row identity is {provider, id}, never a row number.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": { "type": "integer", "minimum": 1, "maximum": 25, "description": "How many ranked rows to include in top (default 10)." }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_catalog_info",
+      "title": "Get image catalog freshness",
+      "description": "Read-only. Returns the image page name, pricing snapshot timestamp, catalog size, and distinct provider count.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_sort",
+      "title": "Sort image results",
+      "description": "Sets the active image-table sort and direction, then re-renders the same results. Sortable columns: org, model, cost_per_unit, and cost. Text fields sort alphabetically; numeric fields sort ascending or descending. Returns a fresh get_view snapshot.",
+      "annotations": { "readOnlyHint": false },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "by": { "type": "string", "enum": ["org", "model", "cost_per_unit", "cost"], "description": "Column to sort by." },
+          "dir": { "type": "string", "enum": ["asc", "desc"], "description": "asc = low/alphabetical first; desc = high/reverse-alphabetical first." }
+        },
+        "required": ["by", "dir"],
+        "additionalProperties": false
+      }
+    }
+  ],
+  "video": [
+    {
+      "name": "get_view",
+      "title": "Get current video results",
+      "description": "Read-only snapshot of the TokenWatch video calculator: current duration or budget mode, filters, active sort, rowCount, and the top ranked video offerings. By default, top is sorted by total cost ascending; use set_sort to change any table column and direction. Row identity is {provider, id}, never a row number.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": { "type": "integer", "minimum": 1, "maximum": 25, "description": "How many ranked rows to include in top (default 10)." }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_catalog_info",
+      "title": "Get video catalog freshness",
+      "description": "Read-only. Returns the video page name, pricing snapshot timestamp, catalog size, and distinct provider count.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_sort",
+      "title": "Sort video results",
+      "description": "Sets the active video-table sort and direction, then re-renders the same results. Sortable columns: org, model, resolution, audio, cost_per_second, and cost. Text fields sort alphabetically; numeric fields sort ascending or descending. Returns a fresh get_view snapshot.",
+      "annotations": { "readOnlyHint": false },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "by": { "type": "string", "enum": ["org", "model", "resolution", "audio", "cost_per_second", "cost"], "description": "Column to sort by." },
+          "dir": { "type": "string", "enum": ["asc", "desc"], "description": "asc = low/alphabetical first; desc = high/reverse-alphabetical first." }
+        },
+        "required": ["by", "dir"],
+        "additionalProperties": false
+      }
+    }
+  ]
+}
+`);
+
 function asResult(value) {
   if (typeof value === 'string') return value;
   try {
@@ -288,6 +390,7 @@ function catalogExecutors(catalog) {
   return {
     get_view: (input) => catalog.getView(input),
     get_model: (input) => catalog.getModel(input),
+    set_sort: (input) => catalog.setSort(input),
     explain_ranking: () => catalog.explainRanking(),
     list_presets: () => catalog.listPresets(),
     get_share_url: () => catalog.getShareUrl(),
@@ -351,7 +454,7 @@ async function bootWebmcp() {
   const catalog = await waitForCatalog(15_000);
   if (!catalog?.ready) return;
 
-  const defs = catalog.page === 'text' ? TEXT_TOOL_DEFS : [];
+  const defs = catalog.page === 'text' ? TEXT_TOOL_DEFS : (MEDIA_TOOL_DEFS[catalog.page] || []);
   if (!defs.length) return;
 
   const controller = new AbortController();

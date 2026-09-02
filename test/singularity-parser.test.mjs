@@ -50,6 +50,18 @@ test('parseSingularity skips unpriced and empty payloads', () => {
   }), []);
 });
 
+test('parseSingularity skips image-only capabilities instead of treating them as text', () => {
+  assert.deepEqual(parseSingularity({
+    data: [{
+      id: 'flux-1-schnell',
+      capabilities: [{
+        endpoint: '/v1/images/generations',
+        pricing: { input_per_million_usd: '0', output_per_million_usd: '0.003' },
+      }],
+    }],
+  }), []);
+});
+
 test('fetch-pricing wires Singularity behind SINGULARITY_API_KEY', async () => {
   const src = await readFile(new URL('../scripts/fetch-pricing.mjs', import.meta.url), 'utf8');
   assert.match(src, /apiKeyEnv: 'SINGULARITY_API_KEY'/);

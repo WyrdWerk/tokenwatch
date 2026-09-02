@@ -521,6 +521,93 @@ function clearCompare() {
   computeAndRender();
 }
 
+// ── WebMCP façade (window.TWCatalog) ─────────────────────────────────────────
+// The shared registrar exposes the same read/sort contract on media pages.
+// Cost computation remains in this page's calculator; the façade only returns
+// the rows the human is currently looking at.
+function roundMediaValue(value) {
+  if (value == null || !Number.isFinite(value)) return value;
+  return Math.round(value * 1e6) / 1e6;
+}
+
+function imageSnapshotRow(row, rank) {
+  return {
+    rank,
+    provider: row.model.provider,
+    id: row.model.id,
+    name: row.model.name || row.model.id,
+    org: row.model.org || null,
+    unit: row.unit,
+    variant: row.variant || null,
+    cost_per_unit: roundMediaValue(row.costPerUnit),
+    cost: roundMediaValue(row.cost),
+  };
+}
+
+function getView(input) {
+  const limit = Math.min(25, Math.max(1, parseInt(input?.limit, 10) || 10));
+  const rows = state.currentRows || [];
+  const budgetMode = state.computeBy === 'budget';
+  return {
+    page: 'image',
+    generated_at: state.data?.generated_at || null,
+    workload: {
+      computeBy: state.computeBy,
+      imageCount: parseInt(els.imageCount.value, 10) || 100,
+      budget: parseFloat(els.budgetInput?.value) || 0,
+      basis: budgetMode ? 'affordable images per $ budget' : 'total cost for image count',
+    },
+    filters: {
+      provider: els.providerSearch.value.trim(),
+      model: els.modelSearch.value.trim(),
+      variant: els.variantFilter.value,
+      flatOnly: !!els.flatOnly.checked,
+    },
+    sort: { by: state.sortBy, dir: state.sortDir },
+    rowCount: rows.length,
+    top: rows.slice(0, limit).map((row, index) => imageSnapshotRow(row, index + 1)),
+    shareUrl: location.href,
+  };
+}
+
+function getCatalogInfo() {
+  const providers = new Set((state.data?.models || []).map((model) => model.provider).filter(Boolean));
+  return {
+    page: 'image',
+    generated_at: state.data?.generated_at || null,
+    catalogSize: state.data?.models?.length || 0,
+    providerCount: providers.size,
+    note: 'generated_at is the pricing snapshot time; providerCount is the number of distinct providers in this image catalog.',
+  };
+}
+
+const IMAGE_SORT_COLUMNS = ['org', 'model', 'cost_per_unit', 'cost'];
+
+function setSort(input) {
+  input = input || {};
+  if (!IMAGE_SORT_COLUMNS.includes(input.by)) {
+    return { error: `by must be one of: ${IMAGE_SORT_COLUMNS.join(', ')}.` };
+  }
+  if (input.dir !== 'asc' && input.dir !== 'desc') {
+    return { error: 'dir must be "asc" or "desc".' };
+  }
+  state.sortBy = input.by;
+  state.sortDir = input.dir;
+  computeAndRender();
+  return getView();
+}
+
+function publishTwCatalog() {
+  window.TWCatalog = {
+    page: 'image',
+    ready: true,
+    getView,
+    getCatalogInfo,
+    setSort,
+  };
+  document.dispatchEvent(new CustomEvent('tw-catalog-ready', { detail: { page: 'image' } }));
+}
+
 // ── Event listeners ───────────────────────────────────────────────────────────
 function attachListeners() {
   const debouncedRender = debounce(() => computeAndRender());
@@ -584,6 +671,7 @@ async function init() {
     els.flatOnly.checked = state.flatOnly;
     attachListeners();
     computeAndRender();
+    publishTwCatalog();
   } catch (err) {
     els.resultsBody.innerHTML = `<tr><td colspan="6" class="empty error-state">
       <p>Could not load image pricing data.</p>

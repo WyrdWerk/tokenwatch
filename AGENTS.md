@@ -261,7 +261,7 @@ OpenRouter has dedicated APIs for image and video generation — separate from t
 - `public/image.html` + `public/image-app.js`: image calculator (count × $/image for flat-priced; varies for others), provider + model typeahead search, variant/resolution filter, sortable table with unit-adaptive columns, mobile card layout via data-label, mobile sort dropdown
 - `public/video.html` + `public/video-app.js`: video calculator (seconds × $/sec), provider + model typeahead search, resolution + audio filters, mobile card layout via data-label, mobile sort dropdown
 - Tab navigation bar (Text/Image/Video) on all three pages, shared `styles.css` (including responsive: 768px control stacking, 640px table→card transform, mobile-sort visibility)
-- **WebMCP (text calculator)**: `public/webmcp.js` feature-detects `document.modelContext`, waits for `window.TWCatalog` (`tw-catalog-ready` after a successful `pricing.json` load), registers 18 same-origin tools, aborts on `pagehide`. Tools call existing UI functions via the façade — never copy cost math. `webmcp.js` **must** stay in `scripts/bust-cache.mjs` `FINGERPRINT`. Details: [docs/WEBMCP.md](docs/WEBMCP.md).
+- **WebMCP (text, image, and video calculators)**: `public/webmcp.js` feature-detects `document.modelContext`, waits for `window.TWCatalog` (`tw-catalog-ready` after a successful catalog load), registers 19 text tools or three page-specific image/video tools, and aborts on `pagehide`. Tools call existing UI functions via the façade — never copy cost math. `webmcp.js` **must** stay in `scripts/bust-cache.mjs` `FINGERPRINT`. Details: [docs/WEBMCP.md](docs/WEBMCP.md).
 
 ### CI/CD
 Three jobs in `.github/workflows/refresh-pricing.yml`:

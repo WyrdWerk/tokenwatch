@@ -1490,25 +1490,29 @@ function providerName(key, display) {
 // 0.024999999999999998 → 0.025). Per-unit pricing only; aggregate cost uses fmtCost.
 
 
+function sortValue(r, sortBy) {
+  switch (sortBy) {
+    case 'org':        return orgDisplay(r.model.org).toLowerCase();
+    case 'provider':   return providerName(r.model.provider, r.model.provider_display).toLowerCase();
+    case 'model':      return r.model.name?.toLowerCase() || r.model.id.toLowerCase();
+    case 'input':      return r.model.pricing.input;
+    case 'output':     return r.model.pricing.output;
+    case 'cache_read': return r.model.pricing.cache_read;
+    case 'context':    return r.model.context_length;
+    case 'speed':      return getPerfData(r)?.throughput?.p50 ?? null;
+    case 'blended':    return r.blended;
+    case 'cost':
+    default:           return r.cost;
+  }
+}
+
 /** Sort rows by the current sort column/direction. Null values always sort to END. */
 function sortRows(rows) {
   const { sortBy, sortDir } = state;
   const dir = sortDir === 'asc' ? 1 : -1;
   rows.sort((a, b) => {
-    let va, vb;
-    switch (sortBy) {
-      case 'org':       va = orgDisplay(a.model.org).toLowerCase(); vb = orgDisplay(b.model.org).toLowerCase(); break;
-      case 'provider':  va = providerName(a.model.provider, a.model.provider_display).toLowerCase(); vb = providerName(b.model.provider, b.model.provider_display).toLowerCase(); break;
-      case 'model':     va = a.model.name?.toLowerCase() || a.model.id.toLowerCase(); vb = b.model.name?.toLowerCase() || b.model.id.toLowerCase(); break;
-      case 'input':     va = a.model.pricing.input; vb = b.model.pricing.input; break;
-      case 'output':    va = a.model.pricing.output; vb = b.model.pricing.output; break;
-      case 'cache_read':va = a.model.pricing.cache_read; vb = b.model.pricing.cache_read; break;
-      case 'context':   va = a.model.context_length; vb = b.model.context_length; break;
-      case 'speed':     va = getPerfData(a)?.throughput?.p50 ?? null; vb = getPerfData(b)?.throughput?.p50 ?? null; break;
-      case 'blended':   va = a.blended; vb = b.blended; break;
-      case 'cost':
-      default:          va = a.cost; vb = b.cost; break;
-    }
+    const va = sortValue(a, sortBy);
+    const vb = sortValue(b, sortBy);
     // Null/undefined values always sort to the END, regardless of direction
     if (va === null || va === undefined) return 1;
     if (vb === null || vb === undefined) return -1;
@@ -1516,6 +1520,38 @@ function sortRows(rows) {
     if (va > vb) return 1 * dir;
     return 0;
   });
+}
+
+function rankingMetric() {
+  const by = state.sortBy;
+  let label;
+  switch (by) {
+    case 'org':        label = 'model creator'; break;
+    case 'provider':   label = 'provider'; break;
+    case 'model':      label = 'model name'; break;
+    case 'input':      label = 'input price'; break;
+    case 'output':     label = 'output price'; break;
+    case 'cache_read': label = 'cache-read price'; break;
+    case 'context':    label = 'context window'; break;
+    case 'speed':      label = 'throughput'; break;
+    case 'blended':    label = 'blended rate'; break;
+    case 'cost':
+    default:           label = state.computeBy === 'budget' ? 'affordable tokens' : (state.costMode === 'monthly' ? 'monthly cost' : 'session cost'); break;
+  }
+  return { by, dir: state.sortDir, label };
+}
+
+function formatRankingValue(value, by) {
+  if (value === null || value === undefined) return 'no value';
+  if (by === 'cost') {
+    return state.computeBy === 'budget'
+      ? `${roundMoney(value)}M tokens`
+      : `$${roundMoney(value)} ${state.costMode === 'monthly' ? '/month' : '/session'}`;
+  }
+  if (by === 'blended' || ['input', 'output', 'cache_read'].includes(by)) return `$${roundMoney(value)}/M`;
+  if (by === 'speed') return `${roundMoney(value)} tok/s`;
+  if (by === 'context') return `${Number(value).toLocaleString()} tokens`;
+  return String(value);
 }
 
 /** Format context length for display: 1000000 → "1M", 262000 → "262K", null → "—" */
@@ -2004,6 +2040,10 @@ function getView(input) {
       groupBy: els.groupBy?.value || 'none',
       minIntelligence: els.minIntelligence ? (parseInt(els.minIntelligence.value, 10) || 0) : 0,
     },
+    sort: {
+      by: state.sortBy,
+      dir: state.sortDir,
+    },
     compare: state.compareSelection.map((m) => ({ provider: m.provider, id: m.id })),
     rowCount: rows.length,
     top: rows.slice(0, n).map((r, i) => snapshotRow(r, i + 1)),
@@ -2064,16 +2104,27 @@ function explainRanking() {
   const excludedCount = matched.filter((m) => costFor(m.pricing, tokens) == null).length;
   const wName = (winner.model.name && winner.model.name !== winner.model.id) ? winner.model.name : winner.model.id;
   const rName = (runner.model.name && runner.model.name !== runner.model.id) ? runner.model.name : runner.model.id;
-  const metric = state.computeBy === 'budget' ? 'affordable tokens' : (state.costMode === 'monthly' ? 'monthly cost' : 'session cost');
-  const why = state.computeBy === 'budget'
-    ? `#1 ${winner.model.provider}/${wName} buys more tokens for the budget than #2 ${runner.model.provider}/${rName} (${roundMoney(winner.cost)} vs ${roundMoney(runner.cost)} M tokens).`
-    : `#1 ${winner.model.provider}/${wName} is cheaper than #2 ${runner.model.provider}/${rName} at the current mix (${roundMoney(winner.cost)} vs ${roundMoney(runner.cost)} USD ${state.costMode === 'monthly' ? '/month' : '/session'}).`;
+  const ranking = rankingMetric();
+  const winnerValue = sortValue(winner, ranking.by);
+  const runnerValue = sortValue(runner, ranking.by);
+  const winnerDisplay = formatRankingValue(winnerValue, ranking.by);
+  const runnerDisplay = formatRankingValue(runnerValue, ranking.by);
+  let why;
+  if (winnerValue === runnerValue) {
+    why = `#1 ${winner.model.provider}/${wName} ties #2 ${runner.model.provider}/${rName} on ${ranking.label} (${winnerDisplay}); the current row order is a tie.`;
+  } else if (['org', 'provider', 'model'].includes(ranking.by)) {
+    why = `#1 ${winner.model.provider}/${wName} appears first alphabetically by ${ranking.label} (${winnerDisplay} vs ${runnerDisplay} for #2 ${runner.model.provider}/${rName}).`;
+  } else {
+    const better = ranking.dir === 'asc' ? 'lower' : 'higher';
+    why = `#1 ${winner.model.provider}/${wName} ranks first on ${ranking.label} (${winnerDisplay} vs ${runnerDisplay} for #2 ${runner.model.provider}/${rName}); ${better} is better for this sort.`;
+  }
   return {
-    metric,
+    metric: ranking.label,
+    sort: ranking,
     mix: [tokens.inputPct, tokens.cacheReadPct, tokens.outputPct],
     costMode: state.costMode,
     computeBy: state.computeBy,
-    winner: { ...snapshotRow(winner, 1), components: {
+    winner: { ...snapshotRow(winner, 1), rankingValue: winnerValue, rankingValueFormatted: winnerDisplay, components: {
       input: roundMoney(wBreak.input),
       output: roundMoney(wBreak.output),
       cacheRead: roundMoney(wBreak.cacheRead),
@@ -2082,7 +2133,7 @@ function explainRanking() {
       displayed: roundMoney(winner.cost),
       modeMultiplier,
     } },
-    runnerUp: { ...snapshotRow(runner, 2), components: {
+    runnerUp: { ...snapshotRow(runner, 2), rankingValue: runnerValue, rankingValueFormatted: runnerDisplay, components: {
       input: roundMoney(rBreak.input),
       output: roundMoney(rBreak.output),
       cacheRead: roundMoney(rBreak.cacheRead),
@@ -2179,6 +2230,22 @@ function applyPresetFromCatalog(name) {
     return { error: `Unknown preset "${name}". Valid: agentic, balanced, heavy-output, no-cache.` };
   }
   applyPreset(name);
+  return getView();
+}
+
+const SORT_COLUMNS = ['org', 'provider', 'model', 'input', 'output', 'cache_read', 'context', 'speed', 'blended', 'cost'];
+
+function setSort(input) {
+  input = input || {};
+  if (!SORT_COLUMNS.includes(input.by)) {
+    return { error: `by must be one of: ${SORT_COLUMNS.join(', ')}.` };
+  }
+  if (input.dir !== 'asc' && input.dir !== 'desc') {
+    return { error: 'dir must be "asc" or "desc".' };
+  }
+  state.sortBy = input.by;
+  state.sortDir = input.dir;
+  computeAndRender();
   return getView();
 }
 
@@ -2415,7 +2482,7 @@ function switchCatalog(page) {
   if (!path) return { error: `Unknown page "${page}". Allowlist: text, image, video, benchmarks.` };
   const url = path === '/' ? `${location.origin}/` : `${location.origin}${path}`;
   location.assign(url);
-  return { ok: true, navigatingTo: url, note: 'The next page registers its own tools after load. Text is the WebMCP-complete catalog today.' };
+  return { ok: true, navigatingTo: url, note: 'The destination page registers its own page-specific tools after load.' };
 }
 
 function publishTwCatalog() {
@@ -2430,6 +2497,7 @@ function publishTwCatalog() {
     getCatalogInfo,
     setWorkload,
     applyPreset: applyPresetFromCatalog,
+    setSort,
     setCacheWrite,
     setFilters,
     clearFilters,

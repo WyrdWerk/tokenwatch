@@ -1,8 +1,10 @@
 # WebMCP on TokenWatch
 
-Site tools for the [text calculator](https://tokenwatch.wyrdwerk.com) so a human and an agent can share the same table. WebMCP is an in-page MCP server: tools run in the page the visitor is looking at, not against a headless API.
+Site tools for the text, image, and video calculators so a human and an agent can share the same table. WebMCP is an in-page MCP server: tools run in the page the visitor is looking at, not against a headless API.
 
 **Existing project.** TokenWatch predates the [WebMCP Challenge](https://openai.com/webmcp-challenge/) (deadline 3 Sep 2026, 1:00 PM PT). This document is the evidence trail of the WebMCP extension.
+
+The agent operating contract is [`.agents/skills/operating-tokenwatch-webmcp/SKILL.md`](../.agents/skills/operating-tokenwatch-webmcp/SKILL.md). Keep it synchronized with the live WebMCP schemas and façade contracts; it documents result shapes and interpretation rules, not static model rows.
 
 | What | Commit |
 |---|---|
@@ -11,16 +13,31 @@ Site tools for the [text calculator](https://tokenwatch.wyrdwerk.com) so a human
 | `window.TWCatalog` façade on the text calculator | `feat: expose TWCatalog façade on text calculator` |
 | `public/webmcp.js` tool registration | `feat: register WebMCP tools on text page` |
 
-Image, video, and benchmarks pages are **out of this drop**. They do not load `webmcp.js`. A later `TWCatalog` on those pages can reuse the same registrar.
+The image and video pages now load the same registrar and expose page-specific `get_view` and `set_sort` tools. Their sort schemas exactly match their visible table columns. The benchmarks page remains out of scope.
 
 ## How it works
 
-1. `public/app.js` loads `pricing.json`. On success it assigns `window.TWCatalog` and dispatches `tw-catalog-ready`. On failure it never becomes ready — tools are not registered against an empty table.
-2. `public/webmcp.js` (loaded after `app.js`) feature-detects `document.modelContext`, waits up to 15s for the façade, registers the text-page tools, and aborts the `AbortController` on `pagehide`.
+1. Each calculator loads its catalog. On success it assigns `window.TWCatalog` and dispatches `tw-catalog-ready`. On failure it never becomes ready — tools are not registered against an empty table.
+2. `public/webmcp.js` (loaded after the page app) feature-detects `document.modelContext`, waits up to 15s for the façade, registers the page's tool set, and aborts the `AbortController` on `pagehide`.
 3. Write tools call existing UI functions (`setCostMode`, `applyPreset`, `computeAndRender`, …) and return a fresh `get_view` snapshot so the agent cannot describe a stale ranking.
-4. Row identity is `{ provider, id }`, never a DOM rank (`ROW_CAP = 250` would otherwise lie).
+4. `get_view.top` and `explain_ranking` follow the table's active sort, returned as `sort: { by, dir }`. The default is total/session cost ascending (`by: "cost", dir: "asc"`); the human can change it with the table controls. `explain_ranking` uses that same metric rather than assuming cost. Row identity is `{ provider, id }`, never a DOM rank (`ROW_CAP = 250` would otherwise lie).
 
 Without WebMCP support the site is unchanged (progressive enhancement).
+
+## Media-page tool catalog
+
+Image and video pages intentionally expose a smaller, page-specific set while their facades mature:
+
+| Page | Tool | Sortable columns |
+|---|---|---|
+| Image | `get_view` | — |
+| Image | `get_catalog_info` | — |
+| Image | `set_sort` | `org`, `model`, `cost_per_unit`, `cost` |
+| Video | `get_view` | — |
+| Video | `get_catalog_info` | — |
+| Video | `set_sort` | `org`, `model`, `resolution`, `audio`, `cost_per_second`, `cost` |
+
+`set_sort` accepts `asc` and `desc` for every listed column and returns a fresh `get_view` snapshot. The `cost` field is the page's active calculated value: total cost in token/count mode or affordable units in budget mode.
 
 ## Tool catalog (text page)
 
@@ -30,6 +47,7 @@ Starred tools are the contest-demo minimum.
 |---|---|---|
 | See | `get_view` ★ | none (read) |
 | See | `get_model` | none (read) |
+| Sort | `set_sort` | re-renders the table |
 | See | `explain_ranking` ★ | none (read) |
 | See | `list_presets` | none (read) |
 | See | `get_share_url` ★ | none (read; returns current hash URL) |
@@ -67,7 +85,7 @@ npm test                 # includes webmcp-schema + twcatalog-contract (no brows
 npm run serve            # public/ on :3000
 ```
 
-Chrome: enable the WebMCP testing flag, open the text page, DevTools → `await document.modelContext.getTools()`. You should see the 18 names above.
+Chrome: enable the WebMCP testing flag, open a catalog page, and run `await document.modelContext.getTools()` in DevTools. The text page exposes 19 tools; image and video expose `get_view`, `get_catalog_info`, and `set_sort`. Use `set_sort` to change any visible sortable column programmatically; `get_view` reports the resulting sort.
 
 ChatGPT: desktop app, Settings → Browser → Permissions, open the live URL, Site tools in the address bar. Luna has WebMCP disabled; Enterprise/Edu are excluded.
 
@@ -75,7 +93,7 @@ ChatGPT: desktop app, Settings → Browser → Permissions, open the live URL, S
 
 - Fake mouse tools (`click_row`, `sort_column`)
 - Advisor-as-a-tool (the floating widget stays for humans; ignore it in the demo)
-- Image/video/benchmarks tools (no CSV/detail on those calculators; clock)
+- Benchmarks tools (no WebMCP facade on that page yet)
 - Declarative `<form toolname>` (this is a SPA)
 - Cross-origin iframe companions (ChatGPT in-app support undocumented)
 - Headless / unattended agent flows

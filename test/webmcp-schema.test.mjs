@@ -20,10 +20,10 @@ function extractJsonParseBlob(src, constName) {
 const STARRED = ['get_view', 'set_workload', 'set_filters', 'compare_models', 'explain_ranking', 'get_share_url'];
 const NAME_RE = /^[A-Za-z0-9_.-]{1,128}$/;
 
-test('text WebMCP tool defs: 18 tools, valid names, additionalProperties false', async () => {
+test('text WebMCP tool defs: 19 tools, valid names, additionalProperties false', async () => {
   const src = await readFile(join(ROOT, 'public/webmcp.js'), 'utf8');
   const defs = extractJsonParseBlob(src, 'TEXT_TOOL_DEFS');
-  assert.equal(defs.length, 18, 'text page registers 18 tools');
+  assert.equal(defs.length, 19, 'text page registers 19 tools');
 
   const names = defs.map((d) => d.name);
   assert.deepEqual(new Set(names).size, names.length, 'tool names must be unique');
@@ -46,7 +46,7 @@ test('text WebMCP tool defs: 18 tools, valid names, additionalProperties false',
   for (const name of ['get_view', 'explain_ranking', 'get_share_url', 'get_catalog_info', 'list_presets', 'get_model']) {
     assert.ok(reads.includes(name), `${name} should be readOnlyHint: true`);
   }
-  for (const name of ['set_workload', 'set_filters', 'compare_models', 'export_csv']) {
+  for (const name of ['set_workload', 'set_sort', 'set_filters', 'compare_models', 'export_csv']) {
     const def = defs.find((d) => d.name === name);
     assert.equal(def.annotations.readOnlyHint, false, `${name} mutates the page`);
   }
@@ -61,6 +61,8 @@ test('set_workload and set_filters schemas use enums; compare uses {provider,id}
   assert.deepEqual(byName.set_workload.inputSchema.properties.computeBy.enum, ['tokens', 'budget']);
   assert.deepEqual(byName.set_filters.inputSchema.properties.groupBy.enum, ['none', 'org', 'provider']);
   assert.deepEqual(byName.apply_preset.inputSchema.properties.name.enum, ['agentic', 'balanced', 'heavy-output', 'no-cache']);
+  assert.deepEqual(byName.set_sort.inputSchema.properties.by.enum, ['org', 'provider', 'model', 'input', 'output', 'cache_read', 'context', 'speed', 'blended', 'cost']);
+  assert.deepEqual(byName.set_sort.inputSchema.properties.dir.enum, ['asc', 'desc']);
   assert.deepEqual(byName.compare_models.inputSchema.properties.action.enum, ['add', 'remove', 'clear', 'set']);
   assert.deepEqual(byName.compare_models.inputSchema.properties.models.items.required, ['provider', 'id']);
   assert.deepEqual(byName.open_detail.inputSchema.required, ['provider', 'id']);
@@ -75,4 +77,38 @@ test('index.html loads webmcp.js after app.js; bust-cache fingerprints it', asyn
 
   const bust = await readFile(join(ROOT, 'scripts/bust-cache.mjs'), 'utf8');
   assert.match(bust, /['"]webmcp\.js['"]/, 'bust-cache FINGERPRINT must include webmcp.js');
+});
+
+test('image and video pages expose page-specific get_view/set_sort tools', async () => {
+  const src = await readFile(join(ROOT, 'public/webmcp.js'), 'utf8');
+  const defs = extractJsonParseBlob(src, 'MEDIA_TOOL_DEFS');
+
+  assert.deepEqual(Object.keys(defs).sort(), ['image', 'video']);
+  assert.deepEqual(defs.image.map((d) => d.name), ['get_view', 'get_catalog_info', 'set_sort']);
+  assert.deepEqual(defs.video.map((d) => d.name), ['get_view', 'get_catalog_info', 'set_sort']);
+  assert.deepEqual(defs.image.find((d) => d.name === 'set_sort').inputSchema.properties.by.enum,
+    ['org', 'model', 'cost_per_unit', 'cost']);
+  assert.deepEqual(defs.video.find((d) => d.name === 'set_sort').inputSchema.properties.by.enum,
+    ['org', 'model', 'resolution', 'audio', 'cost_per_second', 'cost']);
+
+  for (const page of ['image', 'video']) {
+    for (const def of defs[page]) {
+      assert.equal(def.inputSchema.additionalProperties, false);
+      assert.equal(typeof def.annotations.readOnlyHint, 'boolean');
+    }
+    const html = await readFile(join(ROOT, `public/${page}.html`), 'utf8');
+    const appIdx = html.indexOf(`src="/${page}-app.js`);
+    const mcpIdx = html.indexOf('src="/webmcp.js');
+    assert.ok(appIdx !== -1 && mcpIdx !== -1, `${page}.html must load its app and webmcp.js`);
+    assert.ok(mcpIdx > appIdx, `${page}.html must load webmcp.js after its app`);
+
+    const app = await readFile(join(ROOT, 'public', `${page}-app.js`), 'utf8');
+    assert.match(app, /function getView\(input\)/);
+    assert.match(app, /function getCatalogInfo\(\)/);
+    assert.match(app, /function setSort\(input\)/);
+    assert.match(app, new RegExp(`page: '${page}'`));
+    assert.match(app, /getCatalogInfo,/);
+    assert.match(app, /computeAndRender\(\);\s*publishTwCatalog\(\);/,
+      `${page} init must publish after its first render`);
+  }
 });
