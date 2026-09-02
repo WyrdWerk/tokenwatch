@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-01T14:24:03.914Z",
+  "generated_at": "2026-09-02T06:37:03.924Z",
   "models": [
     {
       "id": "kling-video-v3-pro",
@@ -1348,6 +1348,46 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.2
+        }
+      ]
+    },
+    {
+      "id": "minimax/hailuo-3-max",
+      "name": "MiniMax: H3 Max",
+      "org": "minimax",
+      "provider": "minimax",
+      "supported_durations": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "supported_resolutions": [
+        "768p",
+        "480p"
+      ],
+      "pricing": [
+        {
+          "resolution": "480p",
+          "audio": null,
+          "cost_per_second": 0.05
+        },
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.08
+        },
+        {
+          "resolution": "768p",
+          "audio": null,
+          "cost_per_second": 0.08
         }
       ]
     },
