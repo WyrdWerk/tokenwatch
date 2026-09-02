@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-02T06:37:14.800Z",
+  "generated_at": "2026-09-02T12:23:16.546Z",
   "mix": {
     "inputPct": 2.5,
     "cacheReadPct": 97,
@@ -99,7 +99,9 @@
       "scores": {
         "aa_intelligence": 65.7,
         "aa_coding": 81.6,
-        "aa_agentic": 61.3
+        "aa_agentic": 61.3,
+        "design_arena_elo": 1351,
+        "design_arena_category": "website"
       }
     },
     {
@@ -140,7 +142,9 @@
       "scores": {
         "aa_intelligence": 65.7,
         "aa_coding": 81.6,
-        "aa_agentic": 61.3
+        "aa_agentic": 61.3,
+        "design_arena_elo": 1351,
+        "design_arena_category": "website"
       }
     },
     {
@@ -194,7 +198,7 @@
         "aa_intelligence": 63.1,
         "aa_coding": 78,
         "aa_agentic": 59.2,
-        "design_arena_elo": 1387,
+        "design_arena_elo": 1383,
         "design_arena_category": "asciiart"
       }
     },
@@ -243,7 +247,7 @@
         "aa_intelligence": 63.1,
         "aa_coding": 78,
         "aa_agentic": 59.2,
-        "design_arena_elo": 1387,
+        "design_arena_elo": 1383,
         "design_arena_category": "asciiart"
       }
     },
@@ -623,7 +627,7 @@
         "aa_intelligence": 59.7,
         "aa_coding": 76.2,
         "aa_agentic": 54.3,
-        "design_arena_elo": 1441,
+        "design_arena_elo": 1439,
         "design_arena_category": "3d"
       }
     },
@@ -648,7 +652,7 @@
         "aa_intelligence": 59.7,
         "aa_coding": 76.2,
         "aa_agentic": 54.3,
-        "design_arena_elo": 1441,
+        "design_arena_elo": 1439,
         "design_arena_category": "3d"
       }
     },
@@ -757,7 +761,7 @@
         "aa_intelligence": 59.7,
         "aa_coding": 76.2,
         "aa_agentic": 54.3,
-        "design_arena_elo": 1441,
+        "design_arena_elo": 1439,
         "design_arena_category": "3d"
       }
     },
@@ -812,6 +816,12 @@
           "input": 1.17,
           "output": 3.96,
           "cache_read": 0.245
+        },
+        {
+          "provider": "Reka",
+          "input": 1.15,
+          "output": 3.5,
+          "cache_read": 0.09999999999999999
         },
         {
           "provider": "AkashML",
@@ -910,12 +920,6 @@
           "cache_read": 0.26
         },
         {
-          "provider": "Reka",
-          "input": 1.4,
-          "output": 4.4,
-          "cache_read": 0.26
-        },
-        {
           "provider": "Decart",
           "input": 1.4,
           "output": 4.4,
@@ -997,7 +1001,7 @@
         "aa_intelligence": 58.1,
         "aa_coding": 71.8,
         "aa_agentic": 58.4,
-        "design_arena_elo": 1369,
+        "design_arena_elo": 1367,
         "design_arena_category": "3d"
       }
     },
@@ -1572,7 +1576,7 @@
         "aa_intelligence": 56.8,
         "aa_coding": 72.2,
         "aa_agentic": 49.3,
-        "design_arena_elo": 1361,
+        "design_arena_elo": 1359,
         "design_arena_category": "dataviz"
       }
     },
@@ -1760,7 +1764,7 @@
         "aa_intelligence": 56,
         "aa_coding": 76.1,
         "aa_agentic": 45.1,
-        "design_arena_elo": 1355,
+        "design_arena_elo": 1352,
         "design_arena_category": "3d"
       }
     },
@@ -1785,7 +1789,7 @@
         "aa_intelligence": 56,
         "aa_coding": 76.1,
         "aa_agentic": 45.1,
-        "design_arena_elo": 1355,
+        "design_arena_elo": 1352,
         "design_arena_category": "3d"
       }
     },
@@ -1810,7 +1814,7 @@
         "aa_intelligence": 55.8,
         "aa_coding": 72.4,
         "aa_agentic": 48.9,
-        "design_arena_elo": 1306,
+        "design_arena_elo": 1305,
         "design_arena_category": "gamedev"
       }
     },
@@ -2045,6 +2049,12 @@
           "cache_read": 0.0479072
         },
         {
+          "provider": "DeepSeek",
+          "input": 0.66,
+          "output": 1.9800000000000002,
+          "cache_read": 0.022
+        },
+        {
           "provider": "StreamLake",
           "input": 1.1154,
           "output": 3.3461999999999996,
@@ -2085,12 +2095,6 @@
           "input": 1.32,
           "output": 3.9600000000000004,
           "cache_read": 0.045
-        },
-        {
-          "provider": "DeepSeek",
-          "input": 1.32,
-          "output": 3.9600000000000004,
-          "cache_read": 0.044
         },
         {
           "provider": "Together",
@@ -2153,10 +2157,16 @@
       "org": "deepseek",
       "providers": 17,
       "from": {
-        "provider": "StreamLake",
-        "blended_per_m": 0.081
+        "provider": "DeepSeek",
+        "blended_per_m": 0.048
       },
       "offerings": [
+        {
+          "provider": "DeepSeek",
+          "input": 0.66,
+          "output": 1.9800000000000002,
+          "cache_read": 0.022
+        },
         {
           "provider": "StreamLake",
           "input": 1.1154,
@@ -2204,12 +2214,6 @@
           "input": 1.32,
           "output": 3.9600000000000004,
           "cache_read": 0.045
-        },
-        {
-          "provider": "DeepSeek",
-          "input": 1.32,
-          "output": 3.9600000000000004,
-          "cache_read": 0.044
         },
         {
           "provider": "Together",
@@ -2602,7 +2606,7 @@
         "aa_intelligence": 52.6,
         "aa_coding": 68.8,
         "aa_agentic": 45.7,
-        "design_arena_elo": 1342,
+        "design_arena_elo": 1340,
         "design_arena_category": "3d",
         "livebench_math": 89.8,
         "livebench_coding": 79.7,
@@ -2634,7 +2638,7 @@
         "aa_intelligence": 52.6,
         "aa_coding": 68.8,
         "aa_agentic": 45.7,
-        "design_arena_elo": 1342,
+        "design_arena_elo": 1340,
         "design_arena_category": "3d"
       }
     },
@@ -2659,7 +2663,7 @@
         "aa_intelligence": 52.6,
         "aa_coding": 68.8,
         "aa_agentic": 45.7,
-        "design_arena_elo": 1342,
+        "design_arena_elo": 1340,
         "design_arena_category": "3d"
       }
     },
@@ -2684,7 +2688,7 @@
         "aa_intelligence": 52.6,
         "aa_coding": 68.8,
         "aa_agentic": 45.7,
-        "design_arena_elo": 1342,
+        "design_arena_elo": 1340,
         "design_arena_category": "3d"
       }
     },
@@ -2709,7 +2713,7 @@
         "aa_intelligence": 52.6,
         "aa_coding": 68.8,
         "aa_agentic": 45.7,
-        "design_arena_elo": 1342,
+        "design_arena_elo": 1340,
         "design_arena_category": "3d"
       }
     },
@@ -2793,44 +2797,6 @@
         "aa_intelligence": 52.3,
         "aa_coding": 71.4,
         "aa_agentic": 46.9
-      }
-    },
-    {
-      "id": "gemini-3.5-flash",
-      "name": "google/gemini-3.5-flash",
-      "org": "google",
-      "providers": 2,
-      "from": {
-        "provider": "Google AI Studio",
-        "blended_per_m": 0.114
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 1.4999999999999998,
-          "output": 9,
-          "cache_read": null
-        },
-        {
-          "provider": "Google AI Studio",
-          "input": 0.75,
-          "output": 4.5,
-          "cache_read": 0.075
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 52,
-        "aa_coding": 70.1,
-        "aa_agentic": 39.7,
-        "design_arena_elo": 1302,
-        "design_arena_category": "gamedev",
-        "livebench_math": 88.2,
-        "livebench_coding": 78.2,
-        "livebench_language": 84.6,
-        "livebench_data_analysis": 64.9,
-        "livebench_agentic_coding": 49,
-        "livebench_reasoning": 82,
-        "livebench_instruction_following": 75.6
       }
     },
     {
@@ -2944,6 +2910,44 @@
         "aa_intelligence": 52,
         "aa_coding": 68.1,
         "aa_agentic": 50.9
+      }
+    },
+    {
+      "id": "gemini-3.5-flash",
+      "name": "google/gemini-3.5-flash",
+      "org": "google",
+      "providers": 2,
+      "from": {
+        "provider": "Google AI Studio",
+        "blended_per_m": 0.114
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 1.4999999999999998,
+          "output": 9,
+          "cache_read": null
+        },
+        {
+          "provider": "Google AI Studio",
+          "input": 0.75,
+          "output": 4.5,
+          "cache_read": 0.075
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 52,
+        "aa_coding": 70.1,
+        "aa_agentic": 39.7,
+        "design_arena_elo": 1302,
+        "design_arena_category": "gamedev",
+        "livebench_math": 88.2,
+        "livebench_coding": 78.2,
+        "livebench_language": 84.6,
+        "livebench_data_analysis": 64.9,
+        "livebench_agentic_coding": 49,
+        "livebench_reasoning": 82,
+        "livebench_instruction_following": 75.6
       }
     },
     {
@@ -3126,6 +3130,12 @@
           "cache_read": 0.049999999999999996
         },
         {
+          "provider": "DeepSeek",
+          "input": 0.22,
+          "output": 0.66,
+          "cache_read": 0.007
+        },
+        {
           "provider": "Fireworks",
           "input": 0.22,
           "output": 0.66,
@@ -3162,12 +3172,6 @@
           "cache_read": 0.028
         },
         {
-          "provider": "DeepSeek",
-          "input": 0.44,
-          "output": 1.32,
-          "cache_read": 0.014
-        },
-        {
           "provider": "AtlasCloud",
           "input": 0.44,
           "output": 1.32,
@@ -3190,7 +3194,7 @@
         "aa_intelligence": 51.8,
         "aa_coding": 69.1,
         "aa_agentic": 48.4,
-        "design_arena_elo": 1262,
+        "design_arena_elo": 1259,
         "design_arena_category": "uicomponent"
       }
     },
@@ -3215,7 +3219,7 @@
         "aa_intelligence": 51.8,
         "aa_coding": 69.1,
         "aa_agentic": 48.4,
-        "design_arena_elo": 1262,
+        "design_arena_elo": 1259,
         "design_arena_category": "uicomponent"
       }
     },
@@ -3350,6 +3354,12 @@
           "cache_read": 0.049999999999999996
         },
         {
+          "provider": "DeepSeek",
+          "input": 0.22,
+          "output": 0.66,
+          "cache_read": 0.007
+        },
+        {
           "provider": "Fireworks",
           "input": 0.22,
           "output": 0.66,
@@ -3386,12 +3396,6 @@
           "cache_read": 0.028
         },
         {
-          "provider": "DeepSeek",
-          "input": 0.44,
-          "output": 1.32,
-          "cache_read": 0.014
-        },
-        {
           "provider": "AtlasCloud",
           "input": 0.44,
           "output": 1.32,
@@ -3414,7 +3418,7 @@
         "aa_intelligence": 51.8,
         "aa_coding": 69.1,
         "aa_agentic": 48.4,
-        "design_arena_elo": 1262,
+        "design_arena_elo": 1259,
         "design_arena_category": "uicomponent"
       }
     },
@@ -3439,7 +3443,7 @@
         "aa_intelligence": 51.6,
         "aa_coding": 69.2,
         "aa_agentic": 40.5,
-        "design_arena_elo": 1332,
+        "design_arena_elo": 1328,
         "design_arena_category": "uicomponent"
       }
     },
@@ -3464,7 +3468,7 @@
         "aa_intelligence": 51.6,
         "aa_coding": 69.2,
         "aa_agentic": 40.5,
-        "design_arena_elo": 1332,
+        "design_arena_elo": 1328,
         "design_arena_category": "uicomponent"
       }
     },
@@ -3513,7 +3517,7 @@
         "aa_intelligence": 48.4,
         "aa_coding": 63,
         "aa_agentic": 42.1,
-        "design_arena_elo": 1303,
+        "design_arena_elo": 1302,
         "design_arena_category": "website",
         "livebench_math": 87,
         "livebench_coding": 79.3,
@@ -3569,7 +3573,7 @@
         "aa_intelligence": 48.4,
         "aa_coding": 63,
         "aa_agentic": 42.1,
-        "design_arena_elo": 1303,
+        "design_arena_elo": 1302,
         "design_arena_category": "website"
       }
     },
@@ -3600,7 +3604,7 @@
         "aa_intelligence": 47.7,
         "aa_coding": 68.8,
         "aa_agentic": 23,
-        "design_arena_elo": 1327,
+        "design_arena_elo": 1325,
         "design_arena_category": "svg",
         "livebench_math": 91,
         "livebench_coding": 76.5,
@@ -3632,7 +3636,7 @@
         "aa_intelligence": 47.7,
         "aa_coding": 68.8,
         "aa_agentic": 23,
-        "design_arena_elo": 1327,
+        "design_arena_elo": 1325,
         "design_arena_category": "svg"
       }
     },
@@ -3675,7 +3679,7 @@
         "aa_intelligence": 46.7,
         "aa_coding": 66,
         "aa_agentic": 30.9,
-        "design_arena_elo": 1313,
+        "design_arena_elo": 1311,
         "design_arena_category": "3d",
         "livebench_math": 85.2,
         "livebench_coding": 74.2,
@@ -3820,7 +3824,7 @@
         "aa_intelligence": 45.4,
         "aa_coding": 58.6,
         "aa_agentic": 36.1,
-        "design_arena_elo": 1277,
+        "design_arena_elo": 1276,
         "design_arena_category": "website",
         "livebench_math": 76.9,
         "livebench_coding": 68.2,
@@ -3912,7 +3916,7 @@
         "aa_intelligence": 45.4,
         "aa_coding": 58.6,
         "aa_agentic": 36.1,
-        "design_arena_elo": 1277,
+        "design_arena_elo": 1276,
         "design_arena_category": "website"
       }
     },
@@ -3920,7 +3924,7 @@
       "id": "deepseek-v4-pro",
       "name": "deepseek-ai/DeepSeek-V4-Pro",
       "org": "deepseek",
-      "providers": 23,
+      "providers": 22,
       "from": {
         "provider": "crof",
         "blended_per_m": 0.016
@@ -3955,12 +3959,6 @@
           "input": 0.392,
           "output": 0.783,
           "cache_read": 0.128
-        },
-        {
-          "provider": "runinfra",
-          "input": 0.6,
-          "output": 1.9,
-          "cache_read": 0.03
         },
         {
           "provider": "DigitalOcean",
@@ -4069,7 +4067,7 @@
         "aa_intelligence": 45.3,
         "aa_coding": 59.4,
         "aa_agentic": 37.8,
-        "design_arena_elo": 1298,
+        "design_arena_elo": 1296,
         "design_arena_category": "3d",
         "livebench_math": 90.7,
         "livebench_coding": 70,
@@ -4251,7 +4249,7 @@
         "aa_intelligence": 45.1,
         "aa_coding": 61.8,
         "aa_agentic": 31.2,
-        "design_arena_elo": 1311,
+        "design_arena_elo": 1309,
         "design_arena_category": "3d",
         "livebench_math": 84.3,
         "livebench_coding": 78.6,
@@ -4350,6 +4348,12 @@
           "cache_read": 0.15
         },
         {
+          "provider": "StreamLake",
+          "input": 0.7124999999999999,
+          "output": 3,
+          "cache_read": 0.14250000000000002
+        },
+        {
           "provider": "Venice",
           "input": 0.75,
           "output": 3.5,
@@ -4378,12 +4382,6 @@
           "input": 0.95,
           "output": 4,
           "cache_read": 0.16
-        },
-        {
-          "provider": "StreamLake",
-          "input": 0.95,
-          "output": 4,
-          "cache_read": 0.19
         },
         {
           "provider": "GMICloud",
@@ -4426,7 +4424,7 @@
         "aa_intelligence": 43,
         "aa_coding": 60.8,
         "aa_agentic": 30.3,
-        "design_arena_elo": 1289,
+        "design_arena_elo": 1288,
         "design_arena_category": "uicomponent",
         "livebench_math": 79.6,
         "livebench_coding": 74,
@@ -4458,7 +4456,7 @@
         "aa_intelligence": 43,
         "aa_coding": 60.8,
         "aa_agentic": 30.3,
-        "design_arena_elo": 1289,
+        "design_arena_elo": 1288,
         "design_arena_category": "uicomponent"
       }
     },
@@ -4568,7 +4566,7 @@
         "aa_intelligence": 42.3,
         "aa_coding": 52.1,
         "aa_agentic": 34.1,
-        "design_arena_elo": 1229,
+        "design_arena_elo": 1227,
         "design_arena_category": "website"
       }
     },
@@ -4605,7 +4603,7 @@
         "aa_intelligence": 42.3,
         "aa_coding": 52.1,
         "aa_agentic": 34.1,
-        "design_arena_elo": 1229,
+        "design_arena_elo": 1227,
         "design_arena_category": "website"
       }
     },
@@ -4672,7 +4670,7 @@
       "id": "deepseek-v4-flash",
       "name": "deepseek-ai/DeepSeek-V4-Flash",
       "org": "deepseek",
-      "providers": 25,
+      "providers": 24,
       "from": {
         "provider": "crof",
         "blended_per_m": 0.007
@@ -4719,12 +4717,6 @@
           "input": 0.081,
           "output": 0.162,
           "cache_read": 0.007
-        },
-        {
-          "provider": "runinfra",
-          "input": 0.13,
-          "output": 0.27,
-          "cache_read": 0.01
         },
         {
           "provider": "DigitalOcean",
@@ -4871,7 +4863,7 @@
         "aa_intelligence": 41.7,
         "aa_coding": 59.1,
         "aa_agentic": 31.2,
-        "design_arena_elo": 1293,
+        "design_arena_elo": 1290,
         "design_arena_category": "3d"
       }
     },
@@ -4896,7 +4888,7 @@
         "aa_intelligence": 41.6,
         "aa_coding": 52.7,
         "aa_agentic": 33.6,
-        "design_arena_elo": 1186,
+        "design_arena_elo": 1184,
         "design_arena_category": "3d"
       }
     },
@@ -5345,7 +5337,7 @@
       ],
       "scores": {
         "aa_intelligence": 40.6,
-        "design_arena_elo": 1293,
+        "design_arena_elo": 1291,
         "design_arena_category": "3d"
       }
     },
@@ -5368,7 +5360,7 @@
       ],
       "scores": {
         "aa_intelligence": 40.6,
-        "design_arena_elo": 1293,
+        "design_arena_elo": 1291,
         "design_arena_category": "3d"
       }
     },
@@ -5405,7 +5397,7 @@
         "aa_intelligence": 40.5,
         "aa_coding": 54.5,
         "aa_agentic": 29,
-        "design_arena_elo": 1262,
+        "design_arena_elo": 1260,
         "design_arena_category": "uicomponent",
         "livebench_math": 83.7,
         "livebench_coding": 78.2,
@@ -5512,31 +5504,6 @@
       }
     },
     {
-      "id": "minimax-m2.7-turbo",
-      "name": "MiniMaxAI/MiniMax-M2.7-Turbo",
-      "org": "minimax",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.086
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.38,
-          "output": 1.7,
-          "cache_read": 0.07000000140000001
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 38.9,
-        "aa_coding": 52.6,
-        "aa_agentic": 25.9,
-        "design_arena_elo": 1263,
-        "design_arena_category": "website"
-      }
-    },
-    {
       "id": "minimax-m2.7",
       "name": "MiniMaxAI/MiniMax-M2.7",
       "org": "minimax",
@@ -5611,7 +5578,32 @@
         "aa_intelligence": 38.9,
         "aa_coding": 52.6,
         "aa_agentic": 25.9,
-        "design_arena_elo": 1263,
+        "design_arena_elo": 1262,
+        "design_arena_category": "website"
+      }
+    },
+    {
+      "id": "minimax-m2.7-turbo",
+      "name": "MiniMaxAI/MiniMax-M2.7-Turbo",
+      "org": "minimax",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.086
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.38,
+          "output": 1.7,
+          "cache_read": 0.07000000140000001
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 38.9,
+        "aa_coding": 52.6,
+        "aa_agentic": 25.9,
+        "design_arena_elo": 1262,
         "design_arena_category": "website"
       }
     },
@@ -5658,7 +5650,7 @@
       ],
       "scores": {
         "aa_intelligence": 38.8,
-        "design_arena_elo": 1317,
+        "design_arena_elo": 1315,
         "design_arena_category": "3d",
         "livebench_math": 89.3,
         "livebench_coding": 78.2,
@@ -5690,7 +5682,7 @@
         "aa_intelligence": 38.3,
         "aa_coding": 49.3,
         "aa_agentic": 27.5,
-        "design_arena_elo": 1175,
+        "design_arena_elo": 1173,
         "design_arena_category": "3d"
       }
     },
@@ -5727,7 +5719,7 @@
         "aa_intelligence": 38.3,
         "aa_coding": 49.3,
         "aa_agentic": 27.5,
-        "design_arena_elo": 1175,
+        "design_arena_elo": 1173,
         "design_arena_category": "3d"
       }
     },
@@ -5764,7 +5756,7 @@
         "aa_intelligence": 38.3,
         "aa_coding": 49.3,
         "aa_agentic": 27.5,
-        "design_arena_elo": 1175,
+        "design_arena_elo": 1173,
         "design_arena_category": "3d"
       }
     },
@@ -5819,7 +5811,7 @@
         "aa_intelligence": 38,
         "aa_coding": 56.8,
         "aa_agentic": 24.4,
-        "design_arena_elo": 1285,
+        "design_arena_elo": 1284,
         "design_arena_category": "website"
       }
     },
@@ -5842,7 +5834,7 @@
       ],
       "scores": {
         "aa_intelligence": 38,
-        "design_arena_elo": 1247,
+        "design_arena_elo": 1246,
         "design_arena_category": "website"
       }
     },
@@ -5867,7 +5859,7 @@
         "aa_intelligence": 37.9,
         "aa_coding": 42.2,
         "aa_agentic": 24.2,
-        "design_arena_elo": 1217,
+        "design_arena_elo": 1215,
         "design_arena_category": "uicomponent",
         "livebench_math": 84.3,
         "livebench_coding": 69.9,
@@ -6283,7 +6275,7 @@
         "aa_intelligence": 36,
         "aa_coding": 46.8,
         "aa_agentic": 21.7,
-        "design_arena_elo": 1267,
+        "design_arena_elo": 1266,
         "design_arena_category": "website"
       }
     },
@@ -6331,7 +6323,7 @@
       "scores": {
         "aa_intelligence": 35.6,
         "design_arena_elo": 1265,
-        "design_arena_category": "codecategories",
+        "design_arena_category": "gamedev",
         "livebench_math": 90.4,
         "livebench_coding": 79.7,
         "livebench_language": 81.3,
@@ -6360,7 +6352,7 @@
       ],
       "scores": {
         "aa_intelligence": 35.6,
-        "design_arena_elo": 1263,
+        "design_arena_elo": 1261,
         "design_arena_category": "uicomponent"
       }
     },
@@ -6563,7 +6555,7 @@
         "aa_intelligence": 34.5,
         "aa_coding": 45.3,
         "aa_agentic": 26.2,
-        "design_arena_elo": 1244,
+        "design_arena_elo": 1243,
         "design_arena_category": "website"
       }
     },
@@ -6640,7 +6632,7 @@
       ],
       "scores": {
         "aa_intelligence": 34.5,
-        "design_arena_elo": 1240,
+        "design_arena_elo": 1239,
         "design_arena_category": "website"
       }
     },
@@ -6725,7 +6717,7 @@
         "aa_intelligence": 34.3,
         "aa_coding": 48.2,
         "aa_agentic": 19.8,
-        "design_arena_elo": 1209,
+        "design_arena_elo": 1208,
         "design_arena_category": "website"
       }
     },
@@ -6807,7 +6799,7 @@
       "scores": {
         "aa_intelligence": 33.5,
         "aa_coding": 21,
-        "design_arena_elo": 1131,
+        "design_arena_elo": 1130,
         "design_arena_category": "website"
       }
     },
@@ -7016,7 +7008,7 @@
       ],
       "scores": {
         "aa_intelligence": 32.1,
-        "design_arena_elo": 1249,
+        "design_arena_elo": 1247,
         "design_arena_category": "uicomponent"
       }
     },
@@ -7059,7 +7051,7 @@
         "aa_intelligence": 31.4,
         "aa_coding": 43.5,
         "aa_agentic": 19.9,
-        "design_arena_elo": 1208,
+        "design_arena_elo": 1206,
         "design_arena_category": "uicomponent"
       }
     },
@@ -7119,7 +7111,7 @@
         "aa_intelligence": 30.9,
         "aa_coding": 39.6,
         "aa_agentic": 21.7,
-        "design_arena_elo": 1211,
+        "design_arena_elo": 1210,
         "design_arena_category": "website"
       }
     },
@@ -7282,7 +7274,7 @@
         "aa_intelligence": 29.8,
         "aa_coding": 37.6,
         "aa_agentic": 17.6,
-        "design_arena_elo": 1182,
+        "design_arena_elo": 1180,
         "design_arena_category": "3d"
       }
     },
@@ -7574,7 +7566,7 @@
         "aa_intelligence": 29.3,
         "aa_coding": 45.8,
         "aa_agentic": 18.6,
-        "design_arena_elo": 1192,
+        "design_arena_elo": 1191,
         "design_arena_category": "website"
       }
     },
@@ -7597,7 +7589,7 @@
       ],
       "scores": {
         "aa_intelligence": 27.9,
-        "design_arena_elo": 1226,
+        "design_arena_elo": 1224,
         "design_arena_category": "3d"
       }
     },
@@ -8062,7 +8054,7 @@
       "scores": {
         "aa_intelligence": 25.1,
         "aa_coding": 44.2,
-        "design_arena_elo": 1193,
+        "design_arena_elo": 1192,
         "design_arena_category": "website"
       }
     },
@@ -8158,6 +8150,31 @@
         "aa_intelligence": 24.3,
         "aa_coding": 37,
         "aa_agentic": 11.8
+      }
+    },
+    {
+      "id": "gpt-oss-120b-turbo",
+      "name": "openai/gpt-oss-120b-Turbo",
+      "org": "openai",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.152
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.15,
+          "output": 0.6,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 24.1,
+        "aa_coding": 30.4,
+        "aa_agentic": 13.4,
+        "design_arena_elo": 1028,
+        "design_arena_category": "gamedev"
       }
     },
     {
@@ -8295,31 +8312,6 @@
           "input": 0.35,
           "output": 0.75,
           "cache_read": 0.35
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 24.1,
-        "aa_coding": 30.4,
-        "aa_agentic": 13.4,
-        "design_arena_elo": 1028,
-        "design_arena_category": "gamedev"
-      }
-    },
-    {
-      "id": "gpt-oss-120b-turbo",
-      "name": "openai/gpt-oss-120b-Turbo",
-      "org": "openai",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.152
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.15,
-          "output": 0.6,
-          "cache_read": null
         }
       ],
       "scores": {
@@ -8628,7 +8620,7 @@
       ],
       "scores": {
         "aa_intelligence": 23.3,
-        "design_arena_elo": 1233,
+        "design_arena_elo": 1231,
         "design_arena_category": "uicomponent"
       }
     },
@@ -8676,7 +8668,7 @@
         "aa_intelligence": 21.9,
         "aa_coding": 31.1,
         "aa_agentic": 9.5,
-        "design_arena_elo": 1040,
+        "design_arena_elo": 1042,
         "design_arena_category": "asciiart"
       }
     },
@@ -8852,7 +8844,7 @@
       ],
       "scores": {
         "aa_intelligence": 20.1,
-        "design_arena_elo": 1119,
+        "design_arena_elo": 1118,
         "design_arena_category": "website"
       }
     },
@@ -8889,7 +8881,7 @@
         "aa_intelligence": 19.9,
         "aa_coding": 22.1,
         "aa_agentic": 3.8,
-        "design_arena_elo": 1071,
+        "design_arena_elo": 1069,
         "design_arena_category": "website"
       }
     },
@@ -8918,7 +8910,7 @@
       ],
       "scores": {
         "aa_intelligence": 19.7,
-        "design_arena_elo": 1213,
+        "design_arena_elo": 1211,
         "design_arena_category": "3d"
       }
     },
@@ -8971,7 +8963,7 @@
       "scores": {
         "aa_intelligence": 19.7,
         "aa_coding": 21,
-        "design_arena_elo": 1131,
+        "design_arena_elo": 1130,
         "design_arena_category": "website"
       }
     },
@@ -9029,7 +9021,7 @@
       ],
       "scores": {
         "aa_intelligence": 19.6,
-        "design_arena_elo": 1123,
+        "design_arena_elo": 1124,
         "design_arena_category": "dataviz"
       }
     },
@@ -9119,7 +9111,7 @@
         "aa_intelligence": 18.7,
         "aa_coding": 25.8,
         "aa_agentic": 3.7,
-        "design_arena_elo": 1155,
+        "design_arena_elo": 1154,
         "design_arena_category": "website"
       }
     },
@@ -9307,7 +9299,7 @@
       ],
       "scores": {
         "aa_intelligence": 16.7,
-        "design_arena_elo": 1207,
+        "design_arena_elo": 1208,
         "design_arena_category": "dataviz"
       }
     },
@@ -9332,7 +9324,7 @@
         "aa_intelligence": 15.9,
         "aa_coding": 20.1,
         "aa_agentic": 5.5,
-        "design_arena_elo": 1180,
+        "design_arena_elo": 1179,
         "design_arena_category": "website"
       }
     },
@@ -9702,7 +9694,7 @@
         "aa_intelligence": 14.6,
         "aa_coding": 12.1,
         "aa_agentic": 1.8,
-        "design_arena_elo": 948,
+        "design_arena_elo": 947,
         "design_arena_category": "website"
       }
     },
@@ -9815,7 +9807,7 @@
         "aa_intelligence": 14.5,
         "aa_coding": 16.3,
         "aa_agentic": 1.2,
-        "design_arena_elo": 942,
+        "design_arena_elo": 940,
         "design_arena_category": "3d"
       }
     },
@@ -9999,7 +9991,7 @@
       ],
       "scores": {
         "aa_intelligence": 12.5,
-        "design_arena_elo": 1126,
+        "design_arena_elo": 1124,
         "design_arena_category": "3d"
       }
     },
@@ -10059,7 +10051,7 @@
         "aa_intelligence": 11.2,
         "aa_coding": 14.4,
         "aa_agentic": 2.2,
-        "design_arena_elo": 1099,
+        "design_arena_elo": 1098,
         "design_arena_category": "website"
       }
     },
@@ -10424,7 +10416,7 @@
         "aa_intelligence": 9,
         "aa_coding": 9.7,
         "aa_agentic": 1.2,
-        "design_arena_elo": 1083,
+        "design_arena_elo": 1082,
         "design_arena_category": "website"
       }
     },
@@ -10540,7 +10532,7 @@
         "aa_intelligence": 7.1,
         "aa_coding": 4.8,
         "aa_agentic": 1.6,
-        "design_arena_elo": 1046,
+        "design_arena_elo": 1045,
         "design_arena_category": "website"
       }
     },
@@ -10870,24 +10862,31 @@
       }
     },
     {
-      "id": "gemma-3-4b-it",
-      "name": "google/gemma-3-4b-it",
-      "org": "google",
-      "providers": 1,
+      "id": "qwen3-30b-a3b",
+      "name": "Qwen/Qwen3-30B-A3B",
+      "org": "qwen",
+      "providers": 2,
       "from": {
         "provider": "deepinfra",
-        "blended_per_m": 0.05
+        "blended_per_m": 0.122
       },
       "offerings": [
         {
           "provider": "deepinfra",
-          "input": 0.05,
-          "output": 0.1,
+          "input": 0.12000000000000001,
+          "output": 0.5,
+          "cache_read": null
+        },
+        {
+          "provider": "Alibaba",
+          "input": 0.13,
+          "output": 0.52,
           "cache_read": null
         }
       ],
       "scores": {
-        "aa_coding": 2.7
+        "design_arena_elo": 986,
+        "design_arena_category": "dataviz"
       }
     },
     {
@@ -10931,34 +10930,6 @@
       }
     },
     {
-      "id": "qwen3-30b-a3b",
-      "name": "Qwen/Qwen3-30B-A3B",
-      "org": "qwen",
-      "providers": 2,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.122
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.12000000000000001,
-          "output": 0.5,
-          "cache_read": null
-        },
-        {
-          "provider": "Alibaba",
-          "input": 0.13,
-          "output": 0.52,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "design_arena_elo": 986,
-        "design_arena_category": "dataviz"
-      }
-    },
-    {
       "id": "meta-llama-3.1-8b-instruct-turbo",
       "name": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
       "org": "meta",
@@ -10977,6 +10948,27 @@
       ],
       "scores": {
         "aa_coding": 5.4
+      }
+    },
+    {
+      "id": "gemma-3-4b-it",
+      "name": "google/gemma-3-4b-it",
+      "org": "google",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.05
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.05,
+          "output": 0.1,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "aa_coding": 2.7
       }
     },
     {
@@ -11132,7 +11124,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 1206,
+        "design_arena_elo": 1204,
         "design_arena_category": "website"
       }
     },
@@ -11178,7 +11170,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 1317,
+        "design_arena_elo": 1315,
         "design_arena_category": "3d"
       }
     },
@@ -11200,7 +11192,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 1226,
+        "design_arena_elo": 1224,
         "design_arena_category": "3d"
       }
     },
@@ -11318,7 +11310,7 @@
       ],
       "scores": {
         "design_arena_elo": 1265,
-        "design_arena_category": "codecategories"
+        "design_arena_category": "gamedev"
       }
     },
     {
@@ -11361,7 +11353,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 853,
+        "design_arena_elo": 852,
         "design_arena_category": "website"
       }
     },
@@ -11429,7 +11421,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 1197,
+        "design_arena_elo": 1196,
         "design_arena_category": "website"
       }
     },
@@ -11451,7 +11443,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 1125,
+        "design_arena_elo": 1124,
         "design_arena_category": "website"
       }
     },
@@ -11515,7 +11507,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 1141,
+        "design_arena_elo": 1139,
         "design_arena_category": "website"
       }
     },
@@ -11543,7 +11535,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 1119,
+        "design_arena_elo": 1118,
         "design_arena_category": "website"
       }
     },
@@ -11621,7 +11613,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 1062,
+        "design_arena_elo": 1060,
         "design_arena_category": "3d"
       }
     },
@@ -11667,7 +11659,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 1177,
+        "design_arena_elo": 1175,
         "design_arena_category": "website"
       }
     },
@@ -11771,7 +11763,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 948,
+        "design_arena_elo": 949,
         "design_arena_category": "dataviz"
       }
     },
@@ -11837,7 +11829,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 1049,
+        "design_arena_elo": 1047,
         "design_arena_category": "website"
       }
     },
@@ -11909,7 +11901,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 1123,
+        "design_arena_elo": 1124,
         "design_arena_category": "dataviz"
       }
     },
@@ -11937,7 +11929,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 1138,
+        "design_arena_elo": 1137,
         "design_arena_category": "website"
       }
     },
@@ -11959,7 +11951,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 814,
+        "design_arena_elo": 813,
         "design_arena_category": "website"
       }
     },
