@@ -110,7 +110,39 @@ test('explainRanking uses the active sort metric instead of assuming cost', asyn
 
 test('TWCatalog exposes setSort and uses the same sortable columns as the table', async () => {
   const src = await readFile(APP_JS, 'utf8');
-  assert.match(src, /const SORT_COLUMNS = \['org', 'provider', 'model', 'input', 'output', 'cache_read', 'context', 'speed', 'blended', 'cost'\]/);
+  assert.match(src, /const SORT_COLUMNS = \['org', 'provider', 'model', 'input', 'output', 'cache_read', 'context', 'speed', 'ttft', 'blended', 'cost'\]/);
   assert.match(src, /function setSort\(input\)/);
   assert.match(src, /setSort,\s*setCacheWrite/);
+});
+
+test('getView snapshot includes the new text-page filters and ttftP50', async () => {
+  const src = await readFile(APP_JS, 'utf8');
+  const getViewStart = src.indexOf('function getView(input)');
+  const getViewEnd = src.indexOf('\n}\n\nfunction getModel', getViewStart);
+  assert.notEqual(getViewStart, -1, 'getView must exist');
+  assert.notEqual(getViewEnd, -1, 'getView boundary must exist');
+  const body = src.slice(getViewStart, getViewEnd);
+  for (const key of ['hideBatch', 'cacheOnly', 'maxBlended', 'minToks', 'hq']) {
+    assert.match(body, new RegExp(key + ':'), `getView.filters must expose ${key}`);
+  }
+  const snapStart = src.indexOf('function snapshotRow(');
+  const snapEnd = src.indexOf('\n}\n\nfunction getView', snapStart);
+  assert.match(src.slice(snapStart, snapEnd === -1 ? undefined : snapEnd), /ttftP50:/, 'snapshotRow must include ttftP50');
+});
+
+test('setFilters and clearFilters wire hideBatch, cacheOnly, maxBlended, minToks, hq', async () => {
+  const src = await readFile(APP_JS, 'utf8');
+  const setStart = src.indexOf('function setFilters(input)');
+  const setEnd = src.indexOf('\n}\n\nfunction clearFilters', setStart);
+  const clearStart = src.indexOf('function clearFilters()');
+  const clearEnd = src.indexOf('\n}\n\nfunction compareModels', clearStart);
+  assert.notEqual(setStart, -1);
+  assert.notEqual(clearStart, -1);
+  const setBody = src.slice(setStart, setEnd);
+  const clearBody = src.slice(clearStart, clearEnd);
+  for (const key of ['hideBatch', 'cacheOnly', 'maxBlended', 'minToks', 'hq']) {
+    assert.match(setBody, new RegExp(key), `setFilters must accept ${key}`);
+    assert.match(clearBody, new RegExp(key), `clearFilters must reset ${key}`);
+  }
+  assert.match(src, /DEFAULTS\.hideBatch/);
 });

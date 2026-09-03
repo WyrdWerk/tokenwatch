@@ -20,7 +20,7 @@ import { canonicalId } from './normalize.mjs';
  */
 export const PROVIDER_MAP = {
   // slug-format differences (bespoke)
-  deepinfra: 'deep-infra',
+  deepinfra: 'deepinfra',
   fireworks: 'fireworks-ai',
   together: 'togetherai',
   novita: 'novita-ai',

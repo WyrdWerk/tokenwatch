@@ -68,3 +68,27 @@ test('deserializeState applies subscriptionOnly from URL hash param `sub=`', asy
   assert.match(fnBody, /params\.has\(\s*['"]sub['"]\s*\)\s*&&\s*els\.subscriptionOnly\)\s*els\.subscriptionOnly\.checked\s*=\s*params\.get\(\s*['"]sub['"]\s*\)\s*===\s*['"]1['"]/,
     'subscriptionOnly must be applied from `sub=` hash param with exact pattern');
 });
+
+test('hideBatch defaults on and serializes only when turned off', async () => {
+  const src = await readFile(APP_JS, 'utf-8');
+  assert.match(src, /hideBatch:\s*true/, 'DEFAULTS.hideBatch must be true');
+  const serStart = src.indexOf('function serializeState()');
+  const serEnd = src.indexOf('\nfunction deserializeState', serStart);
+  const ser = src.slice(serStart, serEnd);
+  assert.match(ser, /hideBatch/, 'serializeState must mention hideBatch');
+  assert.match(ser, /params\.set\(\s*['"]batch['"]/, 'off state must set batch= hash param');
+  const fnStart = src.indexOf('function deserializeState(hash) {');
+  const fnEnd = src.indexOf('const raw =', fnStart);
+  const resetBlock = src.slice(fnStart, fnEnd);
+  assert.match(resetBlock, /els\.hideBatch\.checked\s*=\s*DEFAULTS\.hideBatch/,
+    'deserializeState must reset hideBatch to DEFAULTS');
+});
+
+test('index.html exposes the new text-page filter controls and TTFT column', async () => {
+  const html = await readFile(join(__dirname, '..', 'public', 'index.html'), 'utf-8');
+  for (const id of ['hideBatch', 'cacheOnly', 'maxBlended', 'minToks', 'hqFilter', 'popularChips']) {
+    assert.match(html, new RegExp(`id="${id}"`), `index.html must include #${id}`);
+  }
+  assert.match(html, /data-sort="ttft"/, 'TTFT must be a sortable column');
+  assert.match(html, /value="ttft:asc"/, 'mobile sort must include TTFT');
+});

@@ -55,7 +55,7 @@ Starred tools are the contest-demo minimum.
 | Workload | `set_workload` ★ | re-renders the table |
 | Workload | `apply_preset` | re-renders the table |
 | Workload | `set_cache_write` | re-renders the table |
-| Filters | `set_filters` ★ | re-renders the table |
+| Filters | `set_filters` ★ | re-renders the table (incl. hideBatch, cacheOnly, maxBlended, minToks, hq) |
 | Filters | `clear_filters` | re-renders the table (workload kept) |
 | Decide | `compare_models` ★ | updates tray; optional modal |
 | Decide | `open_detail` | opens detail modal |

@@ -1,0 +1,403 @@
+{
+  "data": [
+    {
+      "id": "custom",
+      "name": "Custom Model",
+      "display_name": "Custom Model",
+      "created": 1704067200,
+      "description": "custom provided by llmgateway",
+      "family": "llmgateway",
+      "architecture": {
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "tokenizer": "GPT"
+      },
+      "top_provider": {
+        "is_moderated": true
+      },
+      "providers": [
+        {
+          "providerId": "llmgateway",
+          "externalId": "custom",
+          "streaming": true,
+          "vision": true,
+          "cancellation": true,
+          "tools": true,
+          "parallelToolCalls": false,
+          "reasoning": false
+        }
+      ],
+      "pricing": {
+        "prompt": "0",
+        "completion": "0",
+        "image": "0",
+        "request": "0",
+        "input_cache_read": "0",
+        "input_cache_write": "0",
+        "input_cache_write_1h": "0",
+        "web_search": "0",
+        "internal_reasoning": "0"
+      },
+      "context_length": 0,
+      "supported_parameters": [
+        "temperature",
+        "max_tokens",
+        "top_p",
+        "frequency_penalty",
+        "presence_penalty"
+      ],
+      "json_output": true,
+      "structured_outputs": false,
+      "free": false
+    },
+    {
+      "id": "gpt-oss-120b",
+      "name": "GPT OSS 120B",
+      "display_name": "GPT OSS 120B",
+      "created": 1754352000,
+      "description": "gpt-oss-120b provided by groq, cerebras, nanogpt, bytedance, nebius, together-ai, azure, runware, scx-ai",
+      "family": "openai",
+      "architecture": {
+        "input_modalities": [
+          "text"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "tokenizer": "GPT"
+      },
+      "top_provider": {
+        "is_moderated": true
+      },
+      "providers": [
+        {
+          "providerId": "nanogpt",
+          "externalId": "openai/gpt-oss-120b",
+          "pricing": {
+            "prompt": "0.05e-6",
+            "completion": "0.25e-6",
+            "image": "0",
+            "request": "0",
+            "input_cache_read": "0",
+            "input_cache_write": "0",
+            "input_cache_write_1h": "0"
+          },
+          "streaming": true,
+          "vision": false,
+          "cancellation": true,
+          "tools": true,
+          "parallelToolCalls": false,
+          "reasoning": true,
+          "max_output": 32766
+        },
+        {
+          "providerId": "bytedance",
+          "externalId": "gpt-oss-120b-250805",
+          "pricing": {
+            "prompt": "0.1e-6",
+            "completion": "0.5e-6",
+            "image": "0",
+            "request": "0",
+            "input_cache_read": "0.02e-6",
+            "input_cache_write": "0",
+            "input_cache_write_1h": "0"
+          },
+          "streaming": true,
+          "vision": false,
+          "cancellation": true,
+          "tools": true,
+          "parallelToolCalls": false,
+          "reasoning": true,
+          "max_output": 32000
+        }
+      ],
+      "pricing": {
+        "prompt": "0.032e-6",
+        "completion": "0.14e-6",
+        "image": "0",
+        "request": "0",
+        "input_cache_read": "0.032e-6",
+        "input_cache_write": "0",
+        "input_cache_write_1h": "0",
+        "web_search": "0",
+        "internal_reasoning": "0"
+      },
+      "context_length": 131072,
+      "max_output": 32000,
+      "supported_parameters": [
+        "temperature",
+        "max_tokens",
+        "top_p",
+        "response_format",
+        "tools",
+        "tool_choice",
+        "reasoning"
+      ],
+      "json_output": true,
+      "structured_outputs": false,
+      "free": false
+    },
+    {
+      "id": "gemini-3-pro-image",
+      "name": "Gemini 3 Pro Image",
+      "display_name": "Gemini 3 Pro Image",
+      "aliases": [
+        "nano banana pro"
+      ],
+      "created": 1779926400,
+      "description": "gemini-3-pro-image provided by google-ai-studio, glacier, iceberg, google-vertex, quartz",
+      "family": "google",
+      "architecture": {
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text",
+          "image"
+        ],
+        "tokenizer": "GPT"
+      },
+      "top_provider": {
+        "is_moderated": true
+      },
+      "providers": [
+        {
+          "providerId": "google-ai-studio",
+          "externalId": "gemini-3-pro-image",
+          "pricing": {
+            "prompt": "2e-6",
+            "completion": "12e-6",
+            "image": "2e-6",
+            "request": "0",
+            "input_cache_read": "0",
+            "input_cache_write": "0",
+            "input_cache_write_1h": "0"
+          },
+          "streaming": true,
+          "vision": true,
+          "cancellation": true,
+          "tools": false,
+          "parallelToolCalls": false,
+          "reasoning": false,
+          "max_output": 32768
+        },
+        {
+          "providerId": "glacier",
+          "externalId": "gemini-3-pro-image-preview",
+          "pricing": {
+            "prompt": "2e-6",
+            "completion": "12e-6",
+            "image": "2e-6",
+            "request": "0",
+            "input_cache_read": "0.2e-6",
+            "input_cache_write": "0",
+            "input_cache_write_1h": "0"
+          },
+          "streaming": true,
+          "vision": true,
+          "cancellation": true,
+          "tools": false,
+          "parallelToolCalls": false,
+          "reasoning": false,
+          "max_output": 32768
+        },
+        {
+          "providerId": "iceberg",
+          "externalId": "gemini-3-pro-image-preview",
+          "pricing": {
+            "prompt": "2e-6",
+            "completion": "12e-6",
+            "image": "2e-6",
+            "request": "0",
+            "input_cache_read": "0.2e-6",
+            "input_cache_write": "0",
+            "input_cache_write_1h": "0"
+          },
+          "streaming": true,
+          "vision": true,
+          "cancellation": true,
+          "tools": false,
+          "parallelToolCalls": false,
+          "reasoning": false,
+          "max_output": 32768
+        },
+        {
+          "providerId": "google-vertex",
+          "externalId": "gemini-3-pro-image",
+          "pricing": {
+            "prompt": "2e-6",
+            "completion": "12e-6",
+            "image": "2e-6",
+            "request": "0",
+            "input_cache_read": "0",
+            "input_cache_write": "0",
+            "input_cache_write_1h": "0"
+          },
+          "streaming": true,
+          "vision": true,
+          "cancellation": true,
+          "tools": false,
+          "parallelToolCalls": false,
+          "reasoning": false,
+          "max_output": 32768
+        },
+        {
+          "providerId": "quartz",
+          "externalId": "gemini-3-pro-image",
+          "pricing": {
+            "prompt": "2e-6",
+            "completion": "12e-6",
+            "image": "2e-6",
+            "request": "0",
+            "input_cache_read": "0",
+            "input_cache_write": "0",
+            "input_cache_write_1h": "0"
+          },
+          "streaming": true,
+          "vision": true,
+          "cancellation": true,
+          "tools": false,
+          "parallelToolCalls": false,
+          "reasoning": false,
+          "max_output": 32768
+        }
+      ],
+      "pricing": {
+        "prompt": "2e-6",
+        "completion": "12e-6",
+        "image": "2e-6",
+        "request": "0",
+        "input_cache_read": "0",
+        "input_cache_write": "0",
+        "input_cache_write_1h": "0",
+        "web_search": "0",
+        "internal_reasoning": "0"
+      },
+      "context_length": 65536,
+      "max_output": 32768,
+      "supported_parameters": [
+        "temperature",
+        "max_tokens",
+        "top_p",
+        "frequency_penalty",
+        "presence_penalty",
+        "response_format",
+        "tools",
+        "tool_choice"
+      ],
+      "json_output": true,
+      "structured_outputs": true,
+      "free": false
+    },
+    {
+      "id": "glm-5.3-flash",
+      "name": "GLM-5.3 Flash",
+      "display_name": "GLM-5.3 Flash",
+      "created": 1787702400,
+      "description": "glm-5.3-flash provided by zai, scx-ai-gp, runware",
+      "family": "zai",
+      "architecture": {
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "tokenizer": "GPT"
+      },
+      "top_provider": {
+        "is_moderated": true
+      },
+      "providers": [
+        {
+          "providerId": "zai",
+          "externalId": "glm-5.3-flash",
+          "pricing": {
+            "prompt": "0.15e-6",
+            "completion": "0.5e-6",
+            "image": "0",
+            "request": "0",
+            "input_cache_read": "0.03e-6",
+            "input_cache_write": "0",
+            "input_cache_write_1h": "0"
+          },
+          "streaming": true,
+          "vision": true,
+          "cancellation": true,
+          "tools": true,
+          "parallelToolCalls": false,
+          "reasoning": true,
+          "reasoning_efforts": [
+            "low",
+            "high",
+            "max"
+          ],
+          "max_output": 131072
+        },
+        {
+          "providerId": "runware",
+          "externalId": "zai:glm@5.3-flash",
+          "pricing": {
+            "prompt": "0.15e-6",
+            "completion": "0.5e-6",
+            "image": "0",
+            "request": "0",
+            "input_cache_read": "0.03e-6",
+            "input_cache_write": "0",
+            "input_cache_write_1h": "0"
+          },
+          "streaming": true,
+          "vision": true,
+          "cancellation": false,
+          "tools": true,
+          "parallelToolCalls": false,
+          "reasoning": true,
+          "reasoning_efforts": [
+            "none",
+            "minimal",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "max_output": 131072
+        }
+      ],
+      "pricing": {
+        "prompt": "0.13e-6",
+        "completion": "0.4e-6",
+        "image": "0",
+        "request": "0",
+        "input_cache_read": "0.024e-6",
+        "input_cache_write": "0",
+        "input_cache_write_1h": "0",
+        "web_search": "0",
+        "internal_reasoning": "0"
+      },
+      "context_length": 1048576,
+      "max_output": 131072,
+      "supported_parameters": [
+        "temperature",
+        "max_tokens",
+        "top_p",
+        "frequency_penalty",
+        "presence_penalty",
+        "response_format",
+        "tools",
+        "tool_choice",
+        "reasoning"
+      ],
+      "json_output": true,
+      "structured_outputs": true,
+      "free": false
+    }
+  ]
+}

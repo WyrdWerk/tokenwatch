@@ -24,7 +24,7 @@ const state = {
   currentRows: null,
   perfData: null,         // loaded from performance.json
   showAllRows: false,    // when false, flat unfiltered table caps at ROW_CAP rows
-  colOrder: null,         // array of the 9 draggable column keys in display order (null = default)
+  colOrder: null,         // array of the 10 draggable column keys in display order (null = default)
   colHidden: null,        // Set of hidden column keys (null = none hidden)
 };
 
@@ -33,7 +33,7 @@ const state = {
 // head slice keeps detail-modal/compare indices correct for visible rows.
 const ROW_CAP = 250;
 
-// The 9 draggable/hideable columns (between the locked # and Total Cost columns).
+// The 10 draggable/hideable columns (between the locked # and Total Cost columns).
 // key → { label (popover + hash), dataLabel (td[data-label] match) }.
 const COLUMN_KEYS = [
   { key: 'org',        label: 'Org',          dataLabel: 'Org' },
@@ -44,6 +44,7 @@ const COLUMN_KEYS = [
   { key: 'cache_read', label: 'Cache $/M',    dataLabel: 'Cache $/M' },
   { key: 'context',    label: 'Context',      dataLabel: 'Context' },
   { key: 'speed',      label: 'Speed',        dataLabel: 'Speed' },
+  { key: 'ttft',       label: 'TTFT',         dataLabel: 'TTFT' },
   { key: 'blended',    label: 'Blended $/M',  dataLabel: 'Blended $/M' },
 ];
 const DEFAULT_COL_ORDER = COLUMN_KEYS.map((c) => c.key);
@@ -68,6 +69,12 @@ const els = {
   promoOnly: $('promoOnly'),
   zdrOnly: $('zdrOnly'),
   subscriptionOnly: $('subscriptionOnly'),
+  hideBatch: $('hideBatch'),
+  cacheOnly: $('cacheOnly'),
+  maxBlended: $('maxBlended'),
+  minToks: $('minToks'),
+  hqFilter: $('hqFilter'),
+  popularChips: $('popularChips'),
   minIntelligence: $('minIntelligence'),
   modePerRequest: $('modePerRequest'),
   modeMonthly: $('modeMonthly'),
@@ -119,10 +126,26 @@ const DEFAULTS = {
   promoOnly: false,
   zdrOnly: false,
   subscriptionOnly: false,
+  hideBatch: true,
+  cacheOnly: false,
+  maxBlended: 0,
+  minToks: 0,
+  hq: '',
   minIntelligence: 0,
   sortBy: 'cost',
   sortDir: 'asc',
   groupBy: 'none',
+};
+
+/** providers_meta slugs that differ from catalog provider keys. */
+const HQ_SLUG_ALIASES = {
+  google: 'google-ai-studio',
+  amazon: 'amazon-bedrock',
+  atlascloud: 'atlas-cloud',
+  moonshot: 'moonshotai',
+  'mancer-2': 'mancer',
+  arcee: 'arcee-ai',
+  'claude-platform-on-aws': 'amazon-bedrock',
 };
 
 /** Named mix presets — same objects the preset buttons apply. WebMCP list_presets / apply_preset read this; do not fork a second table. */
@@ -174,6 +197,14 @@ function serializeState() {
   const minInt = parseInt(els.minIntelligence?.value, 10) || 0;
   if (minInt !== DEFAULTS.minIntelligence) params.set('minIntelligence', String(minInt));
   if (els.promoOnly.checked) params.set('promo', '1');
+  if (els.hideBatch && els.hideBatch.checked !== DEFAULTS.hideBatch) params.set('batch', '1');
+  if (els.cacheOnly?.checked) params.set('cacheOnly', '1');
+  const maxBlended = parseFloat(els.maxBlended?.value);
+  if (Number.isFinite(maxBlended) && maxBlended > 0) params.set('maxBlended', String(maxBlended));
+  const minToks = parseFloat(els.minToks?.value);
+  if (Number.isFinite(minToks) && minToks > 0) params.set('minToks', String(minToks));
+  const hq = els.hqFilter?.value || '';
+  if (hq) params.set('hq', hq);
 
   if (state.sortBy !== DEFAULTS.sortBy || state.sortDir !== DEFAULTS.sortDir) {
     params.set('sort', `${state.sortBy}:${state.sortDir}`);
@@ -215,6 +246,11 @@ function deserializeState(hash) {
   els.modelSearch.value = DEFAULTS.modelSearch;
   els.promoOnly.checked = DEFAULTS.promoOnly;
   if (els.subscriptionOnly) els.subscriptionOnly.checked = DEFAULTS.subscriptionOnly;
+  if (els.hideBatch) els.hideBatch.checked = DEFAULTS.hideBatch;
+  if (els.cacheOnly) els.cacheOnly.checked = DEFAULTS.cacheOnly;
+  if (els.maxBlended) els.maxBlended.value = DEFAULTS.maxBlended || '';
+  if (els.minToks) els.minToks.value = DEFAULTS.minToks || '';
+  if (els.hqFilter) els.hqFilter.value = DEFAULTS.hq;
   if (els.showOrg) { els.showOrg.checked = false; document.getElementById('resultsTable').classList.add('hide-org'); }
   state.sortBy = DEFAULTS.sortBy;
   state.sortDir = DEFAULTS.sortDir;
@@ -251,6 +287,11 @@ function deserializeState(hash) {
   if (params.has('zdr') && els.zdrOnly) els.zdrOnly.checked = params.get('zdr') === '1';
   if (params.has('sub') && els.subscriptionOnly) els.subscriptionOnly.checked = params.get('sub') === '1';
   if (params.has('minIntelligence')) els.minIntelligence.value = params.get('minIntelligence');
+  if (els.hideBatch) els.hideBatch.checked = params.get('batch') === '1' ? false : DEFAULTS.hideBatch;
+  if (params.has('cacheOnly') && els.cacheOnly) els.cacheOnly.checked = params.get('cacheOnly') === '1';
+  if (params.has('maxBlended') && els.maxBlended) els.maxBlended.value = params.get('maxBlended');
+  if (params.has('minToks') && els.minToks) els.minToks.value = params.get('minToks');
+  if (params.has('hq') && els.hqFilter) els.hqFilter.value = params.get('hq');
   if (params.has('sort')) {
     const [by, dir] = params.get('sort').split(':');
     if (by) state.sortBy = by;
@@ -299,7 +340,7 @@ async function init() {
     const res = await fetch('pricing.json');
     state.data = await res.json();
   } catch (err) {
-    els.resultsBody.innerHTML = `<tr><td colspan="${els.showOrg?.checked ? 11 : 10}" class="empty error-state">
+    els.resultsBody.innerHTML = `<tr><td colspan="${els.showOrg?.checked ? 12 : 11}" class="empty error-state">
       <p>Could not load pricing data.</p>
       <p class="error-hint">Run <code>node scripts/fetch-pricing.mjs</code> if you're developing locally.</p>
       <button type="button" class="retry-btn" onclick="location.reload()">Retry</button>
@@ -480,6 +521,19 @@ function attachListeners() {
   if (els.zdrOnly) els.zdrOnly.addEventListener('change', onFilterChange);
   if (els.minIntelligence) els.minIntelligence.addEventListener('input', onFilterChangeDebounced);
   if (els.subscriptionOnly) els.subscriptionOnly.addEventListener('change', onFilterChange);
+  if (els.hideBatch) els.hideBatch.addEventListener('change', onFilterChange);
+  if (els.cacheOnly) els.cacheOnly.addEventListener('change', onFilterChange);
+  if (els.maxBlended) els.maxBlended.addEventListener('input', onFilterChangeDebounced);
+  if (els.minToks) els.minToks.addEventListener('input', onFilterChangeDebounced);
+  if (els.hqFilter) els.hqFilter.addEventListener('change', onFilterChange);
+  els.popularChips?.addEventListener('click', (e) => {
+    const chip = e.target.closest('.popular-chip');
+    if (!chip) return;
+    const model = chip.dataset.model || '';
+    els.modelSearch.value = model;
+    state.showAllRows = false;
+    computeAndRender();
+  });
   els.groupBy.addEventListener('change', onFilterChange);
   els.showOrg?.addEventListener('change', () => {
     document.getElementById('resultsTable').classList.toggle('hide-org', !els.showOrg.checked);
@@ -1106,6 +1160,11 @@ function showCompareModal() {
         if (tps == null) return '<span class="missing">—</span>';
         return `${Math.round(tps * 10) / 10} tps`;
       }, getRaw: m => getPerfData({ model: m })?.throughput?.p50 ?? null, bestHigh: true },
+    { label: 'TTFT', getValue: m => {
+        const ms = getPerfData({ model: m })?.latency?.p50;
+        if (ms == null) return '<span class="missing">—</span>';
+        return `${fmtTtftSeconds(ms)} s`;
+      }, getRaw: m => getPerfData({ model: m })?.latency?.p50 ?? null, isCost: true },
     { label: 'Blended $/M', getValue: m => {
         const b = blendedCostFor(m.pricing, tokens);
         return b != null ? fmtPrice(b) : '<span class="missing">—</span>';
@@ -1341,6 +1400,11 @@ function matchingOfferings() {
   const promoOnly = els.promoOnly.checked;
   const zdrOnly = els.zdrOnly?.checked;
   const subscriptionOnly = els.subscriptionOnly?.checked;
+  const hideBatch = els.hideBatch ? els.hideBatch.checked : DEFAULTS.hideBatch;
+  const cacheOnly = !!els.cacheOnly?.checked;
+  const maxBlended = parseFloat(els.maxBlended?.value);
+  const minToks = parseFloat(els.minToks?.value);
+  const hq = (els.hqFilter?.value || '').trim();
   const minIntelligence = els.minIntelligence ? (parseInt(els.minIntelligence.value, 10) || 0) : 0;
   return state.data.models.filter((m) => {
     if (provSearch) {
@@ -1361,6 +1425,24 @@ function matchingOfferings() {
     if (subscriptionOnly && !m.subscription) return false;
     if (promoOnly && !(m.discount > 0)) return false;
     if (minIntelligence && !(m.benchmarks?.intelligence_index != null && m.benchmarks.intelligence_index >= minIntelligence)) return false;
+    if (hideBatch && isBatchOrFreeId(m.id)) return false;
+    if (cacheOnly && m.pricing?.cache_read == null) return false;
+    if (Number.isFinite(maxBlended) && maxBlended > 0) {
+      const blended = blendedCostFor(m.pricing, getTokens());
+      if (blended == null || blended > maxBlended) return false;
+    }
+    if (Number.isFinite(minToks) && minToks > 0) {
+      const tps = getPerfData({ model: m })?.throughput?.p50;
+      if (tps == null || tps < minToks) return false;
+    }
+    if (hq) {
+      const country = providerHq(m.provider);
+      if (hq === 'unknown') {
+        if (country) return false;
+      } else if (country !== hq) {
+        return false;
+      }
+    }
     return true;
   });
 }
@@ -1410,7 +1492,21 @@ function computeAndRender() {
   if (promoOnly) title += ' (promos only)';
   if (subscriptionOnly) title += ' (subscription only)';
   if (minIntelligence) title += ` (IQ ≥ ${minIntelligence})`;
+  if (els.hideBatch && !els.hideBatch.checked) title += ' (incl. batch)';
+  if (els.cacheOnly?.checked) title += ' (cache pricing)';
+  const maxBlendedTitle = parseFloat(els.maxBlended?.value);
+  if (Number.isFinite(maxBlendedTitle) && maxBlendedTitle > 0) title += ` (blended ≤ $${maxBlendedTitle}/M)`;
+  const minToksTitle = parseFloat(els.minToks?.value);
+  if (Number.isFinite(minToksTitle) && minToksTitle > 0) title += ` (≥ ${minToksTitle} tok/s)`;
+  const hqTitle = (els.hqFilter?.value || '').trim();
+  if (hqTitle) title += hqTitle === 'unknown' ? ' (HQ unknown)' : ` (HQ ${hqTitle})`;
   els.resultsTitle.textContent = title;
+  if (els.popularChips) {
+    const q = (els.modelSearch.value || '').trim().toLowerCase();
+    els.popularChips.querySelectorAll('.popular-chip').forEach((chip) => {
+      chip.classList.toggle('active', !!q && chip.dataset.model === q);
+    });
+  }
 
   // Compute the per-row headline value (cost $ in forward mode, affordable
   // tokens in millions in budget mode). Both are positive; sort/comparator
@@ -1500,6 +1596,7 @@ function sortValue(r, sortBy) {
     case 'cache_read': return r.model.pricing.cache_read;
     case 'context':    return r.model.context_length;
     case 'speed':      return getPerfData(r)?.throughput?.p50 ?? null;
+    case 'ttft':       return getPerfData(r)?.latency?.p50 ?? null;
     case 'blended':    return r.blended;
     case 'cost':
     default:           return r.cost;
@@ -1534,6 +1631,7 @@ function rankingMetric() {
     case 'cache_read': label = 'cache-read price'; break;
     case 'context':    label = 'context window'; break;
     case 'speed':      label = 'throughput'; break;
+    case 'ttft':       label = 'time to first token'; break;
     case 'blended':    label = 'blended rate'; break;
     case 'cost':
     default:           label = state.computeBy === 'budget' ? 'affordable tokens' : (state.costMode === 'monthly' ? 'monthly cost' : 'session cost'); break;
@@ -1550,6 +1648,7 @@ function formatRankingValue(value, by) {
   }
   if (by === 'blended' || ['input', 'output', 'cache_read'].includes(by)) return `$${roundMoney(value)}/M`;
   if (by === 'speed') return `${roundMoney(value)} tok/s`;
+  if (by === 'ttft') return `${fmtTtftSeconds(value)} s`;
   if (by === 'context') return `${Number(value).toLocaleString()} tokens`;
   return String(value);
 }
@@ -1592,8 +1691,32 @@ function providerMetaHtml(providerKey) {
 /** Shared perf-data lookup — used by renderSpeedCell and sortRows. */
 function getPerfData(r) {
   if (!state.perfData) return null;
-  const key = canonicalModelId(r.model.id) + '|' + r.model.provider;
+  const model = r.model || r;
+  const key = canonicalModelId(model.id) + '|' + model.provider;
   return state.perfData[key] || null;
+}
+
+function isBatchOrFreeId(id) {
+  const s = String(id || '').toLowerCase();
+  return s.includes(':batch') || s.includes(':free') || s.endsWith('-batch');
+}
+
+function providerHq(providerKey) {
+  const meta = state.data?.providers_meta || {};
+  const slug = meta[providerKey] ? providerKey : (HQ_SLUG_ALIASES[providerKey] || providerKey);
+  return meta[slug]?.headquarters || null;
+}
+
+/** Latency p50 is stored in milliseconds; the table displays seconds. */
+function fmtTtftSeconds(ms) {
+  if (ms == null || !Number.isFinite(ms)) return null;
+  const sec = ms / 1000;
+  return Math.round(sec * 100) / 100;
+}
+
+function ttftP50Seconds(r) {
+  const ms = getPerfData(r)?.latency?.p50;
+  return ms == null ? null : fmtTtftSeconds(ms);
 }
 
 function renderProviderCell(r) {
@@ -1604,8 +1727,7 @@ function renderProviderCell(r) {
   }
 
 /** Render the Speed column cell — throughput only (higher = faster).
- *  Latency (ms, lower = better) is shown in the detail modal, not the table,
- *  to avoid mixing opposite-direction metrics in one column. */
+ *  TTFT is a separate column (seconds, lower = faster). */
 function renderSpeedCell(r) {
     const perf = getPerfData(r);
     const tps = perf?.throughput?.p50;
@@ -1614,6 +1736,17 @@ function renderSpeedCell(r) {
     const r1 = (v) => v != null ? Math.round(v * 10) / 10 : '—';
     const title = `Throughput p50/p75/p90/p99: ${r1(t.p50)}/${r1(t.p75)}/${r1(t.p90)}/${r1(t.p99)} tps`;
     return '<span class="perf-pill" title="' + esc(title) + '">⚡' + esc(String(r1(tps))) + 'tps</span>';
+  }
+
+function renderTtftCell(r) {
+    const perf = getPerfData(r);
+    const ms = perf?.latency?.p50;
+    if (ms == null) return '<span class="missing">—</span>';
+    const sec = fmtTtftSeconds(ms);
+    const l = perf.latency;
+    const r1 = (v) => v != null ? fmtTtftSeconds(v) : '—';
+    const title = `TTFT p50/p75/p90/p99: ${r1(l.p50)}/${r1(l.p75)}/${r1(l.p90)}/${r1(l.p99)} s`;
+    return '<span class="perf-pill" title="' + esc(title) + '">' + esc(String(sec)) + 's</span>';
   }
 
 function globalBestValue(rows) {
@@ -1657,6 +1790,7 @@ function renderModelRow(r, rank, groupKey, cheapest) {
     <td class="num" data-label="Cache $/M">${fmtPrice(p.cache_read)} / ${fmtPrice(p.cache_write)}</td>
     <td class="num" data-label="Context">${fmtContext(r.model.context_length)}</td>
     <td class="num speed-cell" data-label="Speed">${renderSpeedCell(r)}</td>
+    <td class="num ttft-cell" data-label="TTFT">${renderTtftCell(r)}</td>
     <td class="num" data-label="Blended $/M">${r.blended != null ? fmtPrice(r.blended) : '<span class="missing">—</span>'}</td>
     <td class="num cost" data-label="${esc(els.costColumnHeader.textContent)}">${state.computeBy === 'budget' ? fmtAffordability(r.cost) : fmtCost(r.cost)}</td>
   </tr>`;
@@ -1675,7 +1809,7 @@ function renderFlatTable(rows, tokens) {
     })
     .join('');
   if (capped) {
-    const colCount = els.showOrg?.checked ? 11 : 10;
+    const colCount = els.showOrg?.checked ? 12 : 11;
     html += `<tr class="show-all-row"><td colspan="${colCount}">
       <button type="button" id="showAllRows">Show all ${rows.length} models</button>
     </td></tr>`;
@@ -1712,7 +1846,7 @@ function renderGroupedTable(rows, tokens, groupBy) {
     const bestLabel = groupBest !== null
       ? (budgetMode ? `up to ${fmtAffordability(groupBest)}` : `from ${fmtCost(groupBest)}`)
       : '';
-    const colCount = els.showOrg?.checked ? 11 : 10;
+    const colCount = els.showOrg?.checked ? 12 : 11;
     html += `<tr class="group-header" data-group="${esc(key)}">
       <td colspan="${colCount}">
         <span class="collapse-arrow">▼</span>
@@ -1899,7 +2033,7 @@ function initColumnDrag() {
 
 function renderTable(rows, tokens) {
   if (rows.length === 0) {
-    const colCount = els.showOrg?.checked ? 11 : 10;
+    const colCount = els.showOrg?.checked ? 12 : 11;
     els.resultsBody.innerHTML = `<tr><td colspan="${colCount}" class="empty">No offerings match your criteria. Some providers may not support the token types you entered.</td></tr>`;
     return;
   }
@@ -1920,7 +2054,7 @@ function exportCsv() {
 
   const headers = [
     'Rank', 'Org', 'Provider', 'Model', 'Input $/M', 'Output $/M',
-    'Cache Read $/M', 'Cache Write $/M', 'Context', 'Speed (tps p50)',
+    'Cache Read $/M', 'Cache Write $/M', 'Context', 'Speed (tps p50)', 'TTFT (s p50)',
     'Blended $/M', state.computeBy === 'budget' ? 'Affordable (M tokens)' : 'Total Cost',
     'ZDR', 'Subscription', 'Discount',
   ];
@@ -1953,6 +2087,7 @@ function exportCsv() {
       p.cache_write ?? '',
       m.context_length ?? '',
       tps ?? '',
+      ttftP50Seconds(r) ?? '',
       r.blended ?? '',
       headline,
       m.zdr ? 'yes' : 'no',
@@ -2011,6 +2146,7 @@ function snapshotRow(r, rank) {
     blended: roundMoney(r.blended),
     zdr: !!m.zdr,
     speedP50: getPerfData(r)?.throughput?.p50 ?? null,
+    ttftP50: ttftP50Seconds(r),
   };
 }
 
@@ -2039,6 +2175,11 @@ function getView(input) {
       promo: !!els.promoOnly?.checked,
       groupBy: els.groupBy?.value || 'none',
       minIntelligence: els.minIntelligence ? (parseInt(els.minIntelligence.value, 10) || 0) : 0,
+      hideBatch: els.hideBatch ? !!els.hideBatch.checked : DEFAULTS.hideBatch,
+      cacheOnly: !!els.cacheOnly?.checked,
+      maxBlended: parseFloat(els.maxBlended?.value) || 0,
+      minToks: parseFloat(els.minToks?.value) || 0,
+      hq: els.hqFilter?.value || '',
     },
     sort: {
       by: state.sortBy,
@@ -2079,6 +2220,7 @@ function getModel(input) {
     cost: roundMoney(r.cost),
     blended: roundMoney(r.blended),
     speedP50: getPerfData(r)?.throughput?.p50 ?? null,
+    ttftP50: ttftP50Seconds(r),
   };
 }
 
@@ -2233,7 +2375,7 @@ function applyPresetFromCatalog(name) {
   return getView();
 }
 
-const SORT_COLUMNS = ['org', 'provider', 'model', 'input', 'output', 'cache_read', 'context', 'speed', 'blended', 'cost'];
+const SORT_COLUMNS = ['org', 'provider', 'model', 'input', 'output', 'cache_read', 'context', 'speed', 'ttft', 'blended', 'cost'];
 
 function setSort(input) {
   input = input || {};
@@ -2287,6 +2429,21 @@ function setFilters(input) {
     if (!Number.isFinite(n) || n < 0) return { error: 'minIntelligence must be a non-negative integer.' };
     els.minIntelligence.value = n;
   }
+  if (input.hideBatch != null && els.hideBatch) els.hideBatch.checked = !!input.hideBatch;
+  if (input.cacheOnly != null && els.cacheOnly) els.cacheOnly.checked = !!input.cacheOnly;
+  if (input.maxBlended != null) {
+    const n = Number(input.maxBlended);
+    if (!Number.isFinite(n) || n < 0) return { error: 'maxBlended must be a non-negative number ($/M).' };
+    if (els.maxBlended) els.maxBlended.value = n > 0 ? n : '';
+  }
+  if (input.minToks != null) {
+    const n = Number(input.minToks);
+    if (!Number.isFinite(n) || n < 0) return { error: 'minToks must be a non-negative number (tok/s).' };
+    if (els.minToks) els.minToks.value = n > 0 ? n : '';
+  }
+  if (input.hq != null && els.hqFilter) {
+    els.hqFilter.value = String(input.hq);
+  }
   state.showAllRows = false;
   computeAndRender();
   return getView();
@@ -2300,6 +2457,11 @@ function clearFilters() {
   els.promoOnly.checked = DEFAULTS.promoOnly;
   els.groupBy.value = DEFAULTS.groupBy;
   if (els.minIntelligence) els.minIntelligence.value = DEFAULTS.minIntelligence;
+  if (els.hideBatch) els.hideBatch.checked = DEFAULTS.hideBatch;
+  if (els.cacheOnly) els.cacheOnly.checked = DEFAULTS.cacheOnly;
+  if (els.maxBlended) els.maxBlended.value = DEFAULTS.maxBlended || '';
+  if (els.minToks) els.minToks.value = DEFAULTS.minToks || '';
+  if (els.hqFilter) els.hqFilter.value = DEFAULTS.hq;
   state.showAllRows = false;
   computeAndRender();
   return getView();
