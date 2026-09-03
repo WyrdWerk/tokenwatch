@@ -74,6 +74,17 @@ test('TWCatalog does not duplicate mix math: setWorkload / explainRanking call e
   assert.match(src, /function costFor\(pricing, tokens\) \{\s*return costBreakdown\(pricing, tokens\)\.total;/);
 });
 
+test('getCatalogInfo counts distinct offering providers, matching the visible catalog claim', async () => {
+  const src = await readFile(APP_JS, 'utf8');
+  const start = src.indexOf('function getCatalogInfo()');
+  const end = src.indexOf('\n}\n\nfunction setWorkload', start);
+  assert.notEqual(start, -1, 'getCatalogInfo must exist');
+  assert.notEqual(end, -1, 'getCatalogInfo boundary must exist');
+  const body = src.slice(start, end);
+  assert.match(body, /new Set\(\(state\.data\?\.models \|\| \[\]\)\.map\(\(model\) => model\.provider\)\.filter\(Boolean\)\)\.size/);
+  assert.doesNotMatch(body, /state\.data\?\.providers\.length/);
+});
+
 test('getView exposes the active sort used for top-ranked rows', async () => {
   const src = await readFile(APP_JS, 'utf8');
   const getViewStart = src.indexOf('function getView(input)');
