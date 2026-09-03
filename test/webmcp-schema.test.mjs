@@ -28,7 +28,7 @@ test('text WebMCP tool defs: 20 tools, valid names, additionalProperties false',
   const names = defs.map((d) => d.name);
   assert.deepEqual(new Set(names).size, names.length, 'tool names must be unique');
   assert.equal([...names].sort()[0], 'about_tokenwatch', 'about_tokenwatch must sort first in Chrome getTools()');
-  const oneliner = 'For operational details, call `about_tokenwatch`.';
+  const oneliner = 'For operational details, call about_tokenwatch.';
   for (const def of defs) {
     if (def.name === 'about_tokenwatch') continue;
     assert.ok(def.description.includes(oneliner), `${def.name} must point at about_tokenwatch`);
@@ -102,7 +102,7 @@ test('image and video pages expose about_tokenwatch plus get_view/set_sort tools
       assert.equal(def.inputSchema.additionalProperties, false);
       assert.equal(typeof def.annotations.readOnlyHint, 'boolean');
       if (def.name !== 'about_tokenwatch') {
-        assert.ok(def.description.includes('For operational details, call `about_tokenwatch`.'));
+        assert.ok(def.description.includes('For operational details, call about_tokenwatch.'));
       }
     }
     const html = await readFile(join(ROOT, `public/${page}.html`), 'utf8');
