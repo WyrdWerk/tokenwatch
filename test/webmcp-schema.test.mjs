@@ -20,13 +20,19 @@ function extractJsonParseBlob(src, constName) {
 const STARRED = ['get_view', 'set_workload', 'set_filters', 'compare_models', 'explain_ranking', 'get_share_url'];
 const NAME_RE = /^[A-Za-z0-9_.-]{1,128}$/;
 
-test('text WebMCP tool defs: 19 tools, valid names, additionalProperties false', async () => {
+test('text WebMCP tool defs: 20 tools, valid names, additionalProperties false', async () => {
   const src = await readFile(join(ROOT, 'public/webmcp.js'), 'utf8');
   const defs = extractJsonParseBlob(src, 'TEXT_TOOL_DEFS');
-  assert.equal(defs.length, 19, 'text page registers 19 tools');
+  assert.equal(defs.length, 20, 'text page registers 20 tools');
 
   const names = defs.map((d) => d.name);
   assert.deepEqual(new Set(names).size, names.length, 'tool names must be unique');
+  assert.equal([...names].sort()[0], 'about_tokenwatch', 'about_tokenwatch must sort first in Chrome getTools()');
+  const oneliner = 'For operational details, call `about_tokenwatch`.';
+  for (const def of defs) {
+    if (def.name === 'about_tokenwatch') continue;
+    assert.ok(def.description.includes(oneliner), `${def.name} must point at about_tokenwatch`);
+  }
   for (const name of STARRED) {
     assert.ok(names.includes(name), `starred contest tool missing: ${name}`);
   }
@@ -43,7 +49,7 @@ test('text WebMCP tool defs: 19 tools, valid names, additionalProperties false',
   }
 
   const reads = defs.filter((d) => d.annotations.readOnlyHint === true).map((d) => d.name);
-  for (const name of ['get_view', 'explain_ranking', 'get_share_url', 'get_catalog_info', 'list_presets', 'get_model']) {
+  for (const name of ['about_tokenwatch', 'get_view', 'explain_ranking', 'get_share_url', 'get_catalog_info', 'list_presets', 'get_model']) {
     assert.ok(reads.includes(name), `${name} should be readOnlyHint: true`);
   }
   for (const name of ['set_workload', 'set_sort', 'set_filters', 'compare_models', 'export_csv']) {
@@ -79,13 +85,13 @@ test('index.html loads webmcp.js after app.js; bust-cache fingerprints it', asyn
   assert.match(bust, /['"]webmcp\.js['"]/, 'bust-cache FINGERPRINT must include webmcp.js');
 });
 
-test('image and video pages expose page-specific get_view/set_sort tools', async () => {
+test('image and video pages expose about_tokenwatch plus get_view/set_sort tools', async () => {
   const src = await readFile(join(ROOT, 'public/webmcp.js'), 'utf8');
   const defs = extractJsonParseBlob(src, 'MEDIA_TOOL_DEFS');
 
   assert.deepEqual(Object.keys(defs).sort(), ['image', 'video']);
-  assert.deepEqual(defs.image.map((d) => d.name), ['get_view', 'get_catalog_info', 'set_sort']);
-  assert.deepEqual(defs.video.map((d) => d.name), ['get_view', 'get_catalog_info', 'set_sort']);
+  assert.deepEqual(defs.image.map((d) => d.name), ['about_tokenwatch', 'get_view', 'get_catalog_info', 'set_sort']);
+  assert.deepEqual(defs.video.map((d) => d.name), ['about_tokenwatch', 'get_view', 'get_catalog_info', 'set_sort']);
   assert.deepEqual(defs.image.find((d) => d.name === 'set_sort').inputSchema.properties.by.enum,
     ['org', 'model', 'cost_per_unit', 'cost']);
   assert.deepEqual(defs.video.find((d) => d.name === 'set_sort').inputSchema.properties.by.enum,
@@ -95,6 +101,9 @@ test('image and video pages expose page-specific get_view/set_sort tools', async
     for (const def of defs[page]) {
       assert.equal(def.inputSchema.additionalProperties, false);
       assert.equal(typeof def.annotations.readOnlyHint, 'boolean');
+      if (def.name !== 'about_tokenwatch') {
+        assert.ok(def.description.includes('For operational details, call `about_tokenwatch`.'));
+      }
     }
     const html = await readFile(join(ROOT, `public/${page}.html`), 'utf8');
     const appIdx = html.indexOf(`src="/${page}-app.js`);

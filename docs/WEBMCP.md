@@ -85,7 +85,7 @@ npm test                 # includes webmcp-schema + twcatalog-contract (no brows
 npm run serve            # public/ on :3000
 ```
 
-Chrome: enable the WebMCP testing flag, open a catalog page, and run `await document.modelContext.getTools()` in DevTools. The text page exposes 19 tools; image and video expose `get_view`, `get_catalog_info`, and `set_sort`. Use `set_sort` to change any visible sortable column programmatically; `get_view` reports the resulting sort.
+Chrome: enable the WebMCP testing flag, open a catalog page, and run `await document.modelContext.getTools()` in DevTools. The text page exposes 20 tools (including `about_tokenwatch`); image and video expose `about_tokenwatch`, `get_view`, `get_catalog_info`, and `set_sort`. Use `set_sort` to change any visible sortable column programmatically; `get_view` reports the resulting sort.
 
 ChatGPT: desktop app, Settings → Browser → Permissions, open the live URL, Site tools in the address bar. Luna has WebMCP disabled; Enterprise/Edu are excluded.
 
