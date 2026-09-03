@@ -14,7 +14,7 @@
     "/api/v1/": {
       "get": {
         "summary": "API metadata and endpoint directory",
-        "operationId": "getApiV1/",
+        "operationId": "getApiV1",
         "parameters": [],
         "responses": {
           "200": {
@@ -623,7 +623,7 @@
     "/api/v1/images/{id}": {
       "get": {
         "summary": "Return one image model with its pricing variants",
-        "operationId": "getApiV1ImagesId}",
+        "operationId": "getApiV1ImagesId",
         "parameters": [
           {
             "name": "id",
@@ -798,7 +798,7 @@
     "/api/v1/videos/{id}": {
       "get": {
         "summary": "Return one video model with its pricing variants",
-        "operationId": "getApiV1VideosId}",
+        "operationId": "getApiV1VideosId",
         "parameters": [
           {
             "name": "id",
