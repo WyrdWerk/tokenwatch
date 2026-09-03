@@ -35,6 +35,8 @@
 # SEO: noindex raw data files + API responses (they are data, not pages)
 /api/*
   X-Robots-Tag: noindex
+/openapi.json
+  X-Robots-Tag: noindex
 /pricing.json
   X-Robots-Tag: noindex
 /image-pricing.json

@@ -36,6 +36,7 @@ import {
   renderProviderDirectoryPage,
   renderMethodologyPage,
   renderApiDocsPage,
+  buildOpenApiDocument,
   renderFaqPage,
   renderExploreLinks,
   buildSitemap,
@@ -196,6 +197,7 @@ export async function main() {
   const providerCount = new Set(pricing.models.map((model) => model.provider)).size;
   const methodology = renderMethodologyPage({ modelCount, providerCount, generatedAt: pricing.generated_at });
   const apiDocs = renderApiDocsPage();
+  const openApi = `${JSON.stringify(buildOpenApiDocument(), null, 2)}\n`;
   const faqPage = renderFaqPage({ modelCount, providerCount });
 
   // /benchmarks crawlable snapshot — page is committed with marker sections;
@@ -228,6 +230,7 @@ export async function main() {
     writeAtomic(join(PUBLIC, 'video.html'), rendered.video),
     writeAtomic(join(PUBLIC, 'docs', 'methodology', 'index.html'), methodology),
     writeAtomic(join(PUBLIC, 'docs', 'api', 'index.html'), apiDocs),
+    writeAtomic(join(PUBLIC, 'openapi.json'), openApi),
     writeAtomic(join(PUBLIC, 'faq', 'index.html'), faqPage),
     writeAtomic(join(PUBLIC, 'benchmarks.html'), benchmarksOut),
     writeAtomic(join(PUBLIC, 'llms.txt'), buildLlmsTxt({

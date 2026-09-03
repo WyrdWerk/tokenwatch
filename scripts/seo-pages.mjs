@@ -664,7 +664,7 @@ export function renderApiDocsPage() {
   const rows = API_ENDPOINTS.map((endpoint) => `<tr><td><code>${esc(endpoint.path)}</code></td><td>${esc(endpoint.summary)}</td><td>${endpoint.params.length ? endpoint.params.map((param) => `<code>${esc(param)}</code>`).join(', ') : '—'}</td><td>${endpoint.sort.length ? endpoint.sort.map((sort) => `<code>${esc(sort)}</code>`).join(', ') : '—'}</td></tr>`).join('\n');
   const body = `    <article class="seo-prose">
       <h2>Public JSON API</h2>
-      <p>All endpoints accept GET requests and return JSON with permissive CORS headers. List endpoints paginate with <code>limit</code> and <code>offset</code>; the limit is clamped to 1–500 and defaults to 100.</p>
+      <p>All endpoints accept GET requests and return JSON with permissive CORS headers. List endpoints paginate with <code>limit</code> and <code>offset</code>; the limit is clamped to 1–500 and defaults to 100. A machine-readable <a href="/openapi.json">OpenAPI 3.1 description</a> is also available.</p>
       <div class="table-wrap"><table><caption>TokenWatch API endpoints</caption><thead><tr><th scope="col">Endpoint</th><th scope="col">Response</th><th scope="col">Query parameters</th><th scope="col">Sort values</th></tr></thead><tbody>${rows}</tbody></table></div>
       <h2>Examples</h2>
       <pre><code>curl '${SITE}/api/v1/models?provider=aster&amp;sort=input&amp;limit=20'
@@ -686,6 +686,66 @@ curl '${SITE}/api/v1/videos?provider=fal&amp;limit=25'</code></pre>
     body,
     structuredData: { '@context': 'https://schema.org', '@graph': [{ '@type': 'TechArticle', url: SITE + path, headline: 'TokenWatch API documentation', description }, breadcrumbSchema([{ name: 'Text pricing', path: '/' }, { name: 'API documentation', path }])] },
   });
+}
+
+const BOOLEAN_API_PARAMS = new Set(['cache_read', 'cache_write', 'promo', 'zdr', 'sub', 'benchmarked']);
+const INTEGER_API_PARAMS = new Set(['limit', 'offset']);
+const NUMBER_API_PARAMS = new Set(['min_context', 'min_output', 'min_intelligence', 'tokens']);
+
+function openApiParameter(name) {
+  const schema = BOOLEAN_API_PARAMS.has(name)
+    ? { type: 'boolean' }
+    : INTEGER_API_PARAMS.has(name)
+      ? { type: 'integer', minimum: name === 'limit' ? 1 : 0, maximum: name === 'limit' ? 500 : undefined }
+      : NUMBER_API_PARAMS.has(name)
+        ? { type: 'number', minimum: 0 }
+        : { type: 'string' };
+  if (schema.maximum === undefined) delete schema.maximum;
+  return {
+    name,
+    in: 'query',
+    required: false,
+    description: name === 'mix' ? 'Comma-separated input, cached-input, and output percentages.' : `Filter or control parameter: ${name}.`,
+    schema,
+  };
+}
+
+/** Build the published API contract from the endpoint metadata that powers the docs and API directory. */
+export function buildOpenApiDocument() {
+  const paths = {};
+  for (const endpoint of API_ENDPOINTS) {
+    const path = endpoint.path.replace(/:([A-Za-z][A-Za-z0-9_]*)/g, '{$1}');
+    const pathParams = [...endpoint.path.matchAll(/:([A-Za-z][A-Za-z0-9_]*)/g)].map((match) => ({
+      name: match[1],
+      in: 'path',
+      required: true,
+      description: `Canonical resource identifier: ${match[1]}.`,
+      schema: { type: 'string' },
+    }));
+    paths[path] = {
+      get: {
+        summary: endpoint.summary,
+        operationId: `get${endpoint.path.split('/').filter(Boolean).map((segment) => segment.replace(/^:/, '').replace(/^./, (char) => char.toUpperCase())).join('') || 'ApiDirectory'}`, 
+        parameters: [...pathParams, ...endpoint.params.map(openApiParameter)],
+        responses: {
+          200: { description: 'Successful JSON response.', content: { 'application/json': { schema: { type: 'object' } } } },
+          400: { description: 'Invalid request parameter or malformed model ID.', content: { 'application/json': { schema: { type: 'object' } } } },
+          404: { description: 'Unknown API route or resource.', content: { 'application/json': { schema: { type: 'object' } } } },
+          503: { description: 'A required catalog asset is unavailable.', content: { 'application/json': { schema: { type: 'object' } } } },
+        },
+      },
+    };
+  }
+  return {
+    openapi: '3.1.0',
+    info: {
+      title: 'TokenWatch Pricing API',
+      version: 'v1',
+      description: 'Read-only, public JSON API for TokenWatch text, image, video, provider, organization, and pricing catalog data.',
+    },
+    servers: [{ url: SITE }],
+    paths,
+  };
 }
 
 export function renderExploreLinks() {

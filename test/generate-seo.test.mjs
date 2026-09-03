@@ -18,6 +18,7 @@ import {
   providerSlug,
   renderProviderDirectoryPage,
   renderApiDocsPage,
+  buildOpenApiDocument,
   buildSitemap,
   buildRobots,
 } from '../scripts/seo-pages.mjs';
@@ -194,6 +195,7 @@ test('provider slug collisions fail instead of overwriting generated pages', () 
 
 test('API documentation renders from the same endpoint metadata as API discovery', () => {
   const docs = renderApiDocsPage();
+  const openApi = buildOpenApiDocument();
   const directory = endpointDirectory();
   const discoverable = API_ENDPOINTS.filter((endpoint) => endpoint.path !== '/api/v1/');
   assert.equal(directory.length, discoverable.length);
@@ -203,6 +205,14 @@ test('API documentation renders from the same endpoint metadata as API discovery
   }
   assert.match(docs, /min_intelligence/);
   assert.match(docs, /benchmarked/);
+  assert.match(docs, /href="\/openapi\.json"/);
+  assert.equal(openApi.openapi, '3.1.0');
+  assert.equal(openApi.servers[0].url, 'https://tokenwatch.wyrdwerk.com');
+  for (const endpoint of API_ENDPOINTS) {
+    const path = endpoint.path.replace(/:([A-Za-z][A-Za-z0-9_]*)/g, '{$1}');
+    assert.ok(openApi.paths[path]?.get, `missing OpenAPI operation for ${endpoint.path}`);
+    assert.match(openApi.paths[path].get.operationId, /^[A-Za-z][A-Za-z0-9]*$/, `operationId must be identifier-safe for ${endpoint.path}`);
+  }
 });
 
 test('dynamic sitemap rejects duplicates and includes generated routes', () => {

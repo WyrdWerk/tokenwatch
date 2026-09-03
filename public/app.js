@@ -2170,7 +2170,7 @@ function getCatalogInfo() {
     page: 'text',
     generated_at: state.data?.generated_at || null,
     catalogSize: state.data?.models?.length || 0,
-    providerCount: Array.isArray(state.data?.providers) ? state.data.providers.length : null,
+    providerCount: new Set((state.data?.models || []).map((model) => model.provider).filter(Boolean)).size,
     note: 'generated_at is the pricing snapshot time. Do not invent a fresher date.',
   };
 }
