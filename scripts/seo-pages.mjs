@@ -612,6 +612,7 @@ export function buildLlmsTxt({ modelCount, providerCount, imageCount, videoCount
 - [Methodology](https://tokenwatch.wyrdwerk.com/docs/methodology/): sourcing, normalization, dedup, and cost-calculation rules
 - [API docs](https://tokenwatch.wyrdwerk.com/docs/api/): queryable JSON endpoints for all catalogs
 - [FAQ](https://tokenwatch.wyrdwerk.com/faq/): pricing, image/video billing, and plain-language benchmark explainers
+- [WebMCP operating skill](https://tokenwatch.wyrdwerk.com/skill.md): how agents should operate the in-page catalog tools
 
 ## API
 

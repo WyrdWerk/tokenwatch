@@ -125,6 +125,21 @@ const DEFAULTS = {
   groupBy: 'none',
 };
 
+/** Named mix presets — same objects the preset buttons apply. WebMCP list_presets / apply_preset read this; do not fork a second table. */
+const PRESETS = {
+  agentic:        { totalTokens: 1000, inputPct: 2.5, cacheReadPct: 97, outputPct: 0.5 },
+  balanced:       { totalTokens: 1000, inputPct: 30,  cacheReadPct: 50,  outputPct: 20 },
+  'heavy-output': { totalTokens: 1000, inputPct: 10,  cacheReadPct: 0,   outputPct: 90 },
+  'no-cache':     { totalTokens: 1000, inputPct: 70,  cacheReadPct: 0,   outputPct: 30 },
+};
+
+const CATALOG_PAGES = {
+  text: '/',
+  image: '/image',
+  video: '/video',
+  benchmarks: '/benchmarks',
+};
+
 // ── URL hash state ─────────────────────────────────────────────────────────────
 
 /** Build a hash query string from current UI + sort state. Omits default values. */
@@ -299,6 +314,7 @@ async function init() {
   updateCompareTray();
   await refreshPerfData(true);
   computeAndRender();
+  publishTwCatalog();
 }
 
 /** Fetch performance.json. Fail-soft: on initial load sets {}, on refresh keeps last-good data. */
@@ -630,15 +646,11 @@ function attachListeners() {
   }
 
 function applyPreset(name) {
-  const presets = {
-    agentic:       { totalTokens: 1000, inputPct: 2.5, cacheReadPct: 97,   outputPct: 0.5 },
-    balanced:      { totalTokens: 1000, inputPct: 30,  cacheReadPct: 50,   outputPct: 20 },
-    'heavy-output': { totalTokens: 1000, inputPct: 10,  cacheReadPct: 0,    outputPct: 90 },
-    'no-cache':     { totalTokens: 1000, inputPct: 70,  cacheReadPct: 0,    outputPct: 30 },
-  };
-  const p = presets[name];
+  const p = PRESETS[name];
   if (!p) return;
-  for (const [k, v] of Object.entries(p)) els[k].value = v;
+  for (const [k, v] of Object.entries(p)) {
+    if (els[k]) els[k].value = v;
+  }
   computeAndRender();
 }
 
@@ -1192,19 +1204,27 @@ function getTokens() {
  *  - cache_read null → cached tokens charged at the INPUT rate (no cache discount)
  *  - cache_write null → cache-write component is $0 (provider doesn't charge for it)
  *  This ensures models without published cache pricing still appear in results. */
-function costFor(pricing, tokens) {
+function costBreakdown(pricing, tokens) {
   const c = (price, tok) => (price != null ? (price * tok) / 1e6 : null);
-  const inputCost = c(pricing.input, tokens.input);
-  const outputCost = c(pricing.output, tokens.output);
-  // Cache-read null → fall back to input price (model offers no cache discount)
-  const cacheReadCost = c(pricing.cache_read != null ? pricing.cache_read : pricing.input, tokens.cacheRead);
-  // Cache-write null → $0 (do NOT filter the model)
-  const cacheWriteCost = tokens.cacheWrite > 0 && pricing.cache_write != null
+  const input = c(pricing.input, tokens.input);
+  const output = c(pricing.output, tokens.output);
+  const cacheRead = c(pricing.cache_read != null ? pricing.cache_read : pricing.input, tokens.cacheRead);
+  const cacheWrite = tokens.cacheWrite > 0 && pricing.cache_write != null
     ? (pricing.cache_write * (tokens.cacheWrite / (tokens.amortizeN || 1))) / 1e6
     : 0;
-  if (tokens.input > 0 && inputCost === null) return null;
-  if (tokens.output > 0 && outputCost === null) return null;
-  return (inputCost || 0) + (outputCost || 0) + (cacheReadCost || 0) + cacheWriteCost;
+  const excluded = (tokens.input > 0 && input === null) || (tokens.output > 0 && output === null);
+  return {
+    input,
+    output,
+    cacheRead,
+    cacheWrite,
+    total: excluded ? null : (input || 0) + (output || 0) + (cacheRead || 0) + cacheWrite,
+    excluded,
+  };
+}
+
+function costFor(pricing, tokens) {
+  return costBreakdown(pricing, tokens).total;
 }
 
 /** Blended $/M: the effective per-million-token rate at the current input/cache/output mix.
@@ -1312,6 +1332,39 @@ function renderBenchmarkBox(rows) {
   bar.innerHTML = html;
 }
 
+/** Filter the catalog the same way computeAndRender does, before cost/affordability exclusion.
+ *  WebMCP explain_ranking uses this to report mix-unsupported offerings. */
+function matchingOfferings() {
+  if (!state.data) return [];
+  const provSearch = els.providerSearch.value.trim().toLowerCase();
+  const modSearch = els.modelSearch.value.trim().toLowerCase();
+  const promoOnly = els.promoOnly.checked;
+  const zdrOnly = els.zdrOnly?.checked;
+  const subscriptionOnly = els.subscriptionOnly?.checked;
+  const minIntelligence = els.minIntelligence ? (parseInt(els.minIntelligence.value, 10) || 0) : 0;
+  return state.data.models.filter((m) => {
+    if (provSearch) {
+      const provName = providerName(m.provider, m.provider_display).toLowerCase();
+      if (!provName.includes(provSearch) && !m.provider.toLowerCase().includes(provSearch)) return false;
+    }
+    if (modSearch) {
+      // Normalize spaces and hyphens to the same separator so "glm 5.2"
+      // matches "glm-5.2" — users naturally type spaces, IDs use hyphens.
+      const norm = (s) => s.toLowerCase().replace(/[\s-]+/g, ' ');
+      const q = norm(modSearch);
+      const canon = canonicalModelId(m.id);
+      const modDisplay = norm(state.modelDisplayName[canon] || canon);
+      const rawId = norm(m.id.split('/').slice(-1)[0]);
+      if (!modDisplay.includes(q) && !rawId.includes(q)) return false;
+    }
+    if (zdrOnly && !m.zdr) return false;
+    if (subscriptionOnly && !m.subscription) return false;
+    if (promoOnly && !(m.discount > 0)) return false;
+    if (minIntelligence && !(m.benchmarks?.intelligence_index != null && m.benchmarks.intelligence_index >= minIntelligence)) return false;
+    return true;
+  });
+}
+
 // ── Rendering ─────────────────────────────────────────────────────────────────
 
 function computeAndRender() {
@@ -1338,34 +1391,11 @@ function computeAndRender() {
     els.pctSum.className = 'pct-warn';
   }
 
-  // Filter offerings: AND of provider search + model search + promo filter
-  // Provider search matches against inference provider (display name or raw key)
-  // Model search matches against canonical model display name
   const promoOnly = els.promoOnly.checked;
   const zdrOnly = els.zdrOnly?.checked;
   const subscriptionOnly = els.subscriptionOnly?.checked;
   const minIntelligence = els.minIntelligence ? (parseInt(els.minIntelligence.value, 10) || 0) : 0;
-  let offerings = state.data.models.filter((m) => {
-    if (provSearch) {
-      const provName = providerName(m.provider, m.provider_display).toLowerCase();
-      if (!provName.includes(provSearch) && !m.provider.toLowerCase().includes(provSearch)) return false;
-    }
-    if (modSearch) {
-      // Normalize spaces and hyphens to the same separator so "glm 5.2"
-      // matches "glm-5.2" — users naturally type spaces, IDs use hyphens.
-      const norm = (s) => s.toLowerCase().replace(/[\s-]+/g, ' ');
-      const q = norm(modSearch);
-      const canon = canonicalModelId(m.id);
-      const modDisplay = norm(state.modelDisplayName[canon] || canon);
-      const rawId = norm(m.id.split('/').slice(-1)[0]);
-      if (!modDisplay.includes(q) && !rawId.includes(q)) return false;
-    }
-    if (zdrOnly && !m.zdr) return false;
-    if (subscriptionOnly && !m.subscription) return false;
-    if (promoOnly && !(m.discount > 0)) return false;
-    if (minIntelligence && !(m.benchmarks?.intelligence_index != null && m.benchmarks.intelligence_index >= minIntelligence)) return false;
-    return true;
-  });
+  let offerings = matchingOfferings();
 
   // Build results title
   let title = 'All models across all providers';
@@ -1460,25 +1490,29 @@ function providerName(key, display) {
 // 0.024999999999999998 → 0.025). Per-unit pricing only; aggregate cost uses fmtCost.
 
 
+function sortValue(r, sortBy) {
+  switch (sortBy) {
+    case 'org':        return orgDisplay(r.model.org).toLowerCase();
+    case 'provider':   return providerName(r.model.provider, r.model.provider_display).toLowerCase();
+    case 'model':      return r.model.name?.toLowerCase() || r.model.id.toLowerCase();
+    case 'input':      return r.model.pricing.input;
+    case 'output':     return r.model.pricing.output;
+    case 'cache_read': return r.model.pricing.cache_read;
+    case 'context':    return r.model.context_length;
+    case 'speed':      return getPerfData(r)?.throughput?.p50 ?? null;
+    case 'blended':    return r.blended;
+    case 'cost':
+    default:           return r.cost;
+  }
+}
+
 /** Sort rows by the current sort column/direction. Null values always sort to END. */
 function sortRows(rows) {
   const { sortBy, sortDir } = state;
   const dir = sortDir === 'asc' ? 1 : -1;
   rows.sort((a, b) => {
-    let va, vb;
-    switch (sortBy) {
-      case 'org':       va = orgDisplay(a.model.org).toLowerCase(); vb = orgDisplay(b.model.org).toLowerCase(); break;
-      case 'provider':  va = providerName(a.model.provider, a.model.provider_display).toLowerCase(); vb = providerName(b.model.provider, b.model.provider_display).toLowerCase(); break;
-      case 'model':     va = a.model.name?.toLowerCase() || a.model.id.toLowerCase(); vb = b.model.name?.toLowerCase() || b.model.id.toLowerCase(); break;
-      case 'input':     va = a.model.pricing.input; vb = b.model.pricing.input; break;
-      case 'output':    va = a.model.pricing.output; vb = b.model.pricing.output; break;
-      case 'cache_read':va = a.model.pricing.cache_read; vb = b.model.pricing.cache_read; break;
-      case 'context':   va = a.model.context_length; vb = b.model.context_length; break;
-      case 'speed':     va = getPerfData(a)?.throughput?.p50 ?? null; vb = getPerfData(b)?.throughput?.p50 ?? null; break;
-      case 'blended':   va = a.blended; vb = b.blended; break;
-      case 'cost':
-      default:          va = a.cost; vb = b.cost; break;
-    }
+    const va = sortValue(a, sortBy);
+    const vb = sortValue(b, sortBy);
     // Null/undefined values always sort to the END, regardless of direction
     if (va === null || va === undefined) return 1;
     if (vb === null || vb === undefined) return -1;
@@ -1486,6 +1520,38 @@ function sortRows(rows) {
     if (va > vb) return 1 * dir;
     return 0;
   });
+}
+
+function rankingMetric() {
+  const by = state.sortBy;
+  let label;
+  switch (by) {
+    case 'org':        label = 'model creator'; break;
+    case 'provider':   label = 'provider'; break;
+    case 'model':      label = 'model name'; break;
+    case 'input':      label = 'input price'; break;
+    case 'output':     label = 'output price'; break;
+    case 'cache_read': label = 'cache-read price'; break;
+    case 'context':    label = 'context window'; break;
+    case 'speed':      label = 'throughput'; break;
+    case 'blended':    label = 'blended rate'; break;
+    case 'cost':
+    default:           label = state.computeBy === 'budget' ? 'affordable tokens' : (state.costMode === 'monthly' ? 'monthly cost' : 'session cost'); break;
+  }
+  return { by, dir: state.sortDir, label };
+}
+
+function formatRankingValue(value, by) {
+  if (value === null || value === undefined) return 'no value';
+  if (by === 'cost') {
+    return state.computeBy === 'budget'
+      ? `${roundMoney(value)}M tokens`
+      : `$${roundMoney(value)} ${state.costMode === 'monthly' ? '/month' : '/session'}`;
+  }
+  if (by === 'blended' || ['input', 'output', 'cache_read'].includes(by)) return `$${roundMoney(value)}/M`;
+  if (by === 'speed') return `${roundMoney(value)} tok/s`;
+  if (by === 'context') return `${Number(value).toLocaleString()} tokens`;
+  return String(value);
 }
 
 /** Format context length for display: 1000000 → "1M", 262000 → "262K", null → "—" */
@@ -1847,10 +1913,10 @@ function renderTable(rows, tokens) {
     applyColumnLayout();
   }
 
-/** Export current results table to CSV and trigger download. */
+/** Export current results table to CSV and trigger download. Returns the filename, or null. */
 function exportCsv() {
   const rows = state.currentRows;
-  if (!rows || rows.length === 0) return;
+  if (!rows || rows.length === 0) return null;
 
   const headers = [
     'Rank', 'Org', 'Provider', 'Model', 'Input $/M', 'Output $/M',
@@ -1900,11 +1966,550 @@ function exportCsv() {
   const a = document.createElement('a');
   const stamp = new Date().toISOString().slice(0, 10);
   a.href = url;
-  a.download = `tokenwatch-${stamp}.csv`;
+  const filename = `tokenwatch-${stamp}.csv`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+  return filename;
+}
+
+// ── WebMCP façade (window.TWCatalog) ─────────────────────────────────────────
+// Site tools in public/webmcp.js call these methods. Cost math stays here —
+// never copy costFor / blendedCostFor into webmcp.js. Row identity is
+// { provider, id }, never DOM rank. Assigned only after pricing.json loads.
+
+function roundMoney(n) {
+  if (n == null || !Number.isFinite(n)) return n;
+  return Math.round(n * 1e6) / 1e6;
+}
+
+function mixWarning() {
+  const tokens = getTokens();
+  if (Math.abs(tokens.sum - 100) <= 0.5) return null;
+  return `Mix percentages sum to ${tokens.sum.toFixed(1)}% (should be 100). Ranking still uses the entered mix; the UI shows the same warning.`;
+}
+
+function findModel(provider, id) {
+  const rows = state.currentRows || [];
+  const idx = rows.findIndex((r) => r.model.provider === provider && r.model.id === id);
+  if (idx >= 0) return { model: rows[idx].model, row: rows[idx], idx, inView: true };
+  const m = (state.data?.models || []).find((x) => x.provider === provider && x.id === id);
+  return m ? { model: m, row: null, idx: -1, inView: false } : null;
+}
+
+function snapshotRow(r, rank) {
+  const m = r.model;
+  return {
+    rank,
+    provider: m.provider,
+    id: m.id,
+    name: (m.name && m.name !== m.id) ? m.name : m.id,
+    org: m.org || null,
+    cost: roundMoney(r.cost),
+    blended: roundMoney(r.blended),
+    zdr: !!m.zdr,
+    speedP50: getPerfData(r)?.throughput?.p50 ?? null,
+  };
+}
+
+function getView(input) {
+  const n = Math.min(25, Math.max(1, parseInt(input?.limit, 10) || 10));
+  const rows = state.currentRows || [];
+  const tokens = getTokens();
+  const warning = mixWarning();
+  const snapshot = {
+    page: 'text',
+    generated_at: state.data?.generated_at || null,
+    workload: {
+      computeBy: state.computeBy,
+      costMode: state.costMode,
+      totalTokensM: parseFloat(els.totalTokens.value) || 0,
+      mix: [tokens.inputPct, tokens.cacheReadPct, tokens.outputPct],
+      budget: parseFloat(els.budgetInput?.value) || 0,
+      cacheWrite: parseFloat(els.cacheWriteTokens?.value) || 0,
+      amortizeN: parseInt(els.amortizeN?.value, 10) || 100,
+    },
+    filters: {
+      provider: els.providerSearch.value.trim(),
+      model: els.modelSearch.value.trim(),
+      zdr: !!els.zdrOnly?.checked,
+      sub: !!els.subscriptionOnly?.checked,
+      promo: !!els.promoOnly?.checked,
+      groupBy: els.groupBy?.value || 'none',
+      minIntelligence: els.minIntelligence ? (parseInt(els.minIntelligence.value, 10) || 0) : 0,
+    },
+    sort: {
+      by: state.sortBy,
+      dir: state.sortDir,
+    },
+    compare: state.compareSelection.map((m) => ({ provider: m.provider, id: m.id })),
+    rowCount: rows.length,
+    top: rows.slice(0, n).map((r, i) => snapshotRow(r, i + 1)),
+    shareUrl: location.href,
+  };
+  if (warning) snapshot.warning = warning;
+  return snapshot;
+}
+
+function getModel(input) {
+  if (!input?.provider || !input?.id) return { error: 'provider and id are required (row identity, not rank).' };
+  const found = findModel(input.provider, input.id);
+  if (!found) return { error: `No offering ${input.provider} / ${input.id} in the catalog.` };
+  if (!found.inView) {
+    return { error: `${input.provider} / ${input.id} is not in the current view. Call get_view or clear_filters / set_filters first.`, inView: false };
+  }
+  const m = found.model;
+  const r = found.row;
+  return {
+    provider: m.provider,
+    id: m.id,
+    name: (m.name && m.name !== m.id) ? m.name : m.id,
+    org: m.org || null,
+    pricing: m.pricing,
+    context_length: m.context_length ?? null,
+    max_completion_tokens: m.max_completion_tokens ?? null,
+    quantization: m.quantization ?? null,
+    zdr: !!m.zdr,
+    subscription: !!m.subscription,
+    discount: m.discount || 0,
+    benchmarks: m.benchmarks || null,
+    energy: m.energy || null,
+    cost: roundMoney(r.cost),
+    blended: roundMoney(r.blended),
+    speedP50: getPerfData(r)?.throughput?.p50 ?? null,
+  };
+}
+
+function explainRanking() {
+  const rows = state.currentRows || [];
+  if (rows.length < 2) {
+    return { error: 'Need at least two ranked rows. Widen filters or set_workload, then get_view.' };
+  }
+  const tokens = getTokens();
+  const modeMultiplier = state.costMode === 'monthly' ? 30 : 1;
+  const winner = rows[0];
+  const runner = rows[1];
+  const wBreak = costBreakdown(winner.model.pricing, tokens);
+  const rBreak = costBreakdown(runner.model.pricing, tokens);
+  const matched = matchingOfferings();
+  const excluded = [];
+  for (const m of matched) {
+    if (costFor(m.pricing, tokens) == null) {
+      excluded.push({ provider: m.provider, id: m.id });
+      if (excluded.length >= 8) break;
+    }
+  }
+  const excludedCount = matched.filter((m) => costFor(m.pricing, tokens) == null).length;
+  const wName = (winner.model.name && winner.model.name !== winner.model.id) ? winner.model.name : winner.model.id;
+  const rName = (runner.model.name && runner.model.name !== runner.model.id) ? runner.model.name : runner.model.id;
+  const ranking = rankingMetric();
+  const winnerValue = sortValue(winner, ranking.by);
+  const runnerValue = sortValue(runner, ranking.by);
+  const winnerDisplay = formatRankingValue(winnerValue, ranking.by);
+  const runnerDisplay = formatRankingValue(runnerValue, ranking.by);
+  let why;
+  if (winnerValue === runnerValue) {
+    why = `#1 ${winner.model.provider}/${wName} ties #2 ${runner.model.provider}/${rName} on ${ranking.label} (${winnerDisplay}); the current row order is a tie.`;
+  } else if (['org', 'provider', 'model'].includes(ranking.by)) {
+    why = `#1 ${winner.model.provider}/${wName} appears first alphabetically by ${ranking.label} (${winnerDisplay} vs ${runnerDisplay} for #2 ${runner.model.provider}/${rName}).`;
+  } else {
+    const better = ranking.dir === 'asc' ? 'lower' : 'higher';
+    why = `#1 ${winner.model.provider}/${wName} ranks first on ${ranking.label} (${winnerDisplay} vs ${runnerDisplay} for #2 ${runner.model.provider}/${rName}); ${better} is better for this sort.`;
+  }
+  return {
+    metric: ranking.label,
+    sort: ranking,
+    mix: [tokens.inputPct, tokens.cacheReadPct, tokens.outputPct],
+    costMode: state.costMode,
+    computeBy: state.computeBy,
+    winner: { ...snapshotRow(winner, 1), rankingValue: winnerValue, rankingValueFormatted: winnerDisplay, components: {
+      input: roundMoney(wBreak.input),
+      output: roundMoney(wBreak.output),
+      cacheRead: roundMoney(wBreak.cacheRead),
+      cacheWrite: roundMoney(wBreak.cacheWrite),
+      sessionTotal: roundMoney(wBreak.total),
+      displayed: roundMoney(winner.cost),
+      modeMultiplier,
+    } },
+    runnerUp: { ...snapshotRow(runner, 2), rankingValue: runnerValue, rankingValueFormatted: runnerDisplay, components: {
+      input: roundMoney(rBreak.input),
+      output: roundMoney(rBreak.output),
+      cacheRead: roundMoney(rBreak.cacheRead),
+      cacheWrite: roundMoney(rBreak.cacheWrite),
+      sessionTotal: roundMoney(rBreak.total),
+      displayed: roundMoney(runner.cost),
+      modeMultiplier,
+    } },
+    why,
+    excludedForUnsupportedMix: excludedCount,
+    excludedSample: excluded,
+    warning: mixWarning() || undefined,
+  };
+}
+
+function listPresets() {
+  return {
+    presets: Object.entries(PRESETS).map(([name, p]) => ({
+      name,
+      totalTokensM: p.totalTokens,
+      mix: { input: p.inputPct, cache: p.cacheReadPct, output: p.outputPct },
+    })),
+    note: 'agentic is the default (cache-heavy). apply_preset re-renders the table.',
+  };
+}
+
+function getShareUrl() {
+  updateHash();
+  return { shareUrl: location.href, note: 'This hash URL works in any browser — ChatGPT is not required.' };
+}
+
+function getCatalogInfo() {
+  return {
+    page: 'text',
+    generated_at: state.data?.generated_at || null,
+    catalogSize: state.data?.models?.length || 0,
+    providerCount: Array.isArray(state.data?.providers) ? state.data.providers.length : null,
+    note: 'generated_at is the pricing snapshot time. Do not invent a fresher date.',
+  };
+}
+
+function setWorkload(input) {
+  input = input || {};
+  if (input.mix) {
+    const mixIn = Number(input.mix.input);
+    const mixCache = Number(input.mix.cache);
+    const mixOut = Number(input.mix.output);
+    if (![mixIn, mixCache, mixOut].every((n) => Number.isFinite(n))) {
+      return { error: 'mix.input, mix.cache, and mix.output must be numbers.' };
+    }
+    const sum = mixIn + mixCache + mixOut;
+    if (Math.abs(sum - 100) > 0.5) {
+      return { error: `Mix percentages must sum to 100 (±0.5). Got ${mixIn}+${mixCache}+${mixOut}=${sum}. Will not silently renormalize — adjust the mix and retry.` };
+    }
+    els.inputPct.value = mixIn;
+    els.cacheReadPct.value = mixCache;
+    els.outputPct.value = mixOut;
+  }
+  if (input.totalTokensM != null) {
+    const t = Number(input.totalTokensM);
+    if (!Number.isFinite(t) || t < 0) return { error: 'totalTokensM must be a non-negative number (millions of tokens).' };
+    els.totalTokens.value = t;
+  }
+  if (input.budget != null) {
+    const b = Number(input.budget);
+    if (!Number.isFinite(b) || b < 0) return { error: 'budget must be a non-negative number (USD).' };
+    els.budgetInput.value = b;
+  }
+  let rendered = false;
+  if (input.costMode) {
+    if (input.costMode !== 'perRequest' && input.costMode !== 'monthly') {
+      return { error: 'costMode must be "perRequest" or "monthly".' };
+    }
+    if (input.costMode !== state.costMode) {
+      setCostMode(input.costMode);
+      rendered = true;
+    }
+  }
+  if (input.computeBy) {
+    if (input.computeBy !== 'tokens' && input.computeBy !== 'budget') {
+      return { error: 'computeBy must be "tokens" or "budget".' };
+    }
+    if (input.computeBy !== state.computeBy) {
+      setComputeBy(input.computeBy);
+      rendered = true;
+    }
+  }
+  if (!rendered) computeAndRender();
+  return getView();
+}
+
+function applyPresetFromCatalog(name) {
+  if (!PRESETS[name]) {
+    return { error: `Unknown preset "${name}". Valid: agentic, balanced, heavy-output, no-cache.` };
+  }
+  applyPreset(name);
+  return getView();
+}
+
+const SORT_COLUMNS = ['org', 'provider', 'model', 'input', 'output', 'cache_read', 'context', 'speed', 'blended', 'cost'];
+
+function setSort(input) {
+  input = input || {};
+  if (!SORT_COLUMNS.includes(input.by)) {
+    return { error: `by must be one of: ${SORT_COLUMNS.join(', ')}.` };
+  }
+  if (input.dir !== 'asc' && input.dir !== 'desc') {
+    return { error: 'dir must be "asc" or "desc".' };
+  }
+  state.sortBy = input.by;
+  state.sortDir = input.dir;
+  computeAndRender();
+  return getView();
+}
+
+function setCacheWrite(input) {
+  input = input || {};
+  if (input.tokens != null) {
+    const t = Number(input.tokens);
+    if (!Number.isFinite(t) || t < 0) return { error: 'tokens must be a non-negative number (millions).' };
+    els.cacheWriteTokens.value = t;
+  }
+  if (input.amortizeN != null) {
+    const n = parseInt(input.amortizeN, 10);
+    if (!Number.isFinite(n) || n < 1) return { error: 'amortizeN must be an integer ≥ 1.' };
+    els.amortizeN.value = n;
+  }
+  computeAndRender();
+  return getView();
+}
+
+function setFilters(input) {
+  input = input || {};
+  if (input.provider != null) els.providerSearch.value = String(input.provider);
+  if (input.model != null) els.modelSearch.value = String(input.model);
+  if (input.zdr != null) {
+    if (els.zdrOnly) els.zdrOnly.checked = !!input.zdr;
+  }
+  if (input.sub != null) {
+    if (els.subscriptionOnly) els.subscriptionOnly.checked = !!input.sub;
+  }
+  if (input.promo != null) els.promoOnly.checked = !!input.promo;
+  if (input.groupBy != null) {
+    if (!['none', 'org', 'provider'].includes(input.groupBy)) {
+      return { error: 'groupBy must be none, org, or provider.' };
+    }
+    els.groupBy.value = input.groupBy;
+  }
+  if (input.minIntelligence != null) {
+    const n = parseInt(input.minIntelligence, 10);
+    if (!Number.isFinite(n) || n < 0) return { error: 'minIntelligence must be a non-negative integer.' };
+    els.minIntelligence.value = n;
+  }
+  state.showAllRows = false;
+  computeAndRender();
+  return getView();
+}
+
+function clearFilters() {
+  els.providerSearch.value = DEFAULTS.providerSearch;
+  els.modelSearch.value = DEFAULTS.modelSearch;
+  if (els.zdrOnly) els.zdrOnly.checked = DEFAULTS.zdrOnly;
+  if (els.subscriptionOnly) els.subscriptionOnly.checked = DEFAULTS.subscriptionOnly;
+  els.promoOnly.checked = DEFAULTS.promoOnly;
+  els.groupBy.value = DEFAULTS.groupBy;
+  if (els.minIntelligence) els.minIntelligence.value = DEFAULTS.minIntelligence;
+  state.showAllRows = false;
+  computeAndRender();
+  return getView();
+}
+
+function compareModels(input) {
+  input = input || {};
+  const action = input.action || 'add';
+  if (!['add', 'remove', 'clear', 'set'].includes(action)) {
+    return { error: 'action must be add, remove, clear, or set.' };
+  }
+  if (action === 'clear') {
+    clearCompare();
+    return getView();
+  }
+  const refs = Array.isArray(input.models) ? input.models : [];
+  if ((action === 'add' || action === 'set' || action === 'remove') && refs.length === 0) {
+    return { error: 'models must be a non-empty array of { provider, id }.' };
+  }
+  const missing = [];
+  const notInView = [];
+  if (action === 'set') state.compareSelection = [];
+  for (const ref of refs) {
+    if (!ref?.provider || !ref?.id) {
+      missing.push(ref);
+      continue;
+    }
+    const found = findModel(ref.provider, ref.id);
+    if (!found) {
+      missing.push(ref);
+      continue;
+    }
+    if (!found.inView) notInView.push(`${ref.provider}/${ref.id}`);
+    if (action === 'remove') {
+      const i = state.compareSelection.findIndex((m) => m.id === found.model.id && m.provider === found.model.provider);
+      if (i >= 0) state.compareSelection.splice(i, 1);
+    } else {
+      if (state.compareSelection.length >= 6) {
+        updateCompareTray();
+        computeAndRender();
+        return { error: 'Compare tray is full (max 6). Remove one first.', ...getView() };
+      }
+      if (!state.compareSelection.some((m) => m.id === found.model.id && m.provider === found.model.provider)) {
+        state.compareSelection.push(found.model);
+      }
+    }
+  }
+  updateCompareTray();
+  computeAndRender();
+  if (input.open) {
+    if (state.compareSelection.length < 2) {
+      return { error: 'Need at least 2 models to open the compare modal.', ...getView() };
+    }
+    showCompareModal();
+  }
+  const result = getView();
+  if (missing.length) result.missing = missing;
+  if (notInView.length) result.note = `Added from catalog but not in current filtered view: ${notInView.join(', ')}.`;
+  return result;
+}
+
+function openDetail(input) {
+  if (!input?.provider || !input?.id) return { error: 'provider and id are required.' };
+  const found = findModel(input.provider, input.id);
+  if (!found || !found.inView) {
+    return { error: `${input.provider} / ${input.id} is not in the current view. Row identity is { provider, id } from get_view, never a rank number.` };
+  }
+  showDetailModal(found.idx);
+  return { ok: true, opened: { provider: found.model.provider, id: found.model.id }, note: 'Opened the detail modal on the page the human is watching.' };
+}
+
+function highlightTradeoff(input) {
+  const rows = state.currentRows || [];
+  if (!rows.length) return { error: 'No rows in the current view.' };
+  const kinds = Array.isArray(input?.kinds) && input.kinds.length
+    ? input.kinds
+    : ['cheapest', 'fastest', 'zdr_cheapest'];
+  const picks = [];
+  const add = (r) => {
+    if (!r) return;
+    if (picks.some((p) => p.model.id === r.model.id && p.model.provider === r.model.provider)) return;
+    picks.push(r);
+  };
+  const finiteCost = rows.filter((r) => r.cost != null && Number.isFinite(r.cost));
+  const better = (a, b) => (state.computeBy === 'budget' ? a.cost > b.cost : a.cost < b.cost);
+  const cheapest = finiteCost.length
+    ? finiteCost.reduce((a, b) => (better(a, b) ? a : b))
+    : null;
+  const fastest = rows.reduce((best, r) => {
+    const tps = getPerfData(r)?.throughput?.p50;
+    if (tps == null) return best;
+    if (!best) return r;
+    return tps > (getPerfData(best)?.throughput?.p50 ?? -Infinity) ? r : best;
+  }, null);
+  const zdrPool = finiteCost.filter((r) => r.model.zdr);
+  const zdrCheapest = zdrPool.length
+    ? zdrPool.reduce((a, b) => (better(a, b) ? a : b))
+    : null;
+  for (const kind of kinds) {
+    if (kind === 'cheapest') add(cheapest);
+    else if (kind === 'fastest') add(fastest);
+    else if (kind === 'zdr_cheapest') add(zdrCheapest);
+  }
+  if (picks.length < 2) {
+    return { error: 'Could not find two distinct tradeoff rows (need cheapest / fastest / ZDR-cheapest with data).', kinds };
+  }
+  state.compareSelection = picks.slice(0, 6).map((r) => r.model);
+  updateCompareTray();
+  computeAndRender();
+  showCompareModal();
+  return getView();
+}
+
+function exportCsvView() {
+  const filename = exportCsv();
+  if (!filename) return { error: 'No rows to export. Broaden filters first.' };
+  return {
+    ok: true,
+    filename,
+    rowCount: state.currentRows.length,
+    triggeredDownload: true,
+    note: 'In-app browsers (including ChatGPT) may block the file download. The ranking is still on screen; use get_share_url as a portable artifact.',
+  };
+}
+
+async function snapshotCompare() {
+  if (state.compareSelection.length < 2) {
+    return { error: 'Need at least 2 models in compare. Call compare_models first.' };
+  }
+  showCompareModal();
+  const card = document.querySelector('#compareModal .compare-modal-content');
+  if (!card) return { error: 'Compare modal markup missing.' };
+  const stamp = new Date().toISOString().slice(0, 10);
+  const filename = `tokenwatch-compare-${stamp}.png`;
+  try {
+    const blob = await TW.domToPngBlob(card);
+    if (!blob || blob.size === 0) throw new Error('renderer produced an empty image');
+    TW.downloadBlob(blob, filename);
+    return {
+      ok: true,
+      filename,
+      triggeredDownload: true,
+      note: 'PNG download may be blocked inside ChatGPT. Prefer get_share_url if the file does not appear.',
+    };
+  } catch (err) {
+    return { error: err.message || String(err), note: 'PNG capture failed. Use get_share_url instead.' };
+  }
+}
+
+async function downloadCostCardFor(input) {
+  if (!input?.provider || !input?.id) return { error: 'provider and id are required.' };
+  const found = findModel(input.provider, input.id);
+  if (!found || !found.inView) {
+    return { error: `${input.provider} / ${input.id} is not in the current view.` };
+  }
+  let card = null;
+  try {
+    card = buildCostCard(found.model);
+    document.body.appendChild(card);
+    card.offsetWidth;
+    const blob = await TW.domToPngBlob(card);
+    if (!blob || blob.size === 0) throw new Error('renderer produced an empty image');
+    const filename = costCardFilename(found.model);
+    TW.downloadBlob(blob, filename);
+    return {
+      ok: true,
+      filename,
+      triggeredDownload: true,
+      note: 'PNG download may be blocked inside ChatGPT. Use get_share_url as a fallback.',
+    };
+  } catch (err) {
+    return { error: err.message || String(err) };
+  } finally {
+    if (card && card.parentNode) card.parentNode.removeChild(card);
+  }
+}
+
+function switchCatalog(page) {
+  const path = CATALOG_PAGES[page];
+  if (!path) return { error: `Unknown page "${page}". Allowlist: text, image, video, benchmarks.` };
+  const url = path === '/' ? `${location.origin}/` : `${location.origin}${path}`;
+  location.assign(url);
+  return { ok: true, navigatingTo: url, note: 'The destination page registers its own page-specific tools after load.' };
+}
+
+function publishTwCatalog() {
+  window.TWCatalog = {
+    page: 'text',
+    ready: true,
+    getView,
+    getModel,
+    explainRanking,
+    listPresets,
+    getShareUrl,
+    getCatalogInfo,
+    setWorkload,
+    applyPreset: applyPresetFromCatalog,
+    setSort,
+    setCacheWrite,
+    setFilters,
+    clearFilters,
+    compareModels,
+    openDetail,
+    highlightTradeoff,
+    exportCsv: exportCsvView,
+    snapshotCompare,
+    downloadCostCard: downloadCostCardFor,
+    switchCatalog,
+  };
+  document.dispatchEvent(new CustomEvent('tw-catalog-ready', { detail: { page: 'text' } }));
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────────

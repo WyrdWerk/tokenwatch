@@ -21,6 +21,35 @@ test('parseSingularity maps the live catalog fixture', () => {
   assert.equal(flash.max_completion_tokens, 384000);
 });
 
+
+test('parseSingularity prefers /v1/chat/completions even when /v1/responses is listed first', () => {
+  const rows = parseSingularity({
+    data: [{
+      id: 'order-test',
+      display_name: 'Order Test',
+      capabilities: [
+        {
+          endpoint: '/v1/responses',
+          context_window_tokens: 1,
+          maximum_output_tokens: 1,
+          pricing: { input_per_million_usd: 9, output_per_million_usd: 9, cached_input_per_million_usd: 9 },
+        },
+        {
+          endpoint: '/v1/chat/completions',
+          context_window_tokens: 1000,
+          maximum_output_tokens: 100,
+          pricing: { input_per_million_usd: 1, output_per_million_usd: 2, cached_input_per_million_usd: 0.1 },
+        },
+      ],
+    }],
+  });
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].pricing.input, 1);
+  assert.equal(rows[0].pricing.output, 2);
+  assert.equal(rows[0].pricing.cache_read, 0.1);
+  assert.equal(rows[0].context_length, 1000);
+});
+
 test('parseSingularity prefers /v1/chat/completions when multiple capabilities exist', () => {
   const rows = parseSingularity(FIXTURE);
   const luna = rows.find((m) => m.id === 'gpt-5.6-luna');
@@ -47,6 +76,18 @@ test('parseSingularity skips unpriced and empty payloads', () => {
   assert.deepEqual(parseSingularity({ data: [{ id: 'x', capabilities: [] }] }), []);
   assert.deepEqual(parseSingularity({
     data: [{ id: 'x', capabilities: [{ endpoint: '/v1/chat/completions', pricing: {} }] }],
+  }), []);
+});
+
+test('parseSingularity skips image-only capabilities instead of treating them as text', () => {
+  assert.deepEqual(parseSingularity({
+    data: [{
+      id: 'flux-1-schnell',
+      capabilities: [{
+        endpoint: '/v1/images/generations',
+        pricing: { input_per_million_usd: '0', output_per_million_usd: '0.003' },
+      }],
+    }],
   }), []);
 });
 

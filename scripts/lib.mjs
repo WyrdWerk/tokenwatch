@@ -159,7 +159,7 @@ function orgFromBareModelId(id) {
 function singularityChatCapability(m) {
   const caps = Array.isArray(m.capabilities) ? m.capabilities : [];
   return caps.find((c) => c?.endpoint === '/v1/chat/completions')
-    || caps.find((c) => c?.pricing)
+    || caps.find((c) => c?.endpoint === '/v1/responses')
     || null;
 }
 
