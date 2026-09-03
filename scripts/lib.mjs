@@ -158,7 +158,9 @@ function orgFromBareModelId(id) {
 
 function singularityChatCapability(m) {
   const caps = Array.isArray(m.capabilities) ? m.capabilities : [];
-  return caps.find((c) => c?.endpoint === '/v1/chat/completions' || c?.endpoint === '/v1/responses') || null;
+  return caps.find((c) => c?.endpoint === '/v1/chat/completions')
+    || caps.find((c) => c?.endpoint === '/v1/responses')
+    || null;
 }
 
 /** SingularityAPI https://api.singularityapi.dev/v1/models → text records (prices already $/M). */
