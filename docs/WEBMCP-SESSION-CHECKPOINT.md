@@ -230,3 +230,18 @@ identities with compare_models(action="set", open=true). Never use rank as a
 model identity, never silently summarize a multi-row result to one winner, and
 distinguish blended $/M from calculated session cost.
 ```
+
+## Continuation (2026-09-03)
+
+Live tools since the original stop point, on a fresh orb Desktop Chrome session:
+
+- `set_sort({ by: "blended", dir: "asc" })` then `compare_models` of the first five GLM 5.3 Flash ZDR rows: crof, morph, z-ai, novita, makora.
+- `snapshot_compare` wrote `tokenwatch-compare-2026-09-03.png`.
+- `open_detail` opened Crof glm-5.3-flash.
+- `highlight_tradeoff` failed on the GLM+ZDR-only view (all three kinds were Crof); succeeded after `clear_filters` (1408 rows): cheapest nex-agi/nex-n2-mini, fastest relace/relace-apply-3, ZDR-cheapest novita/inclusionai/ling-3.0-flash.
+- `export_csv` wrote `tokenwatch-2026-09-03.csv` (1408 rows) on retry after clear_filters; first attempt during GLM filter returned ok with no file observed.
+- `download_cost_card` returned ok; Chrome blocked the file behind a multiple-download permission prompt. After the human allowed it, `tokenwatch-cost-nex-agi-nex-agi-nex-n2-mini-2026-09-03.png` appeared; a later retry wrote `tokenwatch-cost-crof-z-ai-glm-5-3-flash-2026-09-03.png`.
+- WebMCP `switch_catalog({ page: "image" })` navigated (the TWCatalog façade takes the page string, `switchCatalog("image")`; passing `{ page: "image" }` to the façade errors). Image and video `set_sort({ by: "cost", dir: "asc" })` returned 188 and 145 rows.
+- Skill: model filter is substring+space/hyphen folding, not full canonicalization; highlight_tradeoff needs two distinct kinds; triggeredDownload is not proof of a file.
+
+Current Desktop tab may be text (unfiltered, compare modal open) or video depending on later navigation. Rediscover before acting.

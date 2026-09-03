@@ -218,17 +218,17 @@ the tool returns an error.
 - `set_workload({ totalTokensM?, mix?, costMode?, computeBy?, budget? })` → a fresh `get_view`; mix values must sum to 100 ±0.5 and are not silently normalized. It is a partial update: omitted workload fields, including existing `cacheWrite` and `amortizeN`, are preserved.
 - `apply_preset({ name })` → a fresh `get_view`; valid names are `agentic`, `balanced`, `heavy-output`, and `no-cache`.
 - `set_cache_write({ tokens?, amortizeN? })` → a fresh `get_view`; tokens are millions and `amortizeN` must be at least 1. Cache-write cost is included only when an offering has a numeric `pricing.cache_write`; `null` means the component is treated as $0, so the ranking may remain unchanged.
-- `set_filters({ provider?, model?, zdr?, sub?, promo?, groupBy?, minIntelligence? })` → a fresh `get_view` with its default 10-row `top` preview; this resets the large-row display state. `groupBy` organizes the visible table into provider/org sections but does not change the active ranking or the global `top` preview; explain section placement separately from rank.
+- `set_filters({ provider?, model?, zdr?, sub?, promo?, groupBy?, minIntelligence? })` → a fresh `get_view` with its default 10-row `top` preview; this resets the large-row display state. `groupBy` organizes the visible table into provider/org sections but does not change the active ranking or the global `top` preview; explain section placement separately from rank. The `model` filter is a case-insensitive substring match against the display name or the raw trailing id segment; runs of spaces and hyphens are the same separator (`glm-5.3-flash` matches `GLM 5.3 Flash`). It does not collapse glued tokens (`GLM-5.3Flash` will miss) and it does not collapse every backend of that model into one row — compare/open-detail still need exact `{provider, id}`.
 - `clear_filters()` → a fresh `get_view`; workload and sort are kept.
 
 ### Text comparison, detail, and export tools
 
 - `compare_models({ action, models?, open? })` → a fresh view, with optional `missing` and `note`. Actions are `add`, `remove`, `clear`, and `set`; models use `{ provider, id }`; the tray maximum is six. `open: true` opens the modal and requires at least two selected models.
 - `open_detail({ provider, id })` → `{ ok, opened: { provider, id }, note }`; opens the detail modal for an offering in the current view.
-- `highlight_tradeoff({ kinds? })` → a fresh view after selecting and opening cheapest, fastest, and/or `zdr_cheapest` rows. If omitted, all three kinds are attempted.
+- `highlight_tradeoff({ kinds? })` → a fresh view after selecting and opening cheapest, fastest, and/or `zdr_cheapest` rows. If omitted, all three kinds are attempted. It errors when those kinds collapse to fewer than two distinct `{provider, id}` rows (for example a ZDR-only view where cheapest, fastest, and ZDR-cheapest are the same offering). Retry after `clear_filters` or on a mixed catalog.
 - `export_csv()` → `{ ok, filename, rowCount, triggeredDownload, note }`; the download can be blocked by an in-app browser.
 - `snapshot_compare()` → `{ ok, filename, triggeredDownload, note }`, or an error if fewer than two models are selected or PNG capture fails.
-- `download_cost_card({ provider, id })` → `{ ok, filename, triggeredDownload, note }`, or an error if the row is not in view.
+- `download_cost_card({ provider, id })` → `{ ok, filename, triggeredDownload, note }`, or an error if the row is not in view. `triggeredDownload: true` means the page started a download click. Chrome may still show a multiple-file download permission prompt; the file is not on disk until that is allowed.
 - `switch_catalog({ page })` → `{ ok, navigatingTo, note }`; valid pages are `text`, `image`, `video`, and `benchmarks`, and navigation leaves the current page.
 
 ## Translating tool results into human-readable explanations
