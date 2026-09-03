@@ -19,6 +19,31 @@ facades, and the contract tests. It documents tool contracts, result shapes,
 result-surface behavior, and human-readable interpretation rules; it must not
 contain a static model inventory.
 
+
+## Current state (2026-09-03)
+
+These counts supersede the 2026-09-02 snapshots below.
+
+- Text page: **20 tools**. Chrome `getTools()` is alphabetical; first is
+  `about_tokenwatch`, then `apply_preset`. `about_tokenwatch` returns
+  `{ brief, skillUrl: "/skill.md" }`. The brief is sliced from SKILL.md
+  (operating rules + page capability map). Full contract is at `/skill.md`.
+- Image and video: **4 tools** each — `about_tokenwatch`, `get_view`,
+  `get_catalog_info`, `set_sort`.
+- Unique tool names: **20**. Page registrations: **28** (20 + 4 + 4).
+- Live coverage of the original 25 registrations (19 text + 3 image + 3 video,
+  before `about_tokenwatch`): **25 of 25**. `about_tokenwatch` itself has not
+  been live-invoked in a browser yet; it is covered by schema/skill tests.
+- SKILL.md remains the source of truth. `node scripts/webmcp-skill-brief.mjs`
+  (also hooked from `npm run seo` / `build:prod`) writes `public/skill.md` and
+  `public/webmcp-about.json`.
+- Benchmarks page is still out of WebMCP scope.
+
+The sections **Implemented changes**, **Tools tested**, **Exact stopping point**,
+and **Copy/paste prompt** below are a **2026-09-02 historical snapshot** (19
+text tools, 3 per media page, 17/25 live). Do not treat those numbers as current.
+Use **Continuation (2026-09-03)** plus this section instead.
+
 ## Repository and PR state
 
 - PR worktree used for this session: `/tmp/tokenwatch-pr11-portal`
@@ -41,8 +66,8 @@ contain a static model inventory.
 
 ### Text WebMCP
 
-- The text page registers 19 tools after `pricing.json` and `TWCatalog` are
-  ready.
+- The text page registered 19 tools after `pricing.json` and `TWCatalog` are
+  ready. **Superseded 2026-09-03:** 20 tools including `about_tokenwatch`.
 - `get_view` returns the active `sort: { by, dir }`, full `rowCount`, and a
   ranked `top` preview. `top` defaults to 10 rows; `limit` supports 1–25.
 - `set_sort` supports every text table field: `org`, `provider`, `model`,
@@ -54,8 +79,8 @@ contain a static model inventory.
 ### Image and video WebMCP
 
 - Image and video pages load the shared registrar after their page app.
-- Each registers exactly three tools: `get_view`, `get_catalog_info`, and
-  `set_sort`.
+- Each registered exactly three tools: `get_view`, `get_catalog_info`, and
+  `set_sort`. **Superseded 2026-09-03:** also `about_tokenwatch` (four tools).
 - Image sorting: `org`, `model`, `cost_per_unit`, `cost`.
 - Video sorting: `org`, `model`, `resolution`, `audio`, `cost_per_second`,
   `cost`.
@@ -92,7 +117,7 @@ browser session still exists.
 The counts below are **unique tool names/page registrations directly invoked
 or verified live**, not merely covered by static contract tests.
 
-### Text: 13 of 19 unique tools exercised
+### Text: 13 of 19 unique tools exercised (historical, 2026-09-02)
 
 1. `get_view`
 2. `get_model`
@@ -117,18 +142,15 @@ Remaining text tools:
 - `download_cost_card`
 - `switch_catalog`
 
-### Media: 4 of 6 page registrations exercised
+### Media: 4 of 6 page registrations exercised (historical, 2026-09-02)
 
 - Image: `get_view`, `get_catalog_info` tested; `set_sort` remains.
 - Video: `get_view`, `get_catalog_info` tested; `set_sort` remains.
 
-Thus the current page-registration count is **17 of 25**: 13 text tools plus
-four media registrations. There are 19 unique tool names overall because the
-three media pages reuse the names `get_view`, `get_catalog_info`, and
-`set_sort`.
-
-Static schema/contract tests cover all 19 text registrations and the image and
-video schemas, but static tests do not replace live browser verification.
+Thus the **2026-09-02** page-registration count was **17 of 25**. That snapshot
+is closed: the leftover six text tools and both media `set_sort` calls were
+live-tested on 2026-09-03 (see Continuation). Current registrations are **28**
+(20 text + 4 image + 4 video) including `about_tokenwatch`.
 
 ## Exact stopping point
 
@@ -209,8 +231,10 @@ the next tool. Keep
 .agents/skills/operating-tokenwatch-webmcp/SKILL.md synchronized with any
 contract or interpretation discovery.
 
-The project is WyrdWerk/tokenwatch, PR #11. The text page has 19 tools; image
-and video each have get_view, get_catalog_info, and set_sort. The benchmarks
+The project is WyrdWerk/tokenwatch, PR #11. Historical prompt (2026-09-02):
+text had 19 tools; image and video each had get_view, get_catalog_info, and
+set_sort. Current: 20 text tools including about_tokenwatch; image and video
+each have those three plus about_tokenwatch. The benchmarks
 page is out of scope. WebMCP runs in the exact visible browser tab the human
 is watching, not in a separate headless API. Rediscover the current portal and
 browser tools instead of assuming an old ephemeral URL or CDP session.
@@ -243,5 +267,7 @@ Live tools since the original stop point, on a fresh orb Desktop Chrome session:
 - `download_cost_card` returned ok; Chrome blocked the file behind a multiple-download permission prompt. After the human allowed it, `tokenwatch-cost-nex-agi-nex-agi-nex-n2-mini-2026-09-03.png` appeared; a later retry wrote `tokenwatch-cost-crof-z-ai-glm-5-3-flash-2026-09-03.png`.
 - WebMCP `switch_catalog({ page: "image" })` navigated (the TWCatalog façade takes the page string, `switchCatalog("image")`; passing `{ page: "image" }` to the façade errors). Image and video `set_sort({ by: "cost", dir: "asc" })` returned 188 and 145 rows.
 - Skill: model filter is substring+space/hyphen folding, not full canonicalization; highlight_tradeoff needs two distinct kinds; triggeredDownload is not proof of a file.
+- `about_tokenwatch` added (commit `63aec2c`): first in Chrome alphabetical `getTools()`, returns generated brief + `/skill.md`. Live browser invoke still pending; schema tests cover registration.
+
 
 Current Desktop tab may be text (unfiltered, compare modal open) or video depending on later navigation. Rediscover before acting.
