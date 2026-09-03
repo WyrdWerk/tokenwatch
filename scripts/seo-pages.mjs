@@ -725,7 +725,7 @@ export function buildOpenApiDocument() {
     paths[path] = {
       get: {
         summary: endpoint.summary,
-        operationId: `get${path.replace(/[^A-Za-z0-9]+(.)/g, (_, char) => char.toUpperCase()).replace(/^./, (char) => char.toUpperCase()) || 'ApiDirectory'}`,
+        operationId: `get${endpoint.path.split('/').filter(Boolean).map((segment) => segment.replace(/^:/, '').replace(/^./, (char) => char.toUpperCase())).join('') || 'ApiDirectory'}`, 
         parameters: [...pathParams, ...endpoint.params.map(openApiParameter)],
         responses: {
           200: { description: 'Successful JSON response.', content: { 'application/json': { schema: { type: 'object' } } } },
