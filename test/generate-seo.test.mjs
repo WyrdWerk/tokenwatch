@@ -211,6 +211,7 @@ test('API documentation renders from the same endpoint metadata as API discovery
   for (const endpoint of API_ENDPOINTS) {
     const path = endpoint.path.replace(/:([A-Za-z][A-Za-z0-9_]*)/g, '{$1}');
     assert.ok(openApi.paths[path]?.get, `missing OpenAPI operation for ${endpoint.path}`);
+    assert.match(openApi.paths[path].get.operationId, /^[A-Za-z][A-Za-z0-9]*$/, `operationId must be identifier-safe for ${endpoint.path}`);
   }
 });
 
