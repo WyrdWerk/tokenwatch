@@ -114,7 +114,8 @@ export async function main() {
     const html = await readFile(path, 'utf8');
     if (html.includes('{{')) throw new Error(`verify-seo: unresolved template placeholder in ${path}`);
     if (count(html, /<title>/g) !== 1) throw new Error(`verify-seo: ${path} must contain one title`);
-    if (!path.endsWith(join('widget', 'demo.html')) && count(html, /<link rel="canonical"/g) !== 1) {
+    const skipCanonical = path.endsWith(join('widget', 'demo.html')) || path.endsWith('404.html');
+    if (!skipCanonical && count(html, /<link rel="canonical"/g) !== 1) {
       throw new Error(`verify-seo: ${path} must contain one canonical link`);
     }
   }

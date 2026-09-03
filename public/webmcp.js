@@ -20,7 +20,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "get_view",
     "title": "Get current results",
-    "description": "Read-only snapshot of the TokenWatch text calculator the human is looking at: current mix, modes, filters, active sort, compare tray, rowCount, and the top ranked offerings (rank, provider, id, name, cost, blended $/M, zdr, speedP50). By default, top is sorted by total session cost ascending; use set_sort to change the field and direction programmatically. Use this after any write so you describe the live table, not a stale one. Row identity is {provider, id}, never a row number. For operational details, call about_tokenwatch.",
+    "description": "Read-only snapshot of the TokenWatch text calculator the human is looking at: current mix, modes, filters, active sort, compare tray, rowCount, and the top ranked offerings (rank, provider, id, name, cost, blended $/M, zdr, speedP50, ttftP50 in seconds). By default, top is sorted by total session cost ascending; use set_sort to change the field and direction programmatically. Use this after any write so you describe the live table, not a stale one. Row identity is {provider, id}, never a row number. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": true },
     "inputSchema": {
       "type": "object",
@@ -38,7 +38,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "get_model",
     "title": "Get one offering",
-    "description": "Read-only detail for one offering in the current view: pricing, context, cache, ZDR/subscription, benchmarks, Neuralwatt energy if present. Requires {provider, id} from get_view. For operational details, call about_tokenwatch.",
+    "description": "Read-only detail for one offering in the current view: pricing, context, cache, ZDR/subscription, benchmarks, Neuralwatt energy if present, speedP50, and ttftP50 (seconds). Requires {provider, id} from get_view. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": true },
     "inputSchema": {
       "type": "object",
@@ -62,7 +62,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "set_sort",
     "title": "Sort results",
-    "description": "Sets the active table sort and direction, then re-renders the same results. Sortable columns: org, provider, model, input, output, cache_read, context, speed, blended, and cost. Text fields sort alphabetically; numeric fields sort ascending or descending. Returns a fresh get_view snapshot. For operational details, call about_tokenwatch.",
+    "description": "Sets the active table sort and direction, then re-renders the same results. Sortable columns: org, provider, model, input, output, cache_read, context, speed, ttft, blended, and cost. Text fields sort alphabetically; numeric fields sort ascending or descending. ttft is time-to-first-token in seconds (lower is faster). Returns a fresh get_view snapshot. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": false },
     "inputSchema": {
       "type": "object",
@@ -78,6 +78,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
             "cache_read",
             "context",
             "speed",
+            "ttft",
             "blended",
             "cost"
           ],
@@ -253,7 +254,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "set_filters",
     "title": "Set filters",
-    "description": "Partial update of filters: provider search, model search, ZDR only, subscription only, promos only, group-by, min intelligence. Re-renders the table. Workload is unchanged. For operational details, call about_tokenwatch.",
+    "description": "Partial update of filters: provider search, model search, ZDR only, subscription only, promos only, group-by, min intelligence, hideBatch (default true), cacheOnly, maxBlended $/M, minToks, hq country. Re-renders the table. Workload is unchanged. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": false },
     "inputSchema": {
       "type": "object",
@@ -290,6 +291,28 @@ const TEXT_TOOL_DEFS = JSON.parse(`
           "type": "integer",
           "minimum": 0,
           "description": "Minimum Artificial Analysis intelligence index."
+        },
+        "hideBatch": {
+          "type": "boolean",
+          "description": "If true (the default), hide :batch and :free SKUs. Set false to include them."
+        },
+        "cacheOnly": {
+          "type": "boolean",
+          "description": "If true, only offerings with a numeric cache-read price."
+        },
+        "maxBlended": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum blended $/M at the current mix. 0 or omitted means no cap."
+        },
+        "minToks": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Minimum throughput p50 in tokens/sec. Offerings with no speed data are excluded when this is set."
+        },
+        "hq": {
+          "type": "string",
+          "description": "Headquarters country code (US, SG, CN, FR, ES, NL, SE) or unknown. Empty string means any."
         }
       },
       "additionalProperties": false
@@ -298,7 +321,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "clear_filters",
     "title": "Clear filters",
-    "description": "Resets search, ZDR, subscription, promo, group-by, and min-intelligence filters. Keeps the current workload. Re-renders the table. For operational details, call about_tokenwatch.",
+    "description": "Resets search, ZDR, subscription, promo, group-by, min-intelligence, hide-batch (back to on), cache-only, max blended, min tok/s, and HQ filters. Keeps the current workload. Re-renders the table. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": false },
     "inputSchema": {
       "type": "object",

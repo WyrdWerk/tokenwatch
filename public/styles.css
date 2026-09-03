@@ -380,7 +380,25 @@ select:focus, input:focus { border-color: var(--accent); }
 .promo-control { flex: 0 0 auto; min-width: auto; }
 .promo-toggle { display: flex; align-items: center; gap: 0.4rem; padding-top: 0.55rem; }
 .promo-toggle input { width: 1rem; height: 1rem; cursor: pointer; accent-color: var(--accent); }
+
 .promo-toggle label { font-size: 0.85rem; font-weight: 500; cursor: pointer; text-transform: none; letter-spacing: 0; }
+
+.popular-control { flex: 1 1 100%; min-width: 100%; }
+.popular-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.popular-chip {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.popular-chip:hover { border-color: var(--accent); color: var(--accent); }
+.popular-chip.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
 
 /* ── Results ───────────────────────────────────────────── */
 .results {
@@ -666,6 +684,8 @@ th.sortable:active .col-handle { cursor: grabbing; }
   #resultsTable.hide-col-context td[data-label="Context"] { display: none; }
   #resultsTable.hide-col-speed th[data-sort="speed"],
   #resultsTable.hide-col-speed td[data-label="Speed"] { display: none; }
+  #resultsTable.hide-col-ttft th[data-sort="ttft"],
+  #resultsTable.hide-col-ttft td[data-label="TTFT"] { display: none; }
   #resultsTable.hide-col-blended th[data-sort="blended"],
   #resultsTable.hide-col-blended td[data-label="Blended $/M"] { display: none; }
 }
@@ -680,6 +700,7 @@ th.sortable:active .col-handle { cursor: grabbing; }
   #resultsTable.hide-col-cache_read td[data-label="Cache $/M"],
   #resultsTable.hide-col-context td[data-label="Context"],
   #resultsTable.hide-col-speed td[data-label="Speed"],
+  #resultsTable.hide-col-ttft td[data-label="TTFT"],
   #resultsTable.hide-col-blended td[data-label="Blended $/M"] { display: none; }
 }
 

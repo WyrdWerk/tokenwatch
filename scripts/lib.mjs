@@ -252,6 +252,71 @@ function parseOpenCodePriceCell(raw) {
  * @returns {string|null} catalog id, or null when the name carries no variant
  *   info we can map (caller decides how to treat it)
  */
+/** Providers already covered by TokenWatch direct fetch or OpenRouter de-aggregation.
+ *  LLM Gateway rows for these slugs are skipped — we only want differential hosts. */
+export const LLMGATEWAY_SKIP_PROVIDERS = new Set([
+  'alibaba', 'amazon', 'anthropic', 'atlascloud', 'aws-bedrock', 'azure',
+  'azure-ai-foundry', 'azure-anthropic', 'baidu', 'cerebras', 'deepinfra',
+  'deepseek', 'ember', 'embercloud', 'fireworks', 'google', 'google-ai-studio',
+  'google-vertex', 'groq', 'llmgateway', 'meta', 'minimax', 'mistral', 'moonshot',
+  'nebius', 'novita', 'openai', 'perplexity', 'sakana', 'together', 'together-ai',
+  'vertex-anthropic', 'vertex-openai', 'xai', 'xiaomi', 'z-ai', 'zai',
+]);
+
+/** Map LLM Gateway providerId → TokenWatch provider slug. */
+export const LLMGATEWAY_PROVIDER_MAP = {
+  'inference.net': 'inference-net',
+};
+
+function llmgatewayTextOutput(m) {
+  const out = m?.architecture?.output_modalities;
+  return Array.isArray(out) && out.length === 1 && out[0] === 'text';
+}
+
+/** LLM Gateway https://api.llmgateway.io/v1/models → differential text rows.
+ *  Prices are $/token (scientific notation). Only providers not already in
+ *  TokenWatch are emitted. Image/audio/video output SKUs are dropped. */
+export function parseLlmgateway(data) {
+  const models = Array.isArray(data?.data) ? data.data : [];
+  const rows = [];
+  for (const m of models) {
+    if (!m || typeof m.id !== 'string' || !m.id) continue;
+    if (!llmgatewayTextOutput(m)) continue;
+    const providers = Array.isArray(m.providers) ? m.providers : [];
+    for (const p of providers) {
+      const rawId = p?.providerId;
+      if (!rawId) continue;
+      const mapped = LLMGATEWAY_PROVIDER_MAP[rawId] || rawId;
+      if (LLMGATEWAY_SKIP_PROVIDERS.has(rawId) || LLMGATEWAY_SKIP_PROVIDERS.has(mapped)) continue;
+      const pricing = p.pricing || {};
+      const input = perTokToPerM(pricing.prompt);
+      const output = perTokToPerM(pricing.completion);
+      if (input == null && output == null) continue;
+      if ((input ?? 0) <= 0 && (output ?? 0) <= 0) continue;
+      const cacheRead = perTokToPerM(pricing.input_cache_read);
+      const cacheWrite = perTokToPerM(pricing.input_cache_write);
+      rows.push({
+        id: m.id,
+        name: m.display_name || m.name || m.id,
+        org: orgFromBareModelId(m.id),
+        provider: mapped,
+        quantization: null,
+        discount: 0,
+        context_length: m.context_length || null,
+        max_completion_tokens: p.max_output ?? m.max_output ?? null,
+        pricing: {
+          input,
+          output,
+          cache_read: (cacheRead == null || cacheRead === 0) ? null : cacheRead,
+          cache_write: (cacheWrite == null || cacheWrite === 0) ? null : cacheWrite,
+        },
+      });
+    }
+  }
+  return rows;
+}
+
+
 export function openCodeGoIdFromName(name) {
   const raw = (name || '').trim();
   if (!raw) return null;
@@ -423,6 +488,20 @@ export const PROVIDER_NAME_MAP = {
   'singularity api': 'singularity',
   'runinfra': 'runinfra',
   'run infra': 'runinfra',
+  'nanogpt': 'nanogpt',
+  'runware': 'runware',
+  'scx-ai': 'scx-ai',
+  'scx-ai-gp': 'scx-ai-gp',
+  'iceberg': 'iceberg',
+  'glacier': 'glacier',
+  'quartz': 'quartz',
+  'canopywave': 'canopywave',
+  'inference.net': 'inference-net',
+  'inference-net': 'inference-net',
+  'consensusprotocol': 'consensusprotocol',
+  'gonka24': 'gonka24',
+  'ranoai': 'ranoai',
+  'granite': 'granite',
   'inception': 'inception',
   'infermatic': 'infermatic',
   'mara': 'mara',

@@ -67,11 +67,21 @@ test('set_workload and set_filters schemas use enums; compare uses {provider,id}
   assert.deepEqual(byName.set_workload.inputSchema.properties.computeBy.enum, ['tokens', 'budget']);
   assert.deepEqual(byName.set_filters.inputSchema.properties.groupBy.enum, ['none', 'org', 'provider']);
   assert.deepEqual(byName.apply_preset.inputSchema.properties.name.enum, ['agentic', 'balanced', 'heavy-output', 'no-cache']);
-  assert.deepEqual(byName.set_sort.inputSchema.properties.by.enum, ['org', 'provider', 'model', 'input', 'output', 'cache_read', 'context', 'speed', 'blended', 'cost']);
+  assert.deepEqual(byName.set_sort.inputSchema.properties.by.enum, ['org', 'provider', 'model', 'input', 'output', 'cache_read', 'context', 'speed', 'ttft', 'blended', 'cost']);
   assert.deepEqual(byName.set_sort.inputSchema.properties.dir.enum, ['asc', 'desc']);
   assert.deepEqual(byName.compare_models.inputSchema.properties.action.enum, ['add', 'remove', 'clear', 'set']);
   assert.deepEqual(byName.compare_models.inputSchema.properties.models.items.required, ['provider', 'id']);
   assert.deepEqual(byName.open_detail.inputSchema.required, ['provider', 'id']);
+
+  const filterProps = byName.set_filters.inputSchema.properties;
+  assert.equal(filterProps.hideBatch.type, 'boolean');
+  assert.equal(filterProps.cacheOnly.type, 'boolean');
+  assert.equal(filterProps.maxBlended.type, 'number');
+  assert.equal(filterProps.minToks.type, 'number');
+  assert.equal(filterProps.hq.type, 'string');
+  assert.match(byName.set_filters.description, /hideBatch/);
+  assert.match(byName.clear_filters.description, /hide-batch/);
+  assert.match(byName.get_view.description, /ttftP50/);
 });
 
 test('index.html loads webmcp.js after app.js; bust-cache fingerprints it', async () => {

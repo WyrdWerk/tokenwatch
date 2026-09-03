@@ -26,16 +26,19 @@ models here; catalogs and prices are dynamic.
    before describing the table. Never describe a stale ranking from memory.
 6. If the user asks for full details of selected rows, call `get_model` with
    each row's `{provider, id}` after `get_view`.
-7. Do not call a speed *filter*: TokenWatch exposes speed as a sortable text
-   page column (`speed`), not as a filter.
+7. Speed (`speed`, tok/s) and TTFT (`ttft`, seconds) are sortable columns.
+   Min throughput is also a text-page filter (`minToks` via `set_filters`).
+   Do not treat missing speed/TTFT as zero.
 8. Do not compare image megapixel, image, and token prices as though they were
    one unit. Preserve the billing unit and state the workload basis.
+9. Hide-batch is on by default (`filters.hideBatch: true`). `:batch` rows are
+   absent from `get_view` until `set_filters({ hideBatch: false })`.
 
 ## Page capability map
 
 | Page | Registered tools | Sortable fields |
 |---|---|---|
-| Text `/` | `about_tokenwatch` plus the 19 tools below | `org`, `provider`, `model`, `input`, `output`, `cache_read`, `context`, `speed`, `blended`, `cost` |
+| Text `/` | `about_tokenwatch` plus the 19 tools below | `org`, `provider`, `model`, `input`, `output`, `cache_read`, `context`, `speed`, `ttft`, `blended`, `cost` |
 | Image `/image` | `about_tokenwatch`, `get_view`, `get_catalog_info`, `set_sort` | `org`, `model`, `cost_per_unit`, `cost` |
 | Video `/video` | `about_tokenwatch`, `get_view`, `get_catalog_info`, `set_sort` | `org`, `model`, `resolution`, `audio`, `cost_per_second`, `cost` |
 | Benchmarks `/benchmarks` | none currently | — |
@@ -154,7 +157,12 @@ Returns:
     "sub": false,
     "promo": false,
     "groupBy": "none|org|provider",
-    "minIntelligence": 0
+    "minIntelligence": 0,
+    "hideBatch": true,
+    "cacheOnly": false,
+    "maxBlended": 0,
+    "minToks": 0,
+    "hq": ""
   },
   "sort": { "by": "cost", "dir": "asc" },
   "compare": [{ "provider": "<slug>", "id": "<id>" }],
@@ -165,9 +173,11 @@ Returns:
 ```
 
 Each text row contains `rank`, `provider`, `id`, `name`, `org`, `cost`,
-`blended`, `zdr`, and `speedP50`. `cost` is the calculated workload cost (or
-the inverse affordability value in budget mode); `blended` is the mix-weighted
-comparison rate in $/M and is not the same thing as session `cost`.
+`blended`, `zdr`, `speedP50`, and `ttftP50`. `cost` is the calculated workload
+cost (or the inverse affordability value in budget mode); `blended` is the
+mix-weighted comparison rate in $/M and is not the same thing as session
+`cost`. `ttftP50` is time-to-first-token in seconds (null when unknown).
+`hideBatch` defaults to true, so `:batch` SKUs are excluded until turned off.
 
 ### `get_model({ provider, id })`
 
@@ -177,7 +187,7 @@ Requires the exact identity from `get_view`. On success it returns:
 provider, id, name, org,
 pricing, context_length, max_completion_tokens, quantization,
 zdr, subscription, discount, benchmarks, energy,
-cost, blended, speedP50
+cost, blended, speedP50, ttftP50
 ```
 
 `pricing` contains the offering's component rates. `benchmarks` and `energy`
@@ -192,7 +202,7 @@ Valid `by` values are:
 
 ```text
 org, provider, model, input, output, cache_read,
-context, speed, blended, cost
+context, speed, ttft, blended, cost
 ```
 
 Returns the same shape as `get_view`, with the requested active sort. The
@@ -228,8 +238,8 @@ the tool returns an error.
 - `set_workload({ totalTokensM?, mix?, costMode?, computeBy?, budget? })` → a fresh `get_view`; mix values must sum to 100 ±0.5 and are not silently normalized. It is a partial update: omitted workload fields, including existing `cacheWrite` and `amortizeN`, are preserved.
 - `apply_preset({ name })` → a fresh `get_view`; valid names are `agentic`, `balanced`, `heavy-output`, and `no-cache`.
 - `set_cache_write({ tokens?, amortizeN? })` → a fresh `get_view`; tokens are millions and `amortizeN` must be at least 1. Cache-write cost is included only when an offering has a numeric `pricing.cache_write`; `null` means the component is treated as $0, so the ranking may remain unchanged.
-- `set_filters({ provider?, model?, zdr?, sub?, promo?, groupBy?, minIntelligence? })` → a fresh `get_view` with its default 10-row `top` preview; this resets the large-row display state. `groupBy` organizes the visible table into provider/org sections but does not change the active ranking or the global `top` preview; explain section placement separately from rank. The `model` filter is a case-insensitive substring match against the display name or the raw trailing id segment; runs of spaces and hyphens are the same separator (`glm-5.3-flash` matches `GLM 5.3 Flash`). It does not collapse glued tokens (`GLM-5.3Flash` will miss) and it does not collapse every backend of that model into one row — compare/open-detail still need exact `{provider, id}`.
-- `clear_filters()` → a fresh `get_view`; workload and sort are kept.
+- `set_filters({ provider?, model?, zdr?, sub?, promo?, groupBy?, minIntelligence?, hideBatch?, cacheOnly?, maxBlended?, minToks?, hq? })` → a fresh `get_view` with its default 10-row `top` preview; this resets the large-row display state. `hideBatch` defaults to true on the page (omit to leave it; pass `false` to include `:batch` SKUs). `cacheOnly` keeps rows with a numeric cache-read price. `maxBlended` is a $/M cap at the current mix; `minToks` is minimum throughput p50 and drops rows with no speed data. `hq` is a country code (`US`, `SG`, `CN`, `FR`, `ES`, `NL`, `SE`) or `unknown`. `groupBy` organizes the visible table into provider/org sections but does not change the active ranking or the global `top` preview; explain section placement separately from rank. The `model` filter is a case-insensitive substring match against the display name or the raw trailing id segment; runs of spaces and hyphens are the same separator (`glm-5.3-flash` matches `GLM 5.3 Flash`). It does not collapse glued tokens (`GLM-5.3Flash` will miss) and it does not collapse every backend of that model into one row — compare/open-detail still need exact `{provider, id}`.
+- `clear_filters()` → a fresh `get_view`; workload and sort are kept. Hide-batch returns to on.
 
 ### Text comparison, detail, and export tools
 
@@ -247,7 +257,8 @@ Tool output is the evidence; the agent's response should explain what changed
 and what the returned fields mean. Use the following output-to-response rules:
 
 - `get_view`: state the page, row count, active sort and direction, active
-  filters, workload basis, and requested top rows. Preserve every row in the
+  filters (including hideBatch, cacheOnly, maxBlended, minToks, hq), workload
+  basis, and requested top rows. Report `ttftP50` in seconds when present. Preserve every row in the
   returned `top` array unless the human explicitly asks for a shorter summary;
   do not silently reduce a multi-row result to only the winner. Mention
   `warning` when present. Do not call the top rows “cheapest” or “fastest”

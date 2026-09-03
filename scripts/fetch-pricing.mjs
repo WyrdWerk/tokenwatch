@@ -7,9 +7,11 @@
  *
  * Tier 1 — Direct providers: DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac,
  *          SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs,
- *          SingularityAPI, RunInfra
+ *          SingularityAPI, RunInfra, LLM Gateway (differential hosts only)
  *          (authoritative source for their own offerings; Singularity + RunInfra
- *          are auth-gated via SINGULARITY_API_KEY / RUNINFRA_API_KEY)
+ *          are auth-gated via SINGULARITY_API_KEY / RUNINFRA_API_KEY;
+ *          LLM Gateway via LLMGATEWAY_API_KEY emits only providers TokenWatch
+ *          does not already fetch)
  * Tier 2 — OpenRouter /endpoints: de-aggregated per-backend pricing
  *          (each backend like Fireworks, Together, Novita becomes its own row)
  * Tier 3 — CSV-sourced: Makora, Xiaomimimo (manual-pricing.csv)
@@ -37,7 +39,7 @@
 import { readFile } from 'node:fs/promises';
 import {
   perTokToPerM, centsToDollars, passthrough, parseSference, parseNeuralwatt, parseMerius, parseAster,
-  parseSingularity, parseRuninfra,
+  parseSingularity, parseRuninfra, parseLlmgateway,
   parseOpenCodeGoDocs,
   NON_TEXT_ID, isTextModel,
   ORG_ALIASES, PROVIDER_NAME_MAP,
@@ -144,6 +146,13 @@ const DIRECT_PROVIDERS = [
     url: 'https://api.runinfra.ai/v1/models',
     parse: parseRuninfra,
     apiKeyEnv: 'RUNINFRA_API_KEY',
+  },
+  {
+    key: 'llmgateway',
+    name: 'LLM Gateway (differential)',
+    url: 'https://api.llmgateway.io/v1/models',
+    parse: parseLlmgateway,
+    apiKeyEnv: 'LLMGATEWAY_API_KEY',
   },
   ];
 
@@ -312,6 +321,14 @@ const MANUAL_PROVIDER_META = {
     retains_prompts: false,  // Privacy §X-A Model API: prompt content held in memory only for the request, then discarded
     may_train: false,         // Privacy §X-A: no train/fine-tune/distill/evaluate on prompts or completions
     retention_days: 1,        // Narrow exception: non-streaming Idempotency-Key replay cache up to 24h (privacy §X-A)
+  },
+  llmgateway: {
+    privacy_policy_url: 'https://llmgateway.io/legal/privacy',
+    terms_of_service_url: 'https://llmgateway.io/legal/terms',
+    status_page_url: null,
+    headquarters: null,
+    datacenters: null,
+    // Aggregator — we emit its *upstream hosts* as provider slugs, not llmgateway itself.
   },
 };
 

@@ -5,7 +5,7 @@ import { PROVIDER_MAP, REVERSE_PROVIDER_MAP, normalizeForMatch, findEnrichment }
 // ── PROVIDER_MAP ──────────────────────────────────────────────────────────────
 
 test('PROVIDER_MAP maps known TW providers to models.dev provider_ids', () => {
-  assert.equal(PROVIDER_MAP['deepinfra'], 'deep-infra');
+  assert.equal(PROVIDER_MAP['deepinfra'], 'deepinfra');
   assert.equal(PROVIDER_MAP['fireworks'], 'fireworks-ai');
   assert.equal(PROVIDER_MAP['together'], 'togetherai');
   assert.equal(PROVIDER_MAP['novita'], 'novita-ai');
@@ -16,6 +16,13 @@ test('PROVIDER_MAP maps known TW providers to models.dev provider_ids', () => {
   assert.equal(PROVIDER_MAP['wafer'], 'wafer.ai');
   assert.equal(PROVIDER_MAP['amazon'], 'amazon-bedrock');
   assert.equal(PROVIDER_MAP['cloudflare'], 'cloudflare-workers-ai');
+});
+
+
+test('PROVIDER_MAP deepinfra uses the live models.dev provider id, not deep-infra', () => {
+  assert.equal(PROVIDER_MAP.deepinfra, 'deepinfra');
+  assert.equal(REVERSE_PROVIDER_MAP.deepinfra, 'deepinfra');
+  assert.equal(REVERSE_PROVIDER_MAP['deep-infra'], undefined);
 });
 
 test('PROVIDER_MAP has no undefined or self-mapping entries except identity', () => {
