@@ -4,7 +4,7 @@
 **Repository:** `WyrdWerk/tokenwatch`
 **PR:** [#11](https://github.com/WyrdWerk/tokenwatch/pull/11)
 **Purpose:** Resume the interactive WebMCP testing session in a later,
-session-oriented Amp thread without re-discovering the project from scratch.
+session-oriented follow-up without re-discovering the project from scratch.
 
 ## What this work is
 
@@ -102,7 +102,7 @@ Use **Continuation (2026-09-03)** plus this section instead.
 
 The last live session used:
 
-- Portal: `https://t-03gsjxvuuty0unbtyk0jkfwb8-p25505.onamp.dev/`
+- Portal: ephemeral local preview URL (do not reuse; rediscover each session)
 - Visible Desktop Chrome session: `tokenwatch-webmcp-desktop`
 - CDP port: `9222`
 - Chrome WebMCP testing flag enabled.
@@ -201,7 +201,7 @@ and distinguish `blended` ($/M) from calculated session `cost`.
 
 ## Operating rules for the next session
 
-1. Read this checkpoint and the linked prior Amp thread before acting.
+1. Read this checkpoint and any linked prior session notes before acting.
 2. Inspect the current checkout; conversation history does not transfer
    uncommitted files automatically.
 3. Execute exactly one WebMCP tool, show its complete returned preview, and
@@ -213,7 +213,7 @@ and distinguish `blended` ($/M) from calculated session `cost`.
 7. Preserve explicit `null` values and report download/modal outcomes rather
    than assuming they succeeded.
 
-## Copy/paste prompt for a new Amp session
+## Copy/paste prompt for a new session
 
 Copy the following prompt into a new thread. Replace `THREAD_URL` with this
 thread's URL if it is not already included automatically:
