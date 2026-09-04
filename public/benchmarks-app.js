@@ -189,9 +189,9 @@
     const colVal = (r, key) => {
       if (key === 'name') return r.m.name.toLowerCase();
       if (key === 'org') return (r.m.org || 'zzz').toLowerCase();
-      if (key === 'price') return r.price ?? Number.MAX_SAFE_INTEGER;
-      if (key === 'value') return r.value ?? -1;
-      if (key === 'score') return r.score ?? -1;
+      if (key === 'price') return r.price ?? null;
+      if (key === 'value') return r.value ?? null;
+      if (key === 'score') return r.score ?? null;
       return r.m.scores[key] ?? null;
     };
     valued.sort((a, b) => {
