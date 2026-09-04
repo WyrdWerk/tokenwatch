@@ -1008,6 +1008,36 @@ footer {
   font-size: 1.25rem; color: var(--text-dim, #888); padding: 0;
 }
 .detail-modal-header button:hover { color: var(--text, #1a1a1a); }
+
+/* ── Benchmarks detail modal (shared .modal-backdrop pattern) ─────────────── */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+}
+.modal {
+  background: var(--surface, #fff);
+  color: var(--text, #1a1a1a);
+  border-radius: var(--radius, 8px);
+  max-width: 560px; width: 90vw;
+  max-height: 85vh; overflow: auto;
+  padding: 1.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+.modal h3 { margin: 0 0 0.5rem; }
+.modal-close {
+  float: right;
+  border: none; background: none; cursor: pointer;
+  font-size: 1.25rem; color: var(--text-dim, #888); padding: 0.1rem 0.35rem;
+}
+.modal-close:hover { color: var(--text, #1a1a1a); }
+.detail-sources h4 { margin: 1rem 0 0.25rem; font-size: 0.95rem; }
+.detail-sources ul { margin: 0 0 0.25rem; padding-left: 1.25rem; }
+.detail-sources li { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.9rem; }
+@media (max-width: 640px) {
+  .modal { max-width: 90vw; padding: 1rem; }
+}
 .detail-subtitle {
   font-size: 0.85rem; color: var(--text-dim, #888);
   margin: 0.25rem 0 0 0;
