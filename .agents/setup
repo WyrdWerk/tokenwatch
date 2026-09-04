@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# TokenWatch is a zero-dependency Node ESM static site.
+# CI uses Node 22; engines.node is >=18. Orbs already ship Node.
+# The only extra tool `npm run serve` needs is the `serve` CLI
+# (package.json uses `npx --yes serve`, which re-downloads without a snapshot).
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+log() { printf '%s\n' "$*"; }
+
+time_step() {
+  local label="$1"
+  shift
+  local start end elapsed
+  start="$(date +%s.%N)"
+  log "==> ${label}"
+  "$@"
+  end="$(date +%s.%N)"
+  elapsed="$(awk -v s="$start" -v e="$end" 'BEGIN { printf "%.2f", e - s }')"
+  log "    ${label} finished in ${elapsed}s"
+}
+
+require_node() {
+  if ! command -v node >/dev/null 2>&1; then
+    log "error: node is required (>= 18; CI uses 22)" >&2
+    exit 1
+  fi
+  local major
+  major="$(node -p 'Number.parseInt(process.versions.node, 10)')"
+  if (( major < 18 )); then
+    log "error: node >= 18 required, found $(node -v)" >&2
+    exit 1
+  fi
+  log "node $(node -v); npm $(npm -v)"
+}
+
+install_serve() {
+  if command -v serve >/dev/null 2>&1; then
+    log "serve already on PATH: $(command -v serve)"
+    return 0
+  fi
+  npm install -g serve
+}
+
+time_step "check node" require_node
+time_step "install serve" install_serve
+
+log "TokenWatch setup complete (zero npm dependencies; serve is global for npm run serve / orb service web)"
