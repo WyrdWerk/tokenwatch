@@ -13,7 +13,7 @@ The agent operating contract is [`.agents/skills/operating-tokenwatch-webmcp/SKI
 | `window.TWCatalog` façade on the text calculator | `feat: expose TWCatalog façade on text calculator` |
 | `public/webmcp.js` tool registration | `feat: register WebMCP tools on text page` |
 
-The image and video pages now load the same registrar and expose page-specific `get_view` and `set_sort` tools. Their sort schemas exactly match their visible table columns. The benchmarks page remains out of scope.
+The image and video pages load the same registrar and expose page-specific `get_view` and `set_sort` tools. Their sort schemas exactly match their visible table columns. The benchmarks page registers a thin façade (`get_view`, `get_catalog_info`, `get_model`, `set_sort`, `set_use_case`, `set_filters`) keyed by canonical model id, not `{provider, id}`.
 
 ## How it works
 
@@ -85,7 +85,7 @@ npm test                 # includes webmcp-schema + twcatalog-contract (no brows
 npm run serve            # public/ on :3000
 ```
 
-Chrome: enable the WebMCP testing flag, open a catalog page, and run `await document.modelContext.getTools()` in DevTools. The text page exposes 20 tools (including `about_tokenwatch`); image and video expose `about_tokenwatch`, `get_view`, `get_catalog_info`, and `set_sort`. Use `set_sort` to change any visible sortable column programmatically; `get_view` reports the resulting sort.
+Chrome: enable the WebMCP testing flag, open a catalog page, and run `await document.modelContext.getTools()` in DevTools. The text page exposes 20 tools (including `about_tokenwatch`); image and video expose `about_tokenwatch`, `get_view`, `get_catalog_info`, and `set_sort`; benchmarks expose `about_tokenwatch`, `get_view`, `get_catalog_info`, `get_model`, `set_sort`, `set_use_case`, and `set_filters`. Use `set_sort` to change any visible sortable column programmatically; `get_view` reports the resulting sort.
 
 ChatGPT: desktop app, Settings → Browser → Permissions, open the live URL, Site tools in the address bar. Luna has WebMCP disabled; Enterprise/Edu are excluded.
 
@@ -93,7 +93,6 @@ ChatGPT: desktop app, Settings → Browser → Permissions, open the live URL, S
 
 - Fake mouse tools (`click_row`, `sort_column`)
 - Advisor-as-a-tool (the floating widget stays for humans; ignore it in the demo)
-- Benchmarks tools (no WebMCP facade on that page yet)
 - Declarative `<form toolname>` (this is a SPA)
 - Cross-origin iframe companions (ChatGPT in-app support undocumented)
 - Headless / unattended agent flows

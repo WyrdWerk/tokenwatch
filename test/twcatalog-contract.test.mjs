@@ -110,7 +110,7 @@ test('explainRanking uses the active sort metric instead of assuming cost', asyn
 
 test('TWCatalog exposes setSort and uses the same sortable columns as the table', async () => {
   const src = await readFile(APP_JS, 'utf8');
-  assert.match(src, /const SORT_COLUMNS = \['org', 'provider', 'model', 'input', 'output', 'cache_read', 'context', 'speed', 'ttft', 'blended', 'cost'\]/);
+  assert.match(src, /const SORT_COLUMNS = \['org', 'provider', 'model', 'input', 'output', 'cache_read', 'context', 'speed', 'ttft', 'intelligence', 'coding', 'agentic', 'blended', 'cost'\]/);
   assert.match(src, /function setSort\(input\)/);
   assert.match(src, /setSort,\s*setCacheWrite/);
 });
@@ -128,6 +128,66 @@ test('getView snapshot includes the new text-page filters and ttftP50', async ()
   const snapStart = src.indexOf('function snapshotRow(');
   const snapEnd = src.indexOf('\n}\n\nfunction getView', snapStart);
   assert.match(src.slice(snapStart, snapEnd === -1 ? undefined : snapEnd), /ttftP50:/, 'snapshotRow must include ttftP50');
+});
+
+test('getView snapshot includes AA quality scores without treating missing as zero', async () => {
+  const src = await readFile(APP_JS, 'utf8');
+  const snapStart = src.indexOf('function snapshotRow(');
+  const snapEnd = src.indexOf('\n}\n\nfunction getView', snapStart);
+  const snap = src.slice(snapStart, snapEnd === -1 ? undefined : snapEnd);
+  assert.match(snap, /intelligence:/, 'snapshotRow must include intelligence');
+  assert.match(snap, /coding:/, 'snapshotRow must include coding');
+  assert.match(snap, /agentic:/, 'snapshotRow must include agentic');
+  assert.match(snap, /benchmarks\?\.intelligence_index \?\? null/);
+  assert.match(snap, /benchmarks\?\.coding_index \?\? null/);
+  assert.match(snap, /benchmarks\?\.agentic_index \?\? null/);
+});
+
+test('setFilters and clearFilters wire minCoding, minAgentic, and benchmarked', async () => {
+  const src = await readFile(APP_JS, 'utf8');
+  const setStart = src.indexOf('function setFilters(input)');
+  const setEnd = src.indexOf('\n}\n\nfunction clearFilters', setStart);
+  const clearStart = src.indexOf('function clearFilters()');
+  const clearEnd = src.indexOf('\n}\n\nfunction compareModels', clearStart);
+  const setBody = src.slice(setStart, setEnd);
+  const clearBody = src.slice(clearStart, clearEnd);
+  for (const key of ['minCoding', 'minAgentic', 'benchmarked']) {
+    assert.match(setBody, new RegExp(key), `setFilters must accept ${key}`);
+    assert.match(clearBody, new RegExp(key), `clearFilters must reset ${key}`);
+  }
+  const matchStart = src.indexOf('function matchingOfferings()');
+  const matchEnd = src.indexOf('\n}\n\nfunction computeAndRender', matchStart);
+  const matchBody = src.slice(matchStart, matchEnd);
+  assert.match(matchBody, /minCoding/);
+  assert.match(matchBody, /minAgentic/);
+  assert.match(matchBody, /benchmarked/);
+  assert.match(matchBody, /coding_index/);
+  assert.match(matchBody, /agentic_index/);
+});
+
+test('highlightTradeoff accepts smartest as an AA-intelligence pick', async () => {
+  const src = await readFile(APP_JS, 'utf8');
+  const start = src.indexOf('function highlightTradeoff(input)');
+  const end = src.indexOf('\n}\n\nfunction exportCsvView', start);
+  const body = src.slice(start, end);
+  assert.match(body, /smartest/);
+  assert.match(body, /intelligence_index/);
+});
+
+test('sortValue and rankingMetric cover intelligence, coding, and agentic', async () => {
+  const src = await readFile(APP_JS, 'utf8');
+  const sortStart = src.indexOf('function sortValue(r, sortBy)');
+  const sortEnd = src.indexOf('\n}\n\n/** Sort rows by the current sort column', sortStart);
+  const sortBody = src.slice(sortStart, sortEnd);
+  assert.match(sortBody, /case 'intelligence':/);
+  assert.match(sortBody, /case 'coding':/);
+  assert.match(sortBody, /case 'agentic':/);
+  const rankStart = src.indexOf('function rankingMetric()');
+  const rankEnd = src.indexOf('\n}\n\nfunction formatRankingValue', rankStart);
+  const rankBody = src.slice(rankStart, rankEnd);
+  assert.match(rankBody, /case 'intelligence':/);
+  assert.match(rankBody, /case 'coding':/);
+  assert.match(rankBody, /case 'agentic':/);
 });
 
 test('setFilters and clearFilters wire hideBatch, cacheOnly, maxBlended, minToks, hq', async () => {

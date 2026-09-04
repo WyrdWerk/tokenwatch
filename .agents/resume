@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Fast wake-up check only. Do not install packages here.
+# TokenWatch has no databases, tunnels, or auth that must be repaired on resume.
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "error: node not on PATH" >&2
+  exit 1
+fi

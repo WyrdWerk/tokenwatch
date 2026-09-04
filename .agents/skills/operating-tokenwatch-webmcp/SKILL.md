@@ -1,6 +1,6 @@
 ---
 name: operating-tokenwatch-webmcp
-description: "Operates and interprets TokenWatch's WebMCP tools across text, image, and video catalog pages. Use when an agent must choose tools, synchronize page state, interpret rankings, or explain returned pricing results."
+description: "Operates and interprets TokenWatch's WebMCP tools across text, image, video, and benchmarks catalog pages. Use when an agent must choose tools, synchronize page state, interpret rankings, or explain returned pricing results."
 ---
 
 # Operating TokenWatch WebMCP
@@ -15,8 +15,9 @@ models here; catalogs and prices are dynamic.
 
 1. Discover the current page with `get_view` before interpreting results unless
    the immediately preceding tool returned a complete fresh view.
-2. Treat `{provider, id}` as offering identity. Never use a displayed rank as
-   an identifier; ranks change after sorting or filtering.
+2. Treat `{provider, id}` as offering identity on text/image/video. On
+   `/benchmarks`, identity is the canonical model `id`. Never use a displayed
+   rank as an identifier; ranks change after sorting or filtering.
 3. For a request that names a ranking, call `set_sort` first, then `get_view`.
    `set_sort` already returns a fresh view, but an explicit `get_view` is useful
    when the requested result limit differs from its default.
@@ -25,10 +26,11 @@ models here; catalogs and prices are dynamic.
 5. After any state-changing tool, use its returned view (or call `get_view`)
    before describing the table. Never describe a stale ranking from memory.
 6. If the user asks for full details of selected rows, call `get_model` with
-   each row's `{provider, id}` after `get_view`.
-7. Speed (`speed`, tok/s) and TTFT (`ttft`, seconds) are sortable columns.
-   Min throughput is also a text-page filter (`minToks` via `set_filters`).
-   Do not treat missing speed/TTFT as zero.
+   each row's `{provider, id}` after `get_view` (text/image/video) or with
+   canonical `id` on `/benchmarks`.
+7. Speed (`speed`, tok/s), TTFT (`ttft`, seconds), and AA indices
+   (`intelligence`, `coding`, `agentic`) are sortable text columns. Missing
+   speed/TTFT/scores are null, never zero. Only ~77% of offerings have IQ.
 8. Do not compare image megapixel, image, and token prices as though they were
    one unit. Preserve the billing unit and state the workload basis.
 9. Hide-batch is on by default (`filters.hideBatch: true`). `:batch` rows are
@@ -38,10 +40,10 @@ models here; catalogs and prices are dynamic.
 
 | Page | Registered tools | Sortable fields |
 |---|---|---|
-| Text `/` | `about_tokenwatch` plus the 19 tools below | `org`, `provider`, `model`, `input`, `output`, `cache_read`, `context`, `speed`, `ttft`, `blended`, `cost` |
+| Text `/` | `about_tokenwatch` plus the 19 tools below | `org`, `provider`, `model`, `input`, `output`, `cache_read`, `context`, `speed`, `ttft`, `intelligence`, `coding`, `agentic`, `blended`, `cost` |
 | Image `/image` | `about_tokenwatch`, `get_view`, `get_catalog_info`, `set_sort` | `org`, `model`, `cost_per_unit`, `cost` |
 | Video `/video` | `about_tokenwatch`, `get_view`, `get_catalog_info`, `set_sort` | `org`, `model`, `resolution`, `audio`, `cost_per_second`, `cost` |
-| Benchmarks `/benchmarks` | none currently | — |
+| Benchmarks `/benchmarks` | `about_tokenwatch`, `get_view`, `get_catalog_info`, `get_model`, `set_sort`, `set_use_case`, `set_filters` | `score`, `value`, `price`, `name`, `org`, plus the tab’s score keys |
 
 ### Deferred media workload controls
 
@@ -79,6 +81,7 @@ Use these defaults unless the user specifies otherwise:
 | slowest, lowest throughput | `speed`, `asc` (text only) |
 | lowest/highest price or context | the corresponding numeric field, `asc`/`desc` |
 | alphabetical by provider/model/org | the corresponding text field, `asc` unless reversed |
+| smartest / highest IQ | `intelligence`, `desc` (text only; null scores sink) |
 
 For “top N by X and explain” on text:
 
@@ -106,8 +109,8 @@ get_view()
 compare_models({ action: "set", models: [{ provider, id }, ...], open: true })
 ```
 
-Use `highlight_tradeoff` when the user asks for a cheapest/fastest/ZDR tradeoff
-comparison without naming specific rows.
+Use `highlight_tradeoff` when the user asks for a cheapest/fastest/ZDR/smartest
+tradeoff comparison without naming specific rows.
 
 ## Shared result conventions
 
@@ -158,6 +161,9 @@ Returns:
     "promo": false,
     "groupBy": "none|org|provider",
     "minIntelligence": 0,
+    "minCoding": 0,
+    "minAgentic": 0,
+    "benchmarked": false,
     "hideBatch": true,
     "cacheOnly": false,
     "maxBlended": 0,
@@ -173,11 +179,13 @@ Returns:
 ```
 
 Each text row contains `rank`, `provider`, `id`, `name`, `org`, `cost`,
-`blended`, `zdr`, `speedP50`, and `ttftP50`. `cost` is the calculated workload
-cost (or the inverse affordability value in budget mode); `blended` is the
-mix-weighted comparison rate in $/M and is not the same thing as session
-`cost`. `ttftP50` is time-to-first-token in seconds (null when unknown).
-`hideBatch` defaults to true, so `:batch` SKUs are excluded until turned off.
+`blended`, `zdr`, `speedP50`, `ttftP50`, `intelligence`, `coding`, and
+`agentic`. `cost` is the calculated workload cost (or the inverse
+affordability value in budget mode); `blended` is the mix-weighted comparison
+rate in $/M and is not the same thing as session `cost`. `ttftP50` is
+time-to-first-token in seconds (null when unknown). Quality scores are AA
+0–100 indices or null — never treat missing as zero. `hideBatch` defaults to
+true, so `:batch` SKUs are excluded until turned off.
 
 ### `get_model({ provider, id })`
 
@@ -202,7 +210,7 @@ Valid `by` values are:
 
 ```text
 org, provider, model, input, output, cache_read,
-context, speed, ttft, blended, cost
+context, speed, ttft, intelligence, coding, agentic, blended, cost
 ```
 
 Returns the same shape as `get_view`, with the requested active sort. The
@@ -238,14 +246,14 @@ the tool returns an error.
 - `set_workload({ totalTokensM?, mix?, costMode?, computeBy?, budget? })` → a fresh `get_view`; mix values must sum to 100 ±0.5 and are not silently normalized. It is a partial update: omitted workload fields, including existing `cacheWrite` and `amortizeN`, are preserved.
 - `apply_preset({ name })` → a fresh `get_view`; valid names are `agentic`, `balanced`, `heavy-output`, and `no-cache`.
 - `set_cache_write({ tokens?, amortizeN? })` → a fresh `get_view`; tokens are millions and `amortizeN` must be at least 1. Cache-write cost is included only when an offering has a numeric `pricing.cache_write`; `null` means the component is treated as $0, so the ranking may remain unchanged.
-- `set_filters({ provider?, model?, zdr?, sub?, promo?, groupBy?, minIntelligence?, hideBatch?, cacheOnly?, maxBlended?, minToks?, hq? })` → a fresh `get_view` with its default 10-row `top` preview; this resets the large-row display state. `hideBatch` defaults to true on the page (omit to leave it; pass `false` to include `:batch` SKUs). `cacheOnly` keeps rows with a numeric cache-read price. `maxBlended` is a $/M cap at the current mix; `minToks` is minimum throughput p50 and drops rows with no speed data. `hq` is a country code (`US`, `SG`, `CN`, `FR`, `ES`, `NL`, `SE`) or `unknown`. `groupBy` organizes the visible table into provider/org sections but does not change the active ranking or the global `top` preview; explain section placement separately from rank. The `model` filter is a case-insensitive substring match against the display name or the raw trailing id segment; runs of spaces and hyphens are the same separator (`glm-5.3-flash` matches `GLM 5.3 Flash`). It does not collapse glued tokens (`GLM-5.3Flash` will miss) and it does not collapse every backend of that model into one row — compare/open-detail still need exact `{provider, id}`.
+- `set_filters({ provider?, model?, zdr?, sub?, promo?, groupBy?, minIntelligence?, minCoding?, minAgentic?, benchmarked?, hideBatch?, cacheOnly?, maxBlended?, minToks?, hq? })` → a fresh `get_view` with its default 10-row `top` preview; this resets the large-row display state. `hideBatch` defaults to true on the page (omit to leave it; pass `false` to include `:batch` SKUs). `cacheOnly` keeps rows with a numeric cache-read price. `maxBlended` is a $/M cap at the current mix; `minToks` is minimum throughput p50 and drops rows with no speed data. `hq` is a country code (`US`, `SG`, `CN`, `FR`, `ES`, `NL`, `SE`) or `unknown`. `minCoding` / `minAgentic` drop offerings without that AA score. `benchmarked` keeps rows that have a benchmarks block. `groupBy` organizes the visible table into provider/org sections but does not change the active ranking or the global `top` preview; explain section placement separately from rank. The `model` filter is a case-insensitive substring match against the display name or the raw trailing id segment; runs of spaces and hyphens are the same separator (`glm-5.3-flash` matches `GLM 5.3 Flash`). It does not collapse glued tokens (`GLM-5.3Flash` will miss) and it does not collapse every backend of that model into one row — compare/open-detail still need exact `{provider, id}`.
 - `clear_filters()` → a fresh `get_view`; workload and sort are kept. Hide-batch returns to on.
 
 ### Text comparison, detail, and export tools
 
 - `compare_models({ action, models?, open? })` → a fresh view, with optional `missing` and `note`. Actions are `add`, `remove`, `clear`, and `set`; models use `{ provider, id }`; the tray maximum is six. `open: true` opens the modal and requires at least two selected models.
 - `open_detail({ provider, id })` → `{ ok, opened: { provider, id }, note }`; opens the detail modal for an offering in the current view.
-- `highlight_tradeoff({ kinds? })` → a fresh view after selecting and opening cheapest, fastest, and/or `zdr_cheapest` rows. If omitted, all three kinds are attempted. It errors when those kinds collapse to fewer than two distinct `{provider, id}` rows (for example a ZDR-only view where cheapest, fastest, and ZDR-cheapest are the same offering). Retry after `clear_filters` or on a mixed catalog.
+- `highlight_tradeoff({ kinds? })` → a fresh view after selecting and opening cheapest, fastest, `zdr_cheapest`, and/or `smartest` (highest AA intelligence with a score) rows. If omitted, all four kinds are attempted. It errors when those kinds collapse to fewer than two distinct `{provider, id}` rows. Retry after `clear_filters` or on a mixed catalog.
 - `export_csv()` → `{ ok, filename, rowCount, triggeredDownload, note }`; the download can be blocked by an in-app browser.
 - `snapshot_compare()` → `{ ok, filename, triggeredDownload, note }`, or an error if fewer than two models are selected or PNG capture fails.
 - `download_cost_card({ provider, id })` → `{ ok, filename, triggeredDownload, note }`, or an error if the row is not in view. `triggeredDownload: true` means the page started a download click. Chrome may still show a multiple-file download permission prompt; the file is not on disk until that is allowed.
@@ -296,8 +304,10 @@ and what the returned fields mean. Use the following output-to-response rules:
   page is being left; after navigation, rediscover the destination's tools.
 
 For image and video views, always include the billing unit or duration beside
-prices. For every tool, preserve explicit `null`/missing values and distinguish
-an error response from a successful result containing zero rows.
+prices. For benchmarks views, report canonical `id` (not provider) and say
+when Value is relative (best-in-view = 100). For every tool, preserve explicit
+`null`/missing values and distinguish an error response from a successful
+result containing zero rows.
 
 ## Image-page contracts
 
@@ -380,6 +390,37 @@ duration, or affordable seconds for the selected budget.
 Valid fields are `org`, `model`, `resolution`, `audio`, `cost_per_second`, and
 `cost`. It updates the video table and returns a fresh video `get_view`
 snapshot.
+
+
+## Benchmarks-page contracts
+
+Identity is **canonical id** (`claude-opus-4.6`), not `{provider, id}`. Do not
+mix the two. Value is score ÷ cheapest blended $/M, normalized so the best
+model in the current view = 100 — never an absolute number, never Elo mixed
+into a 0–100 ranking.
+
+`get_catalog_info()` returns `{ page: "benchmarks", generated_at, catalogSize,
+modelCount, sources, note }`.
+
+### `get_view({ limit? })`
+
+Returns `page: "benchmarks"`, `useCase`, `valueKey`, `mix`, `filters`
+(`search`, `org`, `valueKey`), `sort`, `rowCount`, ranked `top` of canonical
+models (`id`, `name`, `org`, `from`, `score`, `value`, `scores`), and
+`shareUrl`.
+
+### `get_model({ id })`
+
+Requires the canonical `id` from `get_view`. Returns scores (AA + LiveBench +
+Design Arena), offerings, and cheapest `from` at the current mix. If the model
+exists but is filtered out, `inView: false`.
+
+### `set_sort({ by, dir })` / `set_use_case({ uc })` / `set_filters(...)`
+
+`set_use_case.uc` is `agentic`, `reasoning`, `knowledge`, or `ui_quality`.
+`set_filters` accepts `search`, `org`, and `valueKey` (`__any__` shows every
+model and disables Value). `set_sort.by` is `score`, `value`, `price`, `name`,
+`org`, or a visible score key for the active tab.
 
 ## Reporting results to the human
 

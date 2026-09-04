@@ -1,0 +1,7 @@
+services:
+  web:
+    command: serve public -l tcp://0.0.0.0:"$PORT"
+    health: /
+    portal:
+      title: TokenWatch
+      description: Static site from public/ (text, image, video, benchmarks). Data is the committed JSON catalogs; fetch pipelines need API keys and are not started here.

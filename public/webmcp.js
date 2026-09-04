@@ -20,7 +20,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "get_view",
     "title": "Get current results",
-    "description": "Read-only snapshot of the TokenWatch text calculator the human is looking at: current mix, modes, filters, active sort, compare tray, rowCount, and the top ranked offerings (rank, provider, id, name, cost, blended $/M, zdr, speedP50, ttftP50 in seconds). By default, top is sorted by total session cost ascending; use set_sort to change the field and direction programmatically. Use this after any write so you describe the live table, not a stale one. Row identity is {provider, id}, never a row number. For operational details, call about_tokenwatch.",
+    "description": "Read-only snapshot of the TokenWatch text calculator the human is looking at: current mix, modes, filters, active sort, compare tray, rowCount, and the top ranked offerings (rank, provider, id, name, cost, blended $/M, zdr, speedP50, ttftP50 in seconds, intelligence, coding, agentic). Missing quality scores are null, never zero. By default, top is sorted by total session cost ascending; use set_sort to change the field and direction programmatically. Use this after any write so you describe the live table, not a stale one. Row identity is {provider, id}, never a row number. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": true },
     "inputSchema": {
       "type": "object",
@@ -62,7 +62,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "set_sort",
     "title": "Sort results",
-    "description": "Sets the active table sort and direction, then re-renders the same results. Sortable columns: org, provider, model, input, output, cache_read, context, speed, ttft, blended, and cost. Text fields sort alphabetically; numeric fields sort ascending or descending. ttft is time-to-first-token in seconds (lower is faster). Returns a fresh get_view snapshot. For operational details, call about_tokenwatch.",
+    "description": "Sets the active table sort and direction, then re-renders the same results. Sortable columns: org, provider, model, input, output, cache_read, context, speed, ttft, intelligence, coding, agentic, blended, and cost. Text fields sort alphabetically; numeric fields sort ascending or descending. ttft is time-to-first-token in seconds (lower is faster). intelligence/coding/agentic are Artificial Analysis 0-100 indices; missing scores sort last, never as zero. Returns a fresh get_view snapshot. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": false },
     "inputSchema": {
       "type": "object",
@@ -79,6 +79,9 @@ const TEXT_TOOL_DEFS = JSON.parse(`
             "context",
             "speed",
             "ttft",
+            "intelligence",
+            "coding",
+            "agentic",
             "blended",
             "cost"
           ],
@@ -254,7 +257,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "set_filters",
     "title": "Set filters",
-    "description": "Partial update of filters: provider search, model search, ZDR only, subscription only, promos only, group-by, min intelligence, hideBatch (default true), cacheOnly, maxBlended $/M, minToks, hq country. Re-renders the table. Workload is unchanged. For operational details, call about_tokenwatch.",
+    "description": "Partial update of filters: provider search, model search, ZDR only, subscription only, promos only, group-by, min intelligence/coding/agentic, benchmarked only, hideBatch (default true), cacheOnly, maxBlended $/M, minToks, hq country. Re-renders the table. Workload is unchanged. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": false },
     "inputSchema": {
       "type": "object",
@@ -292,6 +295,20 @@ const TEXT_TOOL_DEFS = JSON.parse(`
           "minimum": 0,
           "description": "Minimum Artificial Analysis intelligence index."
         },
+        "minCoding": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Minimum Artificial Analysis coding index. Offerings without a coding score are excluded when this is set."
+        },
+        "minAgentic": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Minimum Artificial Analysis agentic index. Offerings without an agentic score are excluded when this is set."
+        },
+        "benchmarked": {
+          "type": "boolean",
+          "description": "If true, only offerings that have a benchmarks block (any AA or Design Arena field)."
+        },
         "hideBatch": {
           "type": "boolean",
           "description": "If true (the default), hide :batch and :free SKUs. Set false to include them."
@@ -321,7 +338,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "clear_filters",
     "title": "Clear filters",
-    "description": "Resets search, ZDR, subscription, promo, group-by, min-intelligence, hide-batch (back to on), cache-only, max blended, min tok/s, and HQ filters. Keeps the current workload. Re-renders the table. For operational details, call about_tokenwatch.",
+    "description": "Resets search, ZDR, subscription, promo, group-by, min-intelligence/coding/agentic, benchmarked-only, hide-batch (back to on), cache-only, max blended, min tok/s, and HQ filters. Keeps the current workload. Re-renders the table. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": false },
     "inputSchema": {
       "type": "object",
@@ -401,7 +418,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "highlight_tradeoff",
     "title": "Highlight tradeoffs",
-    "description": "Fills the compare tray with cheapest / fastest / ZDR-cheapest from the current view and opens the compare modal. Re-renders the table. For operational details, call about_tokenwatch.",
+    "description": "Fills the compare tray with cheapest / fastest / ZDR-cheapest / smartest (highest AA intelligence with a score) from the current view and opens the compare modal. Re-renders the table. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": false },
     "inputSchema": {
       "type": "object",
@@ -413,10 +430,11 @@ const TEXT_TOOL_DEFS = JSON.parse(`
             "enum": [
               "cheapest",
               "fastest",
-              "zdr_cheapest"
+              "zdr_cheapest",
+              "smartest"
             ]
           },
-          "description": "Which tradeoffs to include (default all three)."
+          "description": "Which tradeoffs to include (default all four)."
         }
       },
       "additionalProperties": false
@@ -648,6 +666,129 @@ const MEDIA_TOOL_DEFS = JSON.parse(`
         "additionalProperties": false
       }
     }
+  ],
+  "benchmarks": [
+    {
+      "name": "about_tokenwatch",
+      "title": "Get operating methodology",
+      "description": "Read-only. Returns the TokenWatch WebMCP operating brief (rules and page capability map) plus the URL of the full skill. Call this before ranking, filtering, or comparing so you use canonical model ids on this page (not {provider, id}).",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_view",
+      "title": "Get current benchmark results",
+      "description": "Read-only snapshot of the Benchmarks page the human is looking at: use-case tab, mix, org/search filters, active sort, rowCount, and the top ranked canonical models (id, name, org, scores, cheapest from $/M, value). Identity is canonical id, never {provider, id}. Value is score-per-dollar normalized so the best in view = 100; it is not an absolute number. Missing scores are null, never zero. For operational details, call about_tokenwatch.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 25,
+            "description": "How many ranked rows to include in top (default 10)."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_catalog_info",
+      "title": "Get benchmarks catalog freshness",
+      "description": "Read-only. Returns the benchmarks page name, benchmarks.json generated_at, model count, and source list. For operational details, call about_tokenwatch.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_model",
+      "title": "Get one canonical model",
+      "description": "Read-only detail for one canonical model in the current view: scores (AA, LiveBench, Design Arena), offerings, and cheapest blended $/M at the current mix. Requires {id} from get_view — a canonical model id, not a provider offering. For operational details, call about_tokenwatch.",
+      "annotations": { "readOnlyHint": true },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Canonical model id from get_view (e.g. claude-opus-4.6), not a provider slug."
+          }
+        },
+        "required": ["id"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_sort",
+      "title": "Sort benchmark results",
+      "description": "Sets the active benchmarks-table sort and direction, then re-renders. Sortable fields: score, value, price, name, org, plus the visible score-column keys for the current use-case tab. Missing scores sink. Returns a fresh get_view snapshot. For operational details, call about_tokenwatch.",
+      "annotations": { "readOnlyHint": false },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "by": {
+            "type": "string",
+            "description": "Column to sort by: score, value, price, name, org, or a score key such as aa_intelligence."
+          },
+          "dir": {
+            "type": "string",
+            "enum": ["asc", "desc"],
+            "description": "asc = low/alphabetical first; desc = high/reverse-alphabetical first."
+          }
+        },
+        "required": ["by", "dir"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_use_case",
+      "title": "Set use-case tab",
+      "description": "Switches the Benchmarks page use-case tab (agentic, reasoning, knowledge, ui_quality) and re-renders. This changes which score columns and Value metric are active. For operational details, call about_tokenwatch.",
+      "annotations": { "readOnlyHint": false },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "uc": {
+            "type": "string",
+            "enum": ["agentic", "reasoning", "knowledge", "ui_quality"],
+            "description": "Use-case tab key."
+          }
+        },
+        "required": ["uc"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_filters",
+      "title": "Set benchmarks filters",
+      "description": "Partial update of Benchmarks page filters: model search, org, and the Value-benchmark key (including __any__ for no score filter). Re-renders the table. For operational details, call about_tokenwatch.",
+      "annotations": { "readOnlyHint": false },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "search": {
+            "type": "string",
+            "description": "Model name / org substring search."
+          },
+          "org": {
+            "type": "string",
+            "description": "Creator org slug. Empty string means all organizations."
+          },
+          "valueKey": {
+            "type": "string",
+            "description": "Score key driving Value, or __any__ to show every model with Value disabled."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
   ]
 }
 `);
@@ -678,6 +819,7 @@ function catalogExecutors(catalog) {
     about_tokenwatch: () => aboutTokenwatch(),
     get_view: (input) => catalog.getView(input),
     get_model: (input) => catalog.getModel(input),
+    set_use_case: (input) => catalog.setUseCase(input),
     set_sort: (input) => catalog.setSort(input),
     explain_ranking: () => catalog.explainRanking(),
     list_presets: () => catalog.listPresets(),
