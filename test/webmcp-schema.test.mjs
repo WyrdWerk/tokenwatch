@@ -155,3 +155,18 @@ test('setUseCase resets sort when the previous key is not on the new tab', async
   const click = app.slice(clickStart, clickEnd);
   assert.match(click, /state\.sort\s*=\s*'score'/, 'tab click must reset sort the same way as setUseCase');
 });
+
+test('benchmarks colVal returns null for missing score, value, and price so they sink', async () => {
+  const app = await readFile(join(ROOT, 'public', 'benchmarks-app.js'), 'utf8');
+  const start = app.indexOf('const colVal = (r, key) =>');
+  const end = app.indexOf('valued.sort((a, b) => {', start);
+  assert.notEqual(start, -1, 'colVal must exist');
+  assert.notEqual(end, -1, 'colVal boundary must exist');
+  const body = app.slice(start, end);
+  assert.match(body, /key === 'price'\) return r\.price \?\? null/);
+  assert.match(body, /key === 'value'\) return r\.value \?\? null/);
+  assert.match(body, /key === 'score'\) return r\.score \?\? null/);
+  assert.doesNotMatch(body, /Number\.MAX_SAFE_INTEGER/);
+  assert.doesNotMatch(body, /r\.value \?\? -1/);
+  assert.doesNotMatch(body, /r\.score \?\? -1/);
+});
