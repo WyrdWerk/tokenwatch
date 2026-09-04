@@ -121,6 +121,21 @@
         <input type="number" id="minIntelligence" min="0" max="100" step="1" placeholder="No filter" />
       </div>
       <div class="control-group">
+        <label for="minCoding">Min coding</label>
+        <input type="number" id="minCoding" min="0" max="100" step="1" placeholder="No filter" />
+      </div>
+      <div class="control-group">
+        <label for="minAgentic">Min agentic</label>
+        <input type="number" id="minAgentic" min="0" max="100" step="1" placeholder="No filter" />
+      </div>
+      <div class="control-group promo-control">
+        <label for="benchmarkedOnly">Quality</label>
+        <div class="promo-toggle">
+          <input type="checkbox" id="benchmarkedOnly" />
+          <label for="benchmarkedOnly">Benchmarked only</label>
+        </div>
+      </div>
+      <div class="control-group">
         <label for="maxBlended">Max blended $/M</label>
         <input type="number" id="maxBlended" min="0" step="0.01" placeholder="Any" />
       </div>
@@ -255,6 +270,12 @@
         <option value="speed:desc">Speed ↓</option>
         <option value="ttft:asc">TTFT ↑</option>
         <option value="ttft:desc">TTFT ↓</option>
+        <option value="intelligence:asc">IQ ↑</option>
+        <option value="intelligence:desc">IQ ↓</option>
+        <option value="coding:asc">Coding ↑</option>
+        <option value="coding:desc">Coding ↓</option>
+        <option value="agentic:asc">Agentic ↑</option>
+        <option value="agentic:desc">Agentic ↓</option>
         <option value="blended:asc">Blended $/M ↑</option>
         <option value="blended:desc">Blended $/M ↓</option>
       </select>
@@ -272,19 +293,20 @@
               <th class="sortable num" data-sort="context"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>Context</th>
               <th class="sortable num" data-sort="speed" id="speedColumnHeader"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>Speed</th>
               <th class="sortable num" data-sort="ttft" id="ttftColumnHeader"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>TTFT</th>
+              <th class="sortable num" data-sort="intelligence"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>IQ</th>
               <th class="sortable num" data-sort="blended"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>Blended $/M</th>
               <th class="sortable num" data-sort="cost" id="costColumnHeader">Total Cost</th>
             </tr>
           </thead>
           <tbody id="resultsBody">
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="11"><span class="skeleton-bar"></span></td></tr>
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="11"><span class="skeleton-bar"></span></td></tr>
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="11"><span class="skeleton-bar"></span></td></tr>
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="11"><span class="skeleton-bar"></span></td></tr>
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="11"><span class="skeleton-bar"></span></td></tr>
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="11"><span class="skeleton-bar"></span></td></tr>
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="11"><span class="skeleton-bar"></span></td></tr>
-            <tr class="skeleton-row" aria-hidden="true"><td colspan="11"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="13"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="13"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="13"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="13"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="13"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="13"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="13"><span class="skeleton-bar"></span></td></tr>
+            <tr class="skeleton-row" aria-hidden="true"><td colspan="13"><span class="skeleton-bar"></span></td></tr>
           </tbody>
         </table>
       </div>

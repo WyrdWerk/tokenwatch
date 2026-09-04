@@ -92,3 +92,12 @@ test('index.html exposes the new text-page filter controls and TTFT column', asy
   assert.match(html, /data-sort="ttft"/, 'TTFT must be a sortable column');
   assert.match(html, /value="ttft:asc"/, 'mobile sort must include TTFT');
 });
+
+test('index.html exposes IQ column and extra quality filters', async () => {
+  const html = await readFile(join(__dirname, '..', 'public', 'index.html'), 'utf-8');
+  assert.match(html, /data-sort="intelligence"/, 'IQ must be a sortable column');
+  assert.match(html, /value="intelligence:desc"/, 'mobile sort must include IQ desc');
+  for (const id of ['minCoding', 'minAgentic', 'benchmarkedOnly']) {
+    assert.match(html, new RegExp(`id="${id}"`), `index.html must include #${id}`);
+  }
+});

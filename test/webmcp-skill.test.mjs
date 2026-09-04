@@ -24,6 +24,10 @@ test('TokenWatch WebMCP skill documents tool contracts and human-readable report
   assert.match(skill, /## Translating tool results into human-readable explanations/);
   assert.match(skill, /## Image-page contracts/);
   assert.match(skill, /## Video-page contracts/);
+  assert.match(skill, /## Benchmarks-page contracts/);
+  assert.match(skill, /set_use_case/);
+  assert.match(skill, /canonical id/);
+  assert.match(skill, /smartest/);
   for (const tool of TEXT_TOOLS) {
     assert.match(skill, new RegExp(`\\b${tool.replace('_', '_')}\\b`), `skill must document ${tool}`);
   }

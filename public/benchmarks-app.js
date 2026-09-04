@@ -111,17 +111,25 @@
   // ── Data load ──────────────────────────────────────────────────────────────
 
   async function boot() {
-    const resp = await fetch('/benchmarks.json');
-    state.data = await resp.json();
+    try {
+      const resp = await fetch('/benchmarks.json');
+      state.data = await resp.json();
+    } catch (err) {
+      console.error(err);
+      document.getElementById('benchBody').innerHTML =
+        `<tr><td colspan="9" class="dim">Failed to load benchmarks: ${escapeHtml(err.message)}</td></tr>`;
+      return;
+    }
     state.mix = loadMix();
     renderMixNote();
     buildDatalist();
     renderTabs();
-    render();
+    computeAndRender();
+    publishTwCatalog();
     wireEvents();
     // Hash: #uc=<usecase>
     const m = location.hash.match(/uc=([a-z_]+)/);
-    if (m && USE_CASES[m[1]]) { state.uc = m[1]; renderTabs(); render(); }
+    if (m && USE_CASES[m[1]]) { state.uc = m[1]; renderTabs(); computeAndRender(); }
   }
 
   function buildDatalist() {
@@ -304,6 +312,159 @@
     $('detailModal').hidden = false;
   }
 
+
+  function computeAndRender() {
+    render();
+  }
+
+  function roundBench(n) {
+    if (n == null || !Number.isFinite(n)) return n;
+    return Math.round(n * 1000) / 1000;
+  }
+
+  function snapshotRow(r, rank) {
+    const m = r.m;
+    return {
+      rank,
+      id: m.id,
+      name: m.name,
+      org: m.org || null,
+      providers: m.providers,
+      from: r.cheapest ? { provider: r.cheapest.provider, blended_per_m: roundBench(r.cheapest.rate) } : null,
+      score: r.score,
+      value: r.value == null ? null : roundBench(r.value),
+      scores: m.scores,
+    };
+  }
+
+  function getView(input) {
+    const n = Math.min(25, Math.max(1, parseInt(input?.limit, 10) || 10));
+    const rows = visibleModels();
+    return {
+      page: 'benchmarks',
+      generated_at: state.data?.generated_at || null,
+      useCase: state.uc,
+      valueKey: activeValueKey(),
+      mix: state.mix,
+      filters: { search: state.search, org: state.org, valueKey: activeValueKey() },
+      sort: { by: state.sort, dir: state.dir },
+      rowCount: rows.length,
+      top: rows.slice(0, n).map((r, i) => snapshotRow(r, i + 1)),
+      shareUrl: location.href,
+      note: 'Identity is canonical model id. Do not pass {provider, id} from the text page. Value is best-in-view = 100, not an absolute score/price.',
+    };
+  }
+
+  function getCatalogInfo() {
+    return {
+      page: 'benchmarks',
+      generated_at: state.data?.generated_at || null,
+      catalogSize: state.data?.models?.length || 0,
+      modelCount: state.data?.model_count || state.data?.models?.length || 0,
+      sources: state.data?.sources || null,
+      note: 'generated_at is the benchmarks.json snapshot time. Models are canonical, not provider offerings.',
+    };
+  }
+
+  function getModel(input) {
+    if (!input?.id) return { error: 'id is required (canonical model id from get_view, not {provider, id}).' };
+    const rows = visibleModels();
+    const hit = rows.find((r) => r.m.id === input.id);
+    if (!hit) {
+      const exists = (state.data?.models || []).some((m) => m.id === input.id);
+      if (!exists) return { error: `No canonical model ${input.id} in the benchmarks catalog.` };
+      return { error: `${input.id} is not in the current view. Call get_view or set_filters / set_use_case first.`, inView: false };
+    }
+    return {
+      id: hit.m.id,
+      name: hit.m.name,
+      org: hit.m.org || null,
+      providers: hit.m.providers,
+      from: hit.cheapest ? { provider: hit.cheapest.provider, blended_per_m: roundBench(hit.cheapest.rate) } : null,
+      offerings: hit.m.offerings,
+      scores: hit.m.scores,
+      score: hit.score,
+      value: hit.value == null ? null : roundBench(hit.value),
+      inView: true,
+    };
+  }
+
+  const BENCH_SORT = new Set(['score', 'value', 'price', 'name', 'org', 'rank']);
+
+  function setSort(input) {
+    input = input || {};
+    const uc = USE_CASES[state.uc];
+    const scoreKeys = uc.columns.map((c) => c.key);
+    if (!BENCH_SORT.has(input.by) && !scoreKeys.includes(input.by)) {
+      return { error: `by must be one of: score, value, price, name, org, ${scoreKeys.join(', ')}.` };
+    }
+    if (input.dir !== 'asc' && input.dir !== 'desc') {
+      return { error: 'dir must be "asc" or "desc".' };
+    }
+    state.sort = input.by === 'rank' ? 'score' : input.by;
+    state.dir = input.dir;
+    const sel = document.getElementById('sortSelect');
+    if (sel && ['score', 'value', 'price', 'name'].includes(state.sort)) sel.value = state.sort;
+    computeAndRender();
+    return getView();
+  }
+
+  function setUseCase(input) {
+    const uc = input?.uc;
+    if (!USE_CASES[uc]) return { error: 'uc must be agentic, reasoning, knowledge, or ui_quality.' };
+    state.uc = uc;
+    if (state.valueKey !== ANY && !USE_CASES[state.uc].columns.some((c) => c.key === state.valueKey)) state.valueKey = null;
+    const scoreKeys = USE_CASES[state.uc].columns.map((c) => c.key);
+    if (!['score', 'value', 'price', 'name', 'org'].includes(state.sort) && !scoreKeys.includes(state.sort)) {
+      state.sort = 'score';
+      state.dir = 'desc';
+    }
+    history.replaceState(null, '', `#uc=${state.uc}`);
+    renderTabs();
+    computeAndRender();
+    return getView();
+  }
+
+  function setFilters(input) {
+    input = input || {};
+    if (input.search != null) {
+      state.search = String(input.search);
+      const el = document.getElementById('modelSearch');
+      if (el) el.value = state.search;
+    }
+    if (input.org != null) {
+      state.org = String(input.org);
+      const el = document.getElementById('orgFilter');
+      if (el) el.value = state.org;
+    }
+    if (input.valueKey != null) {
+      state.valueKey = String(input.valueKey);
+      const el = document.getElementById('valueKeySelect');
+      if (el) el.value = state.valueKey;
+      if (state.valueKey !== ANY) {
+        state.sort = state.valueKey;
+        state.dir = 'desc';
+      }
+    }
+    computeAndRender();
+    return getView();
+  }
+
+  function publishTwCatalog() {
+    window.TWCatalog = {
+      page: 'benchmarks',
+      ready: true,
+      getView,
+      getCatalogInfo,
+      getModel,
+      setSort,
+      setUseCase,
+      setFilters,
+    };
+    document.dispatchEvent(new CustomEvent('tw-catalog-ready', { detail: { page: 'benchmarks' } }));
+  }
+
+
   // ── Events ─────────────────────────────────────────────────────────────────
 
   function wireEvents() {
@@ -322,6 +483,10 @@
       if (!btn) return;
       state.uc = btn.dataset.uc;
       if (state.valueKey !== ANY && !USE_CASES[state.uc].columns.some((c) => c.key === state.valueKey)) state.valueKey = null;
+      if (!['score', 'value', 'price', 'name', 'org'].includes(state.sort) && !USE_CASES[state.uc].columns.some((c) => c.key === state.sort)) {
+        state.sort = 'score';
+        state.dir = 'desc';
+      }
       history.replaceState(null, '', `#uc=${state.uc}`);
       renderTabs(); render();
     });
