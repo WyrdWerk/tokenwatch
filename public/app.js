@@ -22,6 +22,7 @@ const state = {
   groupBy: 'none',
   compareSelection: [], // array of model objects (max 6)
   currentRows: null,
+  restoreFocus: null,     // element to refocus when a modal closes
   perfData: null,         // loaded from performance.json
   showAllRows: false,    // when false, flat unfiltered table caps at ROW_CAP rows
   colOrder: null,         // array of the 11 draggable column keys in display order (null = default)
@@ -752,23 +753,26 @@ function updateCompareTray() {
 
 function closeDetailModal() {
   els.detailModal.style.display = 'none';
+  const prev = state.restoreFocus;
+  state.restoreFocus = null;
+  if (prev && document.contains(prev)) prev.focus({ preventScroll: true });
 }
 
 function copyToClipboard(text, btn) {
-  if (!navigator.clipboard) {
-    btn.textContent = '✗';
-    setTimeout(() => { btn.textContent = '📋'; }, 1200);
-    return;
-  }
+  const base = btn.getAttribute('aria-label') || 'Copy';
+  const restore = () => { btn.textContent = '📋'; btn.setAttribute('aria-label', base); };
+  const fail = () => { btn.textContent = '✗'; btn.setAttribute('aria-label', 'Copy failed'); setTimeout(restore, 1200); };
+  if (!navigator.clipboard) { fail(); return; }
   navigator.clipboard.writeText(text).then(
-    () => { btn.textContent = '✓'; setTimeout(() => { btn.textContent = '📋'; }, 1200); },
-    () => { btn.textContent = '✗'; setTimeout(() => { btn.textContent = '📋'; }, 1200); }
+    () => { btn.textContent = '✓'; btn.setAttribute('aria-label', 'Copied'); setTimeout(restore, 1200); },
+    fail
   );
 }
 
 function showDetailModal(idx) {
   const r = state.currentRows?.[idx]?.model;
   if (!r) return;
+  state.restoreFocus = document.activeElement;
   const md = r.modelsdev;
   const mdModel = r.modelsdev_model;
   const parts = [];
@@ -783,9 +787,9 @@ function showDetailModal(idx) {
     parts.push('<div class="detail-section"><div class="detail-section-title">Connect</div>');
     const baseUrl = md.base_url;
     parts.push(`<div class="detail-field"><span class="detail-field-label">Base URL</span>` +
-      `<span class="detail-field-value">${baseUrl ? esc(baseUrl) + ' <button class="copy-btn" data-copy="' + esc(baseUrl) + '">📋</button>' : '<span class="detail-no-url">Provider uses its own SDK package — no generic base URL</span>'}</span></div>`);
+      `<span class="detail-field-value">${baseUrl ? esc(baseUrl) + ' <button class="copy-btn" data-copy="' + esc(baseUrl) + '" aria-label="Copy base URL" title="Copy base URL">📋</button>' : '<span class="detail-no-url">Provider uses its own SDK package — no generic base URL</span>'}</span></div>`);
     parts.push(`<div class="detail-field"><span class="detail-field-label">Model ID</span>` +
-      `<span class="detail-field-value">${esc(md.model_id || '—')} <button class="copy-btn" data-copy="${esc(md.model_id || '')}">📋</button></span></div>`);
+      `<span class="detail-field-value">${esc(md.model_id || '—')} <button class="copy-btn" data-copy="${esc(md.model_id || '')}" aria-label="Copy model ID" title="Copy model ID">📋</button></span></div>`);
     if (md.doc_url) {
       parts.push(`<div class="detail-field"><span class="detail-field-label">Docs</span>` +
         `<span class="detail-field-value"><a href="${esc(md.doc_url)}">${esc(md.doc_url)} ↗</a></span></div>`);
@@ -968,6 +972,7 @@ function showDetailModal(idx) {
   els.detailTitle.textContent = r.name || r.id;
   els.detailBody.innerHTML = parts.join('');
   els.detailModal.style.display = '';
+  els.detailClose.focus();
 
   // Wire footer actions + copy buttons
   const addBtn = document.getElementById('detailAddCompare');
@@ -1150,6 +1155,7 @@ async function shareCostCard(r, btn) {
 
 function showCompareModal() {
   if (state.compareSelection.length < 2) return;
+  state.restoreFocus = document.activeElement;
   const tokens = getTokens();
   const modeMultiplier = state.costMode === 'monthly' ? 30 : 1;
   const budgetMode = state.computeBy === 'budget';
@@ -1256,10 +1262,14 @@ function showCompareModal() {
 
   els.compareBody.innerHTML = html;
   els.compareModal.style.display = '';
+  els.compareClose.focus();
 }
 
 function closeCompareModal() {
   els.compareModal.style.display = 'none';
+  const prev = state.restoreFocus;
+  state.restoreFocus = null;
+  if (prev && document.contains(prev)) prev.focus({ preventScroll: true });
 }
 
 function clearCompare() {
@@ -1830,7 +1840,7 @@ function renderModelRow(r, rank, groupKey, cheapest) {
   const rowIdx = state.currentRows
     ? state.currentRows.findIndex((x) => x.model.id === r.model.id && x.model.provider === r.model.provider)
     : rank - 1;
-  const checkbox = `<input type="checkbox" class="compare-check" data-idx="${rowIdx}" ${isSelected ? 'checked' : ''}${state.compareSelection.length >= 6 && !isSelected ? ' disabled' : ''}>`;
+  const checkbox = `<input type="checkbox" class="compare-check" data-idx="${rowIdx}" aria-label="Add to compare" ${isSelected ? 'checked' : ''}${state.compareSelection.length >= 6 && !isSelected ? ' disabled' : ''}>`;
   return `<tr data-idx="${rowIdx}"${groupAttr} tabindex="0" aria-label="Open details">
     <td class="rank" data-label="#">${checkbox} ${rank}${cheapest ? ' 🏆' : ''}</td>
     <td data-label="Org"><span class="org-badge">${esc(orgDisplay(r.model.org))}</span></td>
