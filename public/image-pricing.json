@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-04T20:01:02.563Z",
+  "generated_at": "2026-09-05T01:55:03.126Z",
   "models": [
     {
       "id": "flux-schnell",
@@ -158,8 +158,8 @@
         {
           "unit": "megapixel",
           "variant": null,
-          "cost_per_unit": 0.011,
-          "cost_per_million": 0.011
+          "cost_per_unit": 0.006,
+          "cost_per_million": 0.006
         }
       ]
     },
@@ -236,6 +236,24 @@
       ]
     },
     {
+      "id": "flux-2",
+      "name": "FLUX 2",
+      "org": "black-forest-labs",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.012,
+          "cost_per_million": 0.012
+        }
+      ]
+    },
+    {
       "id": "xai-grok-imagine-image",
       "name": "Grok Imagine Image",
       "org": "xai",
@@ -304,6 +322,42 @@
           "variant": null,
           "cost_per_unit": 0.008,
           "cost_per_million": 0.008
+        }
+      ]
+    },
+    {
+      "id": "flux-2-flash",
+      "name": "FLUX 2 Flash",
+      "org": "black-forest-labs",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.005,
+          "cost_per_million": 0.005
+        }
+      ]
+    },
+    {
+      "id": "meta-muse-image-text-to-image",
+      "name": "Meta Muse Image Text to Image",
+      "org": "meta",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.01,
+          "cost_per_million": null
         }
       ]
     },
@@ -464,8 +518,8 @@
         {
           "unit": "megapixel",
           "variant": null,
-          "cost_per_unit": 0.009,
-          "cost_per_million": 0.009
+          "cost_per_unit": 0.005,
+          "cost_per_million": 0.005
         }
       ]
     },
@@ -682,6 +736,24 @@
           "variant": null,
           "cost_per_unit": 0.02,
           "cost_per_million": 0.02
+        }
+      ]
+    },
+    {
+      "id": "patina-material",
+      "name": "PATINA",
+      "org": "fal",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.01,
+          "cost_per_million": 0.01
         }
       ]
     },
@@ -992,6 +1064,24 @@
       ]
     },
     {
+      "id": "wan-v2.7-pro-text-to-image",
+      "name": "Wan",
+      "org": "alibaba",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.075,
+          "cost_per_million": null
+        }
+      ]
+    },
+    {
       "id": "flux-1-dev",
       "name": "FLUX.1 [dev]",
       "org": "black-forest-labs",
@@ -1100,6 +1190,42 @@
       ]
     },
     {
+      "id": "flux-2-klein-9b-base",
+      "name": "FLUX.2 [klein] 9B Base",
+      "org": "black-forest-labs",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.011,
+          "cost_per_million": 0.011
+        }
+      ]
+    },
+    {
+      "id": "flux-2-klein-9b-lora",
+      "name": "FLUX.2 [klein] 9B LoRA",
+      "org": "black-forest-labs",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.015,
+          "cost_per_million": 0.015
+        }
+      ]
+    },
+    {
       "id": "hidream-i1-fast",
       "name": "Hidream I1 Fast",
       "org": "samsung",
@@ -1204,6 +1330,24 @@
           "variant": null,
           "cost_per_unit": 0.01,
           "cost_per_million": 0.01
+        }
+      ]
+    },
+    {
+      "id": "wan-v2.6-text-to-image",
+      "name": "Wan v2.6 Text to Image",
+      "org": "alibaba",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.03,
+          "cost_per_million": null
         }
       ]
     },
@@ -1366,6 +1510,42 @@
           "variant": null,
           "cost_per_unit": 0.02,
           "cost_per_million": 0.02
+        }
+      ]
+    },
+    {
+      "id": "rundiffusion-fal-juggernaut-flux-lightning",
+      "name": "Juggernaut Flux Lightning",
+      "org": "rundiffusion-fal",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.006,
+          "cost_per_million": 0.006
+        }
+      ]
+    },
+    {
+      "id": "imagineart-imagineart-1.5-pro-preview-text-to-image",
+      "name": "ImagineArt 1.5 Pro Preview",
+      "org": "imagineart",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.045,
+          "cost_per_million": null
         }
       ]
     },
@@ -1586,6 +1766,42 @@
       ]
     },
     {
+      "id": "flux-2-klein-4b-base",
+      "name": "FLUX.2 [klein] 4B Base",
+      "org": "black-forest-labs",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.009,
+          "cost_per_million": 0.009
+        }
+      ]
+    },
+    {
+      "id": "imagineart-imagineart-1.5-preview-text-to-image",
+      "name": "Imagineart 1.5 Preview",
+      "org": "imagineart",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.03,
+          "cost_per_million": null
+        }
+      ]
+    },
+    {
       "id": "pony-v7",
       "name": "Pony V7",
       "org": "fal",
@@ -1600,6 +1816,24 @@
           "variant": null,
           "cost_per_unit": 0.03,
           "cost_per_million": 0.03
+        }
+      ]
+    },
+    {
+      "id": "rundiffusion-fal-juggernaut-flux-pro",
+      "name": "Juggernaut Flux Pro",
+      "org": "rundiffusion-fal",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.055,
+          "cost_per_million": 0.055
         }
       ]
     },
@@ -1856,6 +2090,24 @@
       ]
     },
     {
+      "id": "rundiffusion-fal-juggernaut-flux-lora",
+      "name": "Juggernaut Flux Base LoRA",
+      "org": "rundiffusion-fal",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.045,
+          "cost_per_million": 0.045
+        }
+      ]
+    },
+    {
       "id": "longcat-image",
       "name": "Longcat Image",
       "org": "anthropic",
@@ -1870,6 +2122,24 @@
           "variant": null,
           "cost_per_unit": 0.13,
           "cost_per_million": 0.13
+        }
+      ]
+    },
+    {
+      "id": "flux-2-klein-4b-lora",
+      "name": "FLUX.2 [klein] 4B LoRA",
+      "org": "black-forest-labs",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.01,
+          "cost_per_million": 0.01
         }
       ]
     },
@@ -2104,6 +2374,24 @@
           "variant": null,
           "cost_per_unit": 0.0075,
           "cost_per_million": 0.0075
+        }
+      ]
+    },
+    {
+      "id": "rundiffusion-fal-juggernaut-flux-base",
+      "name": "Juggernaut Flux Base",
+      "org": "rundiffusion-fal",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "megapixel",
+          "variant": null,
+          "cost_per_unit": 0.035,
+          "cost_per_million": 0.035
         }
       ]
     },

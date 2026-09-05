@@ -1,6 +1,36 @@
 {
-  "generated_at": "2026-09-04T12:22:02.743Z",
+  "generated_at": "2026-09-05T01:55:03.287Z",
   "models": [
+    {
+      "id": "minimax-h3-max",
+      "name": "H3 Max Image to Video",
+      "org": "minimax",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.0125
+        }
+      ]
+    },
+    {
+      "id": "minimax-h3-max-turbo",
+      "name": "H3 Max Turbo Image to Video",
+      "org": "minimax",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.00625
+        }
+      ]
+    },
     {
       "id": "kling-video-v3-pro",
       "name": "Kling Video v3 Image to Video [Pro]",
@@ -28,6 +58,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.07
+        }
+      ]
+    },
+    {
+      "id": "minimax-h3",
+      "name": "MiniMax H3 Reference to Video",
+      "org": "minimax",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.05
         }
       ]
     },
@@ -122,6 +167,21 @@
       ]
     },
     {
+      "id": "google-gemini-omni-flash-v1.1",
+      "name": "Gemini Omni Flash 1.1 Image to Video",
+      "org": "google",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.03
+        }
+      ]
+    },
+    {
       "id": "kling-video-v2.1-standard",
       "name": "Kling 2.1 (standard)",
       "org": "kuaishou",
@@ -193,6 +253,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.085
+        }
+      ]
+    },
+    {
+      "id": "alibaba-wan-3.0",
+      "name": "Wan 3.0",
+      "org": "alibaba",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.05
         }
       ]
     },
@@ -343,6 +418,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.005
+        }
+      ]
+    },
+    {
+      "id": "veed-fabric-1.0",
+      "name": "Fabric 1.0",
+      "org": "veed",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.08
         }
       ]
     },
@@ -587,21 +677,6 @@
       ]
     },
     {
-      "id": "alibaba-happy-horse",
-      "name": "Happy Horse",
-      "org": "alibaba",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.14
-        }
-      ]
-    },
-    {
       "id": "sync-lipsync-v3",
       "name": "sync-3 Avatar Image to Video",
       "org": "fal",
@@ -692,6 +767,21 @@
       ]
     },
     {
+      "id": "alibaba-happy-horse",
+      "name": "Happy Horse",
+      "org": "alibaba",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.14
+        }
+      ]
+    },
+    {
       "id": "bytedance-omnihuman",
       "name": "OmniHuman",
       "org": "bytedance",
@@ -717,7 +807,7 @@
         {
           "resolution": null,
           "audio": null,
-          "cost_per_second": 0.1
+          "cost_per_second": 0.03
         }
       ]
     },
@@ -857,6 +947,21 @@
       ]
     },
     {
+      "id": "minimax-h3-lora",
+      "name": "MiniMax H3 Image to Video LoRA",
+      "org": "minimax",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.0625
+        }
+      ]
+    },
+    {
       "id": "kling-video-v1-pro-ai-avatar",
       "name": "Kling AI Avatar Pro",
       "org": "kuaishou",
@@ -883,6 +988,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.02
+        }
+      ]
+    },
+    {
+      "id": "veed-fabric-1.0-fast",
+      "name": "Fabric 1.0 Fast",
+      "org": "veed",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.1
         }
       ]
     },
@@ -1142,6 +1262,21 @@
       ]
     },
     {
+      "id": "veed-avatars",
+      "name": "Avatars",
+      "org": "veed",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.005833333333333333
+        }
+      ]
+    },
+    {
       "id": "infinitalk-single-text",
       "name": "Infinitalk",
       "org": "fal",
@@ -1217,6 +1352,21 @@
       ]
     },
     {
+      "id": "veed-fabric-1.0-text",
+      "name": "Fabric 1.0",
+      "org": "veed",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.08
+        }
+      ]
+    },
+    {
       "id": "davinci-magihuman",
       "name": "Davinci Magihuman",
       "org": "fal",
@@ -1258,6 +1408,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.098
+        }
+      ]
+    },
+    {
+      "id": "bernini-r",
+      "name": "Bernini-R Reference to Video",
+      "org": "fal",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.08
         }
       ]
     },
