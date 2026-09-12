@@ -5,3 +5,16 @@ services:
     portal:
       title: TokenWatch
       description: Static site from public/ (text, image, video, benchmarks). Data is the committed JSON catalogs; fetch pipelines need API keys and are not started here.
+  bb-pilot:
+    command: bash .agents/bb-service.sh
+    cwd: .
+    health: /health
+    env:
+      BB_TELEMETRY: "false"
+      BB_SERVER_BIND_HOST: "127.0.0.1"
+    portal:
+      url: /
+      title: TokenWatch bb
+      description: Loopback-only bb-app 0.43.0 workspace; state is isolated per AMP_THREAD_ID and telemetry is disabled.
+    review: false
+    agent: off

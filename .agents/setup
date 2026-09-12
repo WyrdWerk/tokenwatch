@@ -45,7 +45,99 @@ install_serve() {
   npm install -g serve
 }
 
+# Install/verify only. Never start bb or mutate plugin state; .amp/services.yaml owns lifecycle.
+install_bb() {
+  local bb_version="0.43.0"
+  local state_dir="${HOME}/.local/share/bb-pilot"
+  local runtime_dir="${state_dir}/runtime"
+  local lock_dir="${HOME}/.cache/bb-pilot"
+  local package_json="${runtime_dir}/node_modules/bb-app/package.json"
+  local entrypoint="${runtime_dir}/node_modules/bb-app/dist/bb-app.js"
+  local marker="${runtime_dir}/.bb-pilot-managed"
+  local installed_version=""
+  local stage_dir=""
+  local stage_package=""
+  local stage_entry=""
+
+  umask 077
+  mkdir -p "${lock_dir}"
+  chmod 700 "${lock_dir}"
+  exec 9>"${lock_dir}/setup.lock"
+  flock 9
+
+  if [[ -e "${runtime_dir}" && ! -d "${runtime_dir}" ]]; then
+    log "error: refusing non-directory bb runtime path: ${runtime_dir}" >&2
+    exit 1
+  fi
+  if [[ -L "${runtime_dir}" || -L "${state_dir}" ]]; then
+    log "error: refusing symlinked bb runtime path" >&2
+    exit 1
+  fi
+
+  if [[ -f "${package_json}" ]]; then
+    installed_version="$(node -p "require('${package_json}').version" 2>/dev/null || true)"
+  fi
+
+  if [[ "${installed_version}" == "${bb_version}" && -f "${entrypoint}" && -f "${marker}" ]]; then
+    chmod -R u+rwX,go-rwx "${runtime_dir}"
+    log "bb-app ${bb_version} already installed: ${runtime_dir}"
+    return 0
+  fi
+
+  if [[ -e "${runtime_dir}" && ! -f "${marker}" ]]; then
+    log "error: refusing to replace an unowned runtime at ${runtime_dir}" >&2
+    exit 1
+  fi
+
+  mkdir -p "${state_dir}"
+  chmod 700 "${state_dir}"
+  stage_dir="$(mktemp -d "${state_dir}/.runtime.XXXXXX")"
+  cleanup_bb_stage() {
+    rm -rf "${stage_dir}"
+  }
+  trap cleanup_bb_stage EXIT
+  chmod 700 "${stage_dir}"
+
+  log "installing bb-app ${bb_version}"
+  npm install \
+    --prefix "${stage_dir}" \
+    --no-save \
+    --package-lock=false \
+    --omit=dev \
+    --no-audit \
+    --no-fund \
+    "bb-app@${bb_version}"
+
+  stage_package="${stage_dir}/node_modules/bb-app/package.json"
+  stage_entry="${stage_dir}/node_modules/bb-app/dist/bb-app.js"
+  if [[ ! -f "${stage_package}" || ! -f "${stage_entry}" ]]; then
+    log "error: bb-app installation is incomplete" >&2
+    exit 1
+  fi
+  if [[ "$(node -p "require('${stage_package}').name")" != "bb-app" ]]; then
+    log "error: installed package identity is not bb-app" >&2
+    exit 1
+  fi
+  if [[ "$(node -p "require('${stage_package}').version")" != "${bb_version}" ]]; then
+    log "error: installed package is not bb-app ${bb_version}" >&2
+    exit 1
+  fi
+
+  printf 'bb-pilot managed runtime; bb-app %s\n' "${bb_version}" > "${stage_dir}/.bb-pilot-managed"
+  chmod 600 "${stage_dir}/.bb-pilot-managed"
+  chmod -R u+rwX,go-rwx "${stage_dir}"
+
+  if [[ -e "${runtime_dir}" ]]; then
+    rm -rf "${runtime_dir}"
+  fi
+  mv "${stage_dir}" "${runtime_dir}"
+  trap - EXIT
+  chmod -R u+rwX,go-rwx "${runtime_dir}"
+  log "bb-app ${bb_version} installed at ${runtime_dir}"
+}
+
 time_step "check node" require_node
 time_step "install serve" install_serve
+time_step "install bb-app 0.43.0" install_bb
 
-log "TokenWatch setup complete (zero npm dependencies; serve is global for npm run serve / orb service web)"
+log "TokenWatch setup complete (bb-app is isolated under the user data directory; the web service remains unchanged)"
