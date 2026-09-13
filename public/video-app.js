@@ -464,7 +464,7 @@ function renderModelRow(r, rank, isBest) {
   const rowIdx = state.currentRows
     ? state.currentRows.findIndex((x) => rowCompareKey(x) === rowCompareKey(r))
     : rank - 1;
-  const checkbox = `<input type="checkbox" class="compare-check" data-idx="${rowIdx}" ${isSelected ? 'checked' : ''}${state.compareSelection.length >= 6 && !isSelected ? ' disabled' : ''}>`;
+  const checkbox = `<input type="checkbox" class="compare-check" data-idx="${rowIdx}" aria-label="Add to compare" ${isSelected ? 'checked' : ''}${state.compareSelection.length >= 6 && !isSelected ? ' disabled' : ''}>`;
   return `<tr>
     <td class="rank" data-label="#">${checkbox} ${rank}${isBest ? ' \u{1F3C6}' : ''}</td>
     <td data-label="Org"><span class="org-badge">${esc(orgDisplay(r.model.org))}</span></td>
@@ -497,7 +497,8 @@ function computeAndRender() {
   if (!state.data) return;
   state.providerSearch = els.providerSearch.value.trim();
   state.modelSearch = els.modelSearch.value.trim();
-  state.videoSeconds = Math.max(1, parseInt(els.videoSeconds.value, 10) || 60);
+  const n = parseInt(els.videoSeconds.value, 10);
+  state.videoSeconds = Number.isNaN(n) ? 60 : Math.max(0, n);
   state.resolutionFilter = els.resolutionFilter.value;
   state.audioFilter = els.audioFilter.value;
 
