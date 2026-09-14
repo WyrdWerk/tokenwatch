@@ -120,9 +120,90 @@
       "name": "Umans AI",
       "model_count": 3,
       "status": "ok"
+    },
+    {
+      "key": "zro",
+      "name": "Zro",
+      "model_count": 5,
+      "status": "ok (snapshot)"
     }
   ],
   "models": [
+    {
+      "id": "deepseek-v4-flash-0731",
+      "name": "DeepSeek V4 Flash 0731",
+      "provider": "zro",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 1000000,
+      "pricing": {
+        "input": 0.14,
+        "output": 0.28,
+        "cache_read": 0.028,
+        "cache_write": null
+      },
+      "org": "deepseek"
+    },
+    {
+      "id": "deepseek-v4.1-flash",
+      "name": "DeepSeek V4.1 Flash",
+      "provider": "zro",
+      "quantization": null,
+      "discount": 0.5,
+      "context_length": 1000000,
+      "pricing": {
+        "input": 0.15,
+        "output": 0.6,
+        "cache_read": 0.003,
+        "cache_write": null
+      },
+      "org": "deepseek"
+    },
+    {
+      "id": "kimi-k3",
+      "name": "Kimi K3",
+      "provider": "zro",
+      "quantization": null,
+      "discount": 0.5,
+      "context_length": 1000000,
+      "pricing": {
+        "input": 1.25,
+        "output": 6,
+        "cache_read": 0.225,
+        "cache_write": null
+      },
+      "org": "moonshot"
+    },
+    {
+      "id": "glm-5.3",
+      "name": "GLM-5.3",
+      "provider": "zro",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 1000000,
+      "pricing": {
+        "input": 1.4,
+        "output": 4.4,
+        "cache_read": 0.26,
+        "cache_write": null
+      },
+      "org": "z-ai"
+    },
+    {
+      "id": "glm-5.3-flash",
+      "name": "GLM-5.3 Flash",
+      "provider": "zro",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 1000000,
+      "pricing": {
+        "input": 0.15,
+        "output": 0.5,
+        "cache_read": 0.03,
+        "cache_write": null
+      },
+      "org": "z-ai"
+    },
     {
       "id": "anthropic/claude-sonnet-4-6",
       "name": "anthropic/claude-sonnet-4-6",
@@ -74409,6 +74490,16 @@
       "headquarters": null,
       "datacenters": null,
       "retains_prompts": false,
+      "may_train": false,
+      "retention_days": null,
+      "source": "manual"
+    },
+    "zro": {
+      "privacy_policy_url": "https://zro.moonmath.ai/privacy",
+      "terms_of_service_url": "https://zro.moonmath.ai/terms",
+      "status_page_url": null,
+      "headquarters": null,
+      "datacenters": null,
       "may_train": false,
       "retention_days": null,
       "source": "manual"
