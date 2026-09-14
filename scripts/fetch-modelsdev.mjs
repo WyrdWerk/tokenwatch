@@ -32,6 +32,20 @@ export function buildIndexFromApi(apiData) {
   const index = new Map(); // twProviderKey → Map<normalizedId, record>
   let modelCount = 0;
   let indexedCount = 0;
+  // Crof was removed as a TokenWatch provider. models.dev still points some
+  // provider records' api/doc URLs at crof.ai; strip those before the
+  // enrichment merges into models so removed-provider URLs never reach
+  // pricing.json.
+  const REMOVED_HOSTS = ['crof.ai'];
+  const isRemovedHost = (url) => {
+    if (typeof url !== 'string') return false;
+    try {
+      const host = new URL(url).hostname;
+      return REMOVED_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
+    } catch {
+      return false;
+    }
+  };
   for (const [mdPid, p] of Object.entries(apiData)) {
     const twKey = REVERSE_MAP.get(mdPid);
     if (!twKey) continue; // provider not in TW — skip
@@ -45,10 +59,12 @@ export function buildIndexFromApi(apiData) {
       if (index.get(twKey).has(normalized)) continue;
       const cost = m.cost || {};
       const limit = m.limit || {};
+      const baseUrl = (p.api && !p.api.includes('${')) ? p.api : null;
+      const docUrl = p.doc || null;
       index.get(twKey).set(normalized, {
-        base_url: (p.api && !p.api.includes('${')) ? p.api : null,
+        base_url: isRemovedHost(baseUrl) ? null : baseUrl,
         model_id: mdMid,
-        doc_url: p.doc || null,
+        doc_url: isRemovedHost(docUrl) ? null : docUrl,
         cache_read: cost.cache_read ?? null,
         cache_write: cost.cache_write ?? null,
         context_length: limit.context ?? null,

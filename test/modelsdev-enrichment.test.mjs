@@ -140,3 +140,31 @@ test('applyEnrichment: provider-specific match wins over model-level fallback', 
   assert.equal(models[0].modelsdev_model, undefined, 'no fallback when provider match exists');
   assert.equal(models[0].modelsdev.description, 'Direct');
 });
+
+test('buildIndexFromApi: strips crof.ai URLs from enrichment records', async () => {
+  const { buildIndexFromApi } = await import('../scripts/fetch-modelsdev.mjs');
+  const apiData = {
+    venice: {
+      api: 'https://crof.ai/v1',
+      doc: 'https://crof.ai/docs',
+      models: {
+        'some-model': { cost: { cache_read: 0.1 }, limit: { context: 1000 } },
+      },
+    },
+  };
+  const idx = buildIndexFromApi(apiData);
+  const rec = idx.get('venice').get('some-model');
+  assert.equal(rec.doc_url, null, 'crof.ai doc_url stripped');
+  assert.equal(rec.base_url, null, 'crof.ai base_url stripped');
+  assert.equal(rec.cache_read, 0.1, 'non-URL fields preserved');
+
+  const keep = buildIndexFromApi({
+    venice: {
+      api: 'https://api.venice.ai/v1',
+      doc: 'https://docs.venice.ai',
+      models: { 'other-model': {} },
+    },
+  });
+  const keepRec = keep.get('venice').get('other-model');
+  assert.equal(keepRec.doc_url, 'https://docs.venice.ai', 'non-crof URLs preserved');
+});
