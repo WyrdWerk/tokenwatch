@@ -427,7 +427,7 @@ function visibleBreadcrumbs(items) {
   return `<nav class="breadcrumbs" aria-label="Breadcrumb">${items.map((item, index) => `${index ? '<span aria-hidden="true">/</span>' : ''}<a href="${esc(item.path)}">${esc(item.name)}</a>`).join('')}</nav>`;
 }
 
-export function renderStaticPage({ title, description, canonicalPath, heading, subtitle, breadcrumbs, body, structuredData }) {
+export function renderStaticPage({ title, description, canonicalPath, heading, subtitle, breadcrumbs, body, structuredData, scripts }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -462,7 +462,7 @@ ${body}
   </main>
   <footer><p>Pricing changes. Verify rates and policy details with the provider before committing spend.</p><p class="footer-links"><a href="/providers/">Providers</a> · <a href="/docs/methodology/">Methodology</a> · <a href="/docs/api/">API docs</a> · <a href="https://github.com/WyrdWerk/tokenwatch">Source</a></p></footer>
   <script src="/shared-ui.js?v=dev" defer></script>
-</body>
+${scripts || ''}</body>
 </html>
 `;
 }
@@ -552,6 +552,30 @@ export function renderProviderDirectoryPage(providers) {
 /** Minimum distinct priced providers for a model landing page to be built. */
 export const MODEL_MIN_PROVIDERS = 3;
 
+/** The exact set of provider slugs that have a generated page. */
+export function providerPageSlugs(providers) {
+  return new Set((providers || []).map((provider) => provider.slug));
+}
+
+/**
+ * The price-history panel for a model page.
+ *
+ * The chart markup is emitted here as an EMPTY container plus a note; it is
+ * hydrated client-side by public/model-history.js against
+ * GET /api/v1/models/:canonicalId/history. History lives in D1, which is not
+ * available at build time, so the loading/empty/error states must be real
+ * client states — which is why the component defines them.
+ */
+export function renderPriceHistorySection(page) {
+  return `    <section class="price-history" id="price-history" data-price-history="${esc(page.canonical)}" aria-labelledby="price-history-heading">
+      <h2 id="price-history-heading">Daily price history</h2>
+      <p class="price-history-note" data-price-history-note>Loading price history…</p>
+      <div class="price-history-chart" data-price-history-chart></div>
+      <p class="price-history-note">Daily snapshots are retained for up to 90 days; history begins with the first recorded snapshot.</p>
+      <noscript><p class="price-history-note">Price history needs JavaScript. The current per-provider rates are listed below.</p></noscript>
+    </section>`;
+}
+
 /**
  * Sanitize a canonical model id into a URL-safe slug. Dots and hyphens are
  * preserved because canonical IDs use them (glm-5.2-fp8); everything else is
@@ -630,13 +654,26 @@ export function collectModelPages({ pricing }, { minProviders = MODEL_MIN_PROVID
   return pages.sort((a, b) => a.slug.localeCompare(b.slug));
 }
 
-function renderModelProviderRows(page) {
+/**
+ * Provider rows for a model page.
+ *
+ * `linkedProviderSlugs` is the exact set of providers that have a generated
+ * /providers/<slug>/ page. A provider without one renders as plain text —
+ * linking it would 404, because provider pages require MODEL_MIN_PROVIDERS
+ * distinct priced identities. The row itself is never dropped.
+ */
+function renderModelProviderRows(page, linkedProviderSlugs = new Set()) {
   return page.ranked.map(({ m, eff }) => {
     const pricing = m.pricing || {};
     const promo = m.discount > 0 ? ' <span class="promo-badge" title="' + (m.discount * 100).toFixed(0) + '% off">promo</span>' : '';
     const uptime = Number.isFinite(m.uptime_30m) ? `${m.uptime_30m.toFixed(2)}%` : '—';
     const quant = m.quantization ? esc(m.quantization) : '—';
-    return `      <tr><td>${esc(prettyProvider(m.provider))}${promo}</td><td>${quant}</td><td class="num">${fmtPrice(pricing.input)}</td><td class="num">${fmtPrice(pricing.output)}</td><td class="num">${fmtPrice(pricing.cache_read)}</td><td class="num">${fmtPrice(eff)}</td><td class="num">${uptime}</td></tr>`;
+    const label = esc(prettyProvider(m.provider));
+    const slug = providerSlug(m.provider);
+    const providerCell = linkedProviderSlugs.has(slug)
+      ? `<a href="/providers/${esc(slug)}/">${label}</a>`
+      : label;
+    return `      <tr><td>${providerCell}${promo}</td><td>${quant}</td><td class="num">${fmtPrice(pricing.input)}</td><td class="num">${fmtPrice(pricing.output)}</td><td class="num">${fmtPrice(pricing.cache_read)}</td><td class="num">${fmtPrice(eff)}</td><td class="num">${uptime}</td></tr>`;
   }).join('\n');
 }
 
@@ -647,7 +684,7 @@ function renderModelProviderRows(page) {
  * price range is a provider-offering range, and uptime is the 30-minute
  * endpoint metric (never a one-day claim).
  */
-export function renderModelPage(page, { lastmod } = {}) {
+export function renderModelPage(page, { lastmod, historyEnabled = true, linkedProviderSlugs = new Set() } = {}) {
   const path = `/models/${page.slug}/`;
   const rangeText = page.inputRange && page.outputRange
     ? `Across tracked provider offerings, input runs ${fmtPrice(page.inputRange.min)}–${fmtPrice(page.inputRange.max)} per million tokens and output ${fmtPrice(page.outputRange.min)}–${fmtPrice(page.outputRange.max)} per million tokens.`
@@ -655,16 +692,18 @@ export function renderModelPage(page, { lastmod } = {}) {
   const cheapestText = page.cheapest
     ? `The cheapest tracked provider offering for a typical agentic mix (2.5% input, 97% cached input, 0.5% output) is ${esc(page.cheapest.provider)} at ${fmtPrice(page.cheapestEff)} per million tokens.`
     : "No provider offering can be priced at the default agentic mix yet.";
-  const description = `Compare ${esc(page.name)} API pricing across ${page.providerCount} tracked providers. See current input, output, and cache-read rates, the cheapest offering for a cached agent workload, and quantized variants.`;
+  const historyText = historyEnabled ? ' Daily price history is retained for up to 90 days.' : '';
+  const description = `Compare ${esc(page.name)} API pricing across ${page.providerCount} tracked providers. See current input, output, and cache-read rates, the cheapest offering for a cached agent workload, and quantized variants.${historyText}`;
+  const history = historyEnabled ? `\n${renderPriceHistorySection(page)}` : '';
 
-  const body = `    <section class="seo-prose"><h2>${esc(page.name)} pricing across providers</h2><p>${esc(rangeText)} ${esc(cheapestText)}</p><p>Prices are USD per million tokens and reflect each provider offering — they are not a single intrinsic model price. ${page.cacheCoverage} of ${page.offerings.length} offerings publish a cache-read rate; ${page.uptimeCoverage} of ${page.offerings.length} publish a 30-minute endpoint uptime figure.</p><p><a href="/#model=${encodeURIComponent(page.canonical)}">Open the calculator filtered to ${esc(page.name)}</a></p></section>
+  const body = `    <section class="seo-prose"><h2>${esc(page.name)} pricing across providers</h2><p>${esc(rangeText)} ${esc(cheapestText)}</p><p>Prices are USD per million tokens and reflect each provider offering — they are not a single intrinsic model price. ${page.cacheCoverage} of ${page.offerings.length} offerings publish a cache-read rate; ${page.uptimeCoverage} of ${page.offerings.length} publish a 30-minute endpoint uptime figure.</p><p><a href="/#model=${encodeURIComponent(page.canonical)}">Open the calculator filtered to ${esc(page.name)}</a></p></section>${history}
     <section class="seo-models" id="model-providers" aria-label="${esc(page.name)} provider pricing">
       <h2>Provider offerings for ${esc(page.name)}</h2>
       <p>Ranked by effective cost at a typical agentic mix. Quantized and tier variants stay separate rows.</p>
       <div class="table-wrap"><table>
         <caption>${esc(page.name)} provider offerings</caption>
         <thead><tr><th scope="col">Provider</th><th scope="col">Quant</th><th scope="col" class="num">Input $/M</th><th scope="col" class="num">Output $/M</th><th scope="col" class="num">Cache $/M</th><th scope="col" class="num">Blended $/M</th><th scope="col" class="num">Uptime (30m)</th></tr></thead>
-        <tbody>${renderModelProviderRows(page)}</tbody>
+        <tbody>${renderModelProviderRows(page, linkedProviderSlugs)}</tbody>
       </table></div>
       <p class="seo-note">Provider-offering pricing refreshed ${esc(lastmod || "")}. Uptime is the 30-minute endpoint metric where a provider publishes it. Verify rates on the provider's official pricing page before committing spend.</p>
     </section>`;
@@ -691,6 +730,11 @@ export function renderModelPage(page, { lastmod } = {}) {
     breadcrumbs,
     body,
     structuredData,
+    // The chart is hydrated client-side; both files are fingerprinted by
+    // bust-cache.mjs so the deployed paths stay cache-safe.
+    scripts: historyEnabled
+      ? '  <script src="/price-sparkline.js?v=dev" defer></script>\n  <script src="/model-history.js?v=dev" defer></script>\n'
+      : '',
   });
 }
 

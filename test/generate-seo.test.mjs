@@ -17,6 +17,9 @@ import {
   collectProviderPages,
   providerSlug,
   renderProviderDirectoryPage,
+  collectModelPages,
+  renderModelPage,
+  providerPageSlugs,
   renderApiDocsPage,
   buildOpenApiDocument,
   buildSitemap,
@@ -225,4 +228,111 @@ test('dynamic sitemap rejects duplicates and includes generated routes', () => {
   assert.match(sitemap, /https:\/\/tokenwatch\.wyrdwerk\.com\/providers\/alpha\//);
   assert.throws(() => buildSitemap([{ path: '/' }, { path: '/' }]), /duplicate sitemap path/);
   assert.match(buildRobots(), /Disallow: \/api\//);
+});
+
+/** A three-provider model, eligible at the PR 1 parity threshold of 3. */
+function eligibleModel(extra = {}) {
+  // A three-provider model, eligible at MODEL_MIN_PROVIDERS = 3.
+  return ['alpha', 'beta', 'gamma'].map((provider) => ({
+    id: 'org/model', name: 'Model', org: 'org', provider, quantization: null,
+    discount: 0, pricing: { input: 1, output: 2, cache_read: 0.1 }, ...extra,
+  }));
+}
+
+/** Build a collected model page from a plain model list. */
+function collectOne(models) {
+  const [page] = collectModelPages({ pricing: { models } });
+  assert.ok(page, 'expected an eligible model page');
+  return page;
+}
+
+// ── Model-page price history (this PR) ───────────────────────────────────────
+//
+// The renderer basics (eligibility, :batch exclusion, slug sanitization,
+// provider table, ranges, byte-idempotence) are covered by PR #18's
+// test/model-pages.test.mjs. These tests cover only the history layer this PR
+// adds on top.
+
+test('a model page mounts the price-history sparkline with real wiring', () => {
+  const page = collectOne(eligibleModel());
+  const html = renderModelPage(page, { lastmod: '2026-09-14' });
+
+  // Mount point + container the client script looks for.
+  assert.match(html, /data-price-history="model"/);
+  assert.match(html, /data-price-history-chart/);
+  assert.match(html, /data-price-history-note/);
+  // Both client scripts must actually be loaded, or the chart never renders.
+  assert.match(html, /src="\/price-sparkline\.js\?v=dev" defer/);
+  assert.match(html, /src="\/model-history\.js\?v=dev" defer/);
+  // The chart starts in a loading state — it must never be server-rendered with
+  // fabricated points, because history lives in D1 and is unavailable at build.
+  assert.match(html, /Loading price history/);
+  assert.doesNotMatch(html, /<circle|<path d=/);
+  // A noscript fallback so the page is still useful without JavaScript.
+  assert.match(html, /<noscript>/);
+});
+
+test('a model page with history disabled omits the chart entirely', () => {
+  const page = collectOne(eligibleModel());
+  const html = renderModelPage(page, { lastmod: '2026-09-14', historyEnabled: false });
+  assert.doesNotMatch(html, /data-price-history/);
+  assert.doesNotMatch(html, /model-history\.js/);
+  assert.doesNotMatch(html, /price-sparkline\.js/);
+  // The page must not promise a chart it cannot serve.
+  assert.doesNotMatch(html, /Loading price history/);
+  assert.doesNotMatch(html, /up to 90 days/);
+});
+
+test('model-page wording says history is retained for up to 90 days, not guaranteed', () => {
+  const page = collectOne(eligibleModel());
+  const html = renderModelPage(page, { lastmod: '2026-09-14' });
+
+  // Day-one pages must not claim 90 days of data exist.
+  assert.match(html, /retained for up to 90 days/);
+  assert.match(html, /history begins with the first recorded snapshot/);
+  assert.doesNotMatch(html, /90-day price history/i);
+  assert.doesNotMatch(html, /90 days of/i);
+  assert.doesNotMatch(html, /90-Day History/);
+
+  // The panel heading is the neutral "Daily price history".
+  assert.match(html, /<h2 id="price-history-heading">Daily price history<\/h2>/);
+});
+
+test('model pages link only providers that have a generated page', () => {
+  const page = collectOne(eligibleModel());
+  // Only 'alpha' has a generated provider page; beta and gamma do not.
+  const html = renderModelPage(page, { lastmod: '2026-09-14', linkedProviderSlugs: new Set(['alpha']) });
+
+  assert.match(html, /<a href="\/providers\/alpha\/">Alpha<\/a>/);
+  // Unlinked providers still appear as text — the row is never dropped.
+  assert.match(html, />Beta</);
+  assert.match(html, />Gamma</);
+  assert.doesNotMatch(html, /href="\/providers\/beta\/"/);
+  assert.doesNotMatch(html, /href="\/providers\/gamma\/"/);
+  // Every emitted provider link resolves against the allowed set.
+  for (const match of html.matchAll(/href="\/providers\/([^/"]+)\//g)) {
+    assert.equal(match[1], 'alpha', `unexpected provider link: ${match[1]}`);
+  }
+});
+
+test('providerPageSlugs derives link eligibility from the generated provider set', () => {
+  const providerPages = collectProviderPages({
+    pricing: {
+      providers: [{ key: 'alpha', name: 'Alpha' }],
+      providers_meta: {},
+      models: [
+        // Three distinct canonical identities from 'alpha' → a provider page exists.
+        { id: 'org/model-a', provider: 'alpha', pricing: { input: 1, output: 2 } },
+        { id: 'org/model-b', provider: 'alpha', pricing: { input: 1, output: 2 } },
+        { id: 'org/model-c', provider: 'alpha', pricing: { input: 1, output: 2 } },
+        // 'thin' has one identity → no provider page → must not be linked.
+        { id: 'org/thin', provider: 'thin', pricing: { input: 1, output: 2 } },
+      ],
+    },
+    imagePricing: { models: [] },
+    videoPricing: { models: [] },
+  });
+  const slugs = providerPageSlugs(providerPages);
+  assert.equal(slugs.has('alpha'), true);
+  assert.equal(slugs.has('thin'), false);
 });
