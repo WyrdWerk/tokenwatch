@@ -1406,3 +1406,98 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
     padding: 0;
   }
 }
+
+/* ── Canonical-model summary (text calculator) ───────────────────────────── */
+.model-summary {
+  margin: 0.75rem 0 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.model-summary-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+.model-summary-sub {
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.model-summary-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+.model-summary-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.model-summary-metric-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.model-summary-metric-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.95rem;
+}
+.model-summary-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.9rem;
+}
+.model-summary-bar-row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 12rem) 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+}
+.model-summary-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.model-summary-bar-track {
+  display: block;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 60%, transparent);
+  overflow: hidden;
+}
+.model-summary-bar-fill {
+  display: block;
+  height: 100%;
+  background: color-mix(in srgb, var(--accent, var(--green)) 70%, transparent);
+}
+.model-summary-bar-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem;
+}
+.model-summary-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.quant-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.1rem 0.3rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--muted) 20%, transparent);
+  color: var(--muted);
+  border: 1px solid color-mix(in srgb, var(--muted) 40%, transparent);
+  margin-left: 0.3rem;
+  vertical-align: middle;
+}
+@media (max-width: 640px) {
+  .model-summary { padding: 0.75rem; }
+  .model-summary-bar-row { grid-template-columns: minmax(5rem, 8rem) 1fr auto; font-size: 0.76rem; }
+}

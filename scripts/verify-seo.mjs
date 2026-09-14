@@ -72,13 +72,14 @@ function localFileForUrl(url) {
 }
 
 export async function main() {
-  const [index, image, video, faqPage, sitemap, providerEntries] = await Promise.all([
+  const [index, image, video, faqPage, sitemap, providerEntries, modelEntries] = await Promise.all([
     readFile(join(PUBLIC, 'index.html'), 'utf8'),
     readFile(join(PUBLIC, 'image.html'), 'utf8'),
     readFile(join(PUBLIC, 'video.html'), 'utf8'),
     readFile(join(PUBLIC, 'faq', 'index.html'), 'utf8'),
     readFile(join(PUBLIC, 'sitemap.xml'), 'utf8'),
     readdir(join(PUBLIC, 'providers'), { withFileTypes: true }),
+    readdir(join(PUBLIC, 'models'), { withFileTypes: true }),
   ]);
   assertFaqPage(faqPage);
 
@@ -96,16 +97,33 @@ export async function main() {
 
   const providerDirs = providerEntries.filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'));
   if (!providerDirs.length) throw new Error('verify-seo: no generated provider pages');
+  const modelDirs = modelEntries.filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'));
+  if (!modelDirs.length) throw new Error('verify-seo: no generated model pages');
   await Promise.all([
     assertFile(join(PUBLIC, 'providers', 'index.html'), 'provider directory'),
+    assertFile(join(PUBLIC, 'models', 'index.html'), 'model directory'),
     assertFile(join(PUBLIC, 'docs', 'methodology', 'index.html'), 'methodology page'),
     assertFile(join(PUBLIC, 'docs', 'api', 'index.html'), 'API documentation page'),
     ...providerDirs.map((entry) => assertFile(join(PUBLIC, 'providers', entry.name, 'index.html'), `provider page ${entry.name}`)),
+    ...modelDirs.map((entry) => assertFile(join(PUBLIC, 'models', entry.name, 'index.html'), `model page ${entry.name}`)),
   ]);
+
+  // Every generated model page must carry a server-rendered provider table, a
+  // canonical URL, breadcrumbs, JSON-LD, and a calculator deep link.
+  for (const entry of modelDirs) {
+    const html = await readFile(join(PUBLIC, 'models', entry.name, 'index.html'), 'utf8');
+    const canonical = `${SITE}/models/${entry.name}/`;
+    requireMatch(html, new RegExp(`<link rel="canonical" href="${canonical.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}" />`), `model page ${entry.name} canonical URL`);
+    requireMatch(html, /class="breadcrumbs"/, `model page ${entry.name} breadcrumbs`);
+    requireMatch(html, /id="seo-structured-data"/, `model page ${entry.name} JSON-LD`);
+    requireMatch(html, /<section class="seo-models"[\s\S]*?<tbody>[\s\S]*?<tr>/, `model page ${entry.name} provider rows`);
+    requireMatch(html, /href="\/#model=/, `model page ${entry.name} calculator deep link`);
+    if (entry.name.includes(':batch')) throw new Error(`verify-seo: model page ${entry.name} must not be a :batch variant`);
+  }
 
   const urls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
   if (urls.length !== new Set(urls).size) throw new Error('verify-seo: sitemap contains duplicate URLs');
-  const expectedUrls = providerDirs.length + 8;
+  const expectedUrls = providerDirs.length + modelDirs.length + 9;
   if (urls.length !== expectedUrls) throw new Error(`verify-seo: sitemap has ${urls.length} URLs; expected ${expectedUrls}`);
   await Promise.all(urls.map((url) => assertFile(localFileForUrl(url), `sitemap target ${url}`)));
 
@@ -120,7 +138,7 @@ export async function main() {
     }
   }
 
-  console.log(`verify-seo: ${htmlFiles.length} HTML pages, ${providerDirs.length} providers, ${urls.length} sitemap URLs`);
+  console.log(`verify-seo: ${htmlFiles.length} HTML pages, ${providerDirs.length} providers, ${modelDirs.length} models, ${urls.length} sitemap URLs`);
   console.log('verify-seo: calculator pricing, visible FAQ/JSON-LD parity, metadata, and sitemap targets passed');
 }
 

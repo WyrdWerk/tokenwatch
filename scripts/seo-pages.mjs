@@ -366,6 +366,7 @@ function prettyProvider(provider) {
     opencode: 'OpenCode',
     neuralwatt: 'Neuralwatt',
     aster: 'Aster Labs',
+    zro: 'Zro',
   };
   if (special[provider]) return special[provider];
   return provider.split('-').map((part) => part ? part[0].toUpperCase() + part.slice(1) : '').join(' ');
@@ -543,6 +544,176 @@ export function renderProviderDirectoryPage(providers) {
         { '@type': 'CollectionPage', url: SITE + path, name: 'TokenWatch provider directory', description },
         breadcrumbSchema([{ name: 'Text pricing', path: '/' }, { name: 'Providers', path }]),
         { '@type': 'ItemList', name: 'Inference providers', numberOfItems: providers.length, itemListElement: providers.map((provider, index) => ({ '@type': 'ListItem', position: index + 1, name: provider.name, url: `${SITE}/providers/${provider.slug}/` })) },
+      ],
+    },
+  });
+}
+
+/** Minimum distinct priced providers for a model landing page to be built. */
+export const MODEL_MIN_PROVIDERS = 3;
+
+/**
+ * Sanitize a canonical model id into a URL-safe slug. Dots and hyphens are
+ * preserved because canonical IDs use them (glm-5.2-fp8); everything else is
+ * collapsed to a hyphen. Quantized canonical ids stay distinct — this never
+ * collapses variants.
+ */
+export function modelPageSlug(canonical) {
+  const slug = String(canonical || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  if (!slug) throw new Error(`generate-seo: unsafe empty model slug for ${canonical}`);
+  return slug;
+}
+
+/**
+ * Group text-catalog offerings by canonical model id and keep only canonical
+ * models with substantive multi-provider coverage. `:batch` canonicals are
+ * excluded by default (they duplicate the base model page and add little
+ * unique content), while quantized canonical ids remain separate pages.
+ *
+ * @param {{pricing: object}} catalogs
+ * @param {{minProviders?: number, excludeBatch?: boolean}} [options]
+ */
+export function collectModelPages({ pricing }, { minProviders = MODEL_MIN_PROVIDERS, excludeBatch = true } = {}) {
+  const groups = new Map();
+  for (const model of pricing.models || []) {
+    if (!model.provider || !hasTextPrice(model)) continue;
+    const canonical = canonicalId(model.id);
+    if (!canonical) continue;
+    if (excludeBatch && /:batch$/i.test(canonical)) continue;
+    if (!groups.has(canonical)) groups.set(canonical, []);
+    groups.get(canonical).push(model);
+  }
+
+  const slugOwners = new Map();
+  const pages = [];
+  for (const [canonical, offerings] of groups) {
+    const providers = new Set(offerings.map((m) => m.provider));
+    if (providers.size < minProviders) continue;
+    const slug = modelPageSlug(canonical);
+    const owner = slugOwners.get(slug);
+    if (owner && owner !== canonical) throw new Error(`generate-seo: model slug collision: ${owner} and ${canonical} → ${slug}`);
+    slugOwners.set(slug, canonical);
+
+    // Provider-offering ranges — NOT an intrinsic model price. Cache-read
+    // coverage counts offerings that publish a cache price.
+    const inputs = offerings.map((m) => m.pricing?.input).filter((v) => Number.isFinite(v) && v > 0);
+    const outputs = offerings.map((m) => m.pricing?.output).filter((v) => Number.isFinite(v) && v > 0);
+    const cacheCoverage = offerings.filter((m) => m.pricing?.cache_read != null).length;
+    const withPerf = offerings.filter((m) => Number.isFinite(m.uptime_30m));
+    const contextLengths = offerings.map((m) => m.context_length).filter((v) => Number.isFinite(v) && v > 0);
+    const ranked = offerings
+      .map((m) => ({ m, eff: blendedRate(m.pricing, AGENTIC_MIX) }))
+      .filter((row) => row.eff != null && row.eff > 0)
+      .sort((a, b) => a.eff - b.eff);
+
+    pages.push({
+      canonical,
+      slug,
+      name: offerings.find((m) => m.name)?.name || canonical,
+      org: offerings.find((m) => m.org)?.org || offerings[0].provider,
+      offerings,
+      ranked,
+      providerCount: providers.size,
+      inputRange: inputs.length ? { min: Math.min(...inputs), max: Math.max(...inputs) } : null,
+      outputRange: outputs.length ? { min: Math.min(...outputs), max: Math.max(...outputs) } : null,
+      cacheCoverage,
+      uptimeCoverage: withPerf.length,
+      maxContext: contextLengths.length ? Math.max(...contextLengths) : null,
+      cheapest: ranked[0]?.m || null,
+      cheapestEff: ranked[0]?.eff ?? null,
+    });
+  }
+  return pages.sort((a, b) => a.slug.localeCompare(b.slug));
+}
+
+function renderModelProviderRows(page) {
+  return page.ranked.map(({ m, eff }) => {
+    const pricing = m.pricing || {};
+    const promo = m.discount > 0 ? ' <span class="promo-badge" title="' + (m.discount * 100).toFixed(0) + '% off">promo</span>' : '';
+    const uptime = Number.isFinite(m.uptime_30m) ? `${m.uptime_30m.toFixed(2)}%` : '—';
+    const quant = m.quantization ? esc(m.quantization) : '—';
+    return `      <tr><td>${esc(prettyProvider(m.provider))}${promo}</td><td>${quant}</td><td class="num">${fmtPrice(pricing.input)}</td><td class="num">${fmtPrice(pricing.output)}</td><td class="num">${fmtPrice(pricing.cache_read)}</td><td class="num">${fmtPrice(eff)}</td><td class="num">${uptime}</td></tr>`;
+  }).join('\n');
+}
+
+/**
+ * Server-render a canonical-model comparison page at /models/<slug>/.
+ * Includes the provider table, a calculator deep link, canonical URL,
+ * breadcrumbs, and JSON-LD. Labels are deliberately source-accurate: the
+ * price range is a provider-offering range, and uptime is the 30-minute
+ * endpoint metric (never a one-day claim).
+ */
+export function renderModelPage(page, { lastmod } = {}) {
+  const path = `/models/${page.slug}/`;
+  const rangeText = page.inputRange && page.outputRange
+    ? `Across tracked provider offerings, input runs ${fmtPrice(page.inputRange.min)}–${fmtPrice(page.inputRange.max)} per million tokens and output ${fmtPrice(page.outputRange.min)}–${fmtPrice(page.outputRange.max)} per million tokens.`
+    : "Tracked provider offerings do not currently publish a complete input/output range.";
+  const cheapestText = page.cheapest
+    ? `The cheapest tracked provider offering for a typical agentic mix (2.5% input, 97% cached input, 0.5% output) is ${esc(page.cheapest.provider)} at ${fmtPrice(page.cheapestEff)} per million tokens.`
+    : "No provider offering can be priced at the default agentic mix yet.";
+  const description = `Compare ${esc(page.name)} API pricing across ${page.providerCount} tracked providers. See current input, output, and cache-read rates, the cheapest offering for a cached agent workload, and quantized variants.`;
+
+  const body = `    <section class="seo-prose"><h2>${esc(page.name)} pricing across providers</h2><p>${esc(rangeText)} ${esc(cheapestText)}</p><p>Prices are USD per million tokens and reflect each provider offering — they are not a single intrinsic model price. ${page.cacheCoverage} of ${page.offerings.length} offerings publish a cache-read rate; ${page.uptimeCoverage} of ${page.offerings.length} publish a 30-minute endpoint uptime figure.</p><p><a href="/#model=${encodeURIComponent(page.canonical)}">Open the calculator filtered to ${esc(page.name)}</a></p></section>
+    <section class="seo-models" id="model-providers" aria-label="${esc(page.name)} provider pricing">
+      <h2>Provider offerings for ${esc(page.name)}</h2>
+      <p>Ranked by effective cost at a typical agentic mix. Quantized and tier variants stay separate rows.</p>
+      <div class="table-wrap"><table>
+        <caption>${esc(page.name)} provider offerings</caption>
+        <thead><tr><th scope="col">Provider</th><th scope="col">Quant</th><th scope="col" class="num">Input $/M</th><th scope="col" class="num">Output $/M</th><th scope="col" class="num">Cache $/M</th><th scope="col" class="num">Blended $/M</th><th scope="col" class="num">Uptime (30m)</th></tr></thead>
+        <tbody>${renderModelProviderRows(page)}</tbody>
+      </table></div>
+      <p class="seo-note">Provider-offering pricing refreshed ${esc(lastmod || "")}. Uptime is the 30-minute endpoint metric where a provider publishes it. Verify rates on the provider's official pricing page before committing spend.</p>
+    </section>`;
+
+  const breadcrumbs = [
+    { name: "Text pricing", path: "/" },
+    { name: "Models", path: "/models/" },
+    { name: page.name, path },
+  ];
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'CollectionPage', url: SITE + path, name: `${page.name} API pricing`, description },
+      breadcrumbSchema(breadcrumbs),
+      { '@type': 'ItemList', name: `${page.name} provider offerings`, numberOfItems: page.providerCount },
+    ],
+  };
+  return renderStaticPage({
+    title: `${page.name} API Pricing Across ${page.providerCount} Providers | TokenWatch`,
+    description,
+    canonicalPath: path,
+    heading: `${page.name} API pricing`,
+    subtitle: `${page.providerCount} tracked provider offerings with offering-level rates`,
+    breadcrumbs,
+    body,
+    structuredData,
+  });
+}
+
+export function renderModelDirectoryPage(pages) {
+  const path = "/models/";
+  const rows = pages.map((page) => `      <tr><td><a href="/models/${esc(page.slug)}/">${esc(page.name)}</a></td><td>${esc(page.org)}</td><td class="num">${page.providerCount}</td><td class="num">${fmtPrice(page.cheapestEff)}</td></tr>`).join('\n');
+  const description = `Browse ${pages.length} canonical models with substantive multi-provider pricing coverage across TokenWatch-tracked providers.`;
+  const body = `    <section class="seo-prose"><h2>Browse models by provider coverage</h2><p>These pages are generated only for canonical models with at least ${MODEL_MIN_PROVIDERS} distinct priced providers. Quantized variants are kept as separate canonical models; <code>:batch</code> variants are excluded.</p></section>
+    <section class="seo-models" id="model-directory"><div class="table-wrap"><table><caption>TokenWatch model directory</caption><thead><tr><th scope="col">Model</th><th scope="col">Org</th><th scope="col" class="num">Providers</th><th scope="col" class="num">Cheapest $/M</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+  return renderStaticPage({
+    title: "LLM Model Pricing by Provider Coverage | TokenWatch",
+    description,
+    canonicalPath: path,
+    heading: "Model pricing directory",
+    subtitle: `${pages.length} canonical models with substantive multi-provider coverage`,
+    breadcrumbs: [{ name: "Text pricing", path: "/" }, { name: "Models", path }],
+    body,
+    structuredData: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'CollectionPage', url: SITE + path, name: 'TokenWatch model directory', description },
+        breadcrumbSchema([{ name: "Text pricing", path: "/" }, { name: "Models", path }]),
+        { '@type': 'ItemList', name: 'Canonical models', numberOfItems: pages.length, itemListElement: pages.map((page, index) => ({ '@type': 'ListItem', position: index + 1, name: page.name, url: `${SITE}/models/${page.slug}/` })) },
       ],
     },
   });

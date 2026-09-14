@@ -373,6 +373,319 @@ export function parseOpenCodeGoDocs(html) {
   return rows;
 }
 
+// ── Zro (Tier 3, official public pricing page) ───────────────────────────────
+//
+// Zro publishes pay-as-you-go API pricing only on its server-rendered marketing
+// page (https://zro.moonmath.ai/pricing). The page is a Next.js app: the API
+// panel and its per-model rows arrive as React Flight chunks inside
+// `self.__next_f.push([1,"<id>:<payload>"])` script tags, not as a <table>.
+//
+// The parser below reconstructs the panel from the visible markup of the "API
+// pricing" group only — plan cards, usage packs, and agent-tool pricing are
+// deliberately ignored. Prices are already USD per 1M tokens, so no conversion
+// is applied. Struck-through list prices are preserved as `original_*` and the
+// fraction off is derived into `discount` so TokenWatch's existing promo
+// representation carries the promotion.
+
+export const ZRO_PRICING_URL = 'https://zro.moonmath.ai/pricing';
+/** Minimum API offerings required for a parse to be considered complete. */
+export const ZRO_MIN_ROWS = 5;
+/** Maximum tolerated row-count drop versus the last-good snapshot. */
+export const ZRO_MAX_ROW_DROP = 0.20;
+/** Reuse window for the committed last-good snapshot. */
+export const ZRO_SNAPSHOT_TTL_MS = 24 * 60 * 60 * 1000;
+
+/** Parse a `$1.23` cell into a number, or null when absent/unparseable. */
+function parseZroPrice(value) {
+  const m = String(value ?? '').match(/\$?\s*([0-9]+(?:\.[0-9]+)?)/);
+  if (!m) return null;
+  const n = Number.parseFloat(m[1]);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Flatten the React Flight payload embedded in `self.__next_f.push` script tags
+ * into one searchable string per chunk.
+ *
+ * Next.js emits each chunk as a JS string literal whose contents are escaped
+ * Flight JSON. One JSON string decode therefore yields the payload text with
+ * its own backslash-escaped quotes, which is what the regexes below match.
+ * Plain single-escaped SSR markup (if Zro ever switches away from Flight) is
+ * matched too, because the patterns below tolerate an optional leading backslash.
+ */
+function zroFlightChunks(html) {
+  const chunks = [];
+    const re = /self\.__next_f\.push\(\[1,\s*("(?:[^"\\]|\\.)*")\]\)/g;
+  let m;
+  while ((m = re.exec(html))) {
+    let decoded;
+    try {
+      decoded = JSON.parse(m[1]);
+    } catch {
+      decoded = m[1];
+    }
+                chunks.push(decoded.replace(/\"/g, '"').replace(/\n/g, '\n').replace(/\u0026/gi, '&'));
+  }
+  return chunks;
+}
+
+/**
+ * Flatten the Flight payload into one string plus a `$L<n>` reference map, so
+ * an article row can be joined to the chunk that holds its price `<dl>`.
+ * The Zro page keeps the first API row inline and emits the rest as `$L16`…
+ * `$L19` references with their price cells in sibling chunks.
+ */
+function zroFlightPayload(html) {
+  const chunks = zroFlightChunks(html);
+  const refs = new Map();
+  for (const chunk of chunks) {
+    const id = chunk.slice(0, chunk.indexOf(':'));
+    if (id) refs.set(`$L${id}`, chunk.slice(chunk.indexOf(':') + 1));
+  }
+  return { payload: chunks.join('\n'), refs };
+}
+
+/**
+ * Scrape the Zro API pricing panel into normalized price rows.
+ * Pure function over the HTML string.
+ * @param {string} html pricing page HTML
+ * @returns {Array<{id: string, name: string, input: number, output: number,
+ *   cache_read: number|null, cache_write: null, context_length: number|null,
+ *   original_input: number|null, original_output: number|null,
+ *   original_cache_read: number|null, discount: number, promotion: object|null}>}
+ */
+export function parseZroPricingHtml(html) {
+  if (typeof html !== 'string' || !html) return [];
+  const { payload, refs } = zroFlightPayload(html);
+  if (!payload) return [];
+
+  // Locate the API pricing group. Its \`content\` payload is the only place the
+  // "Direct API access billed per token" copy and the "USD per 1M tokens"
+  // column header appear; the plan cards use entirely different fields.
+  const apiGroup = payload.indexOf('"id":"api"');
+  // A page without the API panel (and its ordered id list) must yield no rows.
+  if (apiGroup === -1 || !payload.includes('"apiModelIds"')) return [];
+  const apiSlice = payload.slice(apiGroup, apiGroup + 60000);
+
+  // Promotion banner is page-scoped: it names the discounted models and the
+  // percentage. Parse it separately so a promo badge on a row can be labelled
+  // even though the expiry text is informational only (Zro may end it early).
+  const promoMatch = apiSlice.match(/(\d+)%\s*off/i) || payload.match(/(\d+)%\s*off/i);
+  const promoPct = promoMatch ? Number.parseInt(promoMatch[1], 10) : null;
+
+  const rows = [];
+  const seen = new Set();
+
+  // The API panel lists its ordered ids explicitly; use that as the source of
+  // truth so a row whose <article> markup moved into a sibling Flight chunk is
+  // still parsed. Each id also appears as an \`["$","article","<id>",{...}]\`
+  // node (inline for the first row, \`$L<n>\` references for the rest).
+  const idList = (() => {
+    const m = apiSlice.match(/"apiModelIds":\[([^\]]*)\]/);
+    if (!m) return [];
+    return [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]);
+  })();
+
+  // Resolve a Flight element reference (\`$L15\`) to its chunk text so an
+  // article can be joined with the sibling chunk holding its price <dl>.
+  const resolve = (value) => {
+    if (typeof value !== 'string') return '';
+    const ref = value.match(/^\$L([0-9a-f]+)$/i);
+    return ref && refs.has(`$L${ref[1]}`) ? refs.get(`$L${ref[1]}`) : value;
+  };
+
+  // Collect every article body. The panel keeps the first row's markup inline
+  // and emits the rest as `$L<n>` references, while each row's price <dl>
+  // lives in its own chunk. Pair the ordered id list with the ordered set of
+  // chunks that contain an Input/Output/Cache-read <dl>; this avoids leaking a
+  // sibling row's promo badge into an adjacent row.
+  const articles = [];
+  const articleById = new Map();
+  const dlChunks = [...refs.entries()]
+    .filter(([, chunk]) => chunk.includes('["$","div","Input"'))
+    .map(([, chunk]) => chunk);
+  const articleChunkById = new Map();
+  for (const chunk of refs.values()) {
+    const re = /\["\$","article","([^"]+)"/g;
+    let m;
+    while ((m = re.exec(chunk))) {
+      if (!articleChunkById.has(m[1])) articleChunkById.set(m[1], chunk);
+    }
+  }
+  const orderedIds = idList.length ? idList : [...articleChunkById.keys()];
+  orderedIds.forEach((id, index) => {
+    const inlineIdx = apiSlice.indexOf(`["$","article","${id}"`);
+    const inline = inlineIdx === -1 ? "" : apiSlice.slice(inlineIdx);
+    const own = articleChunkById.get(id) || "";
+    const dl = dlChunks[index] || "";
+    const body = `${own || inline}
+${dl}`;
+    if (body.trim()) articleById.set(id, body);
+  });
+  for (const id of orderedIds) {
+    if (articleById.has(id)) articles.push({ id, body: articleById.get(id) });
+  }
+  if (!articles.length) return [];
+
+  for (const article of articles) {
+    const id = article.id.trim().toLowerCase();
+    if (!id || seen.has(id)) continue;
+    const body = article.body;
+
+    const nameMatch = body.match(/\["\$","h3",null,\{[^}]*?"children":"([^"]+)"\}/);
+    const name = nameMatch ? nameMatch[1].trim() : id;
+
+    // Context is rendered as ["Context ","1M tokens"].
+    const ctxMatch = body.match(/"Context ","([0-9.]+)\s*([KM]) tokens"/i);
+    let contextLength = null;
+    if (ctxMatch) {
+      const n = Number.parseFloat(ctxMatch[1]);
+      if (Number.isFinite(n)) contextLength = Math.round(n * (ctxMatch[2].toUpperCase() === 'M' ? 1_000_000 : 1_000));
+    }
+
+    // Each price cell is a <div> keyed by its visible label. The value is
+    // either a bare "$$1.23" string or a span pair [original, current] when the
+    // model is discounted. Slice from the label's div up to the next labelled
+    // price cell (or the end of the row) rather than balancing brackets.
+    const cellSlice = (label) => {
+      const start = body.indexOf(`["$","div","${label}"`);
+      if (start === -1) return null;
+      const rest = body.slice(start + label.length + 16);
+      const nextLabels = ['["$","div","Input"', '["$","div","Output"', '["$","div","Cache read"']
+        .filter((needle) => needle !== `["$","div","${label}"`);
+      let end = rest.length;
+      for (const needle of nextLabels) {
+        const at = rest.indexOf(needle);
+        if (at !== -1 && at < end) end = at;
+      }
+      return rest.slice(0, end);
+    };
+
+    const cell = (label) => {
+      const block = cellSlice(label);
+      if (!block) return { current: null, original: null };
+      const prices = [...block.matchAll(/\$\$([0-9]+(?:\.[0-9]+)?)/g)].map((p) => Number.parseFloat(p[1]));
+      if (!prices.length) return { current: null, original: null };
+      if (prices.length >= 2) return { current: prices[prices.length - 1], original: prices[0] };
+      return { current: prices[0], original: null };
+    };
+
+    const input = cell('Input');
+    const output = cell('Output');
+    const cacheRead = cell('Cache read');
+
+    // Fail closed: a partial parse (missing input/output, or a non-positive
+    // price) is dropped rather than published. Zero is NOT free.
+    if (!Number.isFinite(input.current) || input.current <= 0) continue;
+    if (!Number.isFinite(output.current) || output.current <= 0) continue;
+
+        const hasPromoBadge = /\d+%\s*off/i.test(body);
+    let discount = 0;
+    if (input.original != null && input.original > input.current && input.original > 0) {
+      discount = Math.round((1 - input.current / input.original) * 1e6) / 1e6;
+    } else if (hasPromoBadge && promoPct != null) {
+      discount = promoPct / 100;
+    }
+
+    const promotion = discount > 0
+      ? {
+          label: hasPromoBadge && promoPct != null ? `${promoPct}% off · limited time` : `${Math.round(discount * 100)}% off · limited time`,
+          discount,
+          source_url: ZRO_PRICING_URL,
+          note: 'Current rendered price is authoritative; the stated end date is informational and may end early.',
+        }
+      : null;
+
+    seen.add(id);
+    rows.push({
+      id,
+      name,
+      input: input.current,
+      output: output.current,
+      cache_read: cacheRead.current,
+      cache_write: null,
+      context_length: contextLength,
+      original_input: input.original,
+      original_output: output.original,
+      original_cache_read: cacheRead.original,
+      discount,
+      promotion,
+    });
+  }
+
+  return rows;
+}
+
+/**
+ * Validate a freshly parsed Zro snapshot before it may replace the last-good
+ * copy. Fail-closed: throws instead of returning a partial slice.
+ * @param {{models?: Array}} snapshot
+ * @param {{previous?: {models?: Array}|null}} [options]
+ */
+export function validateZroSnapshot(snapshot, { previous = null } = {}) {
+  const models = snapshot?.models;
+  if (!Array.isArray(models)) throw new Error('zro snapshot: models must be an array');
+  if (models.length < ZRO_MIN_ROWS) {
+    throw new Error(`zro snapshot: ${models.length} rows is below the ${ZRO_MIN_ROWS}-row minimum floor`);
+  }
+  const seen = new Set();
+  for (const [index, m] of models.entries()) {
+    if (!m || typeof m !== 'object') throw new Error(`zro snapshot: row ${index} is not an object`);
+    const id = typeof m.id === 'string' ? m.id.trim() : '';
+    if (!id) throw new Error(`zro snapshot: row ${index} has an empty/invalid id`);
+    if (seen.has(id)) throw new Error(`zro snapshot: duplicate model id "${id}"`);
+    seen.add(id);
+    if (!Number.isFinite(m.input) || m.input <= 0) throw new Error(`zro snapshot: "${id}" has a non-positive input price`);
+    if (!Number.isFinite(m.output) || m.output <= 0) throw new Error(`zro snapshot: "${id}" has a non-positive output price`);
+  }
+  const previousModels = previous?.models;
+  if (Array.isArray(previousModels) && previousModels.length > 0) {
+    const floor = previousModels.length * (1 - ZRO_MAX_ROW_DROP);
+    if (models.length < floor) {
+      throw new Error(
+        `zro snapshot: row count dropped more than ${Math.round(ZRO_MAX_ROW_DROP * 100)}% ` +
+        `(${models.length} vs ${previousModels.length} last-good)`,
+      );
+    }
+  }
+  return true;
+}
+
+/** True when a snapshot's fetched_at is within the reuse TTL of `now`. */
+export function zroSnapshotFresh(snapshot, now = Date.now()) {
+  const fetchedAt = snapshot?.fetched_at ? Date.parse(snapshot.fetched_at) : NaN;
+  if (!Number.isFinite(fetchedAt)) return false;
+  const age = now - fetchedAt;
+  return age >= 0 && age < ZRO_SNAPSHOT_TTL_MS;
+}
+
+/**
+ * Map a validated snapshot (or freshly parsed rows) into ordinary catalog
+ * records. Zero-priced rows are dropped — never published as free.
+ * @param {{models?: Array}} snapshot
+ * @returns {Array<object>} catalog records with provider: 'zro'
+ */
+export function zroRowsFromSnapshot(snapshot) {
+  const models = Array.isArray(snapshot?.models) ? snapshot.models : [];
+  return models
+    .filter((m) => m && typeof m.id === 'string' && m.id.trim())
+    .filter((m) => Number.isFinite(m.input) && m.input > 0 && Number.isFinite(m.output) && m.output > 0)
+    .map((m) => ({
+      id: m.id.trim(),
+      name: m.name || m.id.trim(),
+      provider: 'zro',
+      quantization: null,
+      discount: Number.isFinite(m.discount) && m.discount > 0 ? m.discount : 0,
+      context_length: m.context_length ?? null,
+      pricing: {
+        input: m.input,
+        output: m.output,
+        cache_read: Number.isFinite(m.cache_read) ? m.cache_read : null,
+        cache_write: null,
+      },
+    }));
+}
+
 /** Filter out non-text models by ID pattern. */
 export const NON_TEXT_ID = /(?:^|[-/])(embed|embedding|embeddinggemma|clip|bge|tts|bark|parler|kokoro|openvoice)(?:[-/]|$)/i;
 export function isTextModel(id) {

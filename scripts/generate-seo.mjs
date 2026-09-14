@@ -34,6 +34,9 @@ import {
   collectProviderPages,
   renderProviderPage,
   renderProviderDirectoryPage,
+  collectModelPages,
+  renderModelPage,
+  renderModelDirectoryPage,
   renderMethodologyPage,
   renderApiDocsPage,
   buildOpenApiDocument,
@@ -97,6 +100,37 @@ async function stageProviderPages(providers, dates) {
   }
 
   const backup = join(PUBLIC, `.providers-${process.pid}.bak`);
+  await rm(backup, { recursive: true, force: true });
+  let movedOld = false;
+  try {
+    await rename(target, backup);
+    movedOld = true;
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  try {
+    await rename(stage, target);
+  } catch (error) {
+    if (movedOld) await rename(backup, target);
+    throw error;
+  }
+  if (movedOld) await rm(backup, { recursive: true, force: true });
+}
+
+/** Atomic staging for the /models/<slug>/ tree — never leaves a partial tree. */
+async function stageModelPages(pages, dates) {
+  const target = join(PUBLIC, 'models');
+  const stage = join(PUBLIC, `.models-${process.pid}.tmp`);
+  await rm(stage, { recursive: true, force: true });
+  await mkdir(stage, { recursive: true });
+  await writeFile(join(stage, 'index.html'), renderModelDirectoryPage(pages));
+  for (const page of pages) {
+    const dir = join(stage, page.slug);
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, 'index.html'), renderModelPage(page, { lastmod: dates.text }));
+  }
+
+  const backup = join(PUBLIC, `.models-${process.pid}.bak`);
   await rm(backup, { recursive: true, force: true });
   let movedOld = false;
   try {
@@ -183,6 +217,8 @@ export async function main() {
   const videoRows = cheapestVideoModels(videoPricing.models, TOP_N);
   const providerPages = collectProviderPages({ pricing, imagePricing, videoPricing });
   if (!providerPages.length) throw new Error('generate-seo: provider eligibility produced zero pages');
+  const modelPages = collectModelPages({ pricing });
+  if (!modelPages.length) throw new Error('generate-seo: model eligibility produced zero pages');
 
   const rendered = {
     index: renderHomepage(indexMarkup, pricing, textRows, dates),
@@ -215,6 +251,8 @@ export async function main() {
     { path: '/video', lastmod: dates.video, changefreq: 'daily', priority: '0.8' },
     { path: '/providers/', lastmod: newestDate(Object.values(dates)), changefreq: 'daily', priority: '0.8' },
     ...providerPages.map((provider) => ({ path: `/providers/${provider.slug}/`, lastmod: providerLastmod(provider, dates), changefreq: 'daily', priority: '0.7' })),
+    { path: '/models/', lastmod: dates.text, changefreq: 'daily', priority: '0.7' },
+    ...modelPages.map((page) => ({ path: `/models/${page.slug}/`, lastmod: dates.text, changefreq: 'daily', priority: '0.6' })),
     { path: '/benchmarks', lastmod: dates.text, changefreq: 'daily', priority: '0.8' },
     { path: '/docs/methodology/', lastmod: dates.text, changefreq: 'monthly', priority: '0.6' },
     { path: '/docs/api/', changefreq: 'monthly', priority: '0.6' },
@@ -224,6 +262,7 @@ export async function main() {
   const robots = buildRobots();
 
   await stageProviderPages(providerPages, dates);
+  await stageModelPages(modelPages, dates);
   await Promise.all([
     writeAtomic(join(PUBLIC, 'index.html'), rendered.index),
     writeAtomic(join(PUBLIC, 'image.html'), rendered.image),
@@ -245,6 +284,7 @@ export async function main() {
 
   console.log(`generate-seo: rendered ${textRows.length} text, ${videoRows.length} video, and modality-safe image price rows`);
   console.log(`generate-seo: generated ${providerPages.length} provider pages plus methodology and API documentation`);
+  console.log(`generate-seo: generated ${modelPages.length} canonical-model pages plus the /models/ directory`);
   console.log(`generate-seo: wrote ${sitemapEntries.length} sitemap URLs and refreshed all calculator SEO sections`);
 }
 

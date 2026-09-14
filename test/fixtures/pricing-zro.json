@@ -1,0 +1,201 @@
+{
+  "generated_at": "2026-07-08T00:00:00.000Z",
+  "providers": [
+    {
+      "key": "deepinfra",
+      "name": "DeepInfra",
+      "model_count": 2,
+      "status": "ok"
+    },
+    {
+      "key": "openrouter",
+      "name": "OpenRouter (de-aggregated)",
+      "model_count": 3,
+      "status": "ok"
+    },
+    {
+      "key": "zro",
+      "name": "Zro",
+      "model_count": 3,
+      "status": "ok (fresh)"
+    }
+  ],
+  "providers_meta": {
+    "deepinfra": {
+      "privacy_policy_url": "https://deepinfra.com/privacy",
+      "retains_prompts": false,
+      "source": "openrouter"
+    },
+    "google": {
+      "privacy_policy_url": "https://policies.google.com/privacy",
+      "retains_prompts": true,
+      "source": "openrouter"
+    },
+    "anthropic": {
+      "privacy_policy_url": "https://anthropic.com/privacy",
+      "retains_prompts": false,
+      "source": "openrouter"
+    },
+    "zro": {
+      "privacy_policy_url": "https://zro.moonmath.ai/privacy",
+      "terms_of_service_url": "https://zro.moonmath.ai/terms",
+      "status_page_url": null,
+      "headquarters": null,
+      "datacenters": null,
+      "may_train": false,
+      "retention_days": null,
+      "source": "manual"
+    }
+  },
+  "models": [
+    {
+      "id": "google/gemini-3.1-pro",
+      "name": "Google: Gemini 3.1 Pro",
+      "org": "google",
+      "provider": "deepinfra",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 1000000,
+      "max_completion_tokens": 65536,
+      "uptime_30m": 99.9,
+      "pricing": {
+        "input": 1.25,
+        "output": 5,
+        "cache_read": 0.31,
+        "cache_write": null
+      },
+      "zdr": true,
+      "benchmarks": {
+        "intelligence_index": 48.2,
+        "coding_index": 60.1,
+        "agentic_index": 41.5,
+        "design_arena_best": null
+      }
+    },
+    {
+      "id": "google/gemini-3.1-pro-preview",
+      "name": "Google: Gemini 3.1 Pro Preview",
+      "org": "google",
+      "provider": "google",
+      "quantization": "unknown",
+      "discount": 0,
+      "context_length": 1000000,
+      "max_completion_tokens": 65536,
+      "pricing": {
+        "input": 0.1,
+        "output": 7,
+        "cache_read": 0.1,
+        "cache_write": null
+      }
+    },
+    {
+      "id": "google/gemini-3.1-pro-preview-customtools",
+      "name": "Google: Gemini 3.1 Pro Preview CustomTools",
+      "org": "google",
+      "provider": "google",
+      "quantization": "unknown",
+      "discount": 0.2,
+      "context_length": 1000000,
+      "max_completion_tokens": 65536,
+      "pricing": {
+        "input": 1,
+        "output": 4,
+        "cache_read": 0.25,
+        "cache_write": 0.5
+      },
+      "subscription": true
+    },
+    {
+      "id": "anthropic/claude-sonnet-5",
+      "name": "Anthropic: Claude Sonnet 5",
+      "org": "anthropic",
+      "provider": "anthropic",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 200000,
+      "max_completion_tokens": 16384,
+      "pricing": {
+        "input": 3,
+        "output": 15,
+        "cache_read": 0.3,
+        "cache_write": 3.75
+      },
+      "zdr": true,
+      "benchmarks": {
+        "intelligence_index": 53.4,
+        "coding_index": 72.4,
+        "agentic_index": 45.7,
+        "design_arena_best": {
+          "category": "codecategories",
+          "elo": 1329,
+          "win_rate": 58,
+          "rank": 5
+        }
+      }
+    },
+    {
+      "id": "openai/gpt-4:free",
+      "name": "OpenAI: GPT-4 (free)",
+      "org": "openai",
+      "provider": "openai",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 8192,
+      "pricing": {
+        "input": 0,
+        "output": 0
+      }
+    },
+    {
+      "id": "google/gemini-3.1-pro",
+      "name": "Google: Gemini 3.1 Pro",
+      "org": "google",
+      "provider": "zro",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 1000000,
+      "max_completion_tokens": 65536,
+      "uptime_30m": 99.7,
+      "pricing": {
+        "input": 1.1,
+        "output": 4.4,
+        "cache_read": 0.11,
+        "cache_write": null
+      }
+    },
+    {
+      "id": "anthropic/claude-sonnet-5",
+      "name": "Anthropic: Claude Sonnet 5",
+      "org": "anthropic",
+      "provider": "zro",
+      "quantization": null,
+      "discount": 0,
+      "context_length": 200000,
+      "max_completion_tokens": 64000,
+      "uptime_30m": 99.5,
+      "pricing": {
+        "input": 2.5,
+        "output": 10,
+        "cache_read": 0.25,
+        "cache_write": null
+      }
+    },
+    {
+      "id": "deepseek-v4.1-flash",
+      "name": "DeepSeek V4.1 Flash",
+      "org": "deepseek",
+      "provider": "zro",
+      "quantization": null,
+      "discount": 0.5,
+      "context_length": 1000000,
+      "max_completion_tokens": 131072,
+      "uptime_30m": 100,
+      "pricing": {
+        "input": 0.15,
+        "output": 0.6,
+        "cache_read": 0.003,
+        "cache_write": null
+      }
+    }
+  ]
+}
