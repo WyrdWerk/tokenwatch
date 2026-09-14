@@ -40,7 +40,6 @@ export const PROVIDER_MAP = {
   chutes: 'chutes',
   clarifai: 'clarifai',
   cohere: 'cohere',
-  crof: 'crof',
   crusoe: 'crusoe',
   deepseek: 'deepseek',
   digitalocean: 'digitalocean',

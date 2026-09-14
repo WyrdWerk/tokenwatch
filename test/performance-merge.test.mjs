@@ -6,7 +6,7 @@ import { mergeDirectIntoExisting } from '../shared/performance.mjs';
  * Regression test for the no-OR-key merge branch in fetch-performance.mjs.
  *
  * When OPENROUTER_API_KEY is not set, the script fetches only direct-provider
- * records (Umans/Lilac/Crof ~30 records). Without the merge logic, the 15%
+ * records (Umans/Lilac ~30 records). Without the merge logic, the 15%
  * coverage-drop guard would see 30 vs 780 existing records and bail, leaving
  * stale direct-provider data forever. The merge folds fresh direct-provider
  * records into the existing file's data so OR records are preserved while
@@ -20,7 +20,7 @@ test('mergeDirectIntoExisting: preserves OR records, overwrites direct-provider 
     'gpt-5.6-luna|azure': { latency: { p50: 1521 }, throughput: { p50: 59 } },
     'umans-glm-5.2|umans': { latency: { p50: 9999 }, throughput: { p50: 1.0 } }, // stale
     'umans-flash|umans': { latency: { p50: 9999 }, throughput: { p50: 1.0 } },   // stale
-    'crof-model|crof': { latency: { p50: 500 }, throughput: { p50: 50 } },
+    'lilac-model|lilac': { latency: { p50: 500 }, throughput: { p50: 50 } },
     _meta: { generated_at: '2026-07-13T00:00:00Z' },
   };
 
@@ -28,7 +28,7 @@ test('mergeDirectIntoExisting: preserves OR records, overwrites direct-provider 
   const fresh = {
     'umans-glm-5.2|umans': { latency: { p50: 2070 }, throughput: { p50: 78.5 } },  // fresh
     'umans-flash|umans': { latency: { p50: 1500 }, throughput: { p50: 297.8 } },   // fresh
-    'crof-model|crof': { latency: { p50: 480 }, throughput: { p50: 55 } },         // fresh
+    'lilac-model|lilac': { latency: { p50: 480 }, throughput: { p50: 55 } },         // fresh
   };
 
   const { merged, updatedCount } = mergeDirectIntoExisting(fresh, existing);
@@ -42,7 +42,7 @@ test('mergeDirectIntoExisting: preserves OR records, overwrites direct-provider 
   assert.equal(merged['umans-glm-5.2|umans'].throughput.p50, 78.5, 'Umans throughput updated to fresh value');
   assert.equal(merged['umans-flash|umans'].latency.p50, 1500, 'Umans flash latency updated');
   assert.equal(merged['umans-flash|umans'].throughput.p50, 297.8, 'Umans flash throughput updated');
-  assert.equal(merged['crof-model|crof'].latency.p50, 480, 'Crof record updated');
+  assert.equal(merged['lilac-model|lilac'].latency.p50, 480, 'Lilac record updated');
 
   // Stale values must NOT survive
   assert.notEqual(merged['umans-glm-5.2|umans'].latency.p50, 9999, 'stale Umans value must not survive');
