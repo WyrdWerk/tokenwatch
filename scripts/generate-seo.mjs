@@ -37,6 +37,7 @@ import {
   collectModelPages,
   renderModelPage,
   renderModelDirectoryPage,
+  providerPageSlugs,
   renderMethodologyPage,
   renderApiDocsPage,
   buildOpenApiDocument,
@@ -118,7 +119,7 @@ async function stageProviderPages(providers, dates) {
 }
 
 /** Atomic staging for the /models/<slug>/ tree — never leaves a partial tree. */
-async function stageModelPages(pages, dates) {
+async function stageModelPages(pages, dates, linkedProviderSlugs) {
   const target = join(PUBLIC, 'models');
   const stage = join(PUBLIC, `.models-${process.pid}.tmp`);
   await rm(stage, { recursive: true, force: true });
@@ -127,7 +128,9 @@ async function stageModelPages(pages, dates) {
   for (const page of pages) {
     const dir = join(stage, page.slug);
     await mkdir(dir, { recursive: true });
-    await writeFile(join(dir, 'index.html'), renderModelPage(page, { lastmod: dates.text }));
+    // Only providers with a generated page are linked; the rest render as plain
+    // text so a model page can never emit a 404 link.
+    await writeFile(join(dir, 'index.html'), renderModelPage(page, { lastmod: dates.text, linkedProviderSlugs }));
   }
 
   const backup = join(PUBLIC, `.models-${process.pid}.bak`);
@@ -262,7 +265,7 @@ export async function main() {
   const robots = buildRobots();
 
   await stageProviderPages(providerPages, dates);
-  await stageModelPages(modelPages, dates);
+  await stageModelPages(modelPages, dates, providerPageSlugs(providerPages));
   await Promise.all([
     writeAtomic(join(PUBLIC, 'index.html'), rendered.index),
     writeAtomic(join(PUBLIC, 'image.html'), rendered.image),

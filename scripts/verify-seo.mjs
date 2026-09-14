@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 import { readFile, readdir, stat } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { findHtmlFiles } from './bust-cache.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -109,7 +110,13 @@ export async function main() {
   ]);
 
   // Every generated model page must carry a server-rendered provider table, a
-  // canonical URL, breadcrumbs, JSON-LD, and a calculator deep link.
+  // canonical URL, breadcrumbs, JSON-LD, a calculator deep link, and the
+  // price-history panel wired to the client scripts. It must also not emit a
+  // /providers/<slug>/ link without a generated page: provider pages require
+  // MODEL_MIN_PROVIDERS distinct priced identities, so an unconditional link
+  // 404s for thin providers.
+  const providerSlugs = new Set(providerDirs.map((entry) => entry.name));
+  const deadProviderLinks = [];
   for (const entry of modelDirs) {
     const html = await readFile(join(PUBLIC, 'models', entry.name, 'index.html'), 'utf8');
     const canonical = `${SITE}/models/${entry.name}/`;
@@ -119,6 +126,24 @@ export async function main() {
     requireMatch(html, /<section class="seo-models"[\s\S]*?<tbody>[\s\S]*?<tr>/, `model page ${entry.name} provider rows`);
     requireMatch(html, /href="\/#model=/, `model page ${entry.name} calculator deep link`);
     if (entry.name.includes(':batch')) throw new Error(`verify-seo: model page ${entry.name} must not be a :batch variant`);
+
+    // Price-history wiring: an empty container the client hydrates, both
+    // scripts, and an initial state. A page missing any of these is a broken
+    // chart in production.
+    requireMatch(html, /data-price-history="[^"]+"/, `model page ${entry.name} price-history mount point`);
+    requireMatch(html, /data-price-history-chart/, `model page ${entry.name} chart container`);
+    requireMatch(html, /src="[^"]*model-history\.js/, `model page ${entry.name} does not load model-history.js`);
+    requireMatch(html, /src="[^"]*price-sparkline\.js/, `model page ${entry.name} does not load price-sparkline.js`);
+    requireMatch(html, /Loading price history/, `model page ${entry.name} initial chart state`);
+    // History is retained for up to 90 days, not guaranteed to exist for 90 days.
+    requireMatch(html, /up to 90 days/, `model page ${entry.name} must describe history as retained for up to 90 days`);
+
+    for (const match of html.matchAll(/href="\/providers\/([^/"]+)\/"/g)) {
+      if (!providerSlugs.has(match[1])) deadProviderLinks.push(`${entry.name} → /providers/${match[1]}/`);
+    }
+  }
+  if (deadProviderLinks.length) {
+    throw new Error(`verify-seo: ${deadProviderLinks.length} model-page provider link(s) have no generated page, e.g. ${deadProviderLinks.slice(0, 3).join(', ')}`);
   }
 
   const urls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
@@ -138,8 +163,25 @@ export async function main() {
     }
   }
 
+  // Committed HTML must only reference /h/ assets that exist. bust-cache.mjs
+  // rewrites refs to content-hashed /h/* paths at deploy time and those copies
+  // are deliberately NOT committed, so a hand-authored or accidentally-busted
+  // page that keeps a /h/ ref renders unstyled in a clean checkout. Source HTML
+  // must use the plain `?v=` form; only CI-generated deploy output uses /h/.
+  const missingHashedAssets = [];
+  for (const path of htmlFiles) {
+    const html = await readFile(path, 'utf8');
+    for (const match of html.matchAll(/(?:href|src)="(\/h\/[^"]+)"/g)) {
+      const target = join(PUBLIC, match[1].replace(/^\//, ''));
+      if (!existsSync(target)) missingHashedAssets.push(`${relative(PUBLIC, path)} → ${match[1]}`);
+    }
+  }
+  if (missingHashedAssets.length) {
+    throw new Error(`verify-seo: ${missingHashedAssets.length} committed HTML ref(s) point at absent /h/ assets (use a plain ?v= source path), e.g. ${missingHashedAssets.slice(0, 3).join(', ')}`);
+  }
+
   console.log(`verify-seo: ${htmlFiles.length} HTML pages, ${providerDirs.length} providers, ${modelDirs.length} models, ${urls.length} sitemap URLs`);
-  console.log('verify-seo: calculator pricing, visible FAQ/JSON-LD parity, metadata, and sitemap targets passed');
+  console.log('verify-seo: calculator pricing, visible FAQ/JSON-LD parity, metadata, model-page history wiring, and sitemap targets passed');
 }
 
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;

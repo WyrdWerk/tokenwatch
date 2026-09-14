@@ -8,6 +8,7 @@
 //   GET /api/v1/providers[?zdr=true]          — provider metadata
 //   GET /api/v1/models                         — list text models (with filters)
 //   GET /api/v1/models/:canonicalId/providers  — all providers for a model, sorted by cost
+//   GET /api/v1/models/:canonicalId/history    — daily cheapest-provider price history
 //   GET /api/v1/images                         — list image models
 //   GET /api/v1/images/:id                     — single image model with pricing variants
 //   GET /api/v1/videos                         — list video models
@@ -16,6 +17,16 @@
 
 import { canonicalId } from '../../../shared/normalize.mjs';
 import { endpointDirectory } from '../../../shared/api-meta.mjs';
+import {
+  DEFAULT_MIX,
+  MAX_HISTORY_DAYS,
+  buildHistorySeries,
+  capHistoryDays,
+  parseDaysParam,
+  parseMixParam,
+  utcDay,
+  windowStartDay,
+} from '../../../shared/price-history.mjs';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -53,6 +64,101 @@ function paginate(arr, params) {
   const total = arr.length;
   const paged = arr.slice(offset, offset + limit);
   return { total, offset, limit, paged };
+}
+
+// ── Price history ─────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/v1/models/:canonicalId/history?days=90&mix=2.5,97,0.5
+ *
+ * Reads raw USD-per-million snapshot rows and blends them at read time, so the
+ * stored history is independent of any visitor's token mix.
+ *
+ * Contract:
+ *   - `mix` defaults to the agentic mix (2.5/97/0.5) and is validated; a mix
+ *     that does not sum to 100, or a `days` outside [1, 90], is a 400.
+ *   - Each returned point is the cheapest offering that day for the requested
+ *     mix. A day where nothing can be priced is absent — never $0.
+ *   - `series` carries every offering for the day so a chart can show a
+ *     provider switch without a second request.
+ *   - At most 90 points, chronologically ascending (oldest → newest).
+ *   - `cache_read: null` falls back to the offering's INPUT price (the same
+ *     semantics as /providers and the calculator) rather than disqualifying it.
+ */
+async function historyResponse(context, pricing, rawId) {
+  const { request, env } = context;
+  const params = new URL(request.url).searchParams;
+
+  if (!rawId) return json({ error: 'Not found' }, 404); // "models/history"
+
+  let requestedId;
+  try {
+    requestedId = decodeURIComponent(rawId);
+  } catch {
+    return json({ error: 'Invalid model id encoding' }, 400); // malformed %-encoding
+  }
+
+  const mixParam = parseMixParam(params.get('mix'));
+  if (!mixParam.ok) return json({ error: mixParam.error, parameter: 'mix' }, 400);
+  const daysParam = parseDaysParam(params.get('days'));
+  if (!daysParam.ok) return json({ error: daysParam.error, parameter: 'days' }, 400);
+  const mix = mixParam.mix;
+  const days = daysParam.days;
+
+  const target = canonicalId(requestedId);
+  const known = pricing.models.some((m) => canonicalId(m.id) === target);
+  if (!known) {
+    return json({ error: 'Model not found', canonical_id: requestedId }, 404);
+  }
+
+  const db = env?.PRICE_HISTORY;
+  if (!db) {
+    // Local dev without the D1 binding, or a deployment missing it. Fail
+    // loudly with a 503 rather than pretending the model has no history.
+    return json({
+      error: 'Price history is not configured',
+      detail: 'The PRICE_HISTORY D1 binding is unavailable in this environment',
+    }, 503);
+  }
+
+  const today = utcDay(new Date());
+  const startDay = windowStartDay(today, days);
+
+  let rows;
+  try {
+    const result = await db
+      .prepare(
+        `SELECT utc_day, offering_key, provider, model_id, quantization,
+                input_price, output_price, cache_read, cache_write, discount
+           FROM price_snapshot
+          WHERE canonical_model = ? AND utc_day >= ? AND utc_day <= ?
+          ORDER BY utc_day ASC`,
+      )
+      .bind(target, startDay, today)
+      .all();
+    rows = result?.results ?? [];
+  } catch (err) {
+    return json({ error: 'Failed to read price history', detail: err.message }, 503);
+  }
+
+  const allDays = buildHistorySeries(rows, mix);
+  const points = capHistoryDays(allDays, MAX_HISTORY_DAYS);
+  const providerChanges = points.reduce(
+    (count, entry, index) => count + (index > 0 && entry.point.provider !== points[index - 1].point.provider ? 1 : 0),
+    0,
+  );
+
+  return json({
+    canonical_id: target,
+    days,
+    mix: { input: mix.inputPct, cache_read: mix.cacheReadPct, output: mix.outputPct },
+    from: startDay,
+    to: today,
+    point_count: points.length,
+    provider_switches: providerChanges,
+    points: points.map((entry) => entry.point),
+    series: points.map((entry) => ({ day: entry.day, offerings: entry.series })),
+  });
 }
 
 // ── Main router ───────────────────────────────────────────────────────────────
@@ -151,10 +257,17 @@ export async function onRequestGet(context) {
     });
   }
 
-  // ── Route: /api/v1/models[/:canonicalId/providers] ──
+  // ── Route: /api/v1/models[/:canonicalId/providers|/:canonicalId/history] ──
   if (path === 'models' || path.startsWith('models/')) {
     // 'models' → '' (list); 'models/<rest>' → '<rest>'
     const subPath = path === 'models' ? '' : path.replace(/^models\//, '');
+
+    // /api/v1/models/:canonicalId/history — daily raw snapshots, blended at read
+    // time with the requested visitor mix. Registered before the providers
+    // branch so `models/<id>/history` is never mistaken for an unknown shape.
+    if (subPath !== '' && subPath.endsWith('/history')) {
+      return historyResponse(context, pricing, subPath.slice(0, -'/history'.length));
+    }
 
     // /api/v1/models/:canonicalId/providers — id may itself contain slashes (org/model).
     // Only a non-empty suffix ending exactly in `/providers` is the detail route;

@@ -15,6 +15,7 @@
     "seo": "node scripts/generate-seo.mjs && node scripts/webmcp-skill-brief.mjs",
     "verify:seo": "node scripts/verify-seo.mjs",
     "bust:cache": "node scripts/bust-cache.mjs",
+    "snapshot": "node scripts/snapshot-prices.mjs --local",
     "fetch:benchmarks": "node scripts/fetch-benchmarks.mjs",
     "webmcp:skill": "node scripts/webmcp-skill-brief.mjs"
   },
