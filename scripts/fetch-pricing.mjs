@@ -5,7 +5,7 @@
  * Fetches pricing from direct providers + OpenRouter (de-aggregated per backend
  * inference provider), normalizes to $/M tokens, and writes public/pricing.json.
  *
- * Tier 1 — Direct providers: DeepInfra, Crof, EmberCloud, Wafer, Synthetic, Lilac,
+ * Tier 1 — Direct providers: DeepInfra, EmberCloud, Wafer, Synthetic, Lilac,
  *          SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs,
  *          SingularityAPI, RunInfra, LLM Gateway (differential hosts only)
  *          (authoritative source for their own offerings; Singularity + RunInfra
@@ -66,12 +66,6 @@ const DIRECT_PROVIDERS = [
     name: 'DeepInfra',
     url: 'https://api.deepinfra.com/v1/models',
     parse: parseDeepInfra,
-  },
-  {
-    key: 'crof',
-    name: 'Crof',
-    url: 'https://crof.ai/v1/models',
-    parse: parseCrof,
   },
   {
     key: 'ember',
@@ -171,16 +165,6 @@ const OR_CONCURRENCY = 20;
 //  fetchJson, fetchJsonWithRetry, checkCoverageDrop — all imported from ./lib.mjs)
 
 const MANUAL_PROVIDER_META = {
-  crof: {
-    privacy_policy_url: 'https://crof.ai/privacy',
-    terms_of_service_url: 'https://crof.ai/tos',
-    status_page_url: null,
-    headquarters: 'US',
-    datacenters: ['US'],
-    retains_prompts: false,  // ZDR: "processed in real-time and are not stored, logged, or accessible"
-    may_train: false,         // "We do NOT use your data for: Training AI models"
-    retention_days: null,
-  },
   ember: {
     privacy_policy_url: 'https://www.embercloud.ai/privacy',
     terms_of_service_url: 'https://www.embercloud.ai/terms',
@@ -394,23 +378,6 @@ function parseDeepInfra(data) {
         cache_write: passthrough(m.metadata.pricing?.cache_write_tokens),
       },
     }));
-}
-
-function parseCrof(data) {
-  return (data.data || []).map((m) => ({
-    id: m.id,
-    name: m.name || m.id,
-    provider: 'crof',
-    quantization: null,
-    discount: 0,
-    context_length: m.context_length ?? null,
-    pricing: {
-      input: passthrough(m.pricing?.prompt),
-      output: passthrough(m.pricing?.completion),
-      cache_read: passthrough(m.pricing?.cache_prompt),
-      cache_write: passthrough(m.pricing?.cache_write),
-    },
-  }));
 }
 
 function parseEmber(data) {

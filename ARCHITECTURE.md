@@ -20,8 +20,7 @@ flowchart TD
         direction TB
     subgraph T1T["Tier 1 — Direct providers (authoritative)"]
       T1A["DeepInfra /v1/models"]
-      T1B["Crof /v1/models"]
-      T1C["EmberCloud /v1/models"]
+      T1B["EmberCloud /v1/models"]
       T1D["Wafer /v1/models"]
       T1E["Synthetic /v1/models"]
       T1F["Lilac /v1/models"]

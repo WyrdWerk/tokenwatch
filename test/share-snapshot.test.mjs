@@ -17,7 +17,7 @@ const snapshot = {
   b: 'Basis: 100M tokens · Input 2.5% · Cached 97% · Output 0.5%',
   c: ['Z.ai: GLM 5.2', 'Model <script>alert(1)</script>'],
   r: [
-    ['Provider', ['Crof', 'Example & Co'], []],
+    ['Provider', ['Lilac', 'Example & Co'], []],
     ['Blended $/M', ['$0.012', '$0.019'], [0]],
     ['Speed', ['60 tps', '—'], [0]],
     ['ZDR', ['ZDR', '—'], []],
@@ -53,7 +53,7 @@ test('shared SVG escapes snapshot text and aligns labels opposite value columns'
   assert.match(svg, /&lt;script&gt;/);
   assert.doesNotMatch(svg, /<script>/);
   assert.match(svg, /text-anchor="start"[^>]*>Provider<\/text>/);
-  assert.match(svg, /text-anchor="end"[^>]*>Crof<\/text>/);
+  assert.match(svg, /text-anchor="end"[^>]*>Lilac<\/text>/);
   assert.match(svg, /fill="#e5f4eb"/);
   assert.match(svg, /Snapshot 2026-08-11 · tokenwatch\.wyrdwerk\.com/);
 });
