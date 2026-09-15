@@ -93,6 +93,35 @@ test('index.html exposes the new text-page filter controls and TTFT column', asy
   assert.match(html, /value="ttft:asc"/, 'mobile sort must include TTFT');
 });
 
+test('cache-write defaults to 10M tokens amortized over 100 requests', async () => {
+  const src = await readFile(APP_JS, 'utf-8');
+  const html = await readFile(join(__dirname, '..', 'public', 'index.html'), 'utf-8');
+
+  assert.match(src, /cacheWriteTokens:\s*'10'/, 'DEFAULTS.cacheWriteTokens must be 10');
+  assert.match(src, /amortizeN:\s*'100'/, 'DEFAULTS.amortizeN must be 100');
+  assert.match(
+    html,
+    /id="cacheWriteTokens"[^>]*value="10"/,
+    'index.html cache-write input must default to 10',
+  );
+
+  const serStart = src.indexOf('function serializeState()');
+  const serEnd = src.indexOf('\nfunction deserializeState', serStart);
+  const ser = src.slice(serStart, serEnd);
+  assert.match(ser, /cacheWriteRaw !== DEFAULTS\.cacheWriteTokens/,
+    'serializeState must omit cw= when cache-write volume is the default');
+  assert.match(ser, /amortizeRaw !== DEFAULTS\.amortizeN/,
+    'serializeState must omit cwn= when N is the default');
+
+  const fnStart = src.indexOf('function deserializeState(hash) {');
+  const fnEnd = src.indexOf('const raw =', fnStart);
+  const resetBlock = src.slice(fnStart, fnEnd);
+  assert.match(resetBlock, /cacheWriteTokens'\)\.value = DEFAULTS\.cacheWriteTokens/,
+    'deserializeState must reset cache-write volume to DEFAULTS');
+  assert.match(resetBlock, /amortizeN'\)\.value = DEFAULTS\.amortizeN/,
+    'deserializeState must reset amortizeN to DEFAULTS');
+});
+
 test('index.html exposes IQ column and extra quality filters', async () => {
   const html = await readFile(join(__dirname, '..', 'public', 'index.html'), 'utf-8');
   assert.match(html, /data-sort="intelligence"/, 'IQ must be a sortable column');

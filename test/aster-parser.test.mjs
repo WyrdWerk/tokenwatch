@@ -110,6 +110,23 @@ test('parseAster maps context and model-specific cache prices', () => {
   assert.equal(glm.pricing.cache_write, null);
 });
 
+test('parseAster maps cache_write_per_million_tokens_usd when published', () => {
+  const rows = parseAster({
+    data: [{
+      id: 'glm-5.2',
+      display_name: 'GLM 5.2',
+      context_length: 1048576,
+      pricing: {
+        input_per_million_tokens_usd: 1,
+        output_per_million_tokens_usd: 4,
+        cached_input_per_million_tokens_usd: 0.2,
+        cache_write_per_million_tokens_usd: 1.25,
+      },
+    }],
+  });
+  assert.equal(rows[0].pricing.cache_write, 1.25);
+});
+
 test('parseAster preserves model variants and assigns their creators', () => {
   const rows = parseAster(RESPONSE);
   assert.equal(rows.find((m) => m.id === 'gpt-oss-120b-fast').org, 'openai');

@@ -40,7 +40,7 @@ TokenWatch ships SEO infrastructure for a client-side-rendered SPA:
 - **ZDR badges**: Models from providers with Zero Data Retention show a green "ZDR" badge. Use the "ZDR only" filter to restrict results to ZDR-compliant offerings.
 - **Subscription badges**: Providers with coding plan subscriptions show a blue "Sub" badge. Use the "Sub only" filter to restrict results to subscription providers (13 providers, 142 models).
 - **Promo badges**: Discounted offerings show a "promo" badge with the discount percentage.
-- **Cache write**: An adjustable one-time cache-population cost with amortization over N requests, included in the Total Cost column.
+- **Cache write**: An adjustable one-time cache-population cost with amortization over N requests, included in the Total Cost column. Default is 10M tokens ÷ 100 requests; models with `cache_write: null` still contribute $0.
 - **Blended $/M**: Table column (before Total Cost) showing the effective per-million-token rate at your current input/cache/output mix. Excludes cache-write and monthly multiplier — pure cross-model comparison metric. Also shown in the comparison modal.
 - **Export CSV**: Button above the results table downloads the current filtered/sorted results (all pricing columns, Speed, Blended $/M, ZDR, subscription, discount).
 - **Speed**: Throughput p50 (tokens/sec) from performance data — table column + comparison modal row (blank when unavailable).

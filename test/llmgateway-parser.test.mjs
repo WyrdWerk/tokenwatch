@@ -28,6 +28,39 @@ test('parseLlmgateway keeps only differential providers as priced text rows', ()
   assert.equal(runware.quantization, null);
 });
 
+test('parseLlmgateway keeps a non-zero input_cache_write and treats 0 as null', () => {
+  const rows = parseLlmgateway({
+    data: [{
+      id: 'qwen3.8-max',
+      architecture: { output_modalities: ['text'] },
+      providers: [
+        {
+          providerId: 'runware',
+          pricing: {
+            prompt: '2e-6',
+            completion: '6e-6',
+            input_cache_read: '0.25e-6',
+            input_cache_write: '2.5e-6',
+          },
+        },
+        {
+          providerId: 'nanogpt',
+          pricing: {
+            prompt: '2e-6',
+            completion: '6e-6',
+            input_cache_read: '0.25e-6',
+            input_cache_write: '0',
+          },
+        },
+      ],
+    }],
+  });
+  const runware = rows.find((r) => r.provider === 'runware');
+  const nanogpt = rows.find((r) => r.provider === 'nanogpt');
+  assert.equal(runware.pricing.cache_write, 2.5);
+  assert.equal(nanogpt.pricing.cache_write, null);
+});
+
 test('parseLlmgateway drops image-output and unpriced rows', () => {
   const rows = parseLlmgateway(FIXTURE);
   assert.ok(!rows.some((r) => r.id === 'gemini-3-pro-image'));

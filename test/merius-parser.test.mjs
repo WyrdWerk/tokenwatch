@@ -194,6 +194,25 @@ test('parseMerius handles missing pricing array', () => {
   assert.equal(result[0].pricing.cache_read, null);
 });
 
+test('parseMerius maps input_cache_write to cache_write $/M', () => {
+  const data = {
+    data: [{
+      id: 'minimax/minimax-m2.7',
+      name: 'MiniMax-M2.7',
+      input_modalities: ['text'],
+      output_modalities: ['text'],
+      context_length: 1000,
+      max_output_length: 100,
+      is_ready: true,
+      is_free: false,
+      pricing: [{ prompt: '0.3e-6', completion: '1.2e-6', input_cache_read: '0.06e-6', input_cache_write: '0.375e-6' }],
+    }],
+  };
+  const result = parseMerius(data);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].pricing.cache_write, 0.375);
+});
+
 test('parseMerius handles empty data', () => {
   assert.deepEqual(parseMerius({}), []);
   assert.deepEqual(parseMerius({ data: [] }), []);

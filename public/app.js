@@ -142,6 +142,8 @@ const DEFAULTS = {
   sortBy: 'cost',
   sortDir: 'asc',
   groupBy: 'none',
+  cacheWriteTokens: '10',
+  amortizeN: '100',
 };
 
 /** providers_meta slugs that differ from catalog provider keys. */
@@ -231,10 +233,10 @@ function serializeState() {
   if (els.groupBy.value !== 'none') params.set('group', els.groupBy.value);
   if (els.showOrg?.checked) params.set('orgcol', '1');
 
-  const cacheWriteVal = parseFloat(document.getElementById('cacheWriteTokens').value) || 0;
-  const amortizeVal = parseInt(document.getElementById('amortizeN').value, 10) || 100;
-    if (cacheWriteVal > 0) params.set('cw', document.getElementById('cacheWriteTokens').value);
-    if (amortizeVal !== 100) params.set('cwn', String(amortizeVal));
+  const cacheWriteRaw = document.getElementById('cacheWriteTokens').value;
+  const amortizeRaw = document.getElementById('amortizeN').value;
+  if (cacheWriteRaw !== DEFAULTS.cacheWriteTokens) params.set('cw', cacheWriteRaw);
+  if (amortizeRaw !== DEFAULTS.amortizeN) params.set('cwn', amortizeRaw);
 
     // Column customization: order + hidden set (only when non-default)
     if (state.colOrder && state.colOrder.join(',') !== DEFAULT_COL_ORDER.join(',')) {
@@ -279,8 +281,8 @@ function deserializeState(hash) {
   els.budgetField.style.display = 'none';
   updateLabelsAndHeaders();
   els.groupBy.value = DEFAULTS.groupBy;
-    document.getElementById('cacheWriteTokens').value = '0';
-    document.getElementById('amortizeN').value = '100';
+    document.getElementById('cacheWriteTokens').value = DEFAULTS.cacheWriteTokens;
+    document.getElementById('amortizeN').value = DEFAULTS.amortizeN;
     state.colOrder = null;
     state.colHidden = null;
 

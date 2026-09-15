@@ -150,7 +150,7 @@ Returns:
     "totalTokensM": 0,
     "mix": ["input_percent", "cache_percent", "output_percent"],
     "budget": 0,
-    "cacheWrite": 0,
+    "cacheWrite": 10,
     "amortizeN": 100
   },
   "filters": {

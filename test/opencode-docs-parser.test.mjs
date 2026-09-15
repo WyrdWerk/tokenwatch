@@ -100,6 +100,14 @@ test('parseOpenCodeGoDocs: MiMo V2.5 Pro + DeepSeek V4 Pro use current docs pric
   assert.equal(ds.output, 0.87);
 });
 
+test('fetch-pricing OpenCode fallback keeps published cache_write rates', async () => {
+  const src = await readFile(new URL('../scripts/fetch-pricing.mjs', import.meta.url), 'utf8');
+  assert.match(src, /cache_write: m\.cache_write \?\? null/);
+  assert.match(src, /id: 'minimax-m2\.7'[\s\S]*?cache_write: 0\.375/);
+  assert.match(src, /id: 'qwen3\.7-max'[\s\S]*?cache_write: 3\.125/);
+  assert.match(src, /input_cache_write \?\? m\.pricing\?\.cache_write/);
+});
+
 test('parseOpenCodeGoDocs returns [] when no pricing table exists', () => {
   const html = '<html><body><table><thead><tr><th>Model</th><th>requests per 5 hour</th></tr></thead><tbody></tbody></table></body></html>';
   assert.deepEqual(parseOpenCodeGoDocs(html), []);
