@@ -39,7 +39,11 @@ export function parseSference(data) {
         input: passthrough(m.pricing?.input_per_million_usd),
         output: passthrough(m.pricing?.output_per_million_usd),
         cache_read: passthrough(m.pricing?.cached_input_per_million_usd),
-        cache_write: null,
+        cache_write: passthrough(
+          m.pricing?.cache_write_per_million_usd
+          ?? m.pricing?.cached_write_per_million_usd
+          ?? m.pricing?.cache_write
+        ),
       },
     }));
 }
@@ -60,7 +64,11 @@ export function parseNeuralwatt(data) {
           input: passthrough(p.input_per_million),
           output: passthrough(p.output_per_million),
           cache_read: passthrough(p.cached_input_per_million),
-          cache_write: null,
+          cache_write: passthrough(
+            p.cache_write_per_million
+            ?? p.cached_write_per_million
+            ?? p.cache_write
+          ),
         },
       };
     });
@@ -98,7 +106,7 @@ export function parseMerius(data) {
           input: perTokToPerM(p.prompt),
           output: perTokToPerM(p.completion),
           cache_read: perTokToPerM(p.input_cache_read),
-          cache_write: null,
+          cache_write: perTokToPerM(p.input_cache_write ?? p.cache_write),
         },
       };
     });
@@ -132,7 +140,11 @@ export function parseAster(data) {
         input,
         output,
         cache_read: passthrough(p.cached_input_per_million_tokens_usd),
-        cache_write: null,
+        cache_write: passthrough(
+          p.cache_write_per_million_tokens_usd
+          ?? p.cached_write_per_million_tokens_usd
+          ?? p.cache_write
+        ),
       },
     }];
   });
@@ -187,7 +199,11 @@ export function parseSingularity(data) {
         input,
         output,
         cache_read: passthrough(p.cached_input_per_million_usd),
-        cache_write: null,
+        cache_write: passthrough(
+          p.cache_write_per_million_usd
+          ?? p.cached_write_per_million_usd
+          ?? p.cache_write
+        ),
       },
     }];
   });
@@ -217,7 +233,14 @@ export function parseRuninfra(data) {
         input,
         output,
         cache_read: passthrough(m.cached_input_price ?? m.cached_input_price_usd_per_mtok),
-        cache_write: null,
+        cache_write: passthrough(
+          p.cache_write
+          ?? p.cache_write_price
+          ?? p.cached_write_price
+          ?? m.cache_write_price
+          ?? m.cached_write_price
+          ?? m.cache_write_price_usd_per_mtok
+        ),
       },
     }];
   });
@@ -308,6 +331,8 @@ export function parseLlmgateway(data) {
           input,
           output,
           cache_read: (cacheRead == null || cacheRead === 0) ? null : cacheRead,
+          // LLM Gateway fills input_cache_write: "0" when the host has no write
+          // tariff. Treat 0 as missing so ?cache_write=true stays honest.
           cache_write: (cacheWrite == null || cacheWrite === 0) ? null : cacheWrite,
         },
       });
