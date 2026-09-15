@@ -264,7 +264,7 @@ function renderModelRow(r, rank, rowIdx, isBest, budgetMode) {
   const costLabel = esc(els.costColumnHeader.textContent);
   const costCell = budgetMode ? fmtAffordability(r.cost) : fmtCost(r.cost);
   const isSelected = state.compareSelection.some((x) => rowCompareKey(x) === rowCompareKey(r));
-  const checkbox = `<input type="checkbox" class="compare-check" data-idx="${rowIdx}" ${isSelected ? 'checked' : ''}${state.compareSelection.length >= 6 && !isSelected ? ' disabled' : ''}>`;
+  const checkbox = `<input type="checkbox" class="compare-check" data-idx="${rowIdx}" aria-label="Add to compare" ${isSelected ? 'checked' : ''}${state.compareSelection.length >= 6 && !isSelected ? ' disabled' : ''}>`;
   return '<tr>' +
     '<td class="rank" data-label="#">' + checkbox + ' ' + rank + (isBest ? ' \u{1F3C6}' : '') + '</td>' +
     '<td data-label="Org"><span class="org-badge">' + esc(orgDisplay(r.model.org)) + '</span></td>' +
@@ -296,7 +296,8 @@ function computeAndRender() {
   if (!state.data) return;
   state.providerSearch = els.providerSearch.value;
   state.modelSearch = els.modelSearch.value;
-  state.imageCount = Math.max(1, parseInt(els.imageCount.value, 10) || 100);
+  const n = parseInt(els.imageCount.value, 10);
+  state.imageCount = Number.isNaN(n) ? 100 : Math.max(0, n);
   state.variantFilter = els.variantFilter.value;
   state.flatOnly = els.flatOnly.checked;
 
