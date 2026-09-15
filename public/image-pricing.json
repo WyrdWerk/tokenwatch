@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-15T12:59:13.597Z",
+  "generated_at": "2026-09-15T17:50:07.121Z",
   "models": [
     {
       "id": "flux-schnell",
@@ -2643,6 +2643,42 @@
           "unit": "image",
           "variant": null,
           "cost_per_unit": 0.04,
+          "cost_per_million": null
+        }
+      ]
+    },
+    {
+      "id": "vidu-q2-text-to-image",
+      "name": "Vidu",
+      "org": "shengshu",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.05,
+          "cost_per_million": null
+        }
+      ]
+    },
+    {
+      "id": "vecglypher",
+      "name": "Vecglypher",
+      "org": "fal",
+      "provider": "fal",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": null,
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.005,
           "cost_per_million": null
         }
       ]
