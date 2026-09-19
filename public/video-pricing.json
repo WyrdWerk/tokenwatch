@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-18T13:59:02.919Z",
+  "generated_at": "2026-09-19T13:34:03.151Z",
   "models": [
     {
       "id": "minimax-h3-max",
@@ -182,21 +182,6 @@
       ]
     },
     {
-      "id": "xai-grok-imagine-video-v1.5",
-      "name": "Grok Imagine Video 1.5",
-      "org": "xai",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.01
-        }
-      ]
-    },
-    {
       "id": "veo3.1-lite",
       "name": "Veo3.1 Lite Image to Video",
       "org": "google",
@@ -208,6 +193,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.05
+        }
+      ]
+    },
+    {
+      "id": "xai-grok-imagine-video-v1.5",
+      "name": "Grok Imagine Video 1.5",
+      "org": "xai",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.01
         }
       ]
     },
@@ -242,21 +242,6 @@
       ]
     },
     {
-      "id": "minimax-h3-max-camera-controls",
-      "name": "H3 Max Camera Controls",
-      "org": "minimax",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.025
-        }
-      ]
-    },
-    {
       "id": "blackforestlabs-flux-3",
       "name": "FLUX 3 Image to Video",
       "org": "blackforestlabs",
@@ -287,21 +272,6 @@
       ]
     },
     {
-      "id": "kling-video-ai-avatar-v2-standard",
-      "name": "Kling AI Avatar v2 Standard",
-      "org": "kuaishou",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.0562
-        }
-      ]
-    },
-    {
       "id": "kling-video-v3-turbo-pro",
       "name": "Kling Video V3 Turbo Pro Image to Video",
       "org": "kuaishou",
@@ -317,6 +287,36 @@
       ]
     },
     {
+      "id": "minimax-h3-max-camera-controls",
+      "name": "H3 Max Camera Controls",
+      "org": "minimax",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.025
+        }
+      ]
+    },
+    {
+      "id": "kling-video-ai-avatar-v2-standard",
+      "name": "Kling AI Avatar v2 Standard",
+      "org": "kuaishou",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.0562
+        }
+      ]
+    },
+    {
       "id": "alibaba-wan-3.0-prime",
       "name": "Wan 3.0 Prime",
       "org": "alibaba",
@@ -328,6 +328,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.05
+        }
+      ]
+    },
+    {
+      "id": "minimax-hailuo-02-standard",
+      "name": "MiniMax Hailuo 02 [Standard] (Image to Video)",
+      "org": "minimax",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.045
         }
       ]
     },
@@ -362,8 +377,8 @@
       ]
     },
     {
-      "id": "minimax-hailuo-02-standard",
-      "name": "MiniMax Hailuo 02 [Standard] (Image to Video)",
+      "id": "minimax-h3-max-lip-sync",
+      "name": "H3 Max Lip Sync Image to Video",
       "org": "minimax",
       "provider": "fal",
       "supported_durations": [],
@@ -372,7 +387,7 @@
         {
           "resolution": null,
           "audio": null,
-          "cost_per_second": 0.045
+          "cost_per_second": 0.05
         }
       ]
     },
@@ -467,36 +482,6 @@
       ]
     },
     {
-      "id": "kling-video-v3-4k",
-      "name": "Kling Video",
-      "org": "kuaishou",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.42
-        }
-      ]
-    },
-    {
-      "id": "veo3.1-fast-first-last-frame-to-video",
-      "name": "Veo 3.1 Fast",
-      "org": "google",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.15
-        }
-      ]
-    },
-    {
       "id": "heygen-avatar4",
       "name": "Heygen",
       "org": "heygen",
@@ -523,6 +508,36 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.4
+        }
+      ]
+    },
+    {
+      "id": "kling-video-v3-4k",
+      "name": "Kling Video",
+      "org": "kuaishou",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.42
+        }
+      ]
+    },
+    {
+      "id": "veo3.1-fast-first-last-frame-to-video",
+      "name": "Veo 3.1 Fast",
+      "org": "google",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.15
         }
       ]
     },
@@ -572,6 +587,21 @@
       ]
     },
     {
+      "id": "minimax-hailuo-02-pro",
+      "name": "MiniMax Hailuo 02 [Pro] (Image to Video)",
+      "org": "minimax",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.08
+        }
+      ]
+    },
+    {
       "id": "blackforestlabs-flux-3-first-last-frame-to-video",
       "name": "Flux 3 First Last Frame to Video",
       "org": "blackforestlabs",
@@ -598,21 +628,6 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.05
-        }
-      ]
-    },
-    {
-      "id": "minimax-hailuo-02-pro",
-      "name": "MiniMax Hailuo 02 [Pro] (Image to Video)",
-      "org": "minimax",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.08
         }
       ]
     },
@@ -707,6 +722,21 @@
       ]
     },
     {
+      "id": "bytedance-omnihuman",
+      "name": "OmniHuman",
+      "org": "bytedance",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.14
+        }
+      ]
+    },
+    {
       "id": "alibaba-happy-horse",
       "name": "Happy Horse",
       "org": "alibaba",
@@ -737,21 +767,6 @@
       ]
     },
     {
-      "id": "bytedance-omnihuman",
-      "name": "OmniHuman",
-      "org": "bytedance",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.14
-        }
-      ]
-    },
-    {
       "id": "minimax-hailuo-02-fast",
       "name": "Minimax",
       "org": "minimax",
@@ -763,6 +778,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.017
+        }
+      ]
+    },
+    {
+      "id": "pixverse-v6-transition",
+      "name": "PixVerse V6 Transition",
+      "org": "pixsocial",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.005
         }
       ]
     },
@@ -782,9 +812,9 @@
       ]
     },
     {
-      "id": "pixverse-v6-transition",
-      "name": "PixVerse V6 Transition",
-      "org": "pixsocial",
+      "id": "luma-dream-machine-ray-2",
+      "name": "Luma Ray 2 (Image to Video)",
+      "org": "luma-labs",
       "provider": "fal",
       "supported_durations": [],
       "supported_resolutions": [],
@@ -792,7 +822,7 @@
         {
           "resolution": null,
           "audio": null,
-          "cost_per_second": 0.005
+          "cost_per_second": 0.1
         }
       ]
     },
@@ -827,9 +857,9 @@
       ]
     },
     {
-      "id": "luma-dream-machine-ray-2",
-      "name": "Luma Ray 2 (Image to Video)",
-      "org": "luma-labs",
+      "id": "ltxv-13b-098-distilled",
+      "name": "LTX-Video 13B 0.9.8 Distilled",
+      "org": "lightricks",
       "provider": "fal",
       "supported_durations": [],
       "supported_resolutions": [],
@@ -837,7 +867,7 @@
         {
           "resolution": null,
           "audio": null,
-          "cost_per_second": 0.1
+          "cost_per_second": 0.02
         }
       ]
     },
@@ -872,21 +902,6 @@
       ]
     },
     {
-      "id": "ltxv-13b-098-distilled",
-      "name": "LTX-Video 13B 0.9.8 Distilled",
-      "org": "lightricks",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.02
-        }
-      ]
-    },
-    {
       "id": "kling-video-v1-standard-ai-avatar",
       "name": "Kling AI Avatar",
       "org": "kuaishou",
@@ -917,21 +932,6 @@
       ]
     },
     {
-      "id": "wan-v2.2-a14b-lora",
-      "name": "Wan v2.2 A14B Image-to-Video A14B with LoRAs",
-      "org": "alibaba",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.1
-        }
-      ]
-    },
-    {
       "id": "minimax-h3-lora",
       "name": "MiniMax H3 Image to Video LoRA",
       "org": "minimax",
@@ -947,9 +947,9 @@
       ]
     },
     {
-      "id": "blackforestlabs-flux-3-first-last-frame-to-video-draft",
-      "name": "Flux 3 First Last Frame to Video Draft",
-      "org": "blackforestlabs",
+      "id": "wan-v2.2-a14b-lora",
+      "name": "Wan v2.2 A14B Image-to-Video A14B with LoRAs",
+      "org": "alibaba",
       "provider": "fal",
       "supported_durations": [],
       "supported_resolutions": [],
@@ -957,7 +957,7 @@
         {
           "resolution": null,
           "audio": null,
-          "cost_per_second": 0.03
+          "cost_per_second": 0.1
         }
       ]
     },
@@ -977,8 +977,8 @@
       ]
     },
     {
-      "id": "blackforestlabs-flux-3-keyframes-to-video-draft",
-      "name": "Flux 3 Keyframes To Video Draft",
+      "id": "blackforestlabs-flux-3-first-last-frame-to-video-draft",
+      "name": "Flux 3 First Last Frame to Video Draft",
       "org": "blackforestlabs",
       "provider": "fal",
       "supported_durations": [],
@@ -1007,9 +1007,9 @@
       ]
     },
     {
-      "id": "minimax-h3-max-lip-sync",
-      "name": "H3 Max Lip Sync Image to Video",
-      "org": "minimax",
+      "id": "blackforestlabs-flux-3-keyframes-to-video-draft",
+      "name": "Flux 3 Keyframes To Video Draft",
+      "org": "blackforestlabs",
       "provider": "fal",
       "supported_durations": [],
       "supported_resolutions": [],
@@ -1017,7 +1017,7 @@
         {
           "resolution": null,
           "audio": null,
-          "cost_per_second": 0.05
+          "cost_per_second": 0.03
         }
       ]
     },
@@ -1033,6 +1033,36 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.034
+        }
+      ]
+    },
+    {
+      "id": "longcat-video-distilled-480p",
+      "name": "LongCat Video Distilled",
+      "org": "anthropic",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.005
+        }
+      ]
+    },
+    {
+      "id": "veed-fabric-1.0-text",
+      "name": "Fabric 1.0",
+      "org": "veed",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.08
         }
       ]
     },
@@ -1067,36 +1097,6 @@
       ]
     },
     {
-      "id": "hunyuan-video-v1.5",
-      "name": "Hunyuan Video V1.5",
-      "org": "tencent",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.075
-        }
-      ]
-    },
-    {
-      "id": "longcat-video-distilled-480p",
-      "name": "LongCat Video Distilled",
-      "org": "anthropic",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.005
-        }
-      ]
-    },
-    {
       "id": "nvidia-cosmos-3-super",
       "name": "Cosmos 3 Super Image to Video",
       "org": "nvidia",
@@ -1108,6 +1108,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.05
+        }
+      ]
+    },
+    {
+      "id": "hunyuan-video-v1.5",
+      "name": "Hunyuan Video V1.5",
+      "org": "tencent",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.075
         }
       ]
     },
@@ -1127,6 +1142,21 @@
       ]
     },
     {
+      "id": "infinitalk-single-text",
+      "name": "Infinitalk",
+      "org": "fal",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.2
+        }
+      ]
+    },
+    {
       "id": "framepack",
       "name": "Framepack",
       "org": "fal",
@@ -1142,23 +1172,8 @@
       ]
     },
     {
-      "id": "longcat-video-720p",
-      "name": "LongCat Video",
-      "org": "anthropic",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.04
-        }
-      ]
-    },
-    {
-      "id": "ai-avatar-multi",
-      "name": "AI Avatar Multi",
+      "id": "ai-avatar-single-text",
+      "name": "AI Avatar Single Text",
       "org": "fal",
       "provider": "fal",
       "supported_durations": [],
@@ -1187,23 +1202,8 @@
       ]
     },
     {
-      "id": "veed-fabric-1.0-text",
-      "name": "Fabric 1.0",
-      "org": "veed",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.08
-        }
-      ]
-    },
-    {
-      "id": "bernini-r",
-      "name": "Bernini-R Reference to Video",
+      "id": "ai-avatar-multi",
+      "name": "AI Avatar Multi",
       "org": "fal",
       "provider": "fal",
       "supported_durations": [],
@@ -1212,7 +1212,22 @@
         {
           "resolution": null,
           "audio": null,
-          "cost_per_second": 0.08
+          "cost_per_second": 0.2
+        }
+      ]
+    },
+    {
+      "id": "longcat-video-720p",
+      "name": "LongCat Video",
+      "org": "anthropic",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.04
         }
       ]
     },
@@ -1232,8 +1247,8 @@
       ]
     },
     {
-      "id": "infinitalk-single-text",
-      "name": "Infinitalk",
+      "id": "bernini-r",
+      "name": "Bernini-R Reference to Video",
       "org": "fal",
       "provider": "fal",
       "supported_durations": [],
@@ -1242,37 +1257,7 @@
         {
           "resolution": null,
           "audio": null,
-          "cost_per_second": 0.2
-        }
-      ]
-    },
-    {
-      "id": "longcat-video-480p",
-      "name": "LongCat Video",
-      "org": "anthropic",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.025
-        }
-      ]
-    },
-    {
-      "id": "moonvalley-marey-i2v",
-      "name": "Marey Realism V1.5",
-      "org": "moonvalley",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.3
+          "cost_per_second": 0.08
         }
       ]
     },
@@ -1292,9 +1277,9 @@
       ]
     },
     {
-      "id": "ai-avatar-single-text",
-      "name": "AI Avatar Single Text",
-      "org": "fal",
+      "id": "longcat-video-480p",
+      "name": "LongCat Video",
+      "org": "anthropic",
       "provider": "fal",
       "supported_durations": [],
       "supported_resolutions": [],
@@ -1302,7 +1287,7 @@
         {
           "resolution": null,
           "audio": null,
-          "cost_per_second": 0.2
+          "cost_per_second": 0.025
         }
       ]
     },
@@ -1322,97 +1307,7 @@
       ]
     },
     {
-      "id": "framepack-f1",
-      "name": "Framepack F1",
-      "org": "fal",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.0333
-        }
-      ]
-    },
-    {
-      "id": "krea-wan-14b",
-      "name": "Krea Wan 14b- Text to Video",
-      "org": "krea",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.025
-        }
-      ]
-    },
-    {
-      "id": "framepack-flf2v",
-      "name": "Framepack",
-      "org": "fal",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.0333
-        }
-      ]
-    },
-    {
-      "id": "kling-video-v1-standard-effects",
-      "name": "Kling 1.0",
-      "org": "kuaishou",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.045
-        }
-      ]
-    },
-    {
-      "id": "magi-distilled",
-      "name": "MAGI-1 (Distilled)",
-      "org": "fal",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.08
-        }
-      ]
-    },
-    {
-      "id": "kling-video-v1.6-pro-effects",
-      "name": "Kling 1.6",
-      "org": "kuaishou",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.098
-        }
-      ]
-    },
-    {
-      "id": "moonvalley-marey-t2v",
+      "id": "moonvalley-marey-i2v",
       "name": "Marey Realism V1.5",
       "org": "moonvalley",
       "provider": "fal",
