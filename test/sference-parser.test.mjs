@@ -54,6 +54,16 @@ test('parseSference uses id as name fallback when display_name missing', () => {
   assert.equal(result[0].name, 'zai-org/GLM-5.2');
 });
 
+test('parseSference maps cache_write_per_million_usd when published', () => {
+  const withWrite = {
+    ...GLM,
+    id: 'org/with-write',
+    pricing: { ...GLM.pricing, cache_write_per_million_usd: 1.5 },
+  };
+  const result = parseSference({ data: [withWrite] });
+  assert.equal(result[0].pricing.cache_write, 1.5);
+});
+
 test('parseSference maps missing pricing fields to null', () => {
   const noPricing = { ...GLM };
   delete noPricing.pricing;

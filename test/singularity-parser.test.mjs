@@ -59,6 +59,27 @@ test('parseSingularity prefers /v1/chat/completions when multiple capabilities e
   assert.equal(luna.pricing.cache_read, 0.02);
 });
 
+test('parseSingularity maps cache_write_per_million_usd when published', () => {
+  const rows = parseSingularity({
+    data: [{
+      id: 'gpt-5.6-luna',
+      display_name: 'GPT 5.6 Luna',
+      capabilities: [{
+        endpoint: '/v1/chat/completions',
+        context_window_tokens: 1000,
+        maximum_output_tokens: 100,
+        pricing: {
+          input_per_million_usd: 0.18,
+          output_per_million_usd: 1.1,
+          cached_input_per_million_usd: 0.02,
+          cache_write_per_million_usd: 0.225,
+        },
+      }],
+    }],
+  });
+  assert.equal(rows[0].pricing.cache_write, 0.225);
+});
+
 test('parseSingularity maps null cached_input to null cache_read', () => {
   const v32 = parseSingularity(FIXTURE).find((m) => m.id === 'deepseek-v3.2');
   assert.equal(v32.pricing.cache_read, null);
