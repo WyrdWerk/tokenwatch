@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-20T13:49:03.620Z",
+  "generated_at": "2026-09-21T09:25:04.695Z",
   "models": [
     {
       "id": "minimax-h3-max",
@@ -122,21 +122,6 @@
       ]
     },
     {
-      "id": "minimax-h3-max-lip-sync",
-      "name": "H3 Max Lip Sync Image to Video",
-      "org": "minimax",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.05
-        }
-      ]
-    },
-    {
       "id": "veo3.1",
       "name": "Veo 3.1",
       "org": "google",
@@ -182,21 +167,6 @@
       ]
     },
     {
-      "id": "veo3.1-lite",
-      "name": "Veo3.1 Lite Image to Video",
-      "org": "google",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.05
-        }
-      ]
-    },
-    {
       "id": "google-gemini-omni-flash-v1.1",
       "name": "Gemini Omni Flash 1.1 Image to Video",
       "org": "google",
@@ -227,6 +197,21 @@
       ]
     },
     {
+      "id": "veo3.1-lite",
+      "name": "Veo3.1 Lite Image to Video",
+      "org": "google",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.05
+        }
+      ]
+    },
+    {
       "id": "kling-video-o3-pro",
       "name": "Kling O3 Image to Video [Pro]",
       "org": "kuaishou",
@@ -238,6 +223,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.14
+        }
+      ]
+    },
+    {
+      "id": "minimax-h3-max-lip-sync",
+      "name": "H3 Max Lip Sync Image to Video",
+      "org": "minimax",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.05
         }
       ]
     },
@@ -332,36 +332,6 @@
       ]
     },
     {
-      "id": "minimax-hailuo-02-standard",
-      "name": "MiniMax Hailuo 02 [Standard] (Image to Video)",
-      "org": "minimax",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.045
-        }
-      ]
-    },
-    {
-      "id": "minimax-h3-max-camera-controls",
-      "name": "H3 Max Camera Controls",
-      "org": "minimax",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.025
-        }
-      ]
-    },
-    {
       "id": "kling-video-v2.5-turbo-standard",
       "name": "Kling Video",
       "org": "kuaishou",
@@ -373,6 +343,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.042
+        }
+      ]
+    },
+    {
+      "id": "minimax-hailuo-02-standard",
+      "name": "MiniMax Hailuo 02 [Standard] (Image to Video)",
+      "org": "minimax",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.045
         }
       ]
     },
@@ -407,6 +392,21 @@
       ]
     },
     {
+      "id": "minimax-h3-max-camera-controls",
+      "name": "H3 Max Camera Controls",
+      "org": "minimax",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.025
+        }
+      ]
+    },
+    {
       "id": "kling-video-ai-avatar-v2-pro",
       "name": "Kling AI Avatar v2 Pro",
       "org": "kuaishou",
@@ -422,21 +422,6 @@
       ]
     },
     {
-      "id": "wan-v2.7",
-      "name": "Wan",
-      "org": "alibaba",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.1
-        }
-      ]
-    },
-    {
       "id": "pixverse-v6",
       "name": "PixVerse V6 Image To Video",
       "org": "pixsocial",
@@ -448,6 +433,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.005
+        }
+      ]
+    },
+    {
+      "id": "wan-v2.7",
+      "name": "Wan",
+      "org": "alibaba",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.1
         }
       ]
     },
@@ -617,21 +617,6 @@
       ]
     },
     {
-      "id": "wan-v2.6",
-      "name": "Wan v2.6 Image to Video",
-      "org": "alibaba",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.1
-        }
-      ]
-    },
-    {
       "id": "blackforestlabs-flux-3-first-last-frame-to-video",
       "name": "Flux 3 First Last Frame to Video",
       "org": "blackforestlabs",
@@ -643,6 +628,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.085
+        }
+      ]
+    },
+    {
+      "id": "wan-v2.6",
+      "name": "Wan v2.6 Image to Video",
+      "org": "alibaba",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.1
         }
       ]
     },
@@ -1112,9 +1112,9 @@
       ]
     },
     {
-      "id": "veed-fabric-1.0-text",
-      "name": "Fabric 1.0",
-      "org": "veed",
+      "id": "longcat-video-720p",
+      "name": "LongCat Video",
+      "org": "anthropic",
       "provider": "fal",
       "supported_durations": [],
       "supported_resolutions": [],
@@ -1122,7 +1122,7 @@
         {
           "resolution": null,
           "audio": null,
-          "cost_per_second": 0.08
+          "cost_per_second": 0.04
         }
       ]
     },
@@ -1142,9 +1142,9 @@
       ]
     },
     {
-      "id": "longcat-video-720p",
-      "name": "LongCat Video",
-      "org": "anthropic",
+      "id": "veed-fabric-1.0-text",
+      "name": "Fabric 1.0",
+      "org": "veed",
       "provider": "fal",
       "supported_durations": [],
       "supported_resolutions": [],
@@ -1152,7 +1152,7 @@
         {
           "resolution": null,
           "audio": null,
-          "cost_per_second": 0.04
+          "cost_per_second": 0.08
         }
       ]
     },
@@ -1217,21 +1217,6 @@
       ]
     },
     {
-      "id": "flashhead",
-      "name": "Flashhead",
-      "org": "fal",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.005
-        }
-      ]
-    },
-    {
       "id": "ai-avatar-multi",
       "name": "AI Avatar Multi",
       "org": "fal",
@@ -1247,8 +1232,8 @@
       ]
     },
     {
-      "id": "bernini-r",
-      "name": "Bernini-R Reference to Video",
+      "id": "flashhead",
+      "name": "Flashhead",
       "org": "fal",
       "provider": "fal",
       "supported_durations": [],
@@ -1257,7 +1242,7 @@
         {
           "resolution": null,
           "audio": null,
-          "cost_per_second": 0.08
+          "cost_per_second": 0.005
         }
       ]
     },
@@ -1277,9 +1262,9 @@
       ]
     },
     {
-      "id": "kling-video-v1.6-standard-effects",
-      "name": "Kling 1.6",
-      "org": "kuaishou",
+      "id": "bernini-r",
+      "name": "Bernini-R Reference to Video",
+      "org": "fal",
       "provider": "fal",
       "supported_durations": [],
       "supported_resolutions": [],
@@ -1287,7 +1272,7 @@
         {
           "resolution": null,
           "audio": null,
-          "cost_per_second": 0.056
+          "cost_per_second": 0.08
         }
       ]
     },
@@ -1333,6 +1318,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.025
+        }
+      ]
+    },
+    {
+      "id": "kling-video-v1.6-standard-effects",
+      "name": "Kling 1.6",
+      "org": "kuaishou",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.056
         }
       ]
     },
