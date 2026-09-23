@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-23T14:32:03.710Z",
+  "generated_at": "2026-09-23T19:19:10.953Z",
   "models": [
     {
       "id": "flux-schnell",
@@ -2662,6 +2662,41 @@
           "variant": null,
           "cost_per_unit": 0.012,
           "cost_per_million": 0.012
+        }
+      ]
+    },
+    {
+      "id": "recraft/recraft-v4.1-flash",
+      "name": "Recraft: Recraft V4.1 Flash",
+      "org": "recraft",
+      "provider": "recraft",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": {
+        "aspect_ratio": {
+          "type": "enum",
+          "values": [
+            "1:1",
+            "4:3",
+            "3:4",
+            "16:9",
+            "9:16",
+            "auto"
+          ]
+        },
+        "n": {
+          "type": "range",
+          "min": 1,
+          "max": 6
+        }
+      },
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": null,
+          "cost_per_unit": 0.007,
+          "cost_per_million": null
         }
       ]
     },
