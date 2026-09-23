@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-23T19:19:10.953Z",
+  "generated_at": "2026-09-23T22:33:11.755Z",
   "models": [
     {
       "id": "flux-schnell",
@@ -2662,6 +2662,42 @@
           "variant": null,
           "cost_per_unit": 0.012,
           "cost_per_million": 0.012
+        }
+      ]
+    },
+    {
+      "id": "inclusionai/ming-image-0.1-design-layer",
+      "name": "inclusionAI: Ming Image 0.1 Design Layer",
+      "org": "inclusionai",
+      "provider": "inclusionai",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": {
+        "output_format": {
+          "type": "enum",
+          "values": [
+            "png",
+            "webp"
+          ]
+        },
+        "n": {
+          "type": "range",
+          "min": 1,
+          "max": 1
+        },
+        "input_references": {
+          "type": "range",
+          "min": 1,
+          "max": 1
+        }
+      },
+      "pricing": [
+        {
+          "unit": "token",
+          "variant": null,
+          "cost_per_unit": 0,
+          "cost_per_million": 0
         }
       ]
     },
