@@ -1,3 +1,5 @@
+
+
 # 💰 TokenWatch
 
 Compare pay-as-you-go LLM inference pricing across inference providers. Enter your token volumes and find the cheapest option.
@@ -77,7 +79,7 @@ Presets: Agentic (2.5/97/0.5), Balanced (30/50/20), Heavy output (10/0/90), No c
 | SingularityAPI, RunInfra | 1 | Auth-gated `/v1/models` (`SINGULARITY_API_KEY`, `RUNINFRA_API_KEY`) |
 | OpenRouter `/endpoints` | 2 | De-aggregated per-backend pricing (Fireworks, Together, Novita, SiliconFlow, etc.) |
 | Makora, Xiaomimimo | 3 | CSV (`data/manual-pricing.csv`) |
-| OpenCode Go | 3 | Hardcoded |
+| OpenCode Go | 3 | Docs-page scraped |
 | Umans | 3 | Manually maintained `UMANS_MODELS` / `parseUmansHardcoded()` |
 
 ## Image & Video Generation
