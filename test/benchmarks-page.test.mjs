@@ -50,13 +50,13 @@ test('familyKey strips variant/quant suffixes and reseller prefix, dash-insensit
 
 test('variant models inherit the base model creator', () => {
   const index = buildOrgIndex(new Map([
-    ['glm-5.2',       [{ org: 'z-ai', provider: 'crof' }]],
+    ['glm-5.2',       [{ org: 'z-ai', provider: 'lilac' }]],
     ['glm-5.2-fast',  [{ org: 'neuralwatt', provider: 'neuralwatt' }]], // provider leaked as org
     ['glm5.2-fast',   [{ org: 'wafer', provider: 'wafer' }]],           // dash-less spelling
     ['kimi-k3',       [{ org: 'moonshot', provider: 'hyper' }]],
     ['kimi-k3-fast',  [{ org: 'neuralwatt', provider: 'neuralwatt' }]],
     ['grok-4.6',      [{ org: null, provider: 'openrouter' }]],         // all offering orgs failed
-  ]), ['neuralwatt', 'wafer', 'crof', 'hyper', 'openrouter']);
+  ]), ['neuralwatt', 'wafer', 'lilac', 'hyper', 'openrouter']);
 
   assert.equal(index.get('glm-5.2'), 'z-ai');
   assert.equal(index.get('glm-5.2-fast'), 'z-ai');   // inherits base via family

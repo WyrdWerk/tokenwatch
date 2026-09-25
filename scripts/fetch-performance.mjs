@@ -4,8 +4,7 @@
  *
  *   - Primary source: OpenRouter `/endpoints` API (requires OPENROUTER_API_KEY)
  *     → ~1000+ records with full latency + throughput percentiles
- *   - Supplementary: Crof, Lilac, Umans (direct providers, no key needed)
- *     → Crof: speed (tokens/sec) from `/v1/models` API
+ *   - Supplementary: Lilac, Umans (direct providers, no key needed)
  *     → Lilac/Umans: latency + throughput from their status APIs
  *
  * Writes a compact lookup table to public/performance.json, keyed by the same
@@ -13,7 +12,7 @@
  *
  * Graceful degradation WITHOUT an OPENROUTER_API_KEY:
  *   - OR portion is skipped — existing OR records are preserved via merge
- *   - Crof/Lilac/Umans are still fetched and merged into existing data
+ *   - Lilac/Umans are still fetched and merged into existing data
  *   - 85% threshold guard protects against degraded datasets after the direct merge
  *
  * Usage:
@@ -205,31 +204,6 @@ async function main() {
     console.warn(`    ⚠ Umans status fetch failed: ${err.message} — continuing without Umans perf data`);
   }
 
-  // ── Crof (direct provider) performance data ────────────────────────────────
-  // Crof exposes speed (tokens/sec) on their public /v1/models API — the same
-  // endpoint fetch-pricing.mjs already uses for pricing. No auth required.
-  // Speed is a scalar (tokens/second), wrapped as p50 for shape consistency
-  // with the OR endpoint data lat/tput percentiles.
-  const CROF_MODELS_URL = 'https://crof.ai/v1/models';
-  console.log('  Fetching Crof performance data...');
-  try {
-    const crofData = await fetchJson(CROF_MODELS_URL);
-    const crofModels = crofData.data || [];
-    let crofCount = 0;
-    for (const m of crofModels) {
-      if (!m.id || typeof m.speed !== 'number') continue;
-      const key = perfKey(m.id, 'Crof');
-      perfData[key] = {
-        latency: null,
-        throughput: { p50: m.speed, p75: null, p90: null, p99: null },
-      };
-      crofCount++;
-    }
-    console.log(`    Crof: ${crofCount} models indexed`);
-  } catch (err) {
-    console.warn(`    ⚠ Crof models fetch failed: ${err.message} — continuing without Crof perf data`);
-  }
-
   const ms = Date.now() - t0;
   const total = Object.keys(perfData).length;
   console.log(`  Performance data: ${total} total records (${epCount} endpoints) in ${ms}ms (${failed} model fetches failed)`);
@@ -247,7 +221,7 @@ async function main() {
   // ── Guard: don't overwrite with degraded data ──
   // If we fetched from OR and got zero catalog matches (API outage,
   // key revoked), perfData only has direct-provider records
-  // (Lilac/Umans/Crof). Never overwrite 700+ OR records with ~9
+  // (Lilac/Umans). Never overwrite 700+ OR records with ~9
   // direct-only records — preserve last-good.
   // Only relevant when we actually attempted the OR fetch.
   if (hasKey && catalogCanonicalIds.size > 0 && modelSlugs.size === 0) {
@@ -263,7 +237,7 @@ async function main() {
   // records into the existing file's data so OR records are preserved while
   // direct-provider keys get updated with current values. Without this, the
   // 15% guard below would see 30 records vs 780 existing and bail, leaving
-  // stale Umans/Lilac/Crof data forever.
+  // stale Umans/Lilac data forever.
   if (!hasKey) {
     try {
       const existing = JSON.parse(await readFile(OUTPUT_PATH, 'utf-8'));

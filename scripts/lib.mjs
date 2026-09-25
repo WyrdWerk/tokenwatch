@@ -468,7 +468,6 @@ export const PROVIDER_NAME_MAP = {
   'deepinfra': 'deepinfra',
   'embercloud': 'ember',
   'wafer': 'wafer',
-  'crof': 'crof',
   'synthetic': 'synthetic',
   'lilac': 'lilac',
   'xiaomimimo': 'xiaomi',
