@@ -20,6 +20,12 @@ export const API_ENDPOINTS = [
     sort: [],
   },
   {
+    path: '/api/v1/models/:canonicalId/history',
+    summary: 'Daily cheapest-provider price history, blended at read time',
+    params: ['days', 'mix'],
+    sort: [],
+  },
+  {
     path: '/api/v1/stats',
     summary: 'Return catalog, provider, organization, privacy, cache, and quantization counts',
     params: [],

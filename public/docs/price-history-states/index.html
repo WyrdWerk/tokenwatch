@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Price-history sparkline states | TokenWatch</title>
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="Visual reference for every price-history sparkline state: loading, empty, error, single point, flat series, provider switch, and a normal series." />
+  <link rel="canonical" href="https://tokenwatch.wyrdwerk.com/docs/price-history-states/" />
+  <link rel="stylesheet" href="/styles.css?v=dev" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <style>
+    .demo-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); margin-top: 1rem; }
+    .demo-card { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.9rem; background: var(--surface); }
+    .demo-card h2 { margin: 0 0 0.15rem; font-size: 0.95rem; }
+    .demo-card p.demo-state { margin: 0 0 0.5rem; font-size: 0.75rem; color: var(--text-dim); font-family: ui-monospace, monospace; }
+    .demo-card.wide { grid-column: 1 / -1; }
+    .demo-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.75rem 0 0; }
+    .demo-actions button { font: inherit; padding: 0.35rem 0.7rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface-2); color: var(--text); cursor: pointer; }
+    .demo-actions button:hover { border-color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-row">
+      <a class="brand-link site-brand" href="/" aria-label="TokenWatch home">💰 TokenWatch</a>
+      <a class="repo-link" href="/">Back to calculator</a>
+    </div>
+    <h1 class="tagline">Price-history sparkline states</h1>
+    <p class="subtitle">Every state the daily-snapshot chart can render, on the real component and the real stylesheet.</p>
+  </header>
+
+  <main class="seo-page-main">
+    <section class="seo-prose">
+      <h2>Why each state exists</h2>
+      <p>Price history starts with the first daily snapshot, so a new model legitimately has no data. A missing day is a day with no snapshot, not a $0 price. A flat series is a real, unchanged price — not a broken axis. Each of those must look different from a failure.</p>
+    </section>
+
+    <div class="demo-grid">
+      <div class="demo-card">
+        <h2>Loading</h2>
+        <p class="demo-state">state: loading</p>
+        <div id="state-loading" class="price-history-chart"></div>
+      </div>
+
+      <div class="demo-card">
+        <h2>Empty</h2>
+        <p class="demo-state">state: empty</p>
+        <div id="state-empty" class="price-history-chart"></div>
+      </div>
+
+      <div class="demo-card">
+        <h2>Error</h2>
+        <p class="demo-state">state: error</p>
+        <div id="state-error" class="price-history-chart"></div>
+      </div>
+
+      <div class="demo-card">
+        <h2>Single point</h2>
+        <p class="demo-state">state: single</p>
+        <div id="state-single" class="price-history-chart"></div>
+      </div>
+
+      <div class="demo-card">
+        <h2>Flat series</h2>
+        <p class="demo-state">state: flat</p>
+        <div id="state-flat" class="price-history-chart"></div>
+      </div>
+
+      <div class="demo-card">
+        <h2>Provider switch</h2>
+        <p class="demo-state">state: provider-switch</p>
+        <div id="state-switch" class="price-history-chart"></div>
+      </div>
+
+      <div class="demo-card wide">
+        <h2>Normal series with a missing day (gap)</h2>
+        <p class="demo-state">state: ready — note the absent day is a gap, never a $0 point</p>
+        <div id="state-normal" class="price-history-chart"></div>
+      </div>
+
+      <div class="demo-card wide">
+        <h2>Mix inversion (same model, same days)</h2>
+        <p class="demo-state">state: provider-switch — the cheapest provider depends on the visitor mix</p>
+        <div class="demo-actions">
+          <button type="button" data-demo-mix="2.5,97,0.5">Agentic mix 2.5 / 97 / 0.5</button>
+          <button type="button" data-demo-mix="50,0,50">Balanced mix 50 / 0 / 50</button>
+          <button type="button" data-demo-mix="5,0,95">Output-heavy mix 5 / 0 / 95</button>
+        </div>
+        <div id="state-mix" class="price-history-chart"></div>
+        <p id="state-mix-note" class="demo-state"></p>
+      </div>
+    </div>
+  </main>
+
+  <footer><p>Pricing changes. Verify rates and policy details with the provider before committing spend.</p></footer>
+
+  <script src="/price-sparkline.js?v=dev"></script>
+  <script src="/model-history.js?v=dev"></script>
+  <script>
+    // Each demo block renders the component directly with fixed data so the
+    // visual reference never depends on the local D1 contents.
+    (function () {
+      var spark = window.PriceSparkline;
+      var day = function (n) {
+        var d = new Date();
+        d.setUTCDate(d.getUTCDate() - n);
+        return d.toISOString().slice(0, 10);
+      };
+
+      spark.createPriceSparkline(document.getElementById('state-loading')).render({ state: 'loading' });
+      spark.createPriceSparkline(document.getElementById('state-empty')).render({ state: 'empty' });
+      spark.createPriceSparkline(document.getElementById('state-error')).render({
+        state: 'error',
+        message: 'Price history is not enabled in this environment yet.',
+      });
+      spark.createPriceSparkline(document.getElementById('state-single')).render({
+        points: [{ day: day(0), blended: 0.284, provider: 'deepinfra' }],
+      });
+      spark.createPriceSparkline(document.getElementById('state-flat')).render({
+        points: [
+          { day: day(6), blended: 1.5, provider: 'deepinfra' },
+          { day: day(5), blended: 1.5, provider: 'deepinfra' },
+          { day: day(4), blended: 1.5, provider: 'deepinfra' },
+          { day: day(3), blended: 1.5, provider: 'deepinfra' },
+          { day: day(2), blended: 1.5, provider: 'deepinfra' },
+          { day: day(1), blended: 1.5, provider: 'deepinfra' },
+          { day: day(0), blended: 1.5, provider: 'deepinfra' },
+        ],
+      });
+      spark.createPriceSparkline(document.getElementById('state-switch')).render({
+        points: [
+          { day: day(8), blended: 0.62, provider: 'deepinfra' },
+          { day: day(7), blended: 0.58, provider: 'deepinfra' },
+          { day: day(6), blended: 0.55, provider: 'deepinfra' },
+          { day: day(5), blended: 0.31, provider: 'google' },
+          { day: day(4), blended: 0.33, provider: 'google' },
+          { day: day(3), blended: 0.30, provider: 'google' },
+          { day: day(2), blended: 0.44, provider: 'novita' },
+          { day: day(1), blended: 0.29, provider: 'novita' },
+          { day: day(0), blended: 0.27, provider: 'novita' },
+        ],
+      });
+      // Day 4 is deliberately absent: a real gap in the series.
+      spark.createPriceSparkline(document.getElementById('state-normal')).render({
+        points: [
+          { day: day(7), blended: 1.10, provider: 'deepinfra' },
+          { day: day(6), blended: 0.95, provider: 'deepinfra' },
+          { day: day(5), blended: 1.20, provider: 'deepinfra' },
+          { day: day(3), blended: 0.72, provider: 'google' },
+          { day: day(2), blended: 0.68, provider: 'google' },
+          { day: day(1), blended: 0.66, provider: 'google' },
+          { day: day(0), blended: 0.61, provider: 'google' },
+        ],
+      });
+
+      // Two providers whose rank inverts with the mix. Values mirror the
+      // test fixtures: alpha is cheap on cache, beta is cheap on output.
+      var alpha = { input: 1.0, output: 40.0, cache_read: 0.1 };
+      var beta = { input: 1.0, output: 2.0, cache_read: 5.0 };
+      var blend = function (p, mix) {
+        return (p.input * mix[0] / 100) + (p.cache_read * mix[1] / 100) + (p.output * mix[2] / 100);
+      };
+      var renderMix = function (mix) {
+        var points = [];
+        for (var i = 6; i >= 0; i--) {
+          var a = blend(alpha, mix);
+          var b = blend(beta, mix);
+          var cheapest = a <= b ? { provider: 'alpha', rate: a } : { provider: 'beta', rate: b };
+          points.push({ day: day(i), blended: Math.round(cheapest.rate * 1e6) / 1e6, provider: cheapest.provider });
+        }
+        spark.createPriceSparkline(document.getElementById('state-mix')).render({ points: points });
+        document.getElementById('state-mix-note').textContent =
+          'mix ' + mix.join(',') + ' → cheapest ' + points[points.length - 1].provider;
+      };
+      renderMix([2.5, 97, 0.5]);
+      document.querySelectorAll('[data-demo-mix]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          renderMix(button.getAttribute('data-demo-mix').split(',').map(Number));
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
