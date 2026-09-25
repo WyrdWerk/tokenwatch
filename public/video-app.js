@@ -295,7 +295,8 @@ function showCompareModal() {
   if (state.compareSelection.length < 2) return;
   const budgetMode = state.computeBy === 'budget';
   const budgetVal = budgetMode ? Math.max(0, parseFloat(els.budgetInput?.value) || 0) : 0;
-  const secondsVal = Math.max(1, parseInt(els.videoSeconds?.value, 10) || state.videoSeconds || 60);
+  const parsedSeconds = parseInt(els.videoSeconds?.value, 10);
+  const secondsVal = Number.isNaN(parsedSeconds) ? (state.videoSeconds ?? 60) : Math.max(0, parsedSeconds);
   const selected = state.compareSelection;
 
   const headlineGet = (r) => budgetMode
@@ -396,12 +397,13 @@ function getView(input) {
   const limit = Math.min(25, Math.max(1, parseInt(input?.limit, 10) || 10));
   const rows = state.currentRows || [];
   const budgetMode = state.computeBy === 'budget';
+  const viewSeconds = parseInt(els.videoSeconds.value, 10);
   return {
     page: 'video',
     generated_at: state.data?.generated_at || null,
     workload: {
       computeBy: state.computeBy,
-      videoSeconds: parseInt(els.videoSeconds.value, 10) || 60,
+      videoSeconds: Number.isNaN(viewSeconds) ? 60 : Math.max(0, viewSeconds),
       budget: parseFloat(els.budgetInput?.value) || 0,
       basis: budgetMode ? 'affordable seconds per $ budget' : 'total cost for video duration',
     },
@@ -464,7 +466,7 @@ function renderModelRow(r, rank, isBest) {
   const rowIdx = state.currentRows
     ? state.currentRows.findIndex((x) => rowCompareKey(x) === rowCompareKey(r))
     : rank - 1;
-  const checkbox = `<input type="checkbox" class="compare-check" data-idx="${rowIdx}" ${isSelected ? 'checked' : ''}${state.compareSelection.length >= 6 && !isSelected ? ' disabled' : ''}>`;
+  const checkbox = `<input type="checkbox" class="compare-check" data-idx="${rowIdx}" aria-label="Add to compare" ${isSelected ? 'checked' : ''}${state.compareSelection.length >= 6 && !isSelected ? ' disabled' : ''}>`;
   return `<tr>
     <td class="rank" data-label="#">${checkbox} ${rank}${isBest ? ' \u{1F3C6}' : ''}</td>
     <td data-label="Org"><span class="org-badge">${esc(orgDisplay(r.model.org))}</span></td>
@@ -497,7 +499,8 @@ function computeAndRender() {
   if (!state.data) return;
   state.providerSearch = els.providerSearch.value.trim();
   state.modelSearch = els.modelSearch.value.trim();
-  state.videoSeconds = Math.max(1, parseInt(els.videoSeconds.value, 10) || 60);
+  const n = parseInt(els.videoSeconds.value, 10);
+  state.videoSeconds = Number.isNaN(n) ? 60 : Math.max(0, n);
   state.resolutionFilter = els.resolutionFilter.value;
   state.audioFilter = els.audioFilter.value;
 
@@ -601,7 +604,7 @@ function deserializeState(hash) {
   const mod = params.get('m');
   if (mod) { state.modelSearch = mod; els.modelSearch.value = mod; }
   const sec = parseInt(params.get('sec'), 10);
-  if (sec > 0) { state.videoSeconds = sec; els.videoSeconds.value = sec; }
+  if (sec >= 0) { state.videoSeconds = sec; els.videoSeconds.value = sec; }
   const res = params.get('res');
   if (res) { state.resolutionFilter = res; }
   const audio = params.get('audio');

@@ -21,6 +21,7 @@
     org: '',            // '' = all orgs
     valueKey: null,     // selected benchmark driving Value (null = tab default = first column)
     mix: { inputPct: 2.5, cacheReadPct: 97, outputPct: 0.5 }, // replaced at boot from Text page
+    restoreFocus: null, // element to refocus when the detail modal closes
   };
 
   // Mirror of shared/cost.mjs blendedRate (classic script — no ESM imports).
@@ -243,7 +244,7 @@
     // Header — every column sorts; arrow shows current sort + direction
     const arrow = (key) => state.sort === key ? (state.dir === 'asc' ? ' ▲' : ' ▼') : '';
     const th = (key, label, extra = '') =>
-      `<th class="sortable${/\$|Value|^#/.test(label) ? ' num' : ''}" data-col="${key}" title="${extra}">${label}${arrow(key)}</th>`;
+      `<th class="sortable${/\$|Value|^#/.test(label) ? ' num' : ''}" data-col="${key}" title="${extra}" tabindex="0" role="button" aria-sort="${state.sort === key ? (state.dir === 'asc' ? 'ascending' : 'descending') : 'none'}">${label}${arrow(key)}</th>`;
     $('benchHead').innerHTML =
       th('rank', '#') +
       th('name', 'Model') +
@@ -261,7 +262,7 @@
         return `<td class="num" data-label="${c.label}">${fmt(v)}</td>`;
       }).join('');
       const barW = r.value != null ? Math.max(3, r.value) : 0;
-      return `<tr data-id="${escapeHtml(m.id)}">
+      return `<tr data-id="${escapeHtml(m.id)}" tabindex="0" aria-label="Open model details">
         <td class="num" data-label="#">${i + 1}</td>
         <td data-label="Model">${escapeHtml(m.name)}</td>
         <td data-label="Org">${m.org ? `<span class="org-badge">${escapeHtml(m.org)}</span>` : '—'}</td>
@@ -280,6 +281,7 @@
   function openDetail(id) {
     const m = state.data.models.find((x) => x.id === id);
     if (!m) return;
+    state.restoreFocus = document.activeElement;
     $('detailTitle').textContent = m.name;
     $('detailSub').textContent =
       `${m.org || 'unknown org'} · hosted by ${m.providers} provider${m.providers > 1 ? 's' : ''} · from $${m.from.blended_per_m}/M blended (${m.from.provider})`;
@@ -310,6 +312,14 @@
     $('detailBody').innerHTML = html || '<p class="dim">No scores.</p>';
     $('detailPricingLink').href = `/#q=${encodeURIComponent(m.id)}`;
     $('detailModal').hidden = false;
+    $('detailClose').focus();
+  }
+
+  function closeDetail() {
+    $('detailModal').hidden = true;
+    const prev = state.restoreFocus;
+    state.restoreFocus = null;
+    if (prev && document.contains(prev)) prev.focus({ preventScroll: true });
   }
 
 
@@ -467,6 +477,18 @@
 
   // ── Events ─────────────────────────────────────────────────────────────────
 
+  function sortByCol(col) {
+    const key = col === 'rank' ? 'score' : col;
+    if (state.sort === key) {
+      state.dir = state.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      state.sort = key;
+      state.dir = (key === 'name' || key === 'org') ? 'asc' : 'desc';
+    }
+    $('sortSelect').value = ['score', 'value', 'price', 'name'].includes(state.sort) ? state.sort : 'score';
+    render();
+  }
+
   function wireEvents() {
     $('modelSearch').addEventListener('input', (e) => { state.search = e.target.value; render(); });
     $('sortSelect').addEventListener('change', (e) => { state.sort = e.target.value; render(); });
@@ -494,22 +516,26 @@
       const tr = e.target.closest('tr[data-id]');
       if (tr) openDetail(tr.dataset.id);
     });
+    $('benchBody').addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const tr = e.target.closest('tr[data-id]');
+      if (tr) { e.preventDefault(); openDetail(tr.dataset.id); }
+    });
     $('benchHead').addEventListener('click', (e) => {
       const th = e.target.closest('th[data-col]');
       if (!th) return;
-      const col = th.dataset.col === 'rank' ? 'score' : th.dataset.col;
-      if (state.sort === col) {
-        state.dir = state.dir === 'asc' ? 'desc' : 'asc';
-      } else {
-        state.sort = col;
-        state.dir = (col === 'name' || col === 'org') ? 'asc' : 'desc';
-      }
-      $('sortSelect').value = ['score','value','price','name'].includes(state.sort) ? state.sort : 'score';
-      render();
+      sortByCol(th.dataset.col);
     });
-    $('detailClose').addEventListener('click', () => { $('detailModal').hidden = true; });
-    $('detailModal').addEventListener('click', (e) => { if (e.target === $('detailModal')) $('detailModal').hidden = true; });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('detailModal').hidden = true; });
+    $('benchHead').addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const th = e.target.closest('th[data-col]');
+      if (!th) return;
+      e.preventDefault();
+      sortByCol(th.dataset.col);
+    });
+    $('detailClose').addEventListener('click', closeDetail);
+    $('detailModal').addEventListener('click', (e) => { if (e.target === $('detailModal')) closeDetail(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('detailModal').hidden) closeDetail(); });
   }
 
   function escapeHtml(s) {
