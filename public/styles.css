@@ -1016,6 +1016,9 @@ footer {
   display: flex; align-items: center; justify-content: center;
   z-index: 200;
 }
+/* The modals toggle the hidden *attribute*; author display rules beat the UA
+   [hidden] rule, so reset it here (same pattern as .col-popover[hidden]). */
+.modal-backdrop[hidden] { display: none; }
 .modal {
   background: var(--surface, #fff);
   color: var(--text, #1a1a1a);

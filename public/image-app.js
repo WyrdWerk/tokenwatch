@@ -402,7 +402,7 @@ function deserializeState(hash) {
     els.modelSearch.value = state.modelSearch;
   }
   const count = parseInt(params.get('count'), 10);
-  if (count > 0) { state.imageCount = count; els.imageCount.value = count; }
+  if (count >= 0) { state.imageCount = count; els.imageCount.value = count; }
   const variant = params.get('variant');
   if (variant) { state.variantFilter = variant; }
   if (params.get('flat') === '1') { state.flatOnly = true; els.flatOnly.checked = true; }
@@ -446,7 +446,8 @@ function showCompareModal() {
   const budgetMode = state.computeBy === 'budget';
   const budgetVal = budgetMode ? Math.max(0, parseFloat(els.budgetInput?.value) || 0) : 0;
   const imageCountEl = els.imageCount || document.getElementById('imageCount');
-  const imageCount = Math.max(1, parseInt(imageCountEl?.value, 10) || state.imageCount || 100);
+  const parsedCount = parseInt(imageCountEl?.value, 10);
+  const imageCount = Number.isNaN(parsedCount) ? (state.imageCount ?? 100) : Math.max(0, parsedCount);
   const selected = state.compareSelection;
 
   const headlineGet = (r) => budgetMode
@@ -549,12 +550,13 @@ function getView(input) {
   const limit = Math.min(25, Math.max(1, parseInt(input?.limit, 10) || 10));
   const rows = state.currentRows || [];
   const budgetMode = state.computeBy === 'budget';
+  const viewCount = parseInt(els.imageCount.value, 10);
   return {
     page: 'image',
     generated_at: state.data?.generated_at || null,
     workload: {
       computeBy: state.computeBy,
-      imageCount: parseInt(els.imageCount.value, 10) || 100,
+      imageCount: Number.isNaN(viewCount) ? 100 : Math.max(0, viewCount),
       budget: parseFloat(els.budgetInput?.value) || 0,
       basis: budgetMode ? 'affordable images per $ budget' : 'total cost for image count',
     },
