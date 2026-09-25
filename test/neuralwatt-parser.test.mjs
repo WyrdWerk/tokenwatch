@@ -79,6 +79,19 @@ test('parseNeuralwatt maps the verified envelope to a model record', () => {
   assert.equal(m.pricing.cache_write, null, 'cache_write not provided by provider');
 });
 
+test('parseNeuralwatt maps cache_write_per_million when published', () => {
+  const withWrite = {
+    ...GEMMA,
+    id: 'google/with-write',
+    metadata: {
+      ...GEMMA.metadata,
+      pricing: { ...GEMMA.metadata.pricing, cache_write_per_million: 0.18 },
+    },
+  };
+  const result = parseNeuralwatt({ data: [withWrite] });
+  assert.equal(result[0].pricing.cache_write, 0.18);
+});
+
 test('parseNeuralwatt keeps -fast/-short variants as separate rows', () => {
   const result = parseNeuralwatt({ data: [GEMMA, FAST_VARIANT] });
   assert.equal(result.length, 2);

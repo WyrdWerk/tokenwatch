@@ -125,7 +125,7 @@ Used for cross-provider matching and dedup: strips provider prefix, removes suff
 
 Percentage-based: user enters total tokens (in millions) + percentage breakdown (input %, cached input %, output %). Cost = `(tokens × $/M) / 1e6` per component, summed. If a provider doesn't support a requested token type (>0 tokens), that offering is excluded.
 
-Cache-write cost is a one-time charge (writing to cache on first request), amortized over N requests via the **Advanced: cache write** input. It IS included in the Total Cost computation: `cacheWriteTokens_M × cache_write_$/M ÷ N`. The percentage model represents per-request throughput where cache_read replaces input on subsequent requests.
+Cache-write cost is a one-time charge (writing to cache on first request), amortized over N requests via the **Advanced: cache write** input. Site default is **10M tokens ÷ 100 requests**. It IS included in the Total Cost computation: `cacheWriteTokens_M × cache_write_$/M ÷ N` — but only when `pricing.cache_write` is numeric (`null` → $0, so the default volume is a no-op for models without a write tariff). The percentage model represents per-request throughput where cache_read replaces input on subsequent requests.
 
 Two cost modes: **Per Session** (default — enter total tokens, see per-session cost) and **Monthly Volume** (enter daily tokens, see monthly cost × 30). The `modeMultiplier` is applied at the `costFor()` call site in `computeAndRender()` and `showCompareModal()`, not inside `costFor()` itself.
 

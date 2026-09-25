@@ -21,6 +21,23 @@ test('parseRuninfra maps the live catalog fixture', () => {
   assert.equal(flash.max_completion_tokens, 1048576);
 });
 
+test('parseRuninfra maps cache_write_price when published', () => {
+  const rows = parseRuninfra({
+    data: [{
+      id: 'deepseek-v4-flash',
+      availability: 'available',
+      modality: 'llm',
+      context_length: 1000,
+      max_output_tokens: 100,
+      cached_input_price: 0.01,
+      cache_write_price: 0.16,
+      pricing: { input: 0.13, output: 0.27 },
+    }],
+  });
+  assert.equal(rows[0].pricing.cache_read, 0.01);
+  assert.equal(rows[0].pricing.cache_write, 0.16);
+});
+
 test('parseRuninfra assigns creator orgs from bare ids', () => {
   const rows = parseRuninfra(FIXTURE);
   assert.equal(rows.find((m) => m.id === 'glm-5-3-flash').org, 'z-ai');

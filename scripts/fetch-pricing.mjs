@@ -487,7 +487,7 @@ function parseLilac(data) {
       input: perTokToPerM(m.pricing?.prompt),
       output: perTokToPerM(m.pricing?.completion),
       cache_read: perTokToPerM(m.pricing?.input_cache_read),
-      cache_write: null,
+      cache_write: perTokToPerM(m.pricing?.input_cache_write ?? m.pricing?.cache_write),
     },
   }));
 }
@@ -794,22 +794,22 @@ function parseCsvProviders(csvText) {
 
 // Context lengths manually maintained — update when OpenCode Go adds/changes models
 const OPENCODE_GO_MODELS = [
-  { id: 'glm-5.2', name: 'GLM-5.2', input: 1.40, output: 4.40, cache_read: 0.26, context_length: 1048576 },
-  { id: 'glm-5.1', name: 'GLM-5.1', input: 1.40, output: 4.40, cache_read: 0.26, context_length: 202000 },
-  { id: 'kimi-k2.7-code', name: 'Kimi K2.7 Code', input: 0.95, output: 4.00, cache_read: 0.19, context_length: 262000 },
-  { id: 'kimi-k2.6', name: 'Kimi K2.6', input: 0.95, output: 4.00, cache_read: 0.16, context_length: 262000 },
-  { id: 'mimo-v2.5', name: 'MiMo V2.5', input: 0.14, output: 0.28, cache_read: 0.0028, context_length: 1000000 },
-  { id: 'mimo-v2.5-pro', name: 'MiMo V2.5 Pro', input: 1.74, output: 3.48, cache_read: 0.0145, context_length: 1000000 },
-  { id: 'minimax-m3', name: 'MiniMax M3', input: 0.30, output: 1.20, cache_read: 0.06, context_length: null },
-  { id: 'minimax-m2.7', name: 'MiniMax M2.7', input: 0.30, output: 1.20, cache_read: 0.06, context_length: 204000 },
-  { id: 'minimax-m2.5', name: 'MiniMax M2.5', input: 0.30, output: 1.20, cache_read: 0.06, context_length: null },
-  { id: 'qwen3.7-max', name: 'Qwen3.7 Max', input: 2.50, output: 7.50, cache_read: 0.50, context_length: 1000000 },
-  { id: 'qwen3.7-plus', name: 'Qwen3.7 Plus (≤256K)', input: 0.40, output: 1.60, cache_read: 0.04, context_length: 256000 },
-  { id: 'qwen3.7-plus-long', name: 'Qwen3.7 Plus (>256K)', input: 1.20, output: 4.80, cache_read: 0.12, context_length: 1000000 },
-  { id: 'qwen3.6-plus', name: 'Qwen3.6 Plus (≤256K)', input: 0.50, output: 3.00, cache_read: 0.05, context_length: 256000 },
-  { id: 'qwen3.6-plus-long', name: 'Qwen3.6 Plus (>256K)', input: 2.00, output: 6.00, cache_read: 0.20, context_length: 1000000 },
-  { id: 'deepseek-v4-pro', name: 'DeepSeek V4 Pro', input: 1.74, output: 3.48, cache_read: 0.0145, context_length: 1000000 },
-  { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash', input: 0.14, output: 0.28, cache_read: 0.0028, context_length: 1000000 },
+  { id: 'glm-5.2', name: 'GLM-5.2', input: 1.40, output: 4.40, cache_read: 0.26, cache_write: null, context_length: 1048576 },
+  { id: 'glm-5.1', name: 'GLM-5.1', input: 1.40, output: 4.40, cache_read: 0.26, cache_write: null, context_length: 202000 },
+  { id: 'kimi-k2.7-code', name: 'Kimi K2.7 Code', input: 0.95, output: 4.00, cache_read: 0.19, cache_write: null, context_length: 262000 },
+  { id: 'kimi-k2.6', name: 'Kimi K2.6', input: 0.95, output: 4.00, cache_read: 0.16, cache_write: null, context_length: 262000 },
+  { id: 'mimo-v2.5', name: 'MiMo V2.5', input: 0.14, output: 0.28, cache_read: 0.0028, cache_write: null, context_length: 1000000 },
+  { id: 'mimo-v2.5-pro', name: 'MiMo V2.5 Pro', input: 1.74, output: 3.48, cache_read: 0.0145, cache_write: null, context_length: 1000000 },
+  { id: 'minimax-m3', name: 'MiniMax M3', input: 0.30, output: 1.20, cache_read: 0.06, cache_write: null, context_length: null },
+  { id: 'minimax-m2.7', name: 'MiniMax M2.7', input: 0.30, output: 1.20, cache_read: 0.06, cache_write: 0.375, context_length: 204000 },
+  { id: 'minimax-m2.5', name: 'MiniMax M2.5', input: 0.30, output: 1.20, cache_read: 0.06, cache_write: 0.375, context_length: null },
+  { id: 'qwen3.7-max', name: 'Qwen3.7 Max', input: 2.50, output: 7.50, cache_read: 0.50, cache_write: 3.125, context_length: 1000000 },
+  { id: 'qwen3.7-plus', name: 'Qwen3.7 Plus (≤256K)', input: 0.40, output: 1.60, cache_read: 0.04, cache_write: 0.50, context_length: 256000 },
+  { id: 'qwen3.7-plus-long', name: 'Qwen3.7 Plus (>256K)', input: 1.20, output: 4.80, cache_read: 0.12, cache_write: 1.50, context_length: 1000000 },
+  { id: 'qwen3.6-plus', name: 'Qwen3.6 Plus (≤256K)', input: 0.50, output: 3.00, cache_read: 0.05, cache_write: 0.625, context_length: 256000 },
+  { id: 'qwen3.6-plus-long', name: 'Qwen3.6 Plus (>256K)', input: 2.00, output: 6.00, cache_read: 0.20, cache_write: 2.50, context_length: 1000000 },
+  { id: 'deepseek-v4-pro', name: 'DeepSeek V4 Pro', input: 1.74, output: 3.48, cache_read: 0.0145, cache_write: null, context_length: 1000000 },
+  { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash', input: 0.14, output: 0.28, cache_read: 0.0028, cache_write: null, context_length: 1000000 },
 ];
 
 function parseOpenCodeGo() {
@@ -820,7 +820,7 @@ function parseOpenCodeGo() {
     quantization: null,
     discount: 0,
     context_length: m.context_length || null,
-    pricing: { input: m.input, output: m.output, cache_read: m.cache_read, cache_write: null },
+    pricing: { input: m.input, output: m.output, cache_read: m.cache_read, cache_write: m.cache_write ?? null },
   }));
 }
 
