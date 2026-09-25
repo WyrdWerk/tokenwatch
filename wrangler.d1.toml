@@ -1,0 +1,33 @@
+# Wrangler config TEMPLATE for local price-history development.
+#
+# IMPORTANT: never commit this as `wrangler.toml`. Wrangler auto-discovers
+# `wrangler.json` / `wrangler.jsonc` / `wrangler.toml` in the project root and
+# treats such a file as the source of truth for Pages bindings on EVERY
+# `wrangler pages deploy` — including the CI deploys of this repository. A root
+# `wrangler.toml` declaring PRICE_HISTORY with a placeholder database_id would
+# make production deploys fail (the database does not exist) or bind a broken
+# database_id.
+#
+# Local workflow (wrangler.toml is gitignored — see migrations/README.md):
+#
+#   cp wrangler.d1.toml wrangler.toml
+#   npx wrangler d1 migrations apply tokenwatch-price-history --local
+#   npx wrangler pages dev public --port 8788
+#   node scripts/snapshot-prices.mjs --local --date <yyyy-mm-dd>
+#   rm wrangler.toml   # REQUIRED before any manual `wrangler pages deploy`
+#
+# No production/preview D1 database, binding, or credential is configured
+# here. Adding those is a separate, explicitly-approved rollout step.
+
+name = "payg-inference-calculator"
+pages_build_output_dir = "public"
+compatibility_date = "2026-09-01"
+
+[[d1_databases]]
+binding = "PRICE_HISTORY"
+database_name = "tokenwatch-price-history"
+# Placeholder id: only substituted for REMOTE (--remote) access, which this
+# workflow never uses. Local commands resolve the binding from .wrangler/state
+# using database_name, so no real Cloudflare database id is required here.
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"

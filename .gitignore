@@ -21,6 +21,11 @@ node_modules/
 
 # Cloudflare wrangler local state
 .wrangler/
+# Local-only copy of wrangler.d1.toml for D1 price-history dev (see
+# migrations/README.md). MUST NOT be committed or deployed — Wrangler
+# auto-discovers wrangler.toml and would bind the placeholder PRICE_HISTORY
+# database to production on `wrangler pages deploy`.
+wrangler.toml
 .dev.vars
 .empryo
 .opencode-trace/

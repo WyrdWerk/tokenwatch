@@ -3,14 +3,21 @@
 This directory holds the versioned SQL migrations for the `PRICE_HISTORY` D1
 binding used by `GET /api/v1/models/:canonicalId/history`.
 
-**No remote database is configured in this repository.** `wrangler.toml`
-declares a local Pages project plus a placeholder `PRICE_HISTORY` binding; the
-placeholder `database_id` is only substituted for `--remote` access, which this
-workflow never uses.
+**No remote database is configured in this repository.** Local development
+uses a **gitignored copy** of `wrangler.d1.toml` named `wrangler.toml`.
+`wrangler.d1.toml` must never be committed under a name Wrangler
+auto-discovers (`wrangler.toml`/`wrangler.json[c]`): Wrangler treats a
+discovered config as the source of truth for Pages bindings on every
+`wrangler pages deploy`, so a root `wrangler.toml` with a placeholder binding
+would break CI deploys. CI checkouts never contain `wrangler.toml`, so the
+binding is absent in production and `/history` returns the documented 503.
 
 ## Local workflow
 
 ```bash
+# One-time: create the gitignored local config from the committed template.
+cp wrangler.d1.toml wrangler.toml
+
 # Apply migrations to the local (Wrangler .wrangler/state) D1 database.
 npx wrangler d1 migrations apply tokenwatch-price-history --local
 
@@ -21,9 +28,13 @@ node scripts/snapshot-prices.mjs --local --date 2026-09-14
 npx wrangler pages dev public --port 8788
 ```
 
-`wrangler pages dev` reads `[[d1_databases]]` from `wrangler.toml`, so the
-Functions get `env.PRICE_HISTORY` pointed at `.wrangler/state/v3/d1` with no
-Cloudflare credentials and no network access.
+`wrangler pages dev` reads `[[d1_databases]]` from the local `wrangler.toml`,
+so the Functions get `env.PRICE_HISTORY` pointed at `.wrangler/state/v3/d1`
+with no Cloudflare credentials and no network access.
+
+**Before any manual `wrangler pages deploy` (e.g. the recovery command in
+AGENTS.md): remove the local file (`rm wrangler.toml`) or the deploy will
+attempt to bind the placeholder `PRICE_HISTORY` database to production.**
 
 ## Applying a new migration
 
@@ -38,7 +49,10 @@ snapshot needs all of the following, none of which exist yet:
 
 1. A real D1 database created in the Cloudflare account.
 2. A production `PRICE_HISTORY` binding (and ideally a separate preview
-   database) with its real `database_id` in `wrangler.toml`.
+   database) with its real `database_id` — introduced as an explicitly
+   reviewed change that knowingly affects production deploys (e.g. a root
+   `wrangler.toml`, or a Pages-project binding configured in the Cloudflare
+   dashboard), not as a side effect of a local-dev convenience file.
 3. A remote migration applied with explicit approval.
 4. A CI step in `.github/workflows/refresh-pricing.yml` that runs the writer
    after a successful refresh, with credentials that can write to that database.
