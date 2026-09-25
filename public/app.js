@@ -33,6 +33,10 @@ const state = {
 // head slice keeps detail-modal/compare indices correct for visible rows.
 const ROW_CAP = 250;
 
+// Canonical-model summary mode needs at least this many priced offerings for
+// the resolved canonical id before the summary panel replaces the flat view.
+const MIN_PROVIDER_ROWS = 1;
+
 // The 11 draggable/hideable columns (between the locked # and Total Cost columns).
 // key → { label (popover + hash), dataLabel (td[data-label] match) }.
 const COLUMN_KEYS = [
@@ -65,6 +69,7 @@ const els = {
   pctSum: $('pctSum'),
   resultsBody: $('resultsBody'),
   resultsTitle: $('resultsTitle'),
+  modelSummary: $('modelSummary'),
   lastUpdated: $('lastUpdated'),
   perfUpdated: $('perfUpdated'),
   promoOnly: $('promoOnly'),
@@ -1594,6 +1599,7 @@ function computeAndRender() {
 
   state.currentRows = rows;
   renderBenchmarkBox(rows);
+  renderModelSummary(matchingOfferings(), tokens);
   renderTable(rows, tokens);
   updateHash();
 }
@@ -2083,6 +2089,142 @@ function initColumnDrag() {
     dragKey = null;
     dragTh = null;
   });
+}
+
+/** Canonical-model summary math, mirrored from shared/model-summary.mjs.
+ *  app.js is a classic <script> and cannot import ESM, so this is a deliberate
+ *  mirror pinned by test/model-summary.test.mjs (same pattern as
+ *  blendedCostFor ↔ shared/cost.mjs). Update BOTH surfaces together. */
+function rankCanonicalOfferings(offerings, tokens, perfByKey) {
+  return offerings
+    .map((model) => ({
+      model,
+      eff: blendedCostFor(model.pricing || {}, tokens),
+      perf: perfByKey ? (perfByKey[canonicalModelId(model.id) + '|' + model.provider] || null) : null,
+    }))
+    .filter((row) => row.eff != null && row.eff > 0)
+    .sort((a, b) => {
+      if (a.eff !== b.eff) return a.eff - b.eff;
+      return String(a.model.provider).localeCompare(String(b.model.provider));
+    });
+}
+
+/** Mirror of resolveCanonicalQuery() in shared/model-summary.mjs.
+ *  The results filter normalizes spaces/hyphens to the same separator, so the
+ *  summary must resolve the query the same way — otherwise "GLM 5.3" filters
+ *  the table but yields no summary. Exact canonical ids win first. */
+function resolveCanonicalQuery(offerings, query) {
+  const raw = String(query || '').trim();
+  if (!raw) return null;
+  const target = canonicalModelId(raw);
+  if (target && (offerings || []).some((m) => m && canonicalModelId(m.id) === target)) return target;
+  const norm = (s) => s.toLowerCase().replace(/[\s-]+/g, ' ').trim();
+  const q = norm(raw);
+  if (!q) return null;
+  const ids = new Set();
+  for (const m of offerings || []) {
+    if (!m || !m.id) continue;
+    const id = canonicalModelId(m.id);
+    if (id && norm(id) === q) ids.add(id);
+  }
+  return ids.size === 1 ? [...ids][0] : null;
+}
+
+function canonicalSummary(offerings, { canonical, mix, perfByKey } = {}) {
+  const target = resolveCanonicalQuery(offerings, canonical);
+  if (!target) return null;
+  const matching = (offerings || []).filter((m) => m && canonicalModelId(m.id) === target);
+  if (!matching.length) return null;
+  const rows = rankCanonicalOfferings(matching, mix, perfByKey);
+  const collect = (pick) => {
+    const values = matching.map((m) => pick(m.pricing || {})).filter((v) => Number.isFinite(v) && v > 0);
+    return values.length ? { min: Math.min(...values), max: Math.max(...values), count: values.length } : null;
+  };
+  const cheapest = rows[0] || null;
+  return {
+    canonical: target,
+    name: matching.find((m) => m.name)?.name || target,
+    org: matching.find((m) => m.org)?.org || matching[0].provider,
+    providerCount: new Set(matching.map((m) => m.provider)).size,
+    offeringCount: matching.length,
+    rows,
+    cheapest: cheapest ? cheapest.model : null,
+    cheapestEff: cheapest ? cheapest.eff : null,
+    distribution: {
+      input: collect((p) => p.input),
+      output: collect((p) => p.output),
+      cacheRead: collect((p) => p.cache_read),
+      total: matching.length,
+    },
+    perfCoverage: rows.filter((row) => row.perf != null).length,
+  };
+}
+
+/** Canonical-model summary panel.
+ *  Shown only when the current selection resolves to exactly one canonical id.
+ *  Reuses the same mix-aware ranking as the results table (shared/model-summary
+ *  mirrors app.js blendedCostFor) and presents provider-offering ranges, the
+ *  cheapest offering for the current mix, a price distribution, and the full
+ *  sortable offering table. Labels are source-accurate: uptime is the 30-minute
+ *  endpoint metric, TTFT/latency is whatever source published it, and no
+ *  cache-hit-rate claim is made. */
+function renderModelSummary(offerings, tokens) {
+  if (!els.modelSummary) return;
+  const canonical = (els.modelSearch?.value || '').trim();
+  const summary = canonical
+    ? canonicalSummary(offerings, { canonical, mix: tokens, perfByKey: state.perfData })
+    : null;
+
+  if (!summary || summary.rows.length < MIN_PROVIDER_ROWS) {
+    els.modelSummary.hidden = true;
+    els.modelSummary.innerHTML = '';
+    return;
+  }
+
+  const fmt = (v) => (v == null ? '—' : fmtPrice(v));
+  const range = (r) => (r ? `${fmt(r.min)} – ${fmt(r.max)}` : '—');
+  const dist = summary.distribution;
+  const maxEff = Math.max(...summary.rows.map((r) => r.eff || 0), 0);
+  const bars = summary.rows.map((row) => {
+    const pct = maxEff > 0 ? Math.max(4, Math.round((row.eff / maxEff) * 100)) : 4;
+    const promo = row.model.discount > 0 ? ' <span class="promo-badge" title="' + (row.model.discount * 100).toFixed(0) + '% off">promo</span>' : '';
+    const quant = row.model.quantization ? ` <span class="quant-badge">${esc(row.model.quantization)}</span>` : '';
+    return `<div class="model-summary-bar-row"><span class="model-summary-bar-label">${esc(providerName(row.model.provider, row.model.provider_display))}${promo}${quant}</span>` +
+      `<span class="model-summary-bar-track"><span class="model-summary-bar-fill" style="width:${pct}%"></span></span>` +
+      `<span class="model-summary-bar-value">${fmtPrice(row.eff)}</span></div>`;
+  }).join('');
+
+  const rows = summary.rows.map((row) => {
+    const m = row.model;
+    const p = m.pricing || {};
+    const promo = m.discount > 0 ? ` <span class="promo-badge" title="${(m.discount * 100).toFixed(0)}% off">promo</span>` : '';
+    const uptime = m.uptime_30m != null ? `${m.uptime_30m.toFixed(2)}%` : '—';
+    const tps = row.perf?.throughput?.p50;
+    const ttftMs = row.perf?.latency?.p50;
+    return `<tr><td>${esc(providerName(m.provider, m.provider_display))}${promo}</td>` +
+      `<td>${m.quantization ? esc(m.quantization) : '—'}</td>` +
+      `<td class="num">${fmt(p.input)}</td><td class="num">${fmt(p.output)}</td><td class="num">${fmt(p.cache_read)}</td>` +
+      `<td class="num">${fmtPrice(row.eff)}</td>` +
+      `<td class="num">${tps != null ? Math.round(tps * 10) / 10 : '—'}</td>` +
+      `<td class="num">${ttftMs != null ? (Math.round(ttftMs) / 1000) : '—'}</td>` +
+      `<td class="num">${uptime}</td></tr>`;
+  }).join('');
+
+  els.modelSummary.innerHTML =
+    `<h3 class="model-summary-title">${esc(summary.name)} — ${summary.providerCount} provider offering${summary.providerCount === 1 ? '' : 's'}</h3>` +
+    `<p class="model-summary-sub">Cheapest for your current workload mix: <strong>${esc(providerName(summary.cheapest.provider, summary.cheapest.provider_display))}</strong> at ${fmtPrice(summary.cheapestEff)}/M</p>` +
+    `<div class="model-summary-metrics">` +
+      `<div class="model-summary-metric"><span class="model-summary-metric-label">Input range (provider offerings)</span><span class="model-summary-metric-value">${range(dist.input)}</span></div>` +
+      `<div class="model-summary-metric"><span class="model-summary-metric-label">Output range (provider offerings)</span><span class="model-summary-metric-value">${range(dist.output)}</span></div>` +
+      `<div class="model-summary-metric"><span class="model-summary-metric-label">Cache-read coverage</span><span class="model-summary-metric-value">${dist.cacheRead ? `${dist.cacheRead.count} of ${dist.total}` : 'none published'}</span></div>` +
+      `<div class="model-summary-metric"><span class="model-summary-metric-label">Offering count</span><span class="model-summary-metric-value">${summary.offeringCount}</span></div>` +
+    `</div>` +
+    `<div class="model-summary-bars" aria-label="Provider price distribution for the current mix">${bars}</div>` +
+    `<div class="table-wrap"><table class="model-summary-table"><caption>Provider offerings for ${esc(summary.name)}</caption>` +
+      `<thead><tr><th scope="col">Provider</th><th scope="col">Quant</th><th scope="col" class="num">Input $/M</th><th scope="col" class="num">Output $/M</th><th scope="col" class="num">Cache $/M</th><th scope="col" class="num">Blended $/M</th><th scope="col" class="num">Speed (tps p50)</th><th scope="col" class="num">Latency (s p50)</th><th scope="col" class="num">Uptime (30m)</th></tr></thead>` +
+      `<tbody>${rows}</tbody></table></div>` +
+    `<p class="model-summary-note">Prices are USD per million tokens and describe provider offerings, not a single intrinsic model price. Uptime is the 30-minute endpoint metric where a provider publishes it; latency/TTFT comes from the source that published it (OpenRouter endpoint metrics or the provider's own status API).</p>`;
+  els.modelSummary.hidden = false;
 }
 
 function renderTable(rows, tokens) {

@@ -16,6 +16,9 @@
  *          (each backend like Fireworks, Together, Novita becomes its own row)
  * Tier 3 — CSV-sourced: Makora, Xiaomimimo (manual-pricing.csv)
  *          OpenCode Go (hardcoded)
+ *          Zro (official public pricing page https://zro.moonmath.ai/pricing,
+ *          daily with a committed last-good snapshot; ingested before
+ *          OpenRouter so Zro's own tariff wins over an OpenRouter backend)
  *
  * Precedence: (canonical_model, normalized_provider) — direct wins over
  * OpenRouter, which wins over CSV/hardcoded. Quantization IS part of the
@@ -57,6 +60,7 @@ import {
 import { fetchModelsDevEnrichment } from './fetch-modelsdev.mjs';
 import { fetchAABenchmarks } from './fetch-aa.mjs';
 import { fetchNeuralwattEnergy } from './fetch-neuralwatt-energy.mjs';
+import { getZroCatalogRows } from './fetch-zro.mjs';
 
 // ── direct providers config ───────────────────────────────────────────────────
 
@@ -313,6 +317,18 @@ const MANUAL_PROVIDER_META = {
     headquarters: null,
     datacenters: null,
     // Aggregator — we emit its *upstream hosts* as provider slugs, not llmgateway itself.
+  },
+  zro: {
+    privacy_policy_url: 'https://zro.moonmath.ai/privacy',
+    terms_of_service_url: 'https://zro.moonmath.ai/terms',
+    status_page_url: null,
+    headquarters: null,
+    datacenters: null,
+    // The pricing page advertises "Zero request retention" and "No training on
+    // requests" for its plans. That is a marketing-page claim, not a reviewed
+    // policy verdict — leave retains_prompts unset rather than asserting ZDR.
+    may_train: false,
+    retention_days: null,
   },
 };
 
@@ -899,6 +915,26 @@ async function main() {
       out.providers.push({ key: prov.key, name: prov.name, model_count: 0, status: `error: ${err.message}` });
       console.error(`✗ ${prov.name}: ${err.message}`);
     }
+  }
+
+  // ── Zro (official public pricing page, Tier 3 with direct-precedence) ──
+  // Ingested before OpenRouter so Zro's official tariff wins over any
+  // OpenRouter Zro backend. The loader always returns newly validated rows or
+  // last-good snapshot rows — never a partial slice — and reuses a snapshot
+  // younger than 24h so the live page is only hit once per day.
+  try {
+    const zro = await getZroCatalogRows();
+    if (zro.rows.length) {
+      out.providers.push({ key: 'zro', name: 'Zro', model_count: zro.rows.length, status: `ok (${zro.source})` });
+      tieredModels.push(...zro.rows);
+      console.log(`✓ Zro: ${zro.rows.length} models (${zro.source})`);
+    } else {
+      out.providers.push({ key: 'zro', name: 'Zro', model_count: 0, status: `error: ${zro.reason || 'no rows'}` });
+      console.warn(`⚠ Zro: no rows available (${zro.reason || 'no snapshot'})`);
+    }
+  } catch (err) {
+    out.providers.push({ key: 'zro', name: 'Zro', model_count: 0, status: `error: ${err.message}` });
+    console.error(`✗ Zro: ${err.message}`);
   }
 
   // ── Tier 2: OpenRouter de-aggregated ──
