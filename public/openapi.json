@@ -347,6 +347,83 @@
         }
       }
     },
+    "/api/v1/models/{canonicalId}/history": {
+      "get": {
+        "summary": "Daily cheapest-provider price history, blended at read time",
+        "operationId": "getApiV1ModelsCanonicalIdHistory",
+        "parameters": [
+          {
+            "name": "canonicalId",
+            "in": "path",
+            "required": true,
+            "description": "Canonical resource identifier: canonicalId.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "Filter or control parameter: days.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mix",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated input, cached-input, and output percentages.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful JSON response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameter or malformed model ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown API route or resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A required catalog asset is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/stats": {
       "get": {
         "summary": "Return catalog, provider, organization, privacy, cache, and quantization counts",

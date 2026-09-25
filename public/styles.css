@@ -1501,3 +1501,95 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
   .model-summary { padding: 0.75rem; }
   .model-summary-bar-row { grid-template-columns: minmax(5rem, 8rem) 1fr auto; font-size: 0.76rem; }
 }
+
+/* ── Price-history sparkline (public/price-sparkline.js) ──────────────────────
+   Dependency-free SVG chart. Every state the component can report has a
+   distinct visual treatment so a sparse or flat history is never mistaken for
+   a broken chart or for real $0 pricing. */
+.tw-spark {
+  --tw-spark-line: var(--accent);
+  --tw-spark-dot: var(--accent);
+  --tw-spark-switch: var(--yellow);
+  display: block;
+  width: 100%;
+  margin: 0.5rem 0 0;
+  color: var(--text-dim);
+}
+.tw-spark-svg {
+  display: block;
+  width: 100%;
+  height: 120px;
+  overflow: visible;
+}
+.tw-spark-caption {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.tw-spark-message {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-height: 120px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.75rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+.tw-spark-detail {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+/* Distinct accents per state: loading is neutral, empty is informational,
+   error is explicitly alarming. */
+.tw-spark[data-state="loading"] .tw-spark-message { border-style: solid; }
+.tw-spark[data-state="empty"] .tw-spark-message {
+  border-color: var(--accent);
+  background: var(--accent-faint);
+}
+.tw-spark[data-state="error"] .tw-spark-message {
+  border-color: #c0503c;
+  border-style: solid;
+  color: #c0503c;
+}
+[data-theme="dark"] .tw-spark[data-state="error"] .tw-spark-message { color: #e08070; border-color: #e08070; }
+
+/* A flat series is real data, not a failure — keep it visually normal but let
+   the caption carry the "flat at $X" explanation. */
+.tw-spark[data-flat="true"] .tw-spark-svg { opacity: 0.95; }
+.tw-spark[data-switches]:not([data-switches="0"]) .tw-spark-caption { color: var(--yellow); }
+
+.price-history {
+  margin: 1.25rem 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.price-history h2,
+.price-history h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+.price-history .price-history-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+@media (max-width: 640px) {
+  .price-history { padding: 0.75rem; }
+  /* The SVG viewBox is fixed at 640x120 and is scaled down to the container, so
+     its text shrinks with it. Give the chart text a larger viewBox size on
+     mobile so the rendered label stays legible at ~390px. */
+  .tw-spark-svg { height: 100px; }
+  .tw-spark-message { min-height: 100px; }
+  .tw-spark-svg text { font-size: 17px; }
+  .tw-spark-caption { font-size: 0.78rem; line-height: 1.4; }
+}
