@@ -121,8 +121,11 @@ const DIRECT_PROVIDERS = [
   },
   {
     key: 'merius',
-    name: 'Merius',
-    url: 'https://api.merius.ai/v1/models',
+    // Rebranded Merius → Tarmis (merius.ai redirects to tarmis.ai); key kept as
+    // 'merius' so historical data, UI slugs, and providers_meta stay stable.
+    // New live source of truth per https://tarmis.ai/llms.txt.
+    name: 'Tarmis',
+    url: 'https://api.tarmis.ai/v1/models',
     parse: parseMerius,
   },
   {
@@ -258,8 +261,11 @@ const MANUAL_PROVIDER_META = {
     retention_days: null,
   },
   merius: {
-    privacy_policy_url: 'https://merius.ai/privacy',
-    terms_of_service_url: 'https://merius.ai/terms',
+    // Merius rebranded to Tarmis; privacy/terms now served from tarmis.ai.
+    // status.merius.ai still resolves (Better Stack) while status.tarmis.ai
+    // does not yet — revisit when the new status host is live.
+    privacy_policy_url: 'https://tarmis.ai/privacy',
+    terms_of_service_url: 'https://tarmis.ai/terms',
     status_page_url: 'https://status.merius.ai',
     headquarters: null,
     datacenters: null,
