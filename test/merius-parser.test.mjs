@@ -279,17 +279,20 @@ test('merius provider is present in generated pricing.json', async (t) => {
   const pricing = JSON.parse(raw);
   const rows = pricing.models.filter((m) => m.provider === 'merius');
   // Upstream outage guard (2026-09-27): Merius rebranded to Tarmis and
-  // api.merius.ai went dead, so refreshes record `error: fetch failed` in
+  // api.merius.ai went dead, so refreshes record a transport failure in
   // pricing.providers. A dead upstream is an external condition — skip the
-  // presence floor rather than failing every scheduled run. A fetch that
-  // *succeeds* but parses to nothing is still a regression and must fail.
+  // presence floor rather than failing every scheduled run. Anything else —
+  // parse failures ('error: parse failed: …'), a fetch that succeeds but
+  // parses to nothing, or a missing status entry — is our code breaking
+  // against the live schema and must fail here.
   const provStatus = pricing.providers?.find((p) => p.key === 'merius')?.status ?? '';
-  if (/^(error|skipped)/.test(provStatus) && rows.length === 0) {
+  const transportFailure = /^(error: fetch failed|skipped)/.test(provStatus);
+  if (transportFailure && rows.length === 0) {
     return t.skip(`merius upstream unavailable (status: ${provStatus}) — skipping presence floor`);
   }
   // Floor, not exact count — Merius adds/removes models in their live catalog;
   // this test guards presence + validity, not catalog size.
-  assert.ok(rows.length >= 4, `expected >=4 merius rows in pricing.json, found ${rows.length}`);
+  assert.ok(rows.length >= 4, `expected >=4 merius rows in pricing.json, found ${rows.length} (provider status: ${provStatus || '<none>'})`);
   for (const m of rows) {
     assert.ok(m.pricing.input > 0 && m.pricing.output > 0, `${m.id} has positive pricing`);
     assert.equal(m.zdr, true, `${m.id} should be ZDR`);

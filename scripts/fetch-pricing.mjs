@@ -905,7 +905,16 @@ async function main() {
         console.warn(`⚠ ${prov.name}: ${prov.apiKeyEnv} not set — skipping`);
         continue;
       }
-      const data = await fetchJson(prov.url, prov.apiKeyEnv ? { apiKey: process.env[prov.apiKeyEnv] } : {});
+      let data;
+      try {
+        data = await fetchJson(prov.url, prov.apiKeyEnv ? { apiKey: process.env[prov.apiKeyEnv] } : {});
+      } catch (err) {
+        // Transport/upstream failure — distinct from parse failure so tests can
+        // skip outages without also skipping broken-parser regressions.
+        out.providers.push({ key: prov.key, name: prov.name, model_count: 0, status: `error: fetch failed: ${err.message}` });
+        console.error(`✗ ${prov.name}: ${err.message}`);
+        continue;
+      }
       const models = prov.parse(data).filter((m) =>
         !m.id.endsWith(':free') &&
         isTextModel(m.id) &&
@@ -918,7 +927,9 @@ async function main() {
       tieredModels.push(...models);
       console.log(`✓ ${prov.name}: ${models.length} models`);
     } catch (err) {
-      out.providers.push({ key: prov.key, name: prov.name, model_count: 0, status: `error: ${err.message}` });
+      // Parse/normalize/validation failure — our code broke against the live
+      // schema. This must NOT be skippable as an outage downstream.
+      out.providers.push({ key: prov.key, name: prov.name, model_count: 0, status: `error: parse failed: ${err.message}` });
       console.error(`✗ ${prov.name}: ${err.message}`);
     }
   }
