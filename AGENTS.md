@@ -298,3 +298,7 @@ All three JSON files (`pricing.json`, `image-pricing.json`, `video-pricing.json`
 
 ### Historical plans (SHIPPED)
 Design plans under `docs/superpowers/plans/` and `docs/superpowers/specs/` (2026-07-09) for fal.ai, quality benchmarks, and models.dev enrichment are **complete** — treat as historical artifacts, not pending work. Also shipped: Hyper Tier-1 direct migration, Blended $/M column, Export CSV, Speed row in compare modal.
+
+## Amp environment: global skills
+
+Specifically within Amp environments, reusable global skills may be available under `~/.config/agents/skills/`. Before relevant work, inspect that directory for an applicable skill. When using one, read its complete `SKILL.md` and all referenced bundled resources before proceeding.
