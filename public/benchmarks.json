@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-28T16:14:25.415Z",
+  "generated_at": "2026-09-28T22:45:36.974Z",
   "mix": {
     "inputPct": 2.5,
     "cacheReadPct": 97,
@@ -775,14 +775,14 @@
       "providers": 2,
       "from": {
         "provider": "xAI",
-        "blended_per_m": 0.452
+        "blended_per_m": 0.565
       },
       "offerings": [
         {
           "provider": "xAI",
-          "input": 1.5999999999999999,
-          "output": 4.8,
-          "cache_read": 0.39999999999999997
+          "input": 2,
+          "output": 6,
+          "cache_read": 0.5
         },
         {
           "provider": "opencode",
@@ -926,9 +926,9 @@
         },
         {
           "provider": "wafer",
-          "input": 0.42,
+          "input": 0.29,
           "output": 4.4,
-          "cache_read": 0.26
+          "cache_read": 0.24
         },
         {
           "provider": "hyper",
@@ -961,16 +961,16 @@
           "cache_read": 0.15
         },
         {
-          "provider": "runware",
-          "input": 1.2,
-          "output": 4,
-          "cache_read": 0.19999999999999998
-        },
-        {
           "provider": "scx-ai-gp",
           "input": 1.4,
           "output": 4.4,
           "cache_read": 0.26
+        },
+        {
+          "provider": "runware",
+          "input": 1.2,
+          "output": 4,
+          "cache_read": 0.19999999999999998
         },
         {
           "provider": "zro",
@@ -979,22 +979,28 @@
           "cache_read": 0.26
         },
         {
-          "provider": "Morph",
-          "input": 0.1785,
-          "output": 2.8049999999999997,
-          "cache_read": 0.146625
-        },
-        {
           "provider": "Relace",
-          "input": 0.29,
-          "output": 2.9000000000000004,
+          "input": 0.15,
+          "output": 3.3000000000000003,
           "cache_read": 0.09999999999999999
         },
         {
+          "provider": "Morph",
+          "input": 0.1785,
+          "output": 3.366,
+          "cache_read": 0.146625
+        },
+        {
+          "provider": "Sail Research",
+          "input": 0.19999999999999998,
+          "output": 3.4,
+          "cache_read": 0.15
+        },
+        {
           "provider": "Inceptron",
-          "input": 0.3215,
-          "output": 2.5425,
-          "cache_read": 0.159
+          "input": 0.3115,
+          "output": 2.79,
+          "cache_read": 0.1326
         },
         {
           "provider": "Reka",
@@ -1003,16 +1009,16 @@
           "cache_read": 0.067
         },
         {
+          "provider": "AtlasCloud",
+          "input": 0.602,
+          "output": 1.8920000000000001,
+          "cache_read": 0.1118
+        },
+        {
           "provider": "InferenceNet",
           "input": 0.684,
           "output": 2.2800000000000002,
           "cache_read": 0.114
-        },
-        {
-          "provider": "Sail Research",
-          "input": 0.77,
-          "output": 4,
-          "cache_read": 0.19
         },
         {
           "provider": "Novita",
@@ -1051,6 +1057,12 @@
           "cache_read": 0.20800000000000002
         },
         {
+          "provider": "AkashML",
+          "input": 1.17,
+          "output": 3.9600000000000004,
+          "cache_read": 0.234
+        },
+        {
           "provider": "Alibaba",
           "input": 1.19,
           "output": 3.74,
@@ -1067,12 +1079,6 @@
           "input": 1.26,
           "output": 3.9600000000000004,
           "cache_read": 0.234
-        },
-        {
-          "provider": "AkashML",
-          "input": 1.3,
-          "output": 4.4,
-          "cache_read": 0.26
         },
         {
           "provider": "Baidu",
@@ -1136,12 +1142,6 @@
         },
         {
           "provider": "Cloudflare",
-          "input": 1.4,
-          "output": 4.4,
-          "cache_read": 0.26
-        },
-        {
-          "provider": "AtlasCloud",
           "input": 1.4,
           "output": 4.4,
           "cache_read": 0.26
@@ -1178,22 +1178,34 @@
       },
       "offerings": [
         {
-          "provider": "Morph",
-          "input": 0.1785,
-          "output": 2.8049999999999997,
-          "cache_read": 0.146625
-        },
-        {
           "provider": "Relace",
-          "input": 0.29,
-          "output": 2.9000000000000004,
+          "input": 0.15,
+          "output": 3.3000000000000003,
           "cache_read": 0.09999999999999999
         },
         {
+          "provider": "Morph",
+          "input": 0.1785,
+          "output": 3.366,
+          "cache_read": 0.146625
+        },
+        {
+          "provider": "Sail Research",
+          "input": 0.19999999999999998,
+          "output": 3.4,
+          "cache_read": 0.15
+        },
+        {
+          "provider": "Wafer",
+          "input": 0.2949,
+          "output": 4.4,
+          "cache_read": 0.2359
+        },
+        {
           "provider": "Inceptron",
-          "input": 0.3215,
-          "output": 2.5425,
-          "cache_read": 0.159
+          "input": 0.3115,
+          "output": 2.79,
+          "cache_read": 0.1326
         },
         {
           "provider": "Reka",
@@ -1202,28 +1214,22 @@
           "cache_read": 0.067
         },
         {
-          "provider": "Wafer",
-          "input": 0.415,
-          "output": 4.4,
-          "cache_read": 0.26
-        },
-        {
           "provider": "DeepInfra",
           "input": 0.5625,
           "output": 2.5,
           "cache_read": 0.125
         },
         {
+          "provider": "AtlasCloud",
+          "input": 0.602,
+          "output": 1.8920000000000001,
+          "cache_read": 0.1118
+        },
+        {
           "provider": "InferenceNet",
           "input": 0.684,
           "output": 2.2800000000000002,
           "cache_read": 0.114
-        },
-        {
-          "provider": "Sail Research",
-          "input": 0.77,
-          "output": 4,
-          "cache_read": 0.19
         },
         {
           "provider": "Novita",
@@ -1262,6 +1268,12 @@
           "cache_read": 0.20800000000000002
         },
         {
+          "provider": "AkashML",
+          "input": 1.17,
+          "output": 3.9600000000000004,
+          "cache_read": 0.234
+        },
+        {
           "provider": "Alibaba",
           "input": 1.19,
           "output": 3.74,
@@ -1278,12 +1290,6 @@
           "input": 1.26,
           "output": 3.9600000000000004,
           "cache_read": 0.234
-        },
-        {
-          "provider": "AkashML",
-          "input": 1.3,
-          "output": 4.4,
-          "cache_read": 0.26
         },
         {
           "provider": "Baidu",
@@ -1347,12 +1353,6 @@
         },
         {
           "provider": "Cloudflare",
-          "input": 1.4,
-          "output": 4.4,
-          "cache_read": 0.26
-        },
-        {
-          "provider": "AtlasCloud",
           "input": 1.4,
           "output": 4.4,
           "cache_read": 0.26
@@ -1413,7 +1413,7 @@
       "id": "kimi-k3",
       "name": "moonshotai/Kimi-K3",
       "org": "moonshot",
-      "providers": 32,
+      "providers": 31,
       "from": {
         "provider": "zro",
         "blended_per_m": 0.019
@@ -1433,7 +1433,7 @@
         },
         {
           "provider": "wafer",
-          "input": 1,
+          "input": 1.2,
           "output": 9,
           "cache_read": 0.3
         },
@@ -1492,16 +1492,16 @@
           "cache_read": 0.3
         },
         {
-          "provider": "runware",
-          "input": 3,
-          "output": 15,
-          "cache_read": 0.3
-        },
-        {
           "provider": "scx-ai-gp",
           "input": 3.5,
           "output": 18,
           "cache_read": 0.35
+        },
+        {
+          "provider": "runware",
+          "input": 3,
+          "output": 15,
+          "cache_read": 0.3
         },
         {
           "provider": "zro",
@@ -1511,20 +1511,20 @@
         },
         {
           "provider": "Morph",
-          "input": 0.9757499999999999,
-          "output": 8.5442,
-          "cache_read": 0.176987
+          "input": 0.875,
+          "output": 11.2,
+          "cache_read": 0.29
+        },
+        {
+          "provider": "Sail Research",
+          "input": 0.8999999999999999,
+          "output": 7.859999999999999,
+          "cache_read": 0.3
         },
         {
           "provider": "InferenceNet",
           "input": 1,
           "output": 9,
-          "cache_read": 0.3
-        },
-        {
-          "provider": "Sail Research",
-          "input": 1.0301,
-          "output": 9.043,
           "cache_read": 0.3
         },
         {
@@ -1550,12 +1550,6 @@
           "input": 2.5500000000000003,
           "output": 12.95,
           "cache_read": 0.255
-        },
-        {
-          "provider": "Decart",
-          "input": 3,
-          "output": 15,
-          "cache_read": 0.3
         },
         {
           "provider": "Chutes",
@@ -1649,17 +1643,23 @@
       "id": "kimi-k3:batch",
       "name": "MoonshotAI: Kimi K3 (batch)",
       "org": "moonshot",
-      "providers": 18,
+      "providers": 17,
       "from": {
-        "provider": "Morph",
-        "blended_per_m": 0.239
+        "provider": "Relace",
+        "blended_per_m": 0.309
       },
       "offerings": [
         {
           "provider": "Morph",
-          "input": 0.9757499999999999,
-          "output": 8.5442,
-          "cache_read": 0.176987
+          "input": 0.875,
+          "output": 11.2,
+          "cache_read": 0.29
+        },
+        {
+          "provider": "Sail Research",
+          "input": 0.8999999999999999,
+          "output": 7.859999999999999,
+          "cache_read": 0.3
         },
         {
           "provider": "InferenceNet",
@@ -1671,12 +1671,6 @@
           "provider": "Wafer",
           "input": 1,
           "output": 9,
-          "cache_read": 0.3
-        },
-        {
-          "provider": "Sail Research",
-          "input": 1.0301,
-          "output": 9.043,
           "cache_read": 0.3
         },
         {
@@ -1708,12 +1702,6 @@
           "input": 2.8499999999999996,
           "output": 14.25,
           "cache_read": 0.28500000000000003
-        },
-        {
-          "provider": "Decart",
-          "input": 3,
-          "output": 15,
-          "cache_read": 0.3
         },
         {
           "provider": "Chutes",
@@ -1919,16 +1907,16 @@
           "cache_read": 0.03
         },
         {
-          "provider": "scx-ai-gp",
-          "input": 0.088,
-          "output": 0.25,
-          "cache_read": 0.024999999999999998
-        },
-        {
           "provider": "gonka24",
           "input": 0.15,
           "output": 0.3,
           "cache_read": 0.035
+        },
+        {
+          "provider": "scx-ai-gp",
+          "input": 0.088,
+          "output": 0.25,
+          "cache_read": 0.024999999999999998
         },
         {
           "provider": "consensusprotocol",
@@ -1979,6 +1967,12 @@
           "cache_read": 0.0225
         },
         {
+          "provider": "AtlasCloud",
+          "input": 0.11549999999999999,
+          "output": 0.385,
+          "cache_read": 0.0231
+        },
+        {
           "provider": "Inceptron",
           "input": 0.12,
           "output": 0.44999999999999996,
@@ -2004,15 +1998,9 @@
         },
         {
           "provider": "Io Net",
-          "input": 0.135,
-          "output": 0.44999999999999996,
-          "cache_read": 0.027
-        },
-        {
-          "provider": "Morph",
-          "input": 0.14808000000000002,
-          "output": 0.51828,
-          "cache_read": 0.029616
+          "input": 0.13799999999999998,
+          "output": 0.45999999999999996,
+          "cache_read": 0.0276
         },
         {
           "provider": "Modal",
@@ -2043,12 +2031,6 @@
           "input": 0.15,
           "output": 0.5,
           "cache_read": 0.049999999999999996
-        },
-        {
-          "provider": "AtlasCloud",
-          "input": 0.15,
-          "output": 0.5,
-          "cache_read": 0.03
         },
         {
           "provider": "Fireworks",
@@ -2103,6 +2085,12 @@
           "input": 0.15,
           "output": 0.5,
           "cache_read": 0.03
+        },
+        {
+          "provider": "Morph",
+          "input": 0.15308,
+          "output": 0.53578,
+          "cache_read": 0.030616
         },
         {
           "provider": "NextBit",
@@ -2184,6 +2172,12 @@
           "cache_read": 0.0225
         },
         {
+          "provider": "AtlasCloud",
+          "input": 0.11549999999999999,
+          "output": 0.385,
+          "cache_read": 0.0231
+        },
+        {
           "provider": "Inceptron",
           "input": 0.12,
           "output": 0.44999999999999996,
@@ -2209,15 +2203,9 @@
         },
         {
           "provider": "Io Net",
-          "input": 0.135,
-          "output": 0.44999999999999996,
-          "cache_read": 0.027
-        },
-        {
-          "provider": "Morph",
-          "input": 0.14808000000000002,
-          "output": 0.51828,
-          "cache_read": 0.029616
+          "input": 0.13799999999999998,
+          "output": 0.45999999999999996,
+          "cache_read": 0.0276
         },
         {
           "provider": "Modal",
@@ -2248,12 +2236,6 @@
           "input": 0.15,
           "output": 0.5,
           "cache_read": 0.049999999999999996
-        },
-        {
-          "provider": "AtlasCloud",
-          "input": 0.15,
-          "output": 0.5,
-          "cache_read": 0.03
         },
         {
           "provider": "Fireworks",
@@ -2308,6 +2290,12 @@
           "input": 0.15,
           "output": 0.5,
           "cache_read": 0.03
+        },
+        {
+          "provider": "Morph",
+          "input": 0.15308,
+          "output": 0.53578,
+          "cache_read": 0.030616
         },
         {
           "provider": "NextBit",
@@ -2580,8 +2568,8 @@
       "org": "deepseek",
       "providers": 37,
       "from": {
-        "provider": "InferenceNet",
-        "blended_per_m": 0.003
+        "provider": "Morph",
+        "blended_per_m": 0.005
       },
       "offerings": [
         {
@@ -2592,8 +2580,8 @@
         },
         {
           "provider": "wafer",
-          "input": 0.06,
-          "output": 0.6,
+          "input": 0.1,
+          "output": 0.7,
           "cache_read": 0.05
         },
         {
@@ -2651,16 +2639,10 @@
           "cache_read": 0.006
         },
         {
-          "provider": "Relace",
-          "input": 0.03,
-          "output": 0.6,
-          "cache_read": 0.01
-        },
-        {
           "provider": "InferenceNet",
-          "input": 0.035,
-          "output": 0.29,
-          "cache_read": 0.001
+          "input": 0.06,
+          "output": 0.39,
+          "cache_read": 0.005
         },
         {
           "provider": "Sail Research",
@@ -2675,10 +2657,22 @@
           "cache_read": 0.0015507000000000001
         },
         {
+          "provider": "Relace",
+          "input": 0.09,
+          "output": 0.6,
+          "cache_read": 0.009
+        },
+        {
           "provider": "OpenInference",
           "input": 0.09999999999999999,
           "output": 0.5,
           "cache_read": 0.01
+        },
+        {
+          "provider": "AtlasCloud",
+          "input": 0.114,
+          "output": 0.456,
+          "cache_read": 0.011399999999999999
         },
         {
           "provider": "DekaLLM",
@@ -2753,12 +2747,6 @@
           "cache_read": 0.006
         },
         {
-          "provider": "AtlasCloud",
-          "input": 0.3,
-          "output": 1.2,
-          "cache_read": 0.03
-        },
-        {
           "provider": "BaseTen",
           "input": 0.3,
           "output": 1.2,
@@ -2817,27 +2805,15 @@
       "org": "deepseek",
       "providers": 28,
       "from": {
-        "provider": "InferenceNet",
-        "blended_per_m": 0.003
+        "provider": "Morph",
+        "blended_per_m": 0.005
       },
       "offerings": [
         {
-          "provider": "Relace",
-          "input": 0.03,
-          "output": 0.6,
-          "cache_read": 0.01
-        },
-        {
           "provider": "InferenceNet",
-          "input": 0.035,
-          "output": 0.29,
-          "cache_read": 0.001
-        },
-        {
-          "provider": "Wafer",
-          "input": 0.0588,
-          "output": 0.6,
-          "cache_read": 0.045
+          "input": 0.06,
+          "output": 0.39,
+          "cache_read": 0.005
         },
         {
           "provider": "Sail Research",
@@ -2852,10 +2828,28 @@
           "cache_read": 0.0015507000000000001
         },
         {
+          "provider": "Relace",
+          "input": 0.09,
+          "output": 0.6,
+          "cache_read": 0.009
+        },
+        {
           "provider": "OpenInference",
           "input": 0.09999999999999999,
           "output": 0.5,
           "cache_read": 0.01
+        },
+        {
+          "provider": "Wafer",
+          "input": 0.09999999999999999,
+          "output": 0.7,
+          "cache_read": 0.045
+        },
+        {
+          "provider": "AtlasCloud",
+          "input": 0.114,
+          "output": 0.456,
+          "cache_read": 0.011399999999999999
         },
         {
           "provider": "DekaLLM",
@@ -2934,12 +2928,6 @@
           "input": 0.3,
           "output": 1.2,
           "cache_read": 0.006
-        },
-        {
-          "provider": "AtlasCloud",
-          "input": 0.3,
-          "output": 1.2,
-          "cache_read": 0.03
         },
         {
           "provider": "BaseTen",
@@ -3514,7 +3502,7 @@
       "providers": 23,
       "from": {
         "provider": "Baidu",
-        "blended_per_m": 0.047
+        "blended_per_m": 0.028
       },
       "offerings": [
         {
@@ -3543,9 +3531,15 @@
         },
         {
           "provider": "Wafer",
-          "input": 0.3995,
+          "input": 0.39289999999999997,
           "output": 4.199999999999999,
-          "cache_read": 0.399
+          "cache_read": 0.3143
+        },
+        {
+          "provider": "Baidu",
+          "input": 0.39336000000000004,
+          "output": 1.18008,
+          "cache_read": 0.012516
         },
         {
           "provider": "Sail Research",
@@ -3558,12 +3552,6 @@
           "input": 0.5808,
           "output": 1.7424,
           "cache_read": 0.05808
-        },
-        {
-          "provider": "Baidu",
-          "input": 0.65868,
-          "output": 1.97604,
-          "cache_read": 0.020958
         },
         {
           "provider": "StreamLake",
@@ -3590,6 +3578,12 @@
           "cache_read": 0.032999999999999995
         },
         {
+          "provider": "Io Net",
+          "input": 0.9900000000000001,
+          "output": 3.15,
+          "cache_read": 0.108
+        },
+        {
           "provider": "NextBit",
           "input": 1.0559999999999998,
           "output": 3.168,
@@ -3600,12 +3594,6 @@
           "input": 1.0559999999999998,
           "output": 3.168,
           "cache_read": 0.035199999999999995
-        },
-        {
-          "provider": "Io Net",
-          "input": 1.24,
-          "output": 3.5,
-          "cache_read": 0.14
         },
         {
           "provider": "CoreWeave",
@@ -3697,6 +3685,12 @@
           "cache_read": 0.007
         },
         {
+          "provider": "Sail Research",
+          "input": 0.019000000000000003,
+          "output": 0.3,
+          "cache_read": 0.014
+        },
+        {
           "provider": "Relace",
           "input": 0.020999999999999998,
           "output": 0.32,
@@ -3707,12 +3701,6 @@
           "input": 0.020999999999999998,
           "output": 0.5279999999999999,
           "cache_read": 0.0056
-        },
-        {
-          "provider": "Sail Research",
-          "input": 0.021500000000000002,
-          "output": 0.3,
-          "cache_read": 0.014
         },
         {
           "provider": "OpenInference",
@@ -3727,9 +3715,15 @@
           "cache_read": 0.0014
         },
         {
+          "provider": "Wafer",
+          "input": 0.06,
+          "output": 0.35,
+          "cache_read": 0.0531
+        },
+        {
           "provider": "Inceptron",
-          "input": 0.065,
-          "output": 0.3795,
+          "input": 0.063,
+          "output": 0.24839999999999998,
           "cache_read": 0.027
         },
         {
@@ -3737,12 +3731,6 @@
           "input": 0.09,
           "output": 0.195,
           "cache_read": 0.0196
-        },
-        {
-          "provider": "Wafer",
-          "input": 0.09999999999999999,
-          "output": 0.35,
-          "cache_read": 0.0531
         },
         {
           "provider": "DigitalOcean",
@@ -3791,6 +3779,12 @@
           "input": 0.141953,
           "output": 0.399625,
           "cache_read": 0.0359375
+        },
+        {
+          "provider": "AtlasCloud",
+          "input": 0.15839999999999999,
+          "output": 0.4752,
+          "cache_read": 0.01008
         },
         {
           "provider": "Venice",
@@ -3847,12 +3841,6 @@
           "cache_read": 0.014
         },
         {
-          "provider": "AtlasCloud",
-          "input": 0.44,
-          "output": 1.32,
-          "cache_read": 0.028
-        },
-        {
           "provider": "Cloudflare",
           "input": 0.44,
           "output": 1.32,
@@ -3874,12 +3862,12 @@
       "providers": 1,
       "from": {
         "provider": "wafer",
-        "blended_per_m": 0.053
+        "blended_per_m": 0.052
       },
       "offerings": [
         {
           "provider": "wafer",
-          "input": 0.1,
+          "input": 0.06,
           "output": 0.35,
           "cache_read": 0.05
         }
@@ -3943,13 +3931,144 @@
       }
     },
     {
+      "id": "qwen3.8-27b",
+      "name": "Qwen/Qwen3.8-27B",
+      "org": "qwen",
+      "providers": 19,
+      "from": {
+        "provider": "Darkbloom",
+        "blended_per_m": 0.037
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.2,
+          "output": 2.5,
+          "cache_read": 0.05
+        },
+        {
+          "provider": "wafer",
+          "input": 0.06,
+          "output": 4.4,
+          "cache_read": 0.05
+        },
+        {
+          "provider": "synthetic",
+          "input": 0.44999999999999996,
+          "output": 2.2,
+          "cache_read": 0.09
+        },
+        {
+          "provider": "hyper",
+          "input": 0.5,
+          "output": 3,
+          "cache_read": 0.1
+        },
+        {
+          "provider": "consensusprotocol",
+          "input": 0.08,
+          "output": 0.35,
+          "cache_read": 0.049999999999999996
+        },
+        {
+          "provider": "Darkbloom",
+          "input": 0.049999999999999996,
+          "output": 2.2,
+          "cache_read": 0.024999999999999998
+        },
+        {
+          "provider": "Reka",
+          "input": 0.0648,
+          "output": 4.4,
+          "cache_read": 0.0519
+        },
+        {
+          "provider": "DekaLLM",
+          "input": 0.08,
+          "output": 2.5,
+          "cache_read": 0.04
+        },
+        {
+          "provider": "Ionstream",
+          "input": 0.08900000000000001,
+          "output": 2.775,
+          "cache_read": 0.08499999999999999
+        },
+        {
+          "provider": "Phala",
+          "input": 0.19920000000000002,
+          "output": 2.075,
+          "cache_read": 0.0415
+        },
+        {
+          "provider": "Mancer 2",
+          "input": 0.19999999999999998,
+          "output": 2.5,
+          "cache_read": null
+        },
+        {
+          "provider": "AkashML",
+          "input": 0.22499999999999998,
+          "output": 1.9800000000000002,
+          "cache_read": 0.045
+        },
+        {
+          "provider": "Parasail",
+          "input": 0.24,
+          "output": 2.2,
+          "cache_read": 0.049999999999999996
+        },
+        {
+          "provider": "Chutes",
+          "input": 0.24,
+          "output": 2.2,
+          "cache_read": 0.024
+        },
+        {
+          "provider": "CoreWeave",
+          "input": 0.39999999999999997,
+          "output": 3,
+          "cache_read": 0.15
+        },
+        {
+          "provider": "Novita",
+          "input": 0.42,
+          "output": 3,
+          "cache_read": 0.08499999999999999
+        },
+        {
+          "provider": "Alibaba",
+          "input": 0.425,
+          "output": 2.5500000000000003,
+          "cache_read": 0.08499999999999999
+        },
+        {
+          "provider": "Cloudflare",
+          "input": 0.44999999999999996,
+          "output": 3.1999999999999997,
+          "cache_read": 0.049999999999999996
+        },
+        {
+          "provider": "Venice",
+          "input": 0.44999999999999996,
+          "output": 3.1999999999999997,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 33.7,
+        "aa_coding": 68.1,
+        "aa_agentic": 45.8
+      }
+    },
+    {
       "id": "glm-5.2",
       "name": "zai-org/GLM-5.2",
       "org": "z-ai",
       "providers": 35,
       "from": {
         "provider": "Baidu",
-        "blended_per_m": 0.087
+        "blended_per_m": 0.079
       },
       "offerings": [
         {
@@ -3966,7 +4085,7 @@
         },
         {
           "provider": "wafer",
-          "input": 0.39,
+          "input": 0.36,
           "output": 4.4,
           "cache_read": 0.26
         },
@@ -4013,34 +4132,34 @@
           "cache_read": 0.26
         },
         {
-          "provider": "scx-ai-gp",
-          "input": 0.88,
-          "output": 2.5500000000000003,
-          "cache_read": 0.16
-        },
-        {
           "provider": "runware",
           "input": 0.7999999999999999,
           "output": 2.5500000000000003,
           "cache_read": 0.16
         },
         {
-          "provider": "Baidu",
-          "input": 0.3934,
-          "output": 1.2364,
-          "cache_read": 0.07306
-        },
-        {
-          "provider": "Inceptron",
-          "input": 0.3973,
-          "output": 2.8783,
-          "cache_read": 0.2041
+          "provider": "scx-ai-gp",
+          "input": 0.88,
+          "output": 2.5500000000000003,
+          "cache_read": 0.16
         },
         {
           "provider": "Relace",
-          "input": 0.39999999999999997,
+          "input": 0.35,
           "output": 3.5,
           "cache_read": 0.19999999999999998
+        },
+        {
+          "provider": "Inceptron",
+          "input": 0.3565,
+          "output": 2.4007,
+          "cache_read": 0.1668
+        },
+        {
+          "provider": "Baidu",
+          "input": 0.35979999999999995,
+          "output": 1.1308,
+          "cache_read": 0.06682
         },
         {
           "provider": "Decart",
@@ -4176,137 +4295,6 @@
         "livebench_agentic_coding": 51.9,
         "livebench_reasoning": 78.6,
         "livebench_instruction_following": 62.3
-      }
-    },
-    {
-      "id": "qwen3.8-27b",
-      "name": "Qwen/Qwen3.8-27B",
-      "org": "qwen",
-      "providers": 19,
-      "from": {
-        "provider": "Chutes",
-        "blended_per_m": 0.04
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.2,
-          "output": 2.5,
-          "cache_read": 0.05
-        },
-        {
-          "provider": "wafer",
-          "input": 0.08,
-          "output": 4.4,
-          "cache_read": 0.08
-        },
-        {
-          "provider": "synthetic",
-          "input": 0.44999999999999996,
-          "output": 2.2,
-          "cache_read": 0.09
-        },
-        {
-          "provider": "hyper",
-          "input": 0.5,
-          "output": 3,
-          "cache_read": 0.1
-        },
-        {
-          "provider": "consensusprotocol",
-          "input": 0.08,
-          "output": 0.35,
-          "cache_read": 0.049999999999999996
-        },
-        {
-          "provider": "Darkbloom",
-          "input": 0.049999999999999996,
-          "output": 2.2,
-          "cache_read": null
-        },
-        {
-          "provider": "Reka",
-          "input": 0.0766,
-          "output": 4.4,
-          "cache_read": 0.0766
-        },
-        {
-          "provider": "DekaLLM",
-          "input": 0.08,
-          "output": 2.5,
-          "cache_read": 0.04
-        },
-        {
-          "provider": "Ionstream",
-          "input": 0.08900000000000001,
-          "output": 2.5500000000000003,
-          "cache_read": 0.08499999999999999
-        },
-        {
-          "provider": "Phala",
-          "input": 0.19920000000000002,
-          "output": 2.075,
-          "cache_read": 0.0415
-        },
-        {
-          "provider": "Mancer 2",
-          "input": 0.19999999999999998,
-          "output": 2.5,
-          "cache_read": null
-        },
-        {
-          "provider": "Parasail",
-          "input": 0.24,
-          "output": 2.2,
-          "cache_read": 0.049999999999999996
-        },
-        {
-          "provider": "Chutes",
-          "input": 0.24,
-          "output": 2.2,
-          "cache_read": 0.024
-        },
-        {
-          "provider": "AkashML",
-          "input": 0.25,
-          "output": 2.2,
-          "cache_read": 0.049999999999999996
-        },
-        {
-          "provider": "CoreWeave",
-          "input": 0.39999999999999997,
-          "output": 3,
-          "cache_read": 0.15
-        },
-        {
-          "provider": "Novita",
-          "input": 0.42,
-          "output": 3,
-          "cache_read": 0.08499999999999999
-        },
-        {
-          "provider": "Alibaba",
-          "input": 0.425,
-          "output": 2.5500000000000003,
-          "cache_read": 0.08499999999999999
-        },
-        {
-          "provider": "Cloudflare",
-          "input": 0.44999999999999996,
-          "output": 3.1999999999999997,
-          "cache_read": 0.049999999999999996
-        },
-        {
-          "provider": "Venice",
-          "input": 0.44999999999999996,
-          "output": 3.1999999999999997,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 33.7,
-        "aa_coding": 68.1,
-        "aa_agentic": 45.8
       }
     },
     {
@@ -4550,9 +4538,9 @@
         },
         {
           "provider": "wafer",
-          "input": 0.4,
+          "input": 0.39,
           "output": 4.2,
-          "cache_read": 0.4
+          "cache_read": 0.31
         },
         {
           "provider": "hyper",
@@ -4591,16 +4579,16 @@
           "cache_read": 0.079
         },
         {
+          "provider": "Relace",
+          "input": 0.35,
+          "output": 3.5,
+          "cache_read": 0.09999999999999999
+        },
+        {
           "provider": "Baidu",
           "input": 0.59995,
           "output": 1.1999,
           "cache_read": 0.0497
-        },
-        {
-          "provider": "Relace",
-          "input": 0.6,
-          "output": 1.4,
-          "cache_read": 0.12
         },
         {
           "provider": "StreamLake",
@@ -5333,16 +5321,16 @@
           "cache_read": 0.13
         },
         {
-          "provider": "Inceptron",
-          "input": 0.4532,
-          "output": 2.4499999999999997,
-          "cache_read": 0.12329999999999999
+          "provider": "Baidu",
+          "input": 0.4522,
+          "output": 1.904,
+          "cache_read": 0.07616
         },
         {
-          "provider": "Baidu",
-          "input": 0.4541,
-          "output": 1.9120000000000001,
-          "cache_read": 0.07647999999999999
+          "provider": "Inceptron",
+          "input": 0.4523,
+          "output": 2.4499999999999997,
+          "cache_read": 0.123
         },
         {
           "provider": "Chutes",
@@ -5702,7 +5690,7 @@
       "id": "kimi-k2.7-code",
       "name": "Kimi K2.7 Code",
       "org": "moonshot",
-      "providers": 20,
+      "providers": 19,
       "from": {
         "provider": "neuralwatt",
         "blended_per_m": 0.136
@@ -5772,12 +5760,6 @@
           "provider": "Venice",
           "input": 0.75,
           "output": 3.5,
-          "cache_read": 0.16
-        },
-        {
-          "provider": "ModelRun",
-          "input": 0.85,
-          "output": 3.75,
           "cache_read": 0.16
         },
         {
@@ -6243,16 +6225,16 @@
           "cache_read": 0.0028
         },
         {
-          "provider": "runware",
-          "input": 0.07600000000000001,
-          "output": 0.153,
-          "cache_read": 0.014
-        },
-        {
           "provider": "gonka24",
           "input": 0.065,
           "output": 0.116,
           "cache_read": 0.012
+        },
+        {
+          "provider": "runware",
+          "input": 0.07600000000000001,
+          "output": 0.153,
+          "cache_read": 0.014
         },
         {
           "provider": "Relace",
@@ -6268,15 +6250,21 @@
         },
         {
           "provider": "Baidu",
-          "input": 0.07308,
-          "output": 0.14616,
-          "cache_read": 0.014616
+          "input": 0.04886,
+          "output": 0.09772,
+          "cache_read": 0.009772
         },
         {
           "provider": "StreamLake",
-          "input": 0.07322000000000001,
-          "output": 0.14644000000000001,
-          "cache_read": 0.014644
+          "input": 0.049,
+          "output": 0.098,
+          "cache_read": 0.0098
+        },
+        {
+          "provider": "AtlasCloud",
+          "input": 0.08259999999999999,
+          "output": 0.16519999999999999,
+          "cache_read": 0.01652
         },
         {
           "provider": "GMICloud",
@@ -6310,12 +6298,6 @@
         },
         {
           "provider": "Novita",
-          "input": 0.14,
-          "output": 0.28,
-          "cache_read": 0.028
-        },
-        {
-          "provider": "AtlasCloud",
           "input": 0.14,
           "output": 0.28,
           "cache_read": 0.028
@@ -6609,31 +6591,6 @@
       }
     },
     {
-      "id": "nvidia-nemotron-3-ultra-550b-a55b",
-      "name": "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B",
-      "org": "nvidia",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.121
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.5,
-          "output": 2.2,
-          "cache_read": 0.1
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 22.9,
-        "aa_coding": 49.3,
-        "aa_agentic": 20.1,
-        "design_arena_elo": 1153,
-        "design_arena_category": "codecategories"
-      }
-    },
-    {
       "id": "qwen3.5-27b",
       "name": "Qwen/Qwen3.5-27B",
       "org": "qwen",
@@ -6682,6 +6639,31 @@
       ],
       "scores": {
         "aa_intelligence": 22.9
+      }
+    },
+    {
+      "id": "nvidia-nemotron-3-ultra-550b-a55b",
+      "name": "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B",
+      "org": "nvidia",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.121
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.5,
+          "output": 2.2,
+          "cache_read": 0.1
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 22.9,
+        "aa_coding": 49.3,
+        "aa_agentic": 20.1,
+        "design_arena_elo": 1153,
+        "design_arena_category": "codecategories"
       }
     },
     {
@@ -6918,10 +6900,10 @@
       "id": "ling-3.0-flash-fin",
       "name": "inclusionAI/Ling-3.0-flash-Fin",
       "org": "inclusionai",
-      "providers": 1,
+      "providers": 2,
       "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.014
+        "provider": "Novita",
+        "blended_per_m": 0.01
       },
       "offerings": [
         {
@@ -6929,6 +6911,12 @@
           "input": 0.060000000000000005,
           "output": 0.18,
           "cache_read": 0.012000000000000002
+        },
+        {
+          "provider": "Novita",
+          "input": 0.041999999999999996,
+          "output": 0.12319999999999999,
+          "cache_read": 0.008400000000000001
         }
       ],
       "scores": {
@@ -7451,8 +7439,8 @@
       "org": "qwen",
       "providers": 7,
       "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.057
+        "provider": "Darkbloom",
+        "blended_per_m": 0.045
       },
       "offerings": [
         {
@@ -7465,7 +7453,7 @@
           "provider": "Darkbloom",
           "input": 0.08,
           "output": 0.75,
-          "cache_read": null
+          "cache_read": 0.04
         },
         {
           "provider": "Parasail",
@@ -7618,7 +7606,7 @@
       "providers": 10,
       "from": {
         "provider": "Darkbloom",
-        "blended_per_m": 0.053
+        "blended_per_m": 0.029
       },
       "offerings": [
         {
@@ -7631,7 +7619,7 @@
           "provider": "Darkbloom",
           "input": 0.049999999999999996,
           "output": 0.7,
-          "cache_read": null
+          "cache_read": 0.024999999999999998
         },
         {
           "provider": "AkashML",
@@ -7994,6 +7982,12 @@
           "cache_read": 0.056
         },
         {
+          "provider": "AtlasCloud",
+          "input": 0.13440000000000002,
+          "output": 0.2016,
+          "cache_read": 0.06720000000000001
+        },
+        {
           "provider": "GMICloud",
           "input": 0.20879999999999999,
           "output": 0.30960000000000004,
@@ -8004,12 +7998,6 @@
           "input": 0.25899999999999995,
           "output": 0.42,
           "cache_read": 0.135
-        },
-        {
-          "provider": "AtlasCloud",
-          "input": 0.26,
-          "output": 0.38,
-          "cache_read": 0.13
         },
         {
           "provider": "Venice",
@@ -8428,7 +8416,7 @@
       "providers": 6,
       "from": {
         "provider": "Darkbloom",
-        "blended_per_m": 0.08
+        "blended_per_m": 0.041
       },
       "offerings": [
         {
@@ -8441,7 +8429,7 @@
           "provider": "Darkbloom",
           "input": 0.08,
           "output": 0.13,
-          "cache_read": null
+          "cache_read": 0.04
         },
         {
           "provider": "SiliconFlow",
@@ -8548,15 +8536,15 @@
       "org": "nvidia",
       "providers": 5,
       "from": {
-        "provider": "Io Net",
-        "blended_per_m": 0.033
+        "provider": "Darkbloom",
+        "blended_per_m": 0.021
       },
       "offerings": [
         {
           "provider": "Darkbloom",
           "input": 0.039,
           "output": 0.18,
-          "cache_read": null
+          "cache_read": 0.0195
         },
         {
           "provider": "Io Net",
@@ -8868,31 +8856,6 @@
       }
     },
     {
-      "id": "gpt-oss-120b-turbo",
-      "name": "openai/gpt-oss-120b-Turbo",
-      "org": "openai",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.152
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.15,
-          "output": 0.6,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 11.6,
-        "aa_coding": 30.4,
-        "aa_agentic": 3.7,
-        "design_arena_elo": 1006,
-        "design_arena_category": "gamedev"
-      }
-    },
-    {
       "id": "gpt-oss-120b",
       "name": "openai/gpt-oss-120b",
       "org": "openai",
@@ -8951,12 +8914,6 @@
           "cache_read": 0.032
         },
         {
-          "provider": "AkashML",
-          "input": 0.03,
-          "output": 0.16999999999999998,
-          "cache_read": 0.03
-        },
-        {
           "provider": "CoreWeave",
           "input": 0.03,
           "output": 0.16999999999999998,
@@ -8967,6 +8924,12 @@
           "input": 0.03,
           "output": 0.18,
           "cache_read": null
+        },
+        {
+          "provider": "AkashML",
+          "input": 0.032999999999999995,
+          "output": 0.187,
+          "cache_read": 0.032999999999999995
         },
         {
           "provider": "Crusoe",
@@ -9068,6 +9031,31 @@
       }
     },
     {
+      "id": "gpt-oss-120b-turbo",
+      "name": "openai/gpt-oss-120b-Turbo",
+      "org": "openai",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.152
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.15,
+          "output": 0.6,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 11.6,
+        "aa_coding": 30.4,
+        "aa_agentic": 3.7,
+        "design_arena_elo": 1006,
+        "design_arena_category": "gamedev"
+      }
+    },
+    {
       "id": "gpt-oss-120b-fast",
       "name": "gpt-oss-120b-fast",
       "org": "openai",
@@ -9103,12 +9091,6 @@
       },
       "offerings": [
         {
-          "provider": "AkashML",
-          "input": 0.03,
-          "output": 0.16999999999999998,
-          "cache_read": 0.03
-        },
-        {
           "provider": "CoreWeave",
           "input": 0.03,
           "output": 0.16999999999999998,
@@ -9119,6 +9101,12 @@
           "input": 0.03,
           "output": 0.18,
           "cache_read": null
+        },
+        {
+          "provider": "AkashML",
+          "input": 0.032999999999999995,
+          "output": 0.187,
+          "cache_read": 0.032999999999999995
         },
         {
           "provider": "DeepInfra",
@@ -9498,35 +9486,6 @@
       }
     },
     {
-      "id": "gemini-2.5-flash",
-      "name": "google/gemini-2.5-flash",
-      "org": "google",
-      "providers": 2,
-      "from": {
-        "provider": "Google",
-        "blended_per_m": 0.049
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.3,
-          "output": 2.5,
-          "cache_read": null
-        },
-        {
-          "provider": "Google",
-          "input": 0.3,
-          "output": 2.5,
-          "cache_read": 0.03
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 9.9,
-        "design_arena_elo": 1144,
-        "design_arena_category": "dataviz"
-      }
-    },
-    {
       "id": "qwen3-vl-235b-a22b-instruct",
       "name": "Qwen/Qwen3-VL-235B-A22B-Instruct",
       "org": "qwen",
@@ -9569,6 +9528,35 @@
       ],
       "scores": {
         "aa_intelligence": 9.9
+      }
+    },
+    {
+      "id": "gemini-2.5-flash",
+      "name": "google/gemini-2.5-flash",
+      "org": "google",
+      "providers": 2,
+      "from": {
+        "provider": "Google",
+        "blended_per_m": 0.049
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.3,
+          "output": 2.5,
+          "cache_read": null
+        },
+        {
+          "provider": "Google",
+          "input": 0.3,
+          "output": 2.5,
+          "cache_read": 0.03
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 9.9,
+        "design_arena_elo": 1144,
+        "design_arena_category": "dataviz"
       }
     },
     {
@@ -9894,8 +9882,8 @@
       "org": "openai",
       "providers": 12,
       "from": {
-        "provider": "consensusprotocol",
-        "blended_per_m": 0.012
+        "provider": "Darkbloom",
+        "blended_per_m": 0.01
       },
       "offerings": [
         {
@@ -9914,7 +9902,7 @@
           "provider": "Darkbloom",
           "input": 0.018,
           "output": 0.09,
-          "cache_read": null
+          "cache_read": 0.009
         },
         {
           "provider": "AkashML",
@@ -9986,14 +9974,14 @@
       "providers": 11,
       "from": {
         "provider": "Darkbloom",
-        "blended_per_m": 0.018
+        "blended_per_m": 0.01
       },
       "offerings": [
         {
           "provider": "Darkbloom",
           "input": 0.018,
           "output": 0.09,
-          "cache_read": null
+          "cache_read": 0.009
         },
         {
           "provider": "AkashML",
@@ -10866,102 +10854,6 @@
       }
     },
     {
-      "id": "qwen3-14b",
-      "name": "Qwen/Qwen3-14B",
-      "org": "qwen",
-      "providers": 3,
-      "from": {
-        "provider": "NextBit",
-        "blended_per_m": 0.101
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.12000000000000001,
-          "output": 0.24000000000000002,
-          "cache_read": null
-        },
-        {
-          "provider": "NextBit",
-          "input": 0.09999999999999999,
-          "output": 0.22,
-          "cache_read": null
-        },
-        {
-          "provider": "Alibaba",
-          "input": 0.22749999999999998,
-          "output": 0.9099999999999999,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "aa_coding": 13.8,
-        "aa_agentic": 0.9
-      }
-    },
-    {
-      "id": "gemma-4-31b-it-turbo",
-      "name": "google/gemma-4-31B-it-turbo",
-      "org": "google",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.052
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.09,
-          "output": 0.33999999999999997,
-          "cache_read": 0.050000000399999994
-        }
-      ],
-      "scores": {
-        "aa_coding": 43.4,
-        "aa_agentic": 4.2
-      }
-    },
-    {
-      "id": "deepseek-r1-0528",
-      "name": "deepseek-ai/DeepSeek-R1-0528",
-      "org": "deepseek",
-      "providers": 4,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.363
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.5,
-          "output": 2.15,
-          "cache_read": 0.35
-        },
-        {
-          "provider": "SiliconFlow",
-          "input": 0.5,
-          "output": 2.1799999999999997,
-          "cache_read": null
-        },
-        {
-          "provider": "StreamLake",
-          "input": 0.5710000000000001,
-          "output": 2.2859999999999996,
-          "cache_read": null
-        },
-        {
-          "provider": "Novita",
-          "input": 0.7,
-          "output": 2.5,
-          "cache_read": 0.35
-        }
-      ],
-      "scores": {
-        "design_arena_elo": 1192,
-        "design_arena_category": "dataviz"
-      }
-    },
-    {
       "id": "gemma-4-31b-it",
       "name": "google/gemma-4-31B-it",
       "org": "google",
@@ -10990,10 +10882,10 @@
           "cache_read": null
         },
         {
-          "provider": "runware",
-          "input": 0.102,
-          "output": 0.29700000000000004,
-          "cache_read": 0.012
+          "provider": "scx-ai",
+          "input": 0.3,
+          "output": 0.9099999999999999,
+          "cache_read": null
         },
         {
           "provider": "consensusprotocol",
@@ -11002,10 +10894,10 @@
           "cache_read": 0.01
         },
         {
-          "provider": "scx-ai",
-          "input": 0.3,
-          "output": 0.9099999999999999,
-          "cache_read": null
+          "provider": "runware",
+          "input": 0.102,
+          "output": 0.29700000000000004,
+          "cache_read": 0.012
         },
         {
           "provider": "Reka",
@@ -11080,13 +10972,227 @@
       }
     },
     {
+      "id": "deepseek-r1-0528",
+      "name": "deepseek-ai/DeepSeek-R1-0528",
+      "org": "deepseek",
+      "providers": 4,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.363
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.5,
+          "output": 2.15,
+          "cache_read": 0.35
+        },
+        {
+          "provider": "SiliconFlow",
+          "input": 0.5,
+          "output": 2.1799999999999997,
+          "cache_read": null
+        },
+        {
+          "provider": "StreamLake",
+          "input": 0.5710000000000001,
+          "output": 2.2859999999999996,
+          "cache_read": null
+        },
+        {
+          "provider": "Novita",
+          "input": 0.7,
+          "output": 2.5,
+          "cache_read": 0.35
+        }
+      ],
+      "scores": {
+        "design_arena_elo": 1192,
+        "design_arena_category": "dataviz"
+      }
+    },
+    {
+      "id": "qwen3-14b",
+      "name": "Qwen/Qwen3-14B",
+      "org": "qwen",
+      "providers": 3,
+      "from": {
+        "provider": "NextBit",
+        "blended_per_m": 0.101
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.12000000000000001,
+          "output": 0.24000000000000002,
+          "cache_read": null
+        },
+        {
+          "provider": "NextBit",
+          "input": 0.09999999999999999,
+          "output": 0.22,
+          "cache_read": null
+        },
+        {
+          "provider": "Alibaba",
+          "input": 0.22749999999999998,
+          "output": 0.9099999999999999,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "aa_coding": 13.8,
+        "aa_agentic": 0.9
+      }
+    },
+    {
+      "id": "llama-3.3-70b-instruct-turbo",
+      "name": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "org": "meta",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.101
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.1,
+          "output": 0.32,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "aa_coding": 11.9
+      }
+    },
+    {
+      "id": "meta-llama-3.1-8b-instruct-turbo",
+      "name": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+      "org": "meta",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.02
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.02,
+          "output": 0.04,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "aa_coding": 5.4
+      }
+    },
+    {
+      "id": "gemma-4-31b-it-turbo",
+      "name": "google/gemma-4-31B-it-turbo",
+      "org": "google",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.052
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.09,
+          "output": 0.33999999999999997,
+          "cache_read": 0.050000000399999994
+        }
+      ],
+      "scores": {
+        "aa_coding": 43.4,
+        "aa_agentic": 4.2
+      }
+    },
+    {
+      "id": "gemma-3-4b-it",
+      "name": "google/gemma-3-4b-it",
+      "org": "google",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.05
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.05,
+          "output": 0.1,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "aa_coding": 2.7
+      }
+    },
+    {
+      "id": "qwen3-30b-a3b",
+      "name": "Qwen/Qwen3-30B-A3B",
+      "org": "qwen",
+      "providers": 2,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.122
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.12000000000000001,
+          "output": 0.5,
+          "cache_read": null
+        },
+        {
+          "provider": "Alibaba",
+          "input": 0.13,
+          "output": 0.52,
+          "cache_read": null
+        }
+      ],
+      "scores": {
+        "design_arena_elo": 976,
+        "design_arena_category": "dataviz"
+      }
+    },
+    {
+      "id": "ling-3.0-flash",
+      "name": "inclusionAI/Ling-3.0-flash",
+      "org": "inclusionai",
+      "providers": 2,
+      "from": {
+        "provider": "Novita",
+        "blended_per_m": 0.005
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.060000000000000005,
+          "output": 0.18,
+          "cache_read": 0.012000000000000002
+        },
+        {
+          "provider": "Novita",
+          "input": 0.020999999999999998,
+          "output": 0.063,
+          "cache_read": 0.004200000000000001
+        }
+      ],
+      "scores": {
+        "aa_coding": 50.6
+      }
+    },
+    {
       "id": "gemma-4-26b-a4b-it",
       "name": "google/gemma-4-26B-A4B-it",
       "org": "google",
       "providers": 15,
       "from": {
-        "provider": "Makora",
-        "blended_per_m": 0.035
+        "provider": "Darkbloom",
+        "blended_per_m": 0.023
       },
       "offerings": [
         {
@@ -11105,7 +11211,7 @@
           "provider": "Darkbloom",
           "input": 0.041999999999999996,
           "output": 0.22,
-          "cache_read": null
+          "cache_read": 0.020999999999999998
         },
         {
           "provider": "Reka",
@@ -11120,16 +11226,16 @@
           "cache_read": null
         },
         {
+          "provider": "NextBit",
+          "input": 0.0765,
+          "output": 0.255,
+          "cache_read": 0.042499999999999996
+        },
+        {
           "provider": "Makora",
           "input": 0.08,
           "output": 0.32,
           "cache_read": 0.032
-        },
-        {
-          "provider": "NextBit",
-          "input": 0.09,
-          "output": 0.3,
-          "cache_read": 0.049999999999999996
         },
         {
           "provider": "CoreWeave",
@@ -11185,96 +11291,6 @@
       }
     },
     {
-      "id": "llama-3.3-70b-instruct-turbo",
-      "name": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-      "org": "meta",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.101
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.1,
-          "output": 0.32,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "aa_coding": 11.9
-      }
-    },
-    {
-      "id": "ling-3.0-flash",
-      "name": "inclusionAI/Ling-3.0-flash",
-      "org": "inclusionai",
-      "providers": 2,
-      "from": {
-        "provider": "Novita",
-        "blended_per_m": 0.005
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.060000000000000005,
-          "output": 0.18,
-          "cache_read": 0.012000000000000002
-        },
-        {
-          "provider": "Novita",
-          "input": 0.020999999999999998,
-          "output": 0.063,
-          "cache_read": 0.004200000000000001
-        }
-      ],
-      "scores": {
-        "aa_coding": 50.6
-      }
-    },
-    {
-      "id": "gemma-3-4b-it",
-      "name": "google/gemma-3-4b-it",
-      "org": "google",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.05
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.05,
-          "output": 0.1,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "aa_coding": 2.7
-      }
-    },
-    {
-      "id": "meta-llama-3.1-8b-instruct-turbo",
-      "name": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-      "org": "meta",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.02
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.02,
-          "output": 0.04,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "aa_coding": 5.4
-      }
-    },
-    {
       "id": "qwen3-32b",
       "name": "Qwen/Qwen3-32B",
       "org": "qwen",
@@ -11306,34 +11322,6 @@
       "scores": {
         "aa_coding": 15.3,
         "aa_agentic": 0.9
-      }
-    },
-    {
-      "id": "qwen3-30b-a3b",
-      "name": "Qwen/Qwen3-30B-A3B",
-      "org": "qwen",
-      "providers": 2,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.122
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.12000000000000001,
-          "output": 0.5,
-          "cache_read": null
-        },
-        {
-          "provider": "Alibaba",
-          "input": 0.13,
-          "output": 0.52,
-          "cache_read": null
-        }
-      ],
-      "scores": {
-        "design_arena_elo": 976,
-        "design_arena_category": "dataviz"
       }
     },
     {
@@ -11865,20 +11853,20 @@
       "providers": 2,
       "from": {
         "provider": "AtlasCloud",
-        "blended_per_m": 0.271
+        "blended_per_m": 0.07
       },
       "offerings": [
+        {
+          "provider": "AtlasCloud",
+          "input": 0.13440000000000002,
+          "output": 0.2016,
+          "cache_read": 0.06720000000000001
+        },
         {
           "provider": "SiliconFlow",
           "input": 0.27,
           "output": 0.41,
           "cache_read": null
-        },
-        {
-          "provider": "AtlasCloud",
-          "input": 0.27,
-          "output": 0.41,
-          "cache_read": 0.27
         }
       ],
       "scores": {
