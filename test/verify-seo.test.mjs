@@ -1,8 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { collectModelPages, renderModelPage } from '../scripts/seo-pages.mjs';
+import * as verifier from '../scripts/verify-seo.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -68,4 +70,65 @@ test('verify-seo guards against absent /h/ references', async () => {
   const src = await readFile(join(ROOT, 'scripts', 'verify-seo.mjs'), 'utf8');
   assert.match(src, /missingHashedAssets/, 'verify-seo.mjs must scan for absent /h/ assets');
   assert.match(src, /absent \/h\/ assets/);
+});
+
+test('all calculator entry points expose model discovery and PNG social metadata', async () => {
+  for (const page of ['index', 'image', 'video', 'benchmarks']) {
+    const html = await readFile(join(ROOT, 'public', `${page}.html`), 'utf8');
+    assert.match(html, /<nav class="tab-nav"[\s\S]*?href="\/models\/">Models<\/a>/, `${page} model discovery`);
+    for (const field of ['property="og:image"', 'name="twitter:image"']) {
+      assert.ok(html.includes(`${field} content="https://tokenwatch.wyrdwerk.com/og/og-image.png"`), `${page} ${field}`);
+    }
+    assert.match(html, /property="og:image:alt"/);
+    const description = html.match(/name="description" content="([^"]+)"/)[1];
+    assert.ok(html.includes(`property="og:description" content="${description}"`), `${page} social description`);
+    assert.ok(html.includes(`name="twitter:description" content="${description}"`), `${page} Twitter description`);
+    const schema = html.match(/id="seo-structured-data" type="application\/ld\+json">(.*?)<\/script>/);
+    assert.ok(schema, `${page} must expose generated structured data`);
+    const data = JSON.parse(schema[1])['@graph'][0];
+    assert.equal(data.url, html.match(/rel="canonical" href="([^"]+)"/)[1], `${page} schema URL`);
+  }
+  const png = await readFile(join(ROOT, 'public', 'og', 'og-image.png'));
+  assert.equal(png.subarray(1, 4).toString(), 'PNG');
+  assert.equal(png.readUInt32BE(16), 1200);
+  assert.equal(png.readUInt32BE(20), 630);
+  const svg = await readFile(join(ROOT, 'public', 'og', 'og-image.svg'), 'utf8');
+  assert.doesNotMatch(svg, /\d+ providers|\d+ models/, 'social card copy must not age with the catalog');
+});
+
+test('all raw catalog/reference JSON and the widget demo are excluded from search results', async () => {
+  const headers = await readFile(join(ROOT, 'public', '_headers'), 'utf8');
+  const files = (await readdir(join(ROOT, 'public'))).filter((name) => name.endsWith('.json'));
+  assert.ok(files.length >= 8);
+  for (const name of files) {
+    assert.ok(headers.includes(`/${name}\n  X-Robots-Tag: noindex`), name);
+  }
+  const demo = await readFile(join(ROOT, 'public', 'widget', 'demo.html'), 'utf8');
+  assert.match(demo, /name="robots" content="noindex/);
+});
+
+test('generated landing pages exactly preserve the published URL registry', async () => {
+  const registry = JSON.parse(await readFile(join(ROOT, 'data', 'seo-published-pages.json'), 'utf8'));
+  const sitemap = await readFile(join(ROOT, 'public', 'sitemap.xml'), 'utf8');
+  for (const type of ['providers', 'models']) {
+    const entries = await readdir(join(ROOT, 'public', type), { withFileTypes: true });
+    const slugs = entries.filter(entry => entry.isDirectory() && !entry.name.startsWith('.')).map(entry => entry.name).sort();
+    assert.equal(registry[type].length, new Set(registry[type]).size, `${type} registry duplicates`);
+    assert.deepEqual(slugs, [...registry[type]].sort(), `${type} must neither disappear nor expand`);
+    for (const slug of slugs) assert.ok(sitemap.includes(`<loc>https://tokenwatch.wyrdwerk.com/${type}/${slug}/</loc>`), slug);
+  }
+});
+
+test('history validation accepts omission but rejects partially wired or misleading panels', () => {
+  const [page] = collectModelPages({ pricing: { models: ['a', 'b', 'c'].map((provider) => ({
+    id: 'model', name: 'Model', provider, pricing: { input: 1, output: 2, cache_read: 0.1 },
+  })) } });
+  const disabled = renderModelPage(page, { historyEnabled: false });
+  const enabled = renderModelPage(page, { historyEnabled: true });
+  assert.doesNotThrow(() => verifier.assertModelHistory(disabled, 'disabled'));
+  assert.doesNotThrow(() => verifier.assertModelHistory(enabled, 'enabled'));
+  for (const missing of ['data-price-history-chart', 'model-history.js', 'price-sparkline.js', 'Loading price history']) {
+    assert.throws(() => verifier.assertModelHistory(enabled.replaceAll(missing, 'removed'), 'broken'), /verify-seo:/, missing);
+  }
+  assert.throws(() => verifier.assertModelHistory(disabled.replace('</main>', '<p>Retained for up to 90 days</p></main>'), 'misleading'), /verify-seo:/);
 });

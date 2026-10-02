@@ -40,7 +40,8 @@ const allModels = (pricing.models || []).map(m => {
   const bData = benchMap.get(m.id?.toLowerCase()) || benchMap.get(m.name?.toLowerCase());
   const inp = m.pricing?.input || 0;
   const out = m.pricing?.output || 0;
-  // standard agentic mix: 2.5% in, 97% cached (0.25x), 0.5% out
+  // Advisor mix: 50% input, no cached input, 50% output at published rates.
+  // Cache-write/storage charges are excluded; this is not the calculator's default mix.
   const blendedRate = Number((inp * 0.5 + out * 0.5).toFixed(4));
   
   return {

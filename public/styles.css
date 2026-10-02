@@ -51,7 +51,7 @@
   /* Foregrounds tuned for WCAG AA on white and on their own 20% tint. */
   --green: #1f6b45;
   --yellow: #7d5800;
-  --blue: #5B7C99;
+  --blue: #315a7a;
   --radius: 14px;
   --radius-sm: 8px;
 }
@@ -76,7 +76,7 @@
   /* Lighter green so status text clears AA on the dark surface and its tint. */
   --green: #63bd86;
   --yellow: #D4A843;
-  --blue: #6B9AC4;
+  --blue: #82aed2;
   --radius: 14px;
   --radius-sm: 8px;
 }
@@ -1781,7 +1781,6 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
 }
 .tw-spark-detail {
   font-size: 0.75rem;
-  opacity: 0.8;
 }
 /* Distinct accents per state: loading is neutral, empty is informational,
    error is explicitly alarming. */
@@ -1791,9 +1790,9 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
   background: var(--accent-faint);
 }
 .tw-spark[data-state="error"] .tw-spark-message {
-  border-color: #c0503c;
+  border-color: #b04432;
   border-style: solid;
-  color: #c0503c;
+  color: #b04432;
 }
 [data-theme="dark"] .tw-spark[data-state="error"] .tw-spark-message { color: #e08070; border-color: #e08070; }
 

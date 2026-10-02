@@ -46,7 +46,7 @@
     launcher.id = 'tw-advisor-bubble';
     launcher.type = 'button';
     launcher.title = 'Ask TokenWatch Advisor';
-    launcher.setAttribute('aria-label', 'Ask TokenWatch Advisor');
+    launcher.setAttribute('aria-label', 'Ask Advisor — TokenWatch');
     launcher.setAttribute('aria-expanded', 'false');
     launcher.setAttribute('aria-controls', 'tw-advisor-panel');
     launcher.appendChild(el('span', 'tw-advisor-icon', '💬'));

@@ -219,6 +219,8 @@ test('opening is deliberate: no network, aria-expanded flips, input focused', as
   const panel = dom.document.getElementById('tw-advisor-panel');
   const input = dom.document.getElementById('tw-advisor-input');
 
+  assert.ok(launcher.getAttribute('aria-label').includes('Ask Advisor'),
+    'accessible name must contain the visible label for voice control');
   assert.ok(panel.classList.contains('hidden'), 'panel starts closed');
   assert.equal(panel.getAttribute('aria-hidden'), 'true');
   assert.equal(panel.getAttribute('role'), 'dialog');

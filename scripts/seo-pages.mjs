@@ -43,26 +43,30 @@ export function cheapestModels(models, topN = TOP_N) {
     .slice(0, topN);
 }
 
-function renderTextRows(priced) {
+function renderTextRows(priced, { linkedModelPages = new Map(), linkedProviderSlugs = new Set() } = {}) {
   return priced.map(({ m, eff }) => {
     const pricing = m.pricing || {};
-    return `      <tr><td>${esc(m.org || m.provider)}</td><td>${esc(m.provider)}</td><td>${esc(displayName(m))}</td><td class="num">${fmtPrice(pricing.input)}</td><td class="num">${fmtPrice(pricing.output)}</td><td class="num">${fmtPrice(pricing.cache_read)}</td><td class="num">${fmtPrice(eff)}</td></tr>`;
+    const modelSlug = linkedModelPages.get(canonicalId(m.id));
+    const model = modelSlug ? `<a href="/models/${esc(modelSlug)}/">${esc(displayName(m))}</a>` : esc(displayName(m));
+    const slug = providerSlug(m.provider);
+    const provider = linkedProviderSlugs.has(slug) ? `<a href="/providers/${esc(slug)}/">${esc(m.provider)}</a>` : esc(m.provider);
+    return `      <tr><td>${esc(m.org || m.provider)}</td><td>${provider}</td><td>${model}</td><td class="num">${fmtPrice(pricing.input)}</td><td class="num">${fmtPrice(pricing.output)}</td><td class="num">${fmtPrice(pricing.cache_read)}</td><td class="num">${fmtPrice(eff)}</td></tr>`;
   }).join('\n');
 }
 
 export function renderSeoTable(priced, lastmod, options = {}) {
   const id = options.id || 'cheapest';
   const title = options.title || 'Cheapest LLM API models right now';
-  const intro = options.intro || 'Ranked by effective cost at a typical agentic mix (2.5% input, 97% cached input, 0.5% output). Prices are USD per million tokens. Use the calculator above to compute your exact workload cost.';
+  const intro = options.intro || 'Ranked by effective cost at a typical agentic mix (2.5% input, 97% cached input, 0.5% output). Prices are USD per million tokens. Use the calculator above to estimate your workload cost.';
   return `    <section class="seo-models" id="${esc(id)}" aria-label="${esc(title)}">
       <h2>${esc(title)}</h2>
       <p>${esc(intro)}</p>
       <div class="table-wrap"><table>
         <caption>${esc(title)}</caption>
         <thead><tr><th scope="col">Org</th><th scope="col">Provider</th><th scope="col">Model</th><th scope="col" class="num">Input $/M</th><th scope="col" class="num">Output $/M</th><th scope="col" class="num">Cache $/M</th><th scope="col" class="num">Blended $/M</th></tr></thead>
-        <tbody>${renderTextRows(priced)}</tbody>
+        <tbody>${renderTextRows(priced, options)}</tbody>
       </table></div>
-      <p class="seo-note">Pricing refreshed ${esc(lastmod)} from public provider APIs. Verify prices on the provider's official pricing page before committing spend.</p>
+      <p class="seo-note">Catalog snapshot ${esc(lastmod)} from direct-provider APIs, OpenRouter endpoint data, and maintained fallbacks. See the <a href="/docs/methodology/">sources and calculation rules</a>; verify rates on the provider's official pricing page before committing spend.</p>
     </section>`;
 }
 
@@ -235,14 +239,15 @@ export function calculatorStructuredData({ page, title, description, faq, rows }
   const path = page === 'text' ? '/' : `/${page}`;
   const breadcrumbs = page === 'text'
     ? [{ name: 'Text pricing', path: '/' }]
-    : [{ name: 'Text pricing', path: '/' }, { name: `${page[0].toUpperCase()}${page.slice(1)} pricing`, path }];
+    : [{ name: 'Text pricing', path: '/' }, { name: page === 'benchmarks' ? 'Benchmarks' : `${page[0].toUpperCase()}${page.slice(1)} pricing`, path }];
   const graph = [
     {
       '@type': page === 'text' ? 'WebSite' : 'CollectionPage',
       '@id': SITE + path + '#page',
       url: SITE + path,
-      name: title,
+      name: page === 'text' ? 'TokenWatch' : title,
       description,
+      publisher: { '@type': 'Organization', name: 'WyrdWerk', url: 'https://wyrdwerk.com' },
     },
     breadcrumbSchema(breadcrumbs),
   ];
@@ -326,11 +331,15 @@ export function renderModalityMeta(markup, modality, modelCount) {
 }
 
 export function renderHomepageMeta(markup, modelCount, providerCount) {
-  const title = `LLM API Pricing Comparison — Compare ${modelCount} Models Across ${providerCount} Providers | TokenWatch`;
-  const description = `Know what your AI actually costs before the bill arrives. Compare pay-as-you-go LLM API pricing across ${providerCount} providers and ${modelCount} models — text, image, and video. Enter your token mix or budget and find the cheapest option for your agentic workload.`;
-  const subtitle = `Compare pay-as-you-go LLM API pricing across ${providerCount} providers and ${modelCount} models. Enter your token mix or set a budget — see exactly what your agents cost before you commit.`;
+  const title = `LLM API Pricing Comparison — ${providerCount} Providers | TokenWatch`;
+  const description = `Compare pay-as-you-go LLM API pricing across ${providerCount} providers and ${modelCount} text-model offerings. Calculate token or budget costs for your workload; compare image and video pricing separately.`;
+  const subtitle = `Compare pay-as-you-go LLM API pricing across ${providerCount} providers and ${modelCount} text-model offerings. Enter your token mix or set a budget to estimate your agents' costs.`;
   let out = markup.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`);
   out = replaceMetaContent(out, 'name', 'description', description);
+  out = replaceMetaContent(out, 'property', 'og:title', title);
+  out = replaceMetaContent(out, 'property', 'og:description', description);
+  out = replaceMetaContent(out, 'name', 'twitter:title', title);
+  out = replaceMetaContent(out, 'name', 'twitter:description', description);
   out = replaceSubtitle(out, subtitle);
   return out;
 }
@@ -384,13 +393,16 @@ function hasVideoPrice(model) {
   return (model.pricing || []).some((pricing) => isPositive(pricing.cost_per_second));
 }
 
-export function collectProviderPages({ pricing, imagePricing, videoPricing }, minModels = PROVIDER_MIN_MODELS) {
+// A published set retains established URLs regardless of coverage and prevents
+// new landing pages. Without it, use the original minimum-coverage threshold.
+export function collectProviderPages({ pricing, imagePricing, videoPricing, publishedProviders = null }, minModels = PROVIDER_MIN_MODELS) {
   const providers = new Map();
   const names = new Map((pricing.providers || []).map((provider) => [provider.key, provider.name]));
   const get = (key) => {
     if (!providers.has(key)) providers.set(key, { key, text: [], image: [], video: [] });
     return providers.get(key);
   };
+  for (const key of publishedProviders || []) get(key);
   for (const model of pricing.models || []) if (model.provider && hasTextPrice(model)) get(model.provider).text.push(model);
   for (const model of imagePricing.models || []) if (model.provider && hasImagePrice(model)) get(model.provider).image.push(model);
   for (const model of videoPricing.models || []) if (model.provider && hasVideoPrice(model)) get(model.provider).video.push(model);
@@ -403,7 +415,7 @@ export function collectProviderPages({ pricing, imagePricing, videoPricing }, mi
       ...provider.image.map((model) => `image:${canonicalId(model.id)}`),
       ...provider.video.map((model) => `video:${canonicalId(model.id)}`),
     ]);
-    if (identities.size < minModels) continue;
+    if (publishedProviders ? !publishedProviders.has(provider.key) : identities.size < minModels) continue;
     const slug = providerSlug(provider.key);
     const owner = slugOwners.get(slug);
     if (owner && owner !== provider.key) throw new Error(`generate-seo: provider slug collision: ${owner} and ${provider.key} → ${slug}`);
@@ -420,7 +432,7 @@ export function collectProviderPages({ pricing, imagePricing, videoPricing }, mi
 }
 
 function pageNav() {
-  return '<nav class="tab-nav" aria-label="TokenWatch sections"><a class="tab-link" href="/">Text</a><a class="tab-link" href="/image">Image</a><a class="tab-link" href="/video">Video</a><a class="tab-link" href="/benchmarks">Benchmarks</a><a class="tab-link" href="/providers/">Providers</a><a class="tab-link" href="/docs/methodology/">Methodology</a><a class="tab-link" href="/docs/api/">API</a><a class="tab-link" href="/faq/">FAQ</a></nav>';
+  return '<nav class="tab-nav" aria-label="TokenWatch sections"><a class="tab-link" href="/">Text</a><a class="tab-link" href="/image">Image</a><a class="tab-link" href="/video">Video</a><a class="tab-link" href="/benchmarks">Benchmarks</a><a class="tab-link" href="/models/">Models</a><a class="tab-link" href="/providers/">Providers</a><a class="tab-link" href="/docs/methodology/">Methodology</a><a class="tab-link" href="/docs/api/">API</a><a class="tab-link" href="/faq/">FAQ</a></nav>';
 }
 
 function visibleBreadcrumbs(items) {
@@ -443,11 +455,16 @@ export function renderStaticPage({ title, description, canonicalPath, heading, s
   <meta property="og:title" content="${esc(title)}" />
   <meta property="og:description" content="${esc(description)}" />
   <meta property="og:url" content="${SITE}${esc(canonicalPath)}" />
-  <meta property="og:image" content="${SITE}/og/og-image.svg" />
+  <meta property="og:image" content="${SITE}/og/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="TokenWatch — compare text, image, and video API pricing for your workload" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${esc(title)}" />
   <meta name="twitter:description" content="${esc(description)}" />
-  <meta name="twitter:image" content="${SITE}/og/og-image.svg" />
+  <meta name="twitter:image" content="${SITE}/og/og-image.png" />
+  <meta name="twitter:image:alt" content="TokenWatch — compare text, image, and video API pricing for your workload" />
   <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="/fonts/space-grotesk-600.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="/styles.css?v=dev" />
@@ -460,7 +477,7 @@ export function renderStaticPage({ title, description, canonicalPath, heading, s
     ${visibleBreadcrumbs(breadcrumbs)}
 ${body}
   </main>
-  <footer><p>Pricing changes. Verify rates and policy details with the provider before committing spend.</p><p class="footer-links"><a href="/providers/">Providers</a> · <a href="/docs/methodology/">Methodology</a> · <a href="/docs/api/">API docs</a> · <a href="https://github.com/WyrdWerk/tokenwatch">Source</a></p></footer>
+  <footer><p>Pricing changes. Verify rates and policy details with the provider before committing spend.</p><p class="footer-links"><a href="/models/">Models</a> · <a href="/providers/">Providers</a> · <a href="/docs/methodology/">Methodology</a> · <a href="/docs/api/">API docs</a> · <a href="https://github.com/WyrdWerk/tokenwatch">Source</a></p></footer>
   <script src="/shared-ui.js?v=dev" defer></script>
 ${scripts || ''}</body>
 </html>
@@ -476,12 +493,13 @@ function policyLinks(meta) {
   return links.length ? links.map(([label, url]) => `<a href="${esc(url)}" rel="noopener">${esc(label)}</a>`).join(' · ') : 'No reviewed policy links are currently listed.';
 }
 
-function providerTextSection(provider, lastmod) {
+function providerTextSection(provider, lastmod, links) {
   if (!provider.text.length) return '';
   return renderSeoTable(cheapestModels(provider.text, 25), lastmod, {
+    ...links,
     id: 'text-pricing',
     title: `${provider.name} text-model pricing`,
-    intro: 'Text offerings ranked by the Agentic workload mix. Change the calculator mix for a workload-specific result.',
+    intro: 'Text offerings ranked by the Agentic workload mix (2.5% input, 97% cached input, 0.5% output). Change the calculator mix for a workload-specific estimate.',
   });
 }
 
@@ -496,12 +514,14 @@ function providerVideoSection(provider, lastmod) {
   return renderVideoSeoSection(cheapestVideoModels(provider.video, 15), lastmod).replace('id="video-pricing-guide"', 'id="video-pricing"');
 }
 
-export function renderProviderPage(provider, dates) {
+export function renderProviderPage(provider, dates, links = {}) {
   const path = `/providers/${provider.slug}/`;
-  const description = `Compare ${provider.name} API pricing across ${provider.modelCount} tracked text, image, and video model identities. Review current rates, variants, and available policy links.`;
+  const description = provider.modelCount
+    ? `Compare ${provider.name} API pricing across ${provider.modelCount} tracked text, image, and video model identities. Review current rates, variants, and available policy links.`
+    : `Current pricing for ${provider.name} is unavailable in this TokenWatch catalog snapshot. Review available provider policy links and other providers.`;
   const zdr = provider.meta.retains_prompts === false ? 'Reviewed metadata says prompts are not retained.' : 'TokenWatch does not have a provider-wide zero-retention verdict for this page.';
-  const body = `    <section class="seo-prose"><h2>${esc(provider.name)} pricing overview</h2><p>TokenWatch tracks ${provider.text.length} text, ${provider.image.length} image, and ${provider.video.length} video model records for this provider. ${esc(zdr)}</p><p>${policyLinks(provider.meta)}</p><p><a href="/#provider=${encodeURIComponent(provider.key)}">Open the text calculator filtered to ${esc(provider.name)}</a></p></section>
-${providerTextSection(provider, dates.text)}
+  const body = `    <section class="seo-prose"><h2>${esc(provider.name)} pricing overview</h2>${provider.modelCount ? '' : `<p data-catalog-unavailable>No current priced offerings are available in the catalog snapshot ${esc(dates.text)}. Missing catalog coverage is not a zero price or proof that this provider has closed. This established URL is retained for existing links. <a href="/providers/">Browse other providers</a>.</p>`}<p>TokenWatch tracks ${provider.text.length} text, ${provider.image.length} image, and ${provider.video.length} video model records for this provider. ${esc(zdr)}</p><p>${policyLinks(provider.meta)}</p><p><a href="/#provider=${encodeURIComponent(provider.key)}">Open the text calculator filtered to ${esc(provider.name)}</a></p></section>
+${providerTextSection(provider, dates.text, links)}
 ${providerImageSection(provider, dates.image)}
 ${providerVideoSection(provider, dates.video)}`;
   const structuredData = {
@@ -527,15 +547,15 @@ ${providerVideoSection(provider, dates.video)}`;
 export function renderProviderDirectoryPage(providers) {
   const path = '/providers/';
   const rows = providers.map((provider) => `<tr><td><a href="/providers/${esc(provider.slug)}/">${esc(provider.name)}</a></td><td class="num">${provider.text.length}</td><td class="num">${provider.image.length}</td><td class="num">${provider.video.length}</td><td class="num">${provider.modelCount}</td><td>${provider.meta.retains_prompts === false ? 'Reviewed ZDR' : 'Not confirmed provider-wide'}</td></tr>`).join('\n');
-  const body = `    <section class="seo-prose"><h2>Browse inference providers</h2><p>These pages are generated only for providers with at least ${PROVIDER_MIN_MODELS} distinct priced model identities. Counts combine the text, image, and video catalogs without merging unlike pricing variants.</p></section>
+  const body = `    <section class="seo-prose"><h2>Browse inference providers</h2><p>This directory lists established provider pages. Pages remain available when coverage drops. Counts combine the text, image, and video catalogs without merging unlike pricing variants; zero records means unavailable catalog coverage, not free pricing.</p></section>
     <section class="seo-models" id="provider-directory"><div class="table-wrap"><table><caption>TokenWatch provider directory</caption><thead><tr><th scope="col">Provider</th><th scope="col" class="num">Text records</th><th scope="col" class="num">Image records</th><th scope="col" class="num">Video records</th><th scope="col" class="num">Distinct models</th><th scope="col">Retention metadata</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
-  const description = `Browse ${providers.length} inference providers with substantive pricing coverage across TokenWatch's text, image, and video catalogs.`;
+  const description = `Browse ${providers.length} established inference-provider pages with current catalog coverage and available policy links across TokenWatch's text, image, and video catalogs.`;
   return renderStaticPage({
     title: `LLM, Image & Video API Provider Directory | TokenWatch`,
     description,
     canonicalPath: path,
     heading: 'Inference provider directory',
-    subtitle: `${providers.length} providers with substantive, current pricing coverage`,
+    subtitle: `${providers.length} established provider pages; catalog coverage can change`,
     breadcrumbs: [{ name: 'Text pricing', path: '/' }, { name: 'Providers', path }],
     body,
     structuredData: {
@@ -594,20 +614,24 @@ export function modelPageSlug(canonical) {
 
 /**
  * Group text-catalog offerings by canonical model id and keep only canonical
- * models with substantive multi-provider coverage. `:batch` canonicals are
- * excluded by default (they duplicate the base model page and add little
- * unique content), while quantized canonical ids remain separate pages.
+ * models with substantive multi-provider coverage, or retain the exact
+ * published set even when coverage drops. `:batch` canonicals are excluded by
+ * default; quantized canonical ids remain separate pages.
  *
  * @param {{pricing: object}} catalogs
- * @param {{minProviders?: number, excludeBatch?: boolean}} [options]
+ * @param {{minProviders?: number, excludeBatch?: boolean, publishedModels?: Set<string>}} [options]
  */
-export function collectModelPages({ pricing }, { minProviders = MODEL_MIN_PROVIDERS, excludeBatch = true } = {}) {
+export function collectModelPages({ pricing }, { minProviders = MODEL_MIN_PROVIDERS, excludeBatch = true, publishedModels = null } = {}) {
   const groups = new Map();
+  for (const canonical of publishedModels || []) {
+    if (!excludeBatch || !/:batch$/i.test(canonical)) groups.set(canonical, []);
+  }
   for (const model of pricing.models || []) {
     if (!model.provider || !hasTextPrice(model)) continue;
     const canonical = canonicalId(model.id);
     if (!canonical) continue;
     if (excludeBatch && /:batch$/i.test(canonical)) continue;
+    if (publishedModels && !publishedModels.has(canonical)) continue;
     if (!groups.has(canonical)) groups.set(canonical, []);
     groups.get(canonical).push(model);
   }
@@ -616,7 +640,7 @@ export function collectModelPages({ pricing }, { minProviders = MODEL_MIN_PROVID
   const pages = [];
   for (const [canonical, offerings] of groups) {
     const providers = new Set(offerings.map((m) => m.provider));
-    if (providers.size < minProviders) continue;
+    if (!publishedModels && providers.size < minProviders) continue;
     const slug = modelPageSlug(canonical);
     const owner = slugOwners.get(slug);
     if (owner && owner !== canonical) throw new Error(`generate-seo: model slug collision: ${owner} and ${canonical} → ${slug}`);
@@ -638,7 +662,7 @@ export function collectModelPages({ pricing }, { minProviders = MODEL_MIN_PROVID
       canonical,
       slug,
       name: offerings.find((m) => m.name)?.name || canonical,
-      org: offerings.find((m) => m.org)?.org || offerings[0].provider,
+      org: offerings.find((m) => m.org)?.org || offerings[0]?.provider || '—',
       offerings,
       ranked,
       providerCount: providers.size,
@@ -659,8 +683,7 @@ export function collectModelPages({ pricing }, { minProviders = MODEL_MIN_PROVID
  *
  * `linkedProviderSlugs` is the exact set of providers that have a generated
  * /providers/<slug>/ page. A provider without one renders as plain text —
- * linking it would 404, because provider pages require MODEL_MIN_PROVIDERS
- * distinct priced identities. The row itself is never dropped.
+ * linking it would 404. The row itself is never dropped.
  */
 function renderModelProviderRows(page, linkedProviderSlugs = new Set()) {
   return page.ranked.map(({ m, eff }) => {
@@ -686,6 +709,7 @@ function renderModelProviderRows(page, linkedProviderSlugs = new Set()) {
  */
 export function renderModelPage(page, { lastmod, historyEnabled = true, linkedProviderSlugs = new Set() } = {}) {
   const path = `/models/${page.slug}/`;
+  const providerSuffix = page.providerCount === 1 ? '' : 's';
   const rangeText = page.inputRange && page.outputRange
     ? `Across tracked provider offerings, input runs ${fmtPrice(page.inputRange.min)}–${fmtPrice(page.inputRange.max)} per million tokens and output ${fmtPrice(page.outputRange.min)}–${fmtPrice(page.outputRange.max)} per million tokens.`
     : "Tracked provider offerings do not currently publish a complete input/output range.";
@@ -693,10 +717,12 @@ export function renderModelPage(page, { lastmod, historyEnabled = true, linkedPr
     ? `The cheapest tracked provider offering for a typical agentic mix (2.5% input, 97% cached input, 0.5% output) is ${esc(page.cheapest.provider)} at ${fmtPrice(page.cheapestEff)} per million tokens.`
     : "No provider offering can be priced at the default agentic mix yet.";
   const historyText = historyEnabled ? ' Daily price history is retained for up to 90 days.' : '';
-  const description = `Compare ${esc(page.name)} API pricing across ${page.providerCount} tracked providers. See current input, output, and cache-read rates, the cheapest offering for a cached agent workload, and quantized variants.${historyText}`;
+  const description = page.offerings.length
+    ? `Compare ${esc(page.name)} API pricing across ${page.providerCount} tracked provider${providerSuffix}. See current input, output, and cache-read rates, the cheapest offering for a cached agent workload, and quantized variants.${historyText}`
+    : `Current provider pricing for ${page.name} is unavailable in this TokenWatch catalog snapshot. Browse other models or check the calculator for updated coverage.`;
   const history = historyEnabled ? `\n${renderPriceHistorySection(page)}` : '';
 
-  const body = `    <section class="seo-prose"><h2>${esc(page.name)} pricing across providers</h2><p>${esc(rangeText)} ${esc(cheapestText)}</p><p>Prices are USD per million tokens and reflect each provider offering — they are not a single intrinsic model price. ${page.cacheCoverage} of ${page.offerings.length} offerings publish a cache-read rate; ${page.uptimeCoverage} of ${page.offerings.length} publish a 30-minute endpoint uptime figure.</p><p><a href="/#model=${encodeURIComponent(page.canonical)}">Open the calculator filtered to ${esc(page.name)}</a></p></section>${history}
+  const body = `    <section class="seo-prose"><h2>${esc(page.name)} pricing across providers</h2>${page.offerings.length ? '' : '<p data-catalog-unavailable>No current priced offerings are available in this catalog snapshot. Missing coverage is not a zero price or proof that this model has been retired. This established URL is retained for existing links. <a href="/models/">Browse other models</a>.</p>'}<p>${esc(rangeText)} ${esc(cheapestText)}</p><p>Prices are USD per million tokens and reflect each provider offering — they are not a single intrinsic model price. ${page.cacheCoverage} of ${page.offerings.length} offerings publish a cache-read rate; ${page.uptimeCoverage} of ${page.offerings.length} publish a 30-minute endpoint uptime figure.</p><p><a href="/#model=${encodeURIComponent(page.canonical)}">Open the calculator filtered to ${esc(page.name)}</a></p></section>${history}
     <section class="seo-models" id="model-providers" aria-label="${esc(page.name)} provider pricing">
       <h2>Provider offerings for ${esc(page.name)}</h2>
       <p>Ranked by effective cost at a typical agentic mix. Quantized and tier variants stay separate rows.</p>
@@ -722,11 +748,11 @@ export function renderModelPage(page, { lastmod, historyEnabled = true, linkedPr
     ],
   };
   return renderStaticPage({
-    title: `${page.name} API Pricing Across ${page.providerCount} Providers | TokenWatch`,
+    title: `${page.name} API Pricing Across ${page.providerCount} Provider${providerSuffix} | TokenWatch`,
     description,
     canonicalPath: path,
     heading: `${page.name} API pricing`,
-    subtitle: `${page.providerCount} tracked provider offerings with offering-level rates`,
+    subtitle: `${page.providerCount} tracked provider${providerSuffix}; ${page.offerings.length} priced offering${page.offerings.length === 1 ? '' : 's'} with offering-level rates`,
     breadcrumbs,
     body,
     structuredData,
@@ -741,15 +767,15 @@ export function renderModelPage(page, { lastmod, historyEnabled = true, linkedPr
 export function renderModelDirectoryPage(pages) {
   const path = "/models/";
   const rows = pages.map((page) => `      <tr><td><a href="/models/${esc(page.slug)}/">${esc(page.name)}</a></td><td>${esc(page.org)}</td><td class="num">${page.providerCount}</td><td class="num">${fmtPrice(page.cheapestEff)}</td></tr>`).join('\n');
-  const description = `Browse ${pages.length} canonical models with substantive multi-provider pricing coverage across TokenWatch-tracked providers.`;
-  const body = `    <section class="seo-prose"><h2>Browse models by provider coverage</h2><p>These pages are generated only for canonical models with at least ${MODEL_MIN_PROVIDERS} distinct priced providers. Quantized variants are kept as separate canonical models; <code>:batch</code> variants are excluded.</p></section>
+  const description = `Browse ${pages.length} established canonical-model pages with current provider pricing coverage across TokenWatch-tracked providers.`;
+  const body = `    <section class="seo-prose"><h2>Browse models by provider coverage</h2><p>This directory lists established model comparisons. Pages remain available when coverage drops; missing pricing is unknown, not zero. Quantized variants are kept as separate canonical models; <code>:batch</code> variants are excluded.</p></section>
     <section class="seo-models" id="model-directory"><div class="table-wrap"><table><caption>TokenWatch model directory</caption><thead><tr><th scope="col">Model</th><th scope="col">Org</th><th scope="col" class="num">Providers</th><th scope="col" class="num">Cheapest $/M</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
   return renderStaticPage({
     title: "LLM Model Pricing by Provider Coverage | TokenWatch",
     description,
     canonicalPath: path,
     heading: "Model pricing directory",
-    subtitle: `${pages.length} canonical models with substantive multi-provider coverage`,
+    subtitle: `${pages.length} established model pages; provider coverage can change`,
     breadcrumbs: [{ name: "Text pricing", path: "/" }, { name: "Models", path }],
     body,
     structuredData: {
@@ -815,7 +841,9 @@ export function renderFaqPage({ modelCount, providerCount }) {
 export function buildLlmsTxt({ modelCount, providerCount, imageCount, videoCount, generatedAt }) {
   return `# TokenWatch
 
-> Pay-as-you-go LLM API pricing and practical benchmarks: ${modelCount} text offerings across ${providerCount} providers, ${imageCount} image models, ${videoCount} video models. Data generated ${generatedAt}.
+> Pay-as-you-go LLM API pricing and practical benchmarks: ${modelCount} provider-specific text offerings across ${providerCount} inference providers, ${imageCount} image models, ${videoCount} video models. Text catalog generated ${generatedAt}.
+
+TokenWatch compares published provider prices, not a single intrinsic price for each model. One model can have multiple provider, quantization, and endpoint offerings. Each catalog has its own generated_at timestamp; the text timestamp above does not establish image, video, or benchmark freshness.
 
 ## Pages
 
@@ -823,7 +851,8 @@ export function buildLlmsTxt({ modelCount, providerCount, imageCount, videoCount
 - [Image generation pricing](https://tokenwatch.wyrdwerk.com/image): per-image, per-megapixel, and image-token units kept separate
 - [Video generation pricing](https://tokenwatch.wyrdwerk.com/video): per-second rates by resolution and audio mode
 - [Benchmarks by use case](https://tokenwatch.wyrdwerk.com/benchmarks): agentic coding, reasoning, knowledge work, and UI quality scores joined to cheapest-provider blended pricing
-- [Provider directory](https://tokenwatch.wyrdwerk.com/providers/): policy links, HQ, datacenters, and per-provider model catalogs
+- [Model comparison directory](https://tokenwatch.wyrdwerk.com/models/): established canonical model comparisons with current catalog coverage; batch variants are excluded and quantized IDs remain distinct
+- [Provider directory](https://tokenwatch.wyrdwerk.com/providers/): reviewed policy links and per-provider text, image, and video catalogs
 - [Methodology](https://tokenwatch.wyrdwerk.com/docs/methodology/): sourcing, normalization, dedup, and cost-calculation rules
 - [API docs](https://tokenwatch.wyrdwerk.com/docs/api/): queryable JSON endpoints for all catalogs
 - [FAQ](https://tokenwatch.wyrdwerk.com/faq/): pricing, image/video billing, and plain-language benchmark explainers
@@ -831,35 +860,67 @@ export function buildLlmsTxt({ modelCount, providerCount, imageCount, videoCount
 
 ## API
 
-- JSON endpoints under https://tokenwatch.wyrdwerk.com/api/v1/ — models, providers, orgs, stats, images, videos (no auth, CORS enabled)
+- [API endpoint directory](https://tokenwatch.wyrdwerk.com/api/v1/): models, providers, orgs, stats, images, and videos (no auth, CORS enabled)
+- [OpenAPI specification](https://tokenwatch.wyrdwerk.com/openapi.json): endpoint paths, query parameters, response schemas, and error responses
+- For a model's provider comparison, use /api/v1/models/:canonicalId/providers. Use canonical IDs from the catalog, not display names. Send a mix explicitly when comparing a non-default workload; the API docs describe tokens and mix units.
+- Price history is optional. A history endpoint can return 503 when storage is not enabled; missing history is not a zero price.
 
 ## Data notes
 
-- Prices are USD per million tokens (images/video use native units). Direct-provider APIs take precedence, then OpenRouter de-aggregated, then maintained fallbacks.
-- Benchmark scores come from Artificial Analysis, LiveBench, and Design Arena; they measure models, not providers. "From $/M" on the benchmarks page is the cheapest provider's blended rate at a cached-heavy workload mix.
+- Text prices are USD per million tokens. Image prices use per-image, per-megapixel, or image-token units; video prices use USD per output second. Do not rank incompatible units or resolutions as equivalent.
+- Direct-provider APIs take precedence, then OpenRouter de-aggregated endpoint data, then maintained fallbacks. Verify current rates and billing conditions with the provider before committing spend.
+- Established comparison URLs remain available when provider/model coverage drops. Pages without current priced offerings say so explicitly. Missing coverage is not a zero price or proof of retirement; use the current catalog and provider sources, not old quotes.
+- Static text comparisons use 2.5% input, 97% cached input, 0.5% output. The interactive calculator and benchmarks can use the visitor's saved mix, so the cheapest provider can change. Cite the workload and data date with a price comparison.
+- Fresh-input estimates honor an explicit pricing.input_billing='cache_write' rule, even when the write rate is lower than input. A missing explicit write rate makes fresh-input workloads unpriceable. Otherwise a higher finite positive write rate is used, or normal input applies. Cached reads use cache_read or the original input rate. No separate write charge is added; cache-storage charges are excluded. This is an estimate, not an exact invoice.
+- Benchmark scores come from Artificial Analysis, LiveBench, and Design Arena; they measure models, not providers. "From $/M" is workload-specific blended pricing, not the raw input tariff. Missing benchmark or performance measurements are unknown, not zero.
+- ZDR and other policy fields reflect endpoint data or reviewed provider metadata. Missing fields do not establish a privacy guarantee; consult the provider's current policy and the methodology.
 `;
 }
 
-export function renderMethodologyPage({ modelCount, providerCount, generatedAt }) {
+export function renderMethodologyPage({ modelCount, providerCount, generatedAt, models = [], linkedModelPages = new Map() }) {
   const path = '/docs/methodology/';
   const description = 'How TokenWatch sources, normalizes, deduplicates, enriches, and compares pay-as-you-go AI inference pricing.';
+  const workloadRows = [
+    ['Cache-heavy agents', AGENTIC_MIX],
+    ['Uncached retrieval/RAG', { inputPct: 80, cacheReadPct: 0, outputPct: 20 }],
+    ['Balanced uncached', { inputPct: 50, cacheReadPct: 0, outputPct: 50 }],
+    ['Output-heavy generation', { inputPct: 10, cacheReadPct: 0, outputPct: 90 }],
+  ].map(([name, mix]) => {
+    const cheapest = models.filter((m) => m.pricing && (m.pricing.input > 0 || m.pricing.output > 0))
+      .map((m) => ({ m, eff: blendedRate(m.pricing, mix) }))
+      .filter(({ eff }) => Number.isFinite(eff) && eff > 0)
+      .sort((a, b) => a.eff - b.eff)[0];
+    if (!cheapest) return '';
+    const slug = linkedModelPages.get(canonicalId(cheapest.m.id));
+    const label = esc(displayName(cheapest.m));
+    const model = slug ? `<a href="/models/${esc(slug)}/">${label}</a>` : label;
+    return `<tr><td>${esc(name)}</td><td>${mix.inputPct}% / ${mix.cacheReadPct}% / ${mix.outputPct}%</td><td>${model}</td><td>${esc(cheapest.m.provider)}</td><td class="num">${fmtPrice(cheapest.eff)}</td></tr>`;
+  }).join('\n');
   const body = `    <article class="seo-prose">
       <h2>How TokenWatch builds a comparable catalog</h2>
       <p>The current text catalog contains ${modelCount} provider-specific offerings across ${providerCount} inference providers. Its source timestamp is <time datetime="${esc(generatedAt)}">${esc(generatedAt)}</time>.</p>
+      <p>An offering is a model-and-provider combination, not a unique model. Quantization and endpoint variants remain distinct. See the <a href="/models/">model directory</a> for comparisons across providers.</p>
       <h2>Source order</h2>
       <p>Direct provider APIs are the first source because a provider is authoritative for its own prices. OpenRouter endpoint data comes next and is split into provider-specific rows. CSV and maintained fallback records fill gaps after live sources.</p>
+      <p>Inspect the <a href="/pricing.json">text catalog</a>, <a href="/image-pricing.json">image catalog</a>, and <a href="/video-pricing.json">video catalog</a> for published rates and each catalog's own generation timestamp. The <a href="https://github.com/WyrdWerk/tokenwatch/blob/main/scripts/fetch-pricing.mjs">text fetcher</a> and <a href="https://github.com/WyrdWerk/tokenwatch/blob/main/scripts/fetch-fal.mjs">fal.ai fetcher</a> document the provider source URLs and fallback records. Image/video coverage also uses <a href="https://openrouter.ai/">OpenRouter</a> and <a href="https://fal.ai/models">fal.ai</a>.</p>
       <h2>Price normalization</h2>
       <p>Text prices are stored as US dollars per million tokens. Sources quoted per token are multiplied by one million; Wafer cents-per-million values are divided by 100. Image prices keep their native flat-image, megapixel, or image-token units. Video prices are normalized to dollars per second.</p>
       <h2>Model identity and provider precedence</h2>
       <p>The deduplication key combines a canonical model ID with a normalized provider. Provider prefixes, dated aliases, and selected routing suffixes can normalize to one identity. Quantization suffixes remain part of the key, so FP8, NVFP4, and INT4 rows stay separate.</p>
       <h2>Cost calculations</h2>
       <p>Blended $/M and total cost use the same input, cached-input, and output percentages. A provider's explicit default cache-write billing rule takes precedence, even when its write tariff is lower than input; a missing explicit tariff makes fresh-input workloads unpriceable. Without that rule, fresh input uses a finite positive cache-write rate only when higher than normal input pricing; otherwise normal input applies. Cached reads use the published cache-read price or the original input rate. There is no separate write charge. Additional cache-storage charges are excluded, so this simplified estimate is not an exact bill.</p>
+      <h2>Why the cheapest offering depends on the workload</h2>
+      <p>These illustrative token mixes are not measured averages or quality recommendations. Retrieval-augmented generation (RAG) supplies retrieved context as input; caching that context can change the ranking. Each row below selects the lowest positive computable blended rate in this text snapshot, not necessarily a model capable of your task. Free/unpriced offerings are excluded. Promotions can affect the result.</p>
+      ${workloadRows ? `<div class="table-wrap"><table><caption>Illustrative workload costs — USD per million total tokens, snapshot ${esc(generatedAt)}</caption><thead><tr><th scope="col">Example workload</th><th scope="col">Input / cached / output</th><th scope="col">Lowest-cost offering</th><th scope="col">Provider</th><th scope="col">Blended $/M</th></tr></thead><tbody>${workloadRows}</tbody></table></div>` : ''}
+      <p>For one million total tokens, cost is input rate × input share + cache-read rate × cached share + output rate × output share, using the fresh-input rule above. Monthly Volume multiplies an entered daily volume by 30. Retries, tool calls, storage, tax, and other charges need separate consideration. Use the <a href="/">calculator</a> to compare suitable models at your own mix; a 97% cached mix is inappropriate when you cannot reuse most input.</p>
       <h2>Privacy and policy data</h2>
       <p>ZDR tags come from endpoint-level OpenRouter data or reviewed provider metadata. Missing metadata does not become a positive or negative privacy claim. Provider pages link to reviewed policies when TokenWatch has them.</p>
       <h2>Benchmarks and performance</h2>
       <p>Quality indices and design-arena scores are sidecar enrichment, not prices. Variant matching is conservative to reduce false attribution. Throughput is displayed separately because speed, quality, context limits, and cost answer different questions.</p>
       <h2>Known limits</h2>
       <p>Provider catalogs can change between refreshes. Promotions may expire, regional prices may differ, and unpublished cache prices are unknown rather than zero. Treat TokenWatch as a comparison and estimation tool, then confirm a shortlisted provider's current terms.</p>
+      <h2>Maintainer and corrections</h2>
+      <p>TokenWatch is an open-source project by <a href="https://wyrdwerk.com">WyrdWerk</a>, maintained by <a href="https://www.linkedin.com/in/yash-jain-65295511b/">Yash Jain</a>. Pricing tables rank by published rates and the stated workload, not by subscription badges. Report stale prices, incorrect model identities, or policy corrections through <a href="https://github.com/WyrdWerk/tokenwatch/issues">GitHub issues</a>, with the affected offering, source URL, and observation date. Do not include API keys or private prompts.</p>
     </article>`;
   return renderStaticPage({
     title: 'LLM API Pricing Methodology & Data Sources | TokenWatch',
@@ -869,7 +930,7 @@ export function renderMethodologyPage({ modelCount, providerCount, generatedAt }
     subtitle: 'How provider-specific prices become comparable TokenWatch records',
     breadcrumbs: [{ name: 'Text pricing', path: '/' }, { name: 'Methodology', path }],
     body,
-    structuredData: { '@context': 'https://schema.org', '@graph': [{ '@type': 'TechArticle', url: SITE + path, headline: 'TokenWatch pricing methodology and data sources', description }, breadcrumbSchema([{ name: 'Text pricing', path: '/' }, { name: 'Methodology', path }])] },
+    structuredData: { '@context': 'https://schema.org', '@graph': [{ '@type': 'TechArticle', url: SITE + path, headline: 'TokenWatch pricing methodology and data sources', description, author: { '@type': 'Person', name: 'Yash Jain', url: 'https://www.linkedin.com/in/yash-jain-65295511b/' }, publisher: { '@type': 'Organization', name: 'WyrdWerk', url: 'https://wyrdwerk.com' } }, breadcrumbSchema([{ name: 'Text pricing', path: '/' }, { name: 'Methodology', path }])] },
   });
 }
 
@@ -964,14 +1025,14 @@ export function buildOpenApiDocument() {
 }
 
 export function renderExploreLinks() {
-  return `    <section class="seo-links" aria-label="Explore TokenWatch"><h2>Explore TokenWatch data</h2><p><a href="/benchmarks">Compare benchmarks by use case</a> · <a href="/providers/">Browse inference providers</a> · <a href="/docs/methodology/">Read the pricing methodology</a> · <a href="/docs/api/">Use the pricing API</a> · <a href="/faq/">Read the FAQ</a></p></section>`;
+  return `    <section class="seo-links" aria-label="Explore TokenWatch"><h2>Explore TokenWatch data</h2><p><a href="/benchmarks">Compare benchmarks by use case</a> · <a href="/models/">Compare models across providers</a> · <a href="/providers/">Browse inference providers</a> · <a href="/docs/methodology/">Read the pricing methodology</a> · <a href="/docs/api/">Use the pricing API</a> · <a href="/faq/">Read the FAQ</a></p></section>`;
 }
 
 // Crawlable top-models table for /benchmarks — the page's interactive table is
 // client-rendered, so crawlers (and no-JS visitors) need a static snapshot.
 // Ranked by AA intelligence (fallback: LiveBench reasoning), with scores from
 // every source and the cheapest-provider blended price at the default mix.
-export function renderBenchmarksSeoSection(bench) {
+export function renderBenchmarksSeoSection(bench, linkedModelPages = new Map()) {
   const ranked = [...bench.models]
     .filter((m) => m.scores.aa_intelligence != null || m.scores.livebench_reasoning != null)
     .sort((a, b) =>
@@ -979,7 +1040,11 @@ export function renderBenchmarksSeoSection(bench) {
       (a.scores.aa_intelligence ?? a.scores.livebench_reasoning ?? -1))
     .slice(0, 25);
   const fmt = (v) => (v == null ? '—' : String(Math.round(v * 10) / 10));
-  const rows = ranked.map((m) => `          <tr><td>${esc(m.name)}</td><td>${esc(m.org || '—')}</td><td>${fmt(m.scores.aa_intelligence)}</td><td>${fmt(m.scores.aa_agentic)}</td><td>${fmt(m.scores.aa_coding)}</td><td>${fmt(m.scores.livebench_reasoning)}</td><td>${fmt(m.scores.design_arena_elo)}</td><td>$${m.from.blended_per_m}</td></tr>`).join('\n');
+  const rows = ranked.map((m) => {
+    const slug = linkedModelPages.get(canonicalId(m.id));
+    const model = slug ? `<a href="/models/${esc(slug)}/">${esc(m.name)}</a>` : esc(m.name);
+    return `          <tr><td>${model}</td><td>${esc(m.org || '—')}</td><td>${fmt(m.scores.aa_intelligence)}</td><td>${fmt(m.scores.aa_agentic)}</td><td>${fmt(m.scores.aa_coding)}</td><td>${fmt(m.scores.livebench_reasoning)}</td><td>${fmt(m.scores.design_arena_elo)}</td><td>$${m.from.blended_per_m}</td></tr>`;
+  }).join('\n');
   return `    <section class="seo-models" id="crawlable-benchmarks" aria-label="Top benchmarked models">
       <h2>Top benchmarked models and their cheapest blended price</h2>
       <p>Snapshot of the 25 highest-ranked models (Artificial Analysis Intelligence Index, ${bench.model_count} benchmarked models total). The interactive table above adds use-case tabs, live token-mix pricing, and capability-per-dollar value ranking.</p>
@@ -988,7 +1053,7 @@ export function renderBenchmarksSeoSection(bench) {
         <tbody>
 ${rows}
         </tbody></table></div>
-      <p class="seo-note">Scores from <a href="https://artificialanalysis.ai/" rel="noopener">Artificial Analysis</a>, <a href="https://livebench.ai/" rel="noopener">LiveBench</a> and <a href="https://www.designarena.ai/" rel="noopener">Design Arena</a>. "From $/M" is the cheapest provider's blended rate at a cached-heavy workload mix. See the <a href="/faq/#benchmarks">benchmark FAQ</a> for what each score measures.</p>
+      <p class="seo-note">Catalog snapshot <time datetime="${esc(bench.generated_at)}">${esc(bench.generated_at)}</time>. Scores from <a href="https://artificialanalysis.ai/" rel="noopener">Artificial Analysis</a>, <a href="https://livebench.ai/" rel="noopener">LiveBench</a> and <a href="https://www.designarena.ai/" rel="noopener">Design Arena</a>. "From $/M" is the cheapest provider's blended rate at 2.5% input, 97% cached input, 0.5% output. This is a catalog snapshot, not the date every benchmark was measured. See the <a href="/faq/#benchmarks">benchmark FAQ</a> for what each score measures.</p>
     </section>`;
 }
 
@@ -1007,5 +1072,7 @@ export function buildSitemap(entries) {
 }
 
 export function buildRobots() {
-  return `User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${SITE}/sitemap.xml\n`;
+  // Public data is crawlable so search engines can read response-level noindex.
+  // This does not change any crawler-specific AI-training preference.
+  return `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`;
 }

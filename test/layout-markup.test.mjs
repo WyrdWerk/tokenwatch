@@ -206,6 +206,7 @@ test('status text tokens meet WCAG AA contrast in both themes', async () => {
   const light = {
     green: themeVar(css, ':root {', 'green'),
     yellow: themeVar(css, ':root {', 'yellow'),
+    blue: themeVar(css, ':root {', 'blue'),
     accent: themeVar(css, ':root {', 'accent'),
     onAccent: themeVar(css, ':root {', 'on-accent'),
     accentText: themeVar(css, ':root {', 'accent-text'),
@@ -213,6 +214,7 @@ test('status text tokens meet WCAG AA contrast in both themes', async () => {
   const dark = {
     green: themeVar(css, '[data-theme="dark"] {', 'green'),
     yellow: themeVar(css, '[data-theme="dark"] {', 'yellow'),
+    blue: themeVar(css, '[data-theme="dark"] {', 'blue'),
     accent: themeVar(css, '[data-theme="dark"] {', 'accent'),
     onAccent: themeVar(css, '[data-theme="dark"] {', 'on-accent'),
     accentText: themeVar(css, '[data-theme="dark"] {', 'accent-text'),
@@ -223,12 +225,15 @@ test('status text tokens meet WCAG AA contrast in both themes', async () => {
     ['light pct-warn yellow on surface', light.yellow, '#FFFFFF', 4.5],
     ['light promo badge text on tint', light.yellow, tint(light.yellow, '#FFFFFF', 0.2), 4.5],
     ['light zdr badge text on tint', light.green, tint(light.green, '#FFFFFF', 0.2), 4.5],
+    ['light subscription badge text on tint', light.blue, tint(light.blue, '#FFFFFF', 0.2), 4.5],
+    ['light subscription badge on background tint', light.blue, tint(light.blue, '#F8F5F0', 0.2), 4.5],
     ['light selected chip on accent', light.onAccent, light.accent, 4.5],
     ['light accent text on surface', light.accentText, '#FFFFFF', 4.5],
     ['dark green on surface', dark.green, '#242020', 4.5],
     ['dark yellow on surface', dark.yellow, '#242020', 4.5],
     ['dark promo badge text on tint', dark.yellow, tint(dark.yellow, '#242020', 0.2), 4.5],
     ['dark zdr badge text on tint', dark.green, tint(dark.green, '#242020', 0.2), 4.5],
+    ['dark subscription badge text on tint', dark.blue, tint(dark.blue, '#242020', 0.2), 4.5],
     ['dark selected chip on accent', dark.onAccent, dark.accent, 4.5],
     ['dark accent text on surface', dark.accentText, '#242020', 4.5],
     ['dark accent text on bg', dark.accentText, '#1a1612', 4.5],
@@ -237,6 +242,15 @@ test('status text tokens meet WCAG AA contrast in both themes', async () => {
     const ratio = contrast(fg, bg);
     assert.ok(ratio >= min, `${label}: ${fg} on ${bg} is ${ratio.toFixed(2)} (< ${min})`);
   }
+});
+
+test('history error text meets AA and its already-dim detail is not faded again', async () => {
+  const css = await read('public/styles.css');
+  const error = css.match(/\.tw-spark\[data-state="error"\] \.tw-spark-message \{([\s\S]*?)\}/)[1];
+  const color = error.match(/\bcolor:\s*(#[a-f0-9]{6})/i)[1];
+  assert.ok(contrast(color, '#F3F7FB') >= 4.5, 'light error text must clear 4.5:1');
+  const detail = css.match(/\.tw-spark-detail \{([\s\S]*?)\}/)[1];
+  assert.doesNotMatch(detail, /opacity:\s*0\./, 'opacity must not reduce caption contrast');
 });
 
 test('styles.css supports the compact layout contracts', async () => {

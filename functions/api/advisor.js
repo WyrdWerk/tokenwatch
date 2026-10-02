@@ -7,6 +7,7 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Advisor-Session',
   'Content-Type': 'application/json',
+  'X-Robots-Tag': 'noindex',
 };
 
 // In-memory rate map per edge isolate
@@ -100,20 +101,21 @@ export async function onRequestPost(context) {
       const kData = await knowledgeRes.json();
       
       const zdrTopList = (kData.top_zdr_models || []).slice(0, 25).map(m => {
-        const intel = m.scores?.intelligence ? `Intel:${m.scores.intelligence}` : 'Intel:58+';
-        const coding = m.scores?.coding ? `Coding:${m.scores.coding}` : 'Coding:75+';
+        const intel = `Intel:${m.scores?.intelligence ?? 'unknown'}`;
+        const coding = `Coding:${m.scores?.coding ?? 'unknown'}`;
         return `- ${m.name || m.id} via ${m.provider} (${m.org}): $${m.blended}/M blended [ZDR:Yes, ${intel}, ${coding}]`;
       }).join('\n');
 
       const providerPolicies = (kData.providers || []).slice(0, 30).map(p => {
-        return `- ${p.id} (HQ:${p.headquarters}): Privacy: ${p.privacy || 'N/A'}, ToS: ${p.tos || 'N/A'}, ZDR:${p.zdr ? 'Yes' : 'No'}`;
+        return `- ${p.id} (HQ:${p.headquarters}): Privacy: ${p.privacy || 'N/A'}, ToS: ${p.tos || 'N/A'}, ZDR:${p.zdr ? 'Yes' : 'Not confirmed'}`;
       }).join('\n');
 
       knowledgeSnippet = `LIVE DATASET EVIDENCE (TokenWatch Knowledge Base):
-- Total Live Models: ${kData.stats?.total_text_models} (${kData.stats?.total_zdr_models} with Zero Data Retention).
+- Total Live Text Offerings: ${kData.stats?.total_text_models} (${kData.stats?.total_zdr_models} tagged Zero Data Retention).
 - Total Providers Tracked: ${kData.stats?.total_providers}.
 
-TOP CHEAPEST ZERO DATA RETENTION (ZDR) MODELS:
+TOP CHEAPEST ZERO DATA RETENTION (ZDR) OFFERINGS:
+These blended rates use 50% input, 0% cached input, 50% output at published input/output prices. Cache-write and storage charges are excluded. The calculator and benchmark page use their own stated mixes; do not compare these rates without matching the mix.
 ${zdrTopList}
 
 PROVIDER POLICY & PRIVACY URLS:
@@ -130,7 +132,7 @@ Created by Yash Jain (Founder & Principal at WyrdWerk LLP, https://wyrdwerk.com,
 
 YOUR MISSION:
 - You are a friendly, conversational AI consultant helping visitors compare LLM inference costs, benchmark quality (LiveBench / Artificial Analysis), Zero Data Retention (ZDR) privacy compliance, and provider policy URLs.
-- Always answer conversationally and directly. Do not state you lack data—rely on the LIVE DATASET EVIDENCE below.
+- Always answer conversationally and directly using the supplied dataset evidence. Acknowledge missing or unavailable data; never invent benchmark scores, prices, or privacy guarantees. Unknown scores are not zero, and unconfirmed ZDR does not establish retention. Confirm current provider terms before making a privacy recommendation.
 
 ${knowledgeSnippet}
 

@@ -76,19 +76,7 @@ function dateOnly(value, label) {
   return date;
 }
 
-function newestDate(dates) {
-  return [...dates].sort().at(-1);
-}
-
-function providerLastmod(provider, dates) {
-  const represented = [];
-  if (provider.text.length) represented.push(dates.text);
-  if (provider.image.length) represented.push(dates.image);
-  if (provider.video.length) represented.push(dates.video);
-  return newestDate(represented);
-}
-
-async function stageProviderPages(providers, dates) {
+async function stageProviderPages(providers, dates, links) {
   const target = join(PUBLIC, 'providers');
   const stage = join(PUBLIC, `.providers-${process.pid}.tmp`);
   await rm(stage, { recursive: true, force: true });
@@ -97,7 +85,7 @@ async function stageProviderPages(providers, dates) {
   for (const provider of providers) {
     const dir = join(stage, provider.slug);
     await mkdir(dir, { recursive: true });
-    await writeFile(join(dir, 'index.html'), renderProviderPage(provider, dates));
+    await writeFile(join(dir, 'index.html'), renderProviderPage(provider, dates, links));
   }
 
   const backup = join(PUBLIC, `.providers-${process.pid}.bak`);
@@ -130,7 +118,9 @@ async function stageModelPages(pages, dates, linkedProviderSlugs) {
     await mkdir(dir, { recursive: true });
     // Only providers with a generated page are linked; the rest render as plain
     // text so a model page can never emit a 404 link.
-    await writeFile(join(dir, 'index.html'), renderModelPage(page, { lastmod: dates.text, linkedProviderSlugs }));
+    // Production history storage is not enabled. Keep the local renderer and
+    // state gallery usable without advertising an unavailable production API.
+    await writeFile(join(dir, 'index.html'), renderModelPage(page, { lastmod: dates.text, linkedProviderSlugs, historyEnabled: false }));
   }
 
   const backup = join(PUBLIC, `.models-${process.pid}.bak`);
@@ -151,19 +141,19 @@ async function stageModelPages(pages, dates, linkedProviderSlugs) {
   if (movedOld) await rm(backup, { recursive: true, force: true });
 }
 
-function renderHomepage(markup, pricing, rows, dates) {
+function renderHomepage(markup, pricing, rows, dates, links) {
   const modelCount = pricing.models.length;
   const providerCount = new Set(pricing.models.map((model) => model.provider)).size;
   const faq = homeFaqItems(modelCount, providerCount);
   let out = renderCounts(markup, modelCount, providerCount);
   out = renderHomepageMeta(out, modelCount, providerCount);
-  out = replaceSection(out, 'seo-models', renderSeoTable(rows, dates.text));
+  out = replaceSection(out, 'seo-models', renderSeoTable(rows, dates.text, links));
   out = replaceSection(out, 'seo-faq', renderFaqPointerSection());
   out = replaceSection(out, 'seo-links', renderExploreLinks());
   out = replaceStructuredData(out, calculatorStructuredData({
     page: 'text',
-    title: `LLM API Pricing Comparison — ${modelCount} Models Across ${providerCount} Providers`,
-    description: `Compare pay-as-you-go LLM API pricing across ${providerCount} providers and ${modelCount} models using workload-specific token costs.`,
+    title: `LLM API Pricing Comparison — ${providerCount} Providers`,
+    description: `Compare pay-as-you-go LLM API pricing across ${providerCount} providers and ${modelCount} text-model offerings using workload-specific token costs.`,
     rows,
   }));
   return out;
@@ -218,13 +208,20 @@ export async function main() {
   };
   const textRows = cheapestModels(pricing.models, TOP_N);
   const videoRows = cheapestVideoModels(videoPricing.models, TOP_N);
-  const providerPages = collectProviderPages({ pricing, imagePricing, videoPricing });
+  // Freeze established URLs during the discovery-fix phase. Coverage changes
+  // update a page's content, not its existence; new landing pages need approval.
+  const published = JSON.parse(await readFile(join(__dirname, '..', 'data', 'seo-published-pages.json'), 'utf8'));
+  const providerPages = collectProviderPages({ pricing, imagePricing, videoPricing, publishedProviders: new Set(published.providers) });
   if (!providerPages.length) throw new Error('generate-seo: provider eligibility produced zero pages');
-  const modelPages = collectModelPages({ pricing });
+  const modelPages = collectModelPages({ pricing }, { publishedModels: new Set(published.models) });
   if (!modelPages.length) throw new Error('generate-seo: model eligibility produced zero pages');
+  const links = {
+    linkedModelPages: new Map(modelPages.map((page) => [page.canonical, page.slug])),
+    linkedProviderSlugs: providerPageSlugs(providerPages),
+  };
 
   const rendered = {
-    index: renderHomepage(indexMarkup, pricing, textRows, dates),
+    index: renderHomepage(indexMarkup, pricing, textRows, dates, links),
     image: renderImagePage(imageMarkup, imagePricing, dates),
     video: renderVideoPage(videoMarkup, videoPricing, videoRows, dates),
   };
@@ -234,7 +231,7 @@ export async function main() {
 
   const modelCount = pricing.models.length;
   const providerCount = new Set(pricing.models.map((model) => model.provider)).size;
-  const methodology = renderMethodologyPage({ modelCount, providerCount, generatedAt: pricing.generated_at });
+  const methodology = renderMethodologyPage({ modelCount, providerCount, generatedAt: pricing.generated_at, models: pricing.models, linkedModelPages: links.linkedModelPages });
   const apiDocs = renderApiDocsPage();
   const openApi = `${JSON.stringify(buildOpenApiDocument(), null, 2)}\n`;
   const faqPage = renderFaqPage({ modelCount, providerCount });
@@ -243,29 +240,36 @@ export async function main() {
   // regenerate from benchmarks.json like the calculator pages.
   const benchData = JSON.parse(await readFile(join(PUBLIC, 'benchmarks.json'), 'utf8'));
   const benchmarksMarkup = await readFile(join(PUBLIC, 'benchmarks.html'), 'utf8');
-  let benchmarksOut = replaceSection(benchmarksMarkup, 'seo-models', renderBenchmarksSeoSection(benchData));
+  let benchmarksOut = replaceSection(benchmarksMarkup, 'seo-models', renderBenchmarksSeoSection(benchData, links.linkedModelPages));
   benchmarksOut = replaceSection(benchmarksOut, 'seo-faq', renderFaqPointerSection());
+  benchmarksOut = replaceStructuredData(benchmarksOut, calculatorStructuredData({
+    page: 'benchmarks',
+    title: 'LLM benchmarks by use case',
+    description: 'Practical LLM benchmarks joined to pay-as-you-go pricing. Compare models on agentic coding, reasoning, knowledge work and UI quality — with blended cost per million tokens from the cheapest provider.',
+  }));
   if (!benchmarksOut.includes('id="crawlable-benchmarks"') || !benchmarksOut.includes('href="/faq/')) {
     throw new Error('generate-seo: benchmarks page missing crawlable content or FAQ pointer');
   }
+  // generated_at records a fetch, not a meaningful page-content change. Omit
+  // optional lastmod until actual change times are tracked; do not invent them.
   const sitemapEntries = [
-    { path: '/', lastmod: dates.text, changefreq: 'daily', priority: '1.0' },
-    { path: '/image', lastmod: dates.image, changefreq: 'daily', priority: '0.8' },
-    { path: '/video', lastmod: dates.video, changefreq: 'daily', priority: '0.8' },
-    { path: '/providers/', lastmod: newestDate(Object.values(dates)), changefreq: 'daily', priority: '0.8' },
-    ...providerPages.map((provider) => ({ path: `/providers/${provider.slug}/`, lastmod: providerLastmod(provider, dates), changefreq: 'daily', priority: '0.7' })),
-    { path: '/models/', lastmod: dates.text, changefreq: 'daily', priority: '0.7' },
-    ...modelPages.map((page) => ({ path: `/models/${page.slug}/`, lastmod: dates.text, changefreq: 'daily', priority: '0.6' })),
-    { path: '/benchmarks', lastmod: dates.text, changefreq: 'daily', priority: '0.8' },
-    { path: '/docs/methodology/', lastmod: dates.text, changefreq: 'monthly', priority: '0.6' },
+    { path: '/', changefreq: 'daily', priority: '1.0' },
+    { path: '/image', changefreq: 'daily', priority: '0.8' },
+    { path: '/video', changefreq: 'daily', priority: '0.8' },
+    { path: '/providers/', changefreq: 'daily', priority: '0.8' },
+    ...providerPages.map((provider) => ({ path: `/providers/${provider.slug}/`, changefreq: 'daily', priority: '0.7' })),
+    { path: '/models/', changefreq: 'daily', priority: '0.7' },
+    ...modelPages.map((page) => ({ path: `/models/${page.slug}/`, changefreq: 'daily', priority: '0.6' })),
+    { path: '/benchmarks', changefreq: 'daily', priority: '0.8' },
+    { path: '/docs/methodology/', changefreq: 'monthly', priority: '0.6' },
     { path: '/docs/api/', changefreq: 'monthly', priority: '0.6' },
-    { path: '/faq/', lastmod: dates.text, changefreq: 'weekly', priority: '0.6' },
+    { path: '/faq/', changefreq: 'weekly', priority: '0.6' },
   ];
   const sitemap = buildSitemap(sitemapEntries);
   const robots = buildRobots();
 
-  await stageProviderPages(providerPages, dates);
-  await stageModelPages(modelPages, dates, providerPageSlugs(providerPages));
+  await stageProviderPages(providerPages, dates, links);
+  await stageModelPages(modelPages, dates, links.linkedProviderSlugs);
   await Promise.all([
     writeAtomic(join(PUBLIC, 'index.html'), rendered.index),
     writeAtomic(join(PUBLIC, 'image.html'), rendered.image),

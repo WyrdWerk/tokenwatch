@@ -54,6 +54,70 @@ test('CORS headers present on all responses', async () => {
   assert.equal(headers.get('Content-Type'), 'application/json');
 });
 
+test('API success, errors, optional history, and preflight expose noindex without blocking data access', async () => {
+  for (const [path, status] of [
+    ['/api/v1/stats', 200], ['/api/v1/unknown', 404],
+    ['/api/v1/models/gemini-3.1-pro/history', 503],
+  ]) {
+    const response = await onRequestGet(makeContext(path));
+    assert.equal(response.status, status);
+    assert.equal(response.headers.get('X-Robots-Tag'), 'noindex');
+    assert.equal(response.headers.get('Access-Control-Allow-Origin'), '*');
+  }
+  assert.equal((await onRequestOptions()).headers.get('X-Robots-Tag'), 'noindex');
+  const advisor = await import('../functions/api/advisor.js');
+  assert.equal((await advisor.onRequestOptions()).headers.get('X-Robots-Tag'), 'noindex');
+  const error = await advisor.onRequestPost({
+    request: new Request('https://tokenwatch.test/api/advisor', { method: 'POST', body: 'not json' }),
+    env: {},
+  });
+  assert.ok(error.status >= 400);
+  assert.equal(error.headers.get('X-Robots-Tag'), 'noindex');
+});
+
+test('Advisor evidence preserves zero scores, labels unknowns, and states its price mix', async (t) => {
+  const advisor = await import('../functions/api/advisor.js');
+  let prompt;
+  t.mock.method(globalThis, 'fetch', async (_url, options) => {
+    prompt = JSON.parse(options.body).messages[0].content;
+    return Response.json({ choices: [{ message: { content: 'Fixture reply' } }] });
+  });
+  const response = await advisor.onRequestPost({
+    request: new Request('https://tokenwatch.test/api/advisor', {
+      method: 'POST',
+      headers: { 'CF-Connecting-IP': '198.51.100.200', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: 'Compare these offerings.' }] }),
+    }),
+    env: {
+      INFERX_BASE_URL: 'https://advisor.invalid/v1', INFERX_API_KEY: 'test-placeholder',
+      ASSETS: { fetch: async (url) => {
+        assert.equal(new URL(url).pathname, '/advisor-knowledge.json');
+        return Response.json({
+          stats: { total_text_models: 3, total_zdr_models: 3, total_providers: 2 },
+          top_zdr_models: [
+            { name: 'Unknown model', provider: 'a', blended: 0.1, scores: null },
+            { name: 'Zero model', provider: 'a', blended: 0.2, scores: { intelligence: 0, coding: 0 } },
+            { name: 'Partial model', provider: 'b', blended: 0.3, scores: { intelligence: 61 } },
+          ],
+          providers: [{ id: 'a', zdr: true }, { id: 'b', zdr: false }],
+        });
+      } },
+    },
+  });
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('X-Robots-Tag'), 'noindex');
+  assert.equal((await response.json()).reply, 'Fixture reply');
+  assert.match(prompt, /Unknown model[^\n]+Intel:unknown, Coding:unknown/);
+  assert.match(prompt, /Zero model[^\n]+Intel:0, Coding:0/);
+  assert.match(prompt, /Partial model[^\n]+Intel:61, Coding:unknown/);
+  assert.match(prompt, /- a[^\n]+ZDR:Yes/);
+  assert.match(prompt, /- b[^\n]+ZDR:Not confirmed/);
+  assert.match(prompt, /Total Live Text Offerings: 3/);
+  assert.match(prompt, /50% input, 0% cached input, 50% output/);
+  assert.match(prompt, /Acknowledge missing or unavailable data/);
+  assert.doesNotMatch(prompt, /Intel:58\+|Coding:75\+|Do not state you lack data/);
+});
+
 test('onRequestOptions returns empty body with CORS headers', async () => {
   const res = await onRequestOptions();
   assert.equal(res.status, 200);
