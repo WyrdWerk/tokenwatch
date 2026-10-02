@@ -20,10 +20,12 @@ function extractJsonParseBlob(src, constName) {
 const STARRED = ['get_view', 'set_workload', 'set_filters', 'compare_models', 'explain_ranking', 'get_share_url'];
 const NAME_RE = /^[A-Za-z0-9_.-]{1,128}$/;
 
-test('text WebMCP tool defs: 20 tools, valid names, additionalProperties false', async () => {
+test('text WebMCP tool defs: 19 tools, valid names, additionalProperties false', async () => {
   const src = await readFile(join(ROOT, 'public/webmcp.js'), 'utf8');
   const defs = extractJsonParseBlob(src, 'TEXT_TOOL_DEFS');
-  assert.equal(defs.length, 20, 'text page registers 20 tools');
+  assert.equal(defs.length, 19, 'text page registers 19 tools');
+  assert.ok(!defs.some((def) => def.name === 'set_cache_write'), 'cache-write amortization control is not a tool');
+  assert.doesNotMatch(src, /set_cache_write|setCacheWrite/, 'no cache-write control executor is registered');
 
   const names = defs.map((d) => d.name);
   assert.deepEqual(new Set(names).size, names.length, 'tool names must be unique');
@@ -67,7 +69,7 @@ test('set_workload and set_filters schemas use enums; compare uses {provider,id}
   assert.deepEqual(byName.set_workload.inputSchema.properties.computeBy.enum, ['tokens', 'budget']);
   assert.deepEqual(byName.set_filters.inputSchema.properties.groupBy.enum, ['none', 'org', 'provider']);
   assert.deepEqual(byName.apply_preset.inputSchema.properties.name.enum, ['agentic', 'balanced', 'heavy-output', 'no-cache']);
-  assert.deepEqual(byName.set_sort.inputSchema.properties.by.enum, ['org', 'provider', 'model', 'input', 'output', 'cache_read', 'context', 'speed', 'ttft', 'intelligence', 'coding', 'agentic', 'blended', 'cost']);
+  assert.deepEqual(byName.set_sort.inputSchema.properties.by.enum, ['org', 'provider', 'model', 'quantization', 'input', 'output', 'cache_read', 'context', 'speed', 'ttft', 'intelligence', 'coding', 'agentic', 'blended', 'cost']);
   assert.deepEqual(byName.set_sort.inputSchema.properties.dir.enum, ['asc', 'desc']);
   assert.deepEqual(byName.compare_models.inputSchema.properties.action.enum, ['add', 'remove', 'clear', 'set']);
   assert.deepEqual(byName.compare_models.inputSchema.properties.models.items.required, ['provider', 'id']);

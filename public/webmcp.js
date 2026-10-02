@@ -20,7 +20,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "get_view",
     "title": "Get current results",
-    "description": "Read-only snapshot of the TokenWatch text calculator the human is looking at: current mix, modes, filters, active sort, compare tray, rowCount, and the top ranked offerings (rank, provider, id, name, cost, blended $/M, zdr, speedP50, ttftP50 in seconds, intelligence, coding, agentic). Missing quality scores are null, never zero. By default, top is sorted by total session cost ascending; use set_sort to change the field and direction programmatically. Use this after any write so you describe the live table, not a stale one. Row identity is {provider, id}, never a row number. For operational details, call about_tokenwatch.",
+    "description": "Read-only snapshot of the TokenWatch text calculator the human is looking at: current mix, modes, filters, active sort, compare tray, rowCount, and the top ranked offerings (rank, provider, id, name, cost, blended $/M, quantization, zdr, speedP50, ttftP50 in seconds, intelligence, coding, agentic). Missing quality scores are null, never zero. By default, top is sorted by total session cost ascending; use set_sort to change the field and direction programmatically. Check provisional, performance, effectiveSort, and note before calling a pending speed view final. Use this after any write so you describe the live table, not a stale one. Row identity is {provider, id}, never a row number. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": true },
     "inputSchema": {
       "type": "object",
@@ -62,7 +62,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "set_sort",
     "title": "Sort results",
-    "description": "Sets the active table sort and direction, then re-renders the same results. Sortable columns: org, provider, model, input, output, cache_read, context, speed, ttft, intelligence, coding, agentic, blended, and cost. Text fields sort alphabetically; numeric fields sort ascending or descending. ttft is time-to-first-token in seconds (lower is faster). intelligence/coding/agentic are Artificial Analysis 0-100 indices; missing scores sort last, never as zero. Returns a fresh get_view snapshot. For operational details, call about_tokenwatch.",
+    "description": "Sets the active table sort and direction, then re-renders the same results. Sortable columns: org, provider, model, quantization (best effort), input, output, cache_read, context, speed, ttft, intelligence, coding, agentic, blended, and cost. Text fields sort alphabetically; numeric fields sort ascending or descending. ttft is time-to-first-token in seconds (lower is faster). intelligence/coding/agentic are Artificial Analysis 0-100 indices; missing scores sort last, never as zero. Returns a fresh get_view snapshot; effectiveSort reports cost fallback while performance is pending or unavailable. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": false },
     "inputSchema": {
       "type": "object",
@@ -73,6 +73,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
             "org",
             "provider",
             "model",
+            "quantization",
             "input",
             "output",
             "cache_read",
@@ -229,28 +230,6 @@ const TEXT_TOOL_DEFS = JSON.parse(`
       "required": [
         "name"
       ],
-      "additionalProperties": false
-    }
-  },
-  {
-    "name": "set_cache_write",
-    "title": "Set cache-write amortization",
-    "description": "Sets the one-time cache-write volume (millions of tokens) and amortization N, then re-renders the table. Included in Total Cost. For operational details, call about_tokenwatch.",
-    "annotations": { "readOnlyHint": false },
-    "inputSchema": {
-      "type": "object",
-      "properties": {
-        "tokens": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Cache-write tokens in millions."
-        },
-        "amortizeN": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "Amortize the write cost over this many requests."
-        }
-      },
       "additionalProperties": false
     }
   },
@@ -827,7 +806,6 @@ function catalogExecutors(catalog) {
     get_catalog_info: () => catalog.getCatalogInfo(),
     set_workload: (input) => catalog.setWorkload(input),
     apply_preset: (input) => catalog.applyPreset(input?.name),
-    set_cache_write: (input) => catalog.setCacheWrite(input),
     set_filters: (input) => catalog.setFilters(input),
     clear_filters: () => catalog.clearFilters(),
     compare_models: (input) => catalog.compareModels(input),

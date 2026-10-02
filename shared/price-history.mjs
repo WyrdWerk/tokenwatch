@@ -142,7 +142,7 @@ function num(value) {
  */
 export function blendedRateFor(row, mix = DEFAULT_MIX) {
   return blendedRate(
-    { input: row.input_price, output: row.output_price, cache_read: row.cache_read },
+    { input: row.input_price, output: row.output_price, cache_read: row.cache_read, cache_write: row.cache_write },
     mix,
   );
 }

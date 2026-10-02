@@ -304,13 +304,15 @@ function showCompareModal() {
     : costFor(r.pricing, secondsVal);
   const headlineFmt = (v) => budgetMode ? fmtAffordability(v) : fmtCost(v);
 
+  // Lead with the cost outcome, then unit rate and variant information, then
+  // model identity / provenance.
   const metricRows = [
-    { label: 'Org', getValue: (r) => esc(orgDisplay(r.model.org)) },
-    { label: 'Model', getValue: (r) => esc(r.model.name || r.model.id) },
+    { label: els.costColumnHeader?.textContent || 'Total Cost', getValue: (r) => headlineFmt(headlineGet(r)), getRaw: headlineGet, isCost: true, isBudget: budgetMode },
+    { label: '$/Sec', getValue: (r) => fmtPrice(r.pricing.cost_per_second), getRaw: (r) => r.pricing.cost_per_second, isCost: true },
     { label: 'Resolution', getValue: (r) => resLabel(r.resolution) },
     { label: 'Audio', getValue: (r) => audioLabel(r.audio) },
-    { label: '$/Sec', getValue: (r) => fmtPrice(r.pricing.cost_per_second), getRaw: (r) => r.pricing.cost_per_second, isCost: true },
-    { label: els.costColumnHeader?.textContent || 'Total Cost', getValue: (r) => headlineFmt(headlineGet(r)), getRaw: headlineGet, isCost: true, isBudget: budgetMode },
+    { label: 'Model', getValue: (r) => esc(r.model.name || r.model.id) },
+    { label: 'Org', getValue: (r) => esc(orgDisplay(r.model.org)) },
   ];
 
   const snapshot = budgetMode
@@ -647,7 +649,6 @@ function attachListeners() {
       computeAndRender();
     };
     th.setAttribute('tabindex', '0');
-    th.setAttribute('role', 'button');
     th.addEventListener('click', sort);
     th.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sort(); }

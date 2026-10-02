@@ -191,6 +191,7 @@ async function main() {
       offerings.push({
         provider: name,
         input: o.pricing.input,
+        cache_write: o.pricing.cache_write,
         output: o.pricing.output,
         cache_read: o.pricing.cache_read,
       });

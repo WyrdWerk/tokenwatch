@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { parseLiveBenchCsv } from '../scripts/fetch-benchmarks.mjs';
 import { familyKey, resolveOrg, makeCleanOrg, orgFromPrefix, buildOrgIndex } from '../shared/benchmark-org.mjs';
+import { readFileSync } from 'node:fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const BENCH_JSON = join(__dirname, '..', 'public', 'benchmarks.json');
@@ -19,6 +20,14 @@ try {
 }
 // Fail loudly — these tests guard the committed artifacts.
 assert.ok(bench, `benchmarks.json missing or unreadable at ${BENCH_JSON}`);
+
+test('benchmark client mirrors the shared fresh-input and blended-rate helpers', () => {
+  const source = readFileSync(join(__dirname, '..', 'public', 'benchmarks-app.js'), 'utf8');
+  assert.match(source, /function freshInputRate\(pricing\)/);
+  assert.match(source, /write > 0 && write > input \? write : input/);
+  assert.match(source, /function blendedRate\(pricing, mix\)/);
+  assert.match(source, /const inputPrice = freshInputRate\(pricing\)/);
+});
 
 // ── Org correctness (regression: 2026-08-14 wafer/neuralwatt leaked as creators) ──
 

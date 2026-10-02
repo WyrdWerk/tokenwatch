@@ -24,9 +24,11 @@ const state = {
   currentRows: null,
   restoreFocus: null,     // element to refocus when a modal closes
   perfData: null,         // loaded from performance.json
+  perfStatus: 'pending',  // 'pending' | 'ready' | 'unavailable' | 'error'
   showAllRows: false,    // when false, flat unfiltered table caps at ROW_CAP rows
-  colOrder: null,         // array of the 11 draggable column keys in display order (null = default)
-  colHidden: null,        // Set of hidden column keys (null = none hidden)
+  colOrder: null,         // array of the draggable column keys in display order (null = default)
+  colHidden: null,        // Set of hidden column keys (null = default hidden set)
+  summaryDistOpen: false, // whether the summary price-distribution <details> is expanded
 };
 
 // Flat-table render cap: first paint shows this many rows + a "Show all" row.
@@ -38,12 +40,13 @@ const ROW_CAP = 250;
 // the resolved canonical id before the summary panel replaces the flat view.
 const MIN_PROVIDER_ROWS = 1;
 
-// The 11 draggable/hideable columns (between the locked # and Total Cost columns).
+// The draggable/hideable columns (between the locked # and Total Cost columns).
 // key → { label (popover + hash), dataLabel (td[data-label] match) }.
 const COLUMN_KEYS = [
   { key: 'org',          label: 'Org',          dataLabel: 'Org' },
   { key: 'provider',     label: 'Provider',     dataLabel: 'Provider' },
   { key: 'model',        label: 'Model',        dataLabel: 'Model' },
+  { key: 'quantization', label: 'Quantization — best effort', dataLabel: 'Quantization' },
   { key: 'input',        label: 'Input $/M',    dataLabel: 'Input $/M' },
   { key: 'output',       label: 'Output $/M',   dataLabel: 'Output $/M' },
   { key: 'cache_read',   label: 'Cache $/M',    dataLabel: 'Cache $/M' },
@@ -54,6 +57,12 @@ const COLUMN_KEYS = [
   { key: 'blended',      label: 'Blended $/M',  dataLabel: 'Blended $/M' },
 ];
 const DEFAULT_COL_ORDER = COLUMN_KEYS.map((c) => c.key);
+
+// Default-hidden detailed columns: quantization is opt-in, and the raw component
+// prices / context / TTFT stay out of the way until the user asks for them.
+// Visible by default: provider, model, speed, intelligence, blended (+ Org via
+// the separate Show Org toggle) and the locked rank / headline columns.
+const DEFAULT_HIDDEN_COLS = new Set(['quantization', 'input', 'output', 'cache_read', 'context', 'ttft']);
 
 // ── DOM ───────────────────────────────────────────────────────────────────────
 const $ = (id) => document.getElementById(id);
@@ -106,8 +115,6 @@ const els = {
   detailClose: $('detailClose'),
   detailBody: $('detailBody'),
   detailTitle: $('detailTitle'),
-  cacheWriteTokens: $('cacheWriteTokens'),
-  amortizeN: $('amortizeN'),
   mobileSort: $('mobileSort'),
   byTokens: $('byTokens'),
   byBudget: $('byBudget'),
@@ -117,6 +124,13 @@ const els = {
   budgetLabel: $('budgetLabel'),
   budgetHint: $('budgetHint'),
   benchmarkBar: $('benchmarkBar'),
+  // Layout-owner DOM additions (may be absent in the current HTML) — all
+  // consumers must stay null-safe until the markup lands.
+  activeFilters: $('activeFilters'),
+  clearFiltersBtn: $('clearFiltersBtn'),
+  resultsBasis: $('resultsBasis'),
+  rankingExplanation: $('rankingExplanation'),
+  presetDescription: $('presetDescription'),
 };
 
 
@@ -148,8 +162,6 @@ const DEFAULTS = {
   sortBy: 'cost',
   sortDir: 'asc',
   groupBy: 'none',
-  cacheWriteTokens: '10',
-  amortizeN: '100',
 };
 
 /** providers_meta slugs that differ from catalog provider keys. */
@@ -176,6 +188,15 @@ const CATALOG_PAGES = {
   image: '/image',
   video: '/video',
   benchmarks: '/benchmarks',
+};
+
+/** Sentence-case descriptions for the named mix presets. Kept separate from
+ *  PRESETS so WebMCP list_presets keeps its exact payload shape. */
+const PRESET_DESCRIPTIONS = {
+  agentic:        'Cache-heavy agentic coding — 2.5% input, 97% cached, 0.5% output.',
+  balanced:       'Balanced mix — 30% input, 50% cached, 20% output.',
+  'heavy-output': 'Output-heavy — 10% fresh input, no cached reads, 90% output.',
+  'no-cache':     'No cached reads — 70% fresh input, 30% output.',
 };
 
 // ── URL hash state ─────────────────────────────────────────────────────────────
@@ -239,17 +260,18 @@ function serializeState() {
   if (els.groupBy.value !== 'none') params.set('group', els.groupBy.value);
   if (els.showOrg?.checked) params.set('orgcol', '1');
 
-  const cacheWriteRaw = document.getElementById('cacheWriteTokens').value;
-  const amortizeRaw = document.getElementById('amortizeN').value;
-  if (cacheWriteRaw !== DEFAULTS.cacheWriteTokens) params.set('cw', cacheWriteRaw);
-  if (amortizeRaw !== DEFAULTS.amortizeN) params.set('cwn', amortizeRaw);
-
-    // Column customization: order + hidden set (only when non-default)
+    // Column customization: order + visibility (only when non-default).
+    // `show` records default-hidden columns the user opted into; `hide`
+    // records default-visible columns the user turned off. Legacy `hide` URLs
+    // (no `show`) keep quantization hidden.
     if (state.colOrder && state.colOrder.join(',') !== DEFAULT_COL_ORDER.join(',')) {
       params.set('cols', state.colOrder.join(','));
     }
-    if (state.colHidden && state.colHidden.size > 0) {
-      params.set('hide', [...state.colHidden].join(','));
+    if (state.colHidden) {
+      const show = [...DEFAULT_HIDDEN_COLS].filter((k) => !state.colHidden.has(k));
+      const hide = [...state.colHidden].filter((k) => !DEFAULT_HIDDEN_COLS.has(k));
+      if (show.length) params.set('show', show.join(','));
+      if (hide.length) params.set('hide', hide.join(','));
     }
 
     return params.toString();
@@ -287,8 +309,6 @@ function deserializeState(hash) {
   els.budgetField.style.display = 'none';
   updateLabelsAndHeaders();
   els.groupBy.value = DEFAULTS.groupBy;
-    document.getElementById('cacheWriteTokens').value = DEFAULTS.cacheWriteTokens;
-    document.getElementById('amortizeN').value = DEFAULTS.amortizeN;
     state.colOrder = null;
     state.colHidden = null;
 
@@ -330,21 +350,32 @@ function deserializeState(hash) {
   const group = params.get('group');
   if (group) els.groupBy.value = group;
   if (params.has('orgcol') && els.showOrg) { els.showOrg.checked = params.get('orgcol') === '1'; document.getElementById('resultsTable').classList.toggle('hide-org', !els.showOrg.checked); }
-  if (params.has('cw')) document.getElementById('cacheWriteTokens').value = params.get('cw');
   if (params.has('budget')) els.budgetInput.value = params.get('budget');
   if (params.get('by') === 'budget') setComputeBy('budget');
-    if (params.has('cwn')) document.getElementById('amortizeN').value = params.get('cwn');
 
-    // Column customization: order + hidden set
-      if (params.has('cols')) {
-        const order = params.get('cols').split(',').filter((k) => COLUMN_KEYS.some((c) => c.key === k));
-        // Only accept a complete, valid order — a partial list would silently
-        // append the missing columns in default order, which is surprising.
-        if (order.length === COLUMN_KEYS.length) state.colOrder = order;
+    // Column customization: order + visibility.
+    if (params.has('cols')) {
+      const provided = params.get('cols').split(',').filter((k) => COLUMN_KEYS.some((c) => c.key === k));
+      // Keep legacy 11-key orders working: append columns the URL predates
+      // (quantization) in their default position rather than discarding the order.
+      const order = [...provided, ...DEFAULT_COL_ORDER.filter((k) => !provided.includes(k))];
+      if (order.length === COLUMN_KEYS.length) state.colOrder = order;
+    }
+    if (params.has('hide') || params.has('show')) {
+      const hidden = new Set(DEFAULT_HIDDEN_COLS);
+      if (params.has('show')) {
+        for (const k of params.get('show').split(',')) {
+          if (COLUMN_KEYS.some((c) => c.key === k)) hidden.delete(k);
+        }
       }
-    if (params.has('hide')) {
-      const hidden = params.get('hide').split(',').filter((k) => COLUMN_KEYS.some((c) => c.key === k));
-      if (hidden.length > 0) state.colHidden = new Set(hidden);
+      if (params.has('hide')) {
+        for (const k of params.get('hide').split(',')) {
+          if (COLUMN_KEYS.some((c) => c.key === k)) hidden.add(k);
+        }
+      }
+      const isDefault = hidden.size === DEFAULT_HIDDEN_COLS.size
+        && [...DEFAULT_HIDDEN_COLS].every((k) => hidden.has(k));
+      state.colHidden = isDefault ? null : hidden;
     }
   }
 
@@ -362,26 +393,60 @@ function updateHash() {
 
 // ── Init ───────────────────────────────────────────────────────────────────────
 async function init() {
+  // Kick off pricing + performance concurrently. Pricing is required; performance
+  // is an optional enrichment, so we render usable pricing without waiting for it
+  // and re-render when (or if) performance arrives.
+  const pricingPromise = fetch('pricing.json');
+  const perfPromise = refreshPerfData(true);
+
+  let data;
   try {
-    const res = await fetch('pricing.json');
-    state.data = await res.json();
+    const res = await pricingPromise;
+    data = await res.json();
   } catch (err) {
-    els.resultsBody.innerHTML = `<tr><td colspan="${els.showOrg?.checked ? 13 : 12}" class="empty error-state">
+    els.resultsBody.innerHTML = `<tr><td colspan="${els.showOrg?.checked ? 14 : 13}" class="empty error-state">
       <p>Could not load pricing data.</p>
       <p class="error-hint">Run <code>node scripts/fetch-pricing.mjs</code> if you're developing locally.</p>
       <button type="button" class="retry-btn" onclick="location.reload()">Retry</button>
     </td></tr>`;
     return;
   }
+  state.data = data;
 
   els.lastUpdated.textContent = `Pricing (IST): ${fmtIST(state.data.generated_at)}`;
   populateDatalists();
   deserializeState(location.hash.slice(1));
   attachListeners();
   updateCompareTray();
-  await refreshPerfData(true);
   computeAndRender();
   publishTwCatalog();
+  // Race-safe: if performance resolves after the first render, refresh the
+  // speed/TTFT views once; if it already resolved, `changed` still re-renders
+  // consistently (idempotent).
+  perfPromise.then((changed) => { if (changed) computeAndRender(); });
+}
+
+/**
+ * Decide how a view should treat performance data. Only speed/TTFT ordering or
+ * a speed minimum depends on performance; cost results never do. A pending or
+ * failed fetch must produce an honest state, never a falsely final/empty view.
+ */
+function perfViewDecision(perfStatus, sortBy, minToks) {
+  const speedSort = sortBy === 'speed' || sortBy === 'ttft';
+  const dependent = speedSort || (Number.isFinite(minToks) && minToks > 0);
+  const pending = perfStatus === 'pending';
+  const failed = perfStatus === 'unavailable' || perfStatus === 'error';
+  return {
+    dependent,
+    pending: dependent && pending,
+    failed: dependent && failed,
+    provisionalSort: speedSort && (pending || failed),
+  };
+}
+
+/** The current view's performance decision, read from live UI state. */
+function currentPerfDecision() {
+  return perfViewDecision(state.perfStatus, state.sortBy, parseFloat(els.minToks?.value));
 }
 
 /** Fetch performance.json. Fail-soft: on initial load sets {}, on refresh keeps last-good data. */
@@ -402,18 +467,25 @@ async function refreshPerfData(isInitial = false) {
       const next = await perfRes.json();
       const prevTs = state.perfData?._meta?.generated_at;
       const ts = next?._meta?.generated_at;
-      changed = isInitial || ts !== prevTs;
+      // Re-render whenever we transition out of a non-ready state (e.g. a
+      // recovered initial failure), even if neither payload carries a
+      // timestamp — otherwise a restored speed/minimum-speed view would never
+      // apply its filter/ranking.
+      const wasReady = state.perfStatus === 'ready';
+      changed = isInitial || !wasReady || ts !== prevTs;
       state.perfData = next;
+      state.perfStatus = 'ready';
       if (els.perfUpdated) els.perfUpdated.textContent = ts
         ? `Performance (IST): ${fmtIST(ts)}`
         : 'Performance (IST): (no timestamp)';
     } else if (isInitial) {
       state.perfData = {};
+      state.perfStatus = 'unavailable';
       changed = true;
     }
   } catch (err) {
-    if (isInitial) { state.perfData = {}; changed = true; }
-    // On refresh failure: retain last-good state.perfData and timestamp
+    if (isInitial) { state.perfData = {}; state.perfStatus = 'error'; changed = true; }
+    // On refresh failure: retain last-good state.perfData/status and timestamp
   } finally {
     _perfInFlight = false;
   }
@@ -609,7 +681,7 @@ function attachListeners() {
   });
 
   const debouncedRender = debounce(() => computeAndRender());
-  for (const id of ['totalTokens', 'inputPct', 'cacheReadPct', 'outputPct', 'cacheWriteTokens', 'amortizeN']) {
+  for (const id of ['totalTokens', 'inputPct', 'cacheReadPct', 'outputPct']) {
     els[id].addEventListener('input', debouncedRender);
   }
 
@@ -633,7 +705,8 @@ function attachListeners() {
         computeAndRender();
       };
     th.setAttribute('tabindex', '0');
-    th.setAttribute('role', 'button');
+    // Keep native <th> columnheader semantics — role="button" is invalid
+    // alongside aria-sort. Keyboard sorting stays via tabindex + Enter/Space.
     th.addEventListener('click', sort);
     th.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sort(); }
@@ -650,6 +723,9 @@ function attachListeners() {
 
   // Export current results to CSV
   els.exportCsvBtn?.addEventListener('click', exportCsv);
+
+  // Clear secondary filters without wiping the selected model/provider/workload.
+  els.clearFiltersBtn?.addEventListener('click', clearSecondaryFilters);
 
   // Comparison checkboxes (event delegation on tbody)
   els.resultsBody.addEventListener('change', (e) => {
@@ -735,6 +811,106 @@ function applyPreset(name) {
     if (els[k]) els[k].value = v;
   }
   computeAndRender();
+}
+
+/** Active secondary-filter labels (never the selected model/provider/workload). */
+function activeSecondaryFilters() {
+  const list = [];
+  const push = (label) => list.push(label);
+  if (els.zdrOnly?.checked) push('ZDR only');
+  if (els.subscriptionOnly?.checked) push('Subscription only');
+  if (els.promoOnly?.checked) push('Promos only');
+  if (els.hideBatch && !els.hideBatch.checked) push('Including batch');
+  if (els.cacheOnly?.checked) push('Cache pricing only');
+  const maxBlended = parseFloat(els.maxBlended?.value);
+  if (Number.isFinite(maxBlended) && maxBlended > 0) push(`Blended ≤ $${maxBlended}/M`);
+  const minToks = parseFloat(els.minToks?.value);
+  if (Number.isFinite(minToks) && minToks > 0) push(`Speed ≥ ${minToks} tok/s`);
+  const hq = (els.hqFilter?.value || '').trim();
+  if (hq) push(hq === 'unknown' ? 'HQ unknown' : `HQ ${hq}`);
+  const minIntelligence = els.minIntelligence ? (parseInt(els.minIntelligence.value, 10) || 0) : 0;
+  if (minIntelligence) push(`IQ ≥ ${minIntelligence}`);
+  const minCoding = els.minCoding ? (parseInt(els.minCoding.value, 10) || 0) : 0;
+  if (minCoding) push(`Coding ≥ ${minCoding}`);
+  const minAgentic = els.minAgentic ? (parseInt(els.minAgentic.value, 10) || 0) : 0;
+  if (minAgentic) push(`Agentic ≥ ${minAgentic}`);
+  if (els.benchmarkedOnly?.checked) push('Benchmarked only');
+  return list;
+}
+
+/** Render the active-filter count/chips into #activeFilters (aria-live), null-safe. */
+function updateActiveFilters() {
+  if (!els.activeFilters) return;
+  const list = activeSecondaryFilters();
+  if (!list.length) {
+    els.activeFilters.textContent = 'No active filters';
+    return;
+  }
+  els.activeFilters.innerHTML = `${list.length} active filter${list.length === 1 ? '' : 's'}: ` +
+    list.map((label) => `<span class="active-filter-chip">${esc(label)}</span>`).join(' ');
+}
+
+/** Clear secondary filters only — keeps the selected model/provider and the
+ *  workload (tokens/mix/budget/cost mode) intact. */
+function clearSecondaryFilters() {
+  if (els.zdrOnly) els.zdrOnly.checked = DEFAULTS.zdrOnly;
+  if (els.subscriptionOnly) els.subscriptionOnly.checked = DEFAULTS.subscriptionOnly;
+  els.promoOnly.checked = DEFAULTS.promoOnly;
+  if (els.hideBatch) els.hideBatch.checked = DEFAULTS.hideBatch;
+  if (els.cacheOnly) els.cacheOnly.checked = DEFAULTS.cacheOnly;
+  if (els.maxBlended) els.maxBlended.value = DEFAULTS.maxBlended || '';
+  if (els.minToks) els.minToks.value = DEFAULTS.minToks || '';
+  if (els.hqFilter) els.hqFilter.value = DEFAULTS.hq;
+  if (els.minIntelligence) els.minIntelligence.value = DEFAULTS.minIntelligence;
+  if (els.minCoding) els.minCoding.value = DEFAULTS.minCoding;
+  if (els.minAgentic) els.minAgentic.value = DEFAULTS.minAgentic;
+  if (els.benchmarkedOnly) els.benchmarkedOnly.checked = DEFAULTS.benchmarked;
+  state.showAllRows = false;
+  computeAndRender();
+}
+
+/** Compact live workload basis + explanation of the active ranking, null-safe. */
+function updateResultsBasis() {
+  const tokens = getTokens();
+  const budgetMode = state.computeBy === 'budget';
+  let basis;
+  if (budgetMode) {
+    const budget = parseFloat(els.budgetInput?.value) || 0;
+    const period = state.costMode === 'monthly' ? 'monthly budget' : 'budget';
+    basis = `Basis: $${budget.toLocaleString()} ${period} · input ${tokens.inputPct}% · cached ${tokens.cacheReadPct}% · output ${tokens.outputPct}%`;
+  } else {
+    const totalM = tokens.total / 1e6;
+    const period = state.costMode === 'monthly' ? 'M tokens/day ×30' : 'M tokens';
+    basis = `Basis: ${totalM.toLocaleString()}${period} · input ${tokens.inputPct}% · cached ${tokens.cacheReadPct}% · output ${tokens.outputPct}%`;
+  }
+  const decision = perfViewDecision(state.perfStatus, state.sortBy, parseFloat(els.minToks?.value));
+  if (decision.pending) basis += ' · performance data loading';
+  else if (decision.failed) basis += ' · performance data unavailable';
+  if (els.resultsBasis) els.resultsBasis.textContent = basis;
+
+  const metric = rankingMetric();
+  const direction = metric.dir === 'asc' ? 'ascending' : 'descending';
+  const note = ' Total cost and blended $/M use the same token mix and fresh-input cache-write assumption; only total cost scales with volume and monthly mode.';
+  if (els.rankingExplanation) {
+    els.rankingExplanation.textContent = `Ranked by ${metric.label} (${direction}).${note}`;
+  }
+}
+
+/** Describe the active workload preset (or a custom mix), null-safe. */
+function updatePresetDescription() {
+  if (!els.presetDescription) return;
+  const pct = (el) => (el ? parseFloat(el.value) : NaN);
+  const input = pct(els.inputPct);
+  const cache = pct(els.cacheReadPct);
+  const output = pct(els.outputPct);
+  const total = pct(els.totalTokens);
+  for (const [name, p] of Object.entries(PRESETS)) {
+    if (p.inputPct === input && p.cacheReadPct === cache && p.outputPct === output && p.totalTokens === total) {
+      els.presetDescription.textContent = PRESET_DESCRIPTIONS[name] || `Preset: ${name}.`;
+      return;
+    }
+  }
+  els.presetDescription.textContent = 'Custom workload mix.';
 }
 
 
@@ -1065,9 +1241,7 @@ function buildCostCard(r) {
     ['Blended $/M', blendedVal, true, false],
     ['Token mix', esc(mixVal), false, false],
   ];
-  if (tokens.cacheWrite > 0) {
-    rows.push(['Cache-write tokens', `${(tokens.cacheWrite / 1e6).toLocaleString()}M \u00f7 ${tokens.amortizeN}`, true, false]);
-  }
+  rows.push(['Fresh input', 'Higher write rate when published; additional storage excluded', false, false]);
   rows.push(['ZDR', zdrVal, false, false]);
   rows.push(['Speed', speedVal, true, false]);
   // Headline outcome \u2014 accent (compare-cheapest) so it reads as the result.
@@ -1175,19 +1349,18 @@ function showCompareModal() {
     : costFor(m.pricing, tokens) * modeMultiplier;
   const headlineFmt = v => budgetMode ? fmtAffordability(v) : fmtCost(v);
 
+  // Row order: identity → headline total/affordability → effective blended rate
+  // → quality and speed → component prices / technical details. The workload
+  // basis (snapshot below) and sharing behaviour are unchanged.
   const rows = [
-    { label: 'Org', getValue: m => esc(orgDisplay(m.org)) },
-    { label: 'Provider', getValue: m => esc(providerName(m.provider, m.provider_display)) },
     { label: 'Model', getValue: m => esc(m.name && m.name !== m.id ? m.name : m.id) },
-    { label: 'Input $/M', getValue: m => fmtPrice(m.pricing.input), getRaw: m => m.pricing.input, isCost: true },
-    { label: 'Output $/M', getValue: m => fmtPrice(m.pricing.output), getRaw: m => m.pricing.output, isCost: true },
-    { label: 'Cache Read $/M', getValue: m => fmtPrice(m.pricing.cache_read), getRaw: m => m.pricing.cache_read, isCost: true },
-    { label: 'ZDR', getValue: m => (m.zdr ? '<span class="zdr-badge">ZDR</span>' : '—') + (m.subscription ? ' <span class="subscription-badge">Sub</span>' : '') },
-    { label: 'Cache Write $/M', getValue: m => fmtPrice(m.pricing.cache_write), getRaw: m => m.pricing.cache_write, isCost: true },
-    { label: 'Context', getValue: m => fmtContext(m.context_length) },
-    { label: 'Max Output Tokens', getValue: m => m.max_completion_tokens ? m.max_completion_tokens.toLocaleString() : '<span class="missing">—</span>' },
-    { label: 'Uptime (30m)', getValue: m => m.uptime_30m != null ? `${m.uptime_30m.toFixed(2)}%` : '<span class="missing">—</span>' },
-    { label: 'Discount', getValue: m => m.discount > 0 ? `<span class="promo-badge">${(m.discount * 100).toFixed(0)}% off</span>` : '—' },
+    { label: 'Provider', getValue: m => esc(providerName(m.provider, m.provider_display)) },
+    { label: 'Org', getValue: m => esc(orgDisplay(m.org)) },
+    { label: els.costColumnHeader?.textContent || 'Total Cost', getValue: m => headlineFmt(headlineGet(m)), getRaw: headlineGet, isCost: true, isBudget: budgetMode },
+    { label: 'Blended $/M', getValue: m => {
+        const b = blendedCostFor(m.pricing, tokens);
+        return b != null ? fmtPrice(b) : '<span class="missing">—</span>';
+      }, getRaw: m => blendedCostFor(m.pricing, tokens), isCost: true },
     { label: 'IQ', getValue: m => {
         const v = m.benchmarks?.intelligence_index;
         return v != null ? String(v) : '<span class="missing">—</span>';
@@ -1200,22 +1373,26 @@ function showCompareModal() {
         const v = m.benchmarks?.agentic_index;
         return v != null ? String(v) : '<span class="missing">—</span>';
       }, getRaw: m => m.benchmarks?.agentic_index ?? null, bestHigh: true },
-    { label: 'Speed', getValue: m => {
+    { label: 'Speed (tps p50)', getValue: m => {
         const perf = getPerfData({ model: m });
         const tps = perf?.throughput?.p50;
         if (tps == null) return '<span class="missing">—</span>';
         return `${Math.round(tps * 10) / 10} tps`;
       }, getRaw: m => getPerfData({ model: m })?.throughput?.p50 ?? null, bestHigh: true },
-    { label: 'TTFT', getValue: m => {
+    { label: 'TTFT (s p50)', getValue: m => {
         const ms = getPerfData({ model: m })?.latency?.p50;
         if (ms == null) return '<span class="missing">—</span>';
         return `${fmtTtftSeconds(ms)} s`;
       }, getRaw: m => getPerfData({ model: m })?.latency?.p50 ?? null, isCost: true },
-    { label: 'Blended $/M', getValue: m => {
-        const b = blendedCostFor(m.pricing, tokens);
-        return b != null ? fmtPrice(b) : '<span class="missing">—</span>';
-      }, getRaw: m => blendedCostFor(m.pricing, tokens), isCost: true },
-    { label: els.costColumnHeader?.textContent || 'Total Cost', getValue: m => headlineFmt(headlineGet(m)), getRaw: headlineGet, isCost: true, isBudget: budgetMode },
+    { label: 'Input $/M', getValue: m => fmtPrice(m.pricing.input), getRaw: m => m.pricing.input, isCost: true },
+    { label: 'Output $/M', getValue: m => fmtPrice(m.pricing.output), getRaw: m => m.pricing.output, isCost: true },
+    { label: 'Cache Read $/M', getValue: m => fmtPrice(m.pricing.cache_read), getRaw: m => m.pricing.cache_read, isCost: true },
+    { label: 'Cache Write $/M', getValue: m => fmtPrice(m.pricing.cache_write), getRaw: m => m.pricing.cache_write, isCost: true },
+    { label: 'Context', getValue: m => fmtContext(m.context_length) },
+    { label: 'Max Output Tokens', getValue: m => m.max_completion_tokens ? m.max_completion_tokens.toLocaleString() : '<span class="missing">—</span>' },
+    { label: 'Uptime (30m)', getValue: m => m.uptime_30m != null ? `${m.uptime_30m.toFixed(2)}%` : '<span class="missing">—</span>' },
+    { label: 'Discount', getValue: m => m.discount > 0 ? `<span class="promo-badge">${(m.discount * 100).toFixed(0)}% off</span>` : '—' },
+    { label: 'ZDR', getValue: m => (m.zdr ? '<span class="zdr-badge">ZDR</span>' : '—') + (m.subscription ? ' <span class="subscription-badge">Sub</span>' : '') },
   ];
 
   // Snapshot: what's being compared (so users don't revert to the page to check basis)
@@ -1229,9 +1406,8 @@ function showCompareModal() {
   } else {
     const totalM = (tokens.total / 1e6);
     const totalLabel = monthly ? `Daily ${totalM.toLocaleString()}M tokens` : `${totalM.toLocaleString()}M tokens`;
-    const cw = tokens.cacheWrite > 0 ? ` · cache-write ${(tokens.cacheWrite/1e6).toLocaleString()}M ÷ ${tokens.amortizeN}` : '';
     const period = monthly ? ' (×30 monthly)' : '';
-    snapshot = `<strong>${totalLabel}</strong>${period} · mix: ${mixStr}${cw}`;
+    snapshot = `<strong>${totalLabel}</strong>${period} · mix: ${mixStr}`;
   }
   const snapshotHtml = `<div class="compare-snapshot"><span class="snapshot-label">Basis:</span> ${snapshot}</div>`;
   const scrollHintHtml = '<p class="compare-scroll-hint" aria-hidden="true">Swipe horizontally to see every model \u2192</p>';
@@ -1293,41 +1469,41 @@ function getTokens() {
   const inputPct = Math.max(0, parseFloat(els.inputPct.value) || 0);
   const cacheReadPct = Math.max(0, parseFloat(els.cacheReadPct.value) || 0);
   const outputPct = Math.max(0, parseFloat(els.outputPct.value) || 0);
-  const cacheWriteTokens = Math.max(0, parseFloat(document.getElementById('cacheWriteTokens').value) || 0) * 1e6;
-  const amortizeN = Math.max(1, parseInt(document.getElementById('amortizeN').value, 10) || 100);
   return {
     total, inputPct, cacheReadPct, outputPct, sum: inputPct + cacheReadPct + outputPct,
     input: total * inputPct / 100,
     cacheRead: total * cacheReadPct / 100,
-    cacheWrite: cacheWriteTokens,
-    amortizeN,
     output: total * outputPct / 100,
   };
+}
+
+/** Mirror of shared/cost.mjs: fresh input uses the higher write tariff where
+ *  published. Additional cache-storage charges are excluded from the estimate. */
+function freshInputRate(pricing) {
+  const { input, cache_write: write } = pricing;
+  return typeof input === 'number' && Number.isFinite(input)
+    && typeof write === 'number' && Number.isFinite(write)
+    && write > 0 && write > input ? write : input;
 }
 
 /** cost = (tokens × $/M) / 1e6  — prices are $/M tokens
  *
  *  Null-price semantics: a model is only filtered out (returns null) if it
  *  lacks an input or output price AND the user requested those token types.
- *  Cache fields are NEVER disqualifiers:
- *  - cache_read null → cached tokens charged at the INPUT rate (no cache discount)
- *  - cache_write null → cache-write component is $0 (provider doesn't charge for it)
- *  This ensures models without published cache pricing still appear in results. */
+ *  Cache fields never disqualify an offering. Missing cache-read pricing falls
+ *  back to ORIGINAL input pricing. Fresh input uses the higher write tariff
+ *  where published, without a separate cache-write charge. */
 function costBreakdown(pricing, tokens) {
   const c = (price, tok) => (price != null ? (price * tok) / 1e6 : null);
-  const input = c(pricing.input, tokens.input);
+  const input = c(freshInputRate(pricing), tokens.input);
   const output = c(pricing.output, tokens.output);
   const cacheRead = c(pricing.cache_read != null ? pricing.cache_read : pricing.input, tokens.cacheRead);
-  const cacheWrite = tokens.cacheWrite > 0 && pricing.cache_write != null
-    ? (pricing.cache_write * (tokens.cacheWrite / (tokens.amortizeN || 1))) / 1e6
-    : 0;
   const excluded = (tokens.input > 0 && input === null) || (tokens.output > 0 && output === null);
   return {
     input,
     output,
     cacheRead,
-    cacheWrite,
-    total: excluded ? null : (input || 0) + (output || 0) + (cacheRead || 0) + cacheWrite,
+    total: excluded ? null : (input || 0) + (output || 0) + (cacheRead || 0),
     excluded,
   };
 }
@@ -1337,11 +1513,11 @@ function costFor(pricing, tokens) {
 }
 
 /** Blended $/M: the effective per-million-token rate at the current input/cache/output mix.
- *  Deliberately excludes cache_write and monthly multiplier — it's a pure
- *  comparison metric so users can see where models stand per 1M tokens.
- *  Uses the same null-price semantics as costFor (cache_read null → input rate). */
+ *  Uses the same fresh-input write assumption as costFor, but excludes token
+ *  volume and monthly scaling. Missing cache-read pricing uses original input. */
 function blendedCostFor(pricing, tokens) {
-  const inRate   = pricing.input != null ? pricing.input * tokens.inputPct / 100 : null;
+  const inputPrice = freshInputRate(pricing);
+  const inRate   = inputPrice != null ? inputPrice * tokens.inputPct / 100 : null;
   const outRate  = pricing.output != null ? pricing.output * tokens.outputPct / 100 : null;
   const crPrice  = pricing.cache_read != null ? pricing.cache_read : pricing.input;
   const crRate   = crPrice != null ? crPrice * tokens.cacheReadPct / 100 : null;
@@ -1352,36 +1528,13 @@ function blendedCostFor(pricing, tokens) {
 
 /** Affordability: given a $ budget and the per-session token breakdown shape,
  *  return how many MILLION tokens the budget buys on this offering.
- *  Inverse of costFor: affordable_M = (budget - cwFixed) / effectiveRate
- *  where effectiveRate = Sum(pct_i/100 × price_i) is $ per 1M total-session tokens,
- *  and cwFixed = pricing.cache_write × cacheWriteTokens / amortizeN / 1e6 is the
- *  per-session fixed cache-write charge. Returns Infinity when the per-M rate is 0
- *  (a free offering), null when the offering can't serve the requested token mix,
- *  and -Infinity (caller filters) when the fixed charge alone exceeds the budget. */
+ *  Inverse of costFor: affordable_M = budget / effectiveRate.
+ *  Returns Infinity for a free offering, null for an unpriceable token mix. */
 function affordabilityFor(pricing, tokens, budget) {
-  // effectiveRate: $/1M total tokens. prices are $/M; pct fractions multiply.
-  const rate = (price, pct) => (price != null ? price * pct / 100 : null);
-  const inRate   = tokens.inputPct    > 0 ? rate(pricing.input,     tokens.inputPct)    : 0;
-  const outRate  = tokens.outputPct   > 0 ? rate(pricing.output,    tokens.outputPct)   : 0;
-  // Cache-read null → fall back to input rate (model offers no cache discount)
-  const crPrice  = pricing.cache_read != null ? pricing.cache_read : pricing.input;
-  const crRate   = tokens.cacheReadPct> 0 ? rate(crPrice, tokens.cacheReadPct): 0;
-  if (tokens.inputPct    > 0 && inRate  === null) return null;
-  if (tokens.outputPct   > 0 && outRate === null) return null;
-  // Cache-write: fixed per-session charge, amortized over N requests.
-  // If provider has no cache_write price (null), treat as $0 fixed charge — do
-  // NOT filter the model out (same semantics as costFor).
-  let cwFixed = 0;
-  if (tokens.cacheWrite > 0 && pricing.cache_write != null) {
-    cwFixed = (pricing.cache_write * (tokens.cacheWrite / (tokens.amortizeN || 1))) / 1e6;
-  }
-  const effectiveRate = (inRate || 0) + (outRate || 0) + (crRate || 0);
-  if (effectiveRate <= 0) {
-    // Free per-token offering. Affordable iff the budget covers the fixed charge.
-    return budget >= cwFixed ? Infinity : null;
-  }
-  if (budget <= cwFixed) return null; // can't even cover cache-write setup
-  return (budget - cwFixed) / effectiveRate;
+  const effectiveRate = blendedCostFor(pricing, tokens);
+  if (effectiveRate === null) return null;
+  if (effectiveRate <= 0) return Infinity;
+  return budget / effectiveRate;
 }
 
 /** Format affordable millions-of-tokens for display. Mirrors the token-input
@@ -1441,6 +1594,25 @@ function renderBenchmarkBox(rows) {
   bar.innerHTML = html;
 }
 
+/** Decide whether a catalog row matches the model-search text.
+ *
+ *  Exact/unambiguous canonical selection — including space/hyphen equivalents
+ *  such as "GLM 5.2" vs "glm-5.2" — uses exact canonical equality, so quant and
+ *  SKU siblings (`-fp8`, `-nvfp4`, `-fast`, `umans-glm-5.2`) cannot broaden the
+ *  cohort. Partial searches keep the broad substring behaviour. Pure so the
+ *  matching rule is testable in isolation. */
+function modelMatchesSearch(model, query, resolvedCanonical, displayName) {
+  if (!query) return true;
+  const canon = canonicalModelId(model.id);
+  if (resolvedCanonical) return canon === resolvedCanonical;
+  const norm = (s) => String(s).toLowerCase().replace(/[\s-]+/g, ' ');
+  const q = norm(query);
+  if (!q) return true;
+  const modDisplay = norm(displayName || canon);
+  const rawId = norm(model.id.split('/').slice(-1)[0]);
+  return modDisplay.includes(q) || rawId.includes(q);
+}
+
 /** Filter the catalog the same way computeAndRender does, before cost/affordability exclusion.
  *  WebMCP explain_ranking uses this to report mix-unsupported offerings. */
 function matchingOfferings() {
@@ -1459,20 +1631,20 @@ function matchingOfferings() {
   const minCoding = els.minCoding ? (parseInt(els.minCoding.value, 10) || 0) : 0;
   const minAgentic = els.minAgentic ? (parseInt(els.minAgentic.value, 10) || 0) : 0;
   const benchmarked = !!els.benchmarkedOnly?.checked;
+  // Resolve the selection against the FULL catalog before any other filter, so
+  // filters can only narrow — never broaden — an exact selection.
+  const resolvedCanonical = modSearch ? resolveCanonicalQuery(state.data.models, modSearch) : null;
+  // A speed minimum depends on optional performance data; skip it while that
+  // data is pending/failed so cost results stay usable (the UI shows why).
+  const perfDecision = perfViewDecision(state.perfStatus, state.sortBy, minToks);
   return state.data.models.filter((m) => {
     if (provSearch) {
       const provName = providerName(m.provider, m.provider_display).toLowerCase();
       if (!provName.includes(provSearch) && !m.provider.toLowerCase().includes(provSearch)) return false;
     }
     if (modSearch) {
-      // Normalize spaces and hyphens to the same separator so "glm 5.2"
-      // matches "glm-5.2" — users naturally type spaces, IDs use hyphens.
-      const norm = (s) => s.toLowerCase().replace(/[\s-]+/g, ' ');
-      const q = norm(modSearch);
       const canon = canonicalModelId(m.id);
-      const modDisplay = norm(state.modelDisplayName[canon] || canon);
-      const rawId = norm(m.id.split('/').slice(-1)[0]);
-      if (!modDisplay.includes(q) && !rawId.includes(q)) return false;
+      if (!modelMatchesSearch(m, modSearch, resolvedCanonical, state.modelDisplayName[canon])) return false;
     }
     if (zdrOnly && !m.zdr) return false;
     if (subscriptionOnly && !m.subscription) return false;
@@ -1487,7 +1659,7 @@ function matchingOfferings() {
       const blended = blendedCostFor(m.pricing, getTokens());
       if (blended == null || blended > maxBlended) return false;
     }
-    if (Number.isFinite(minToks) && minToks > 0) {
+    if (Number.isFinite(minToks) && minToks > 0 && !perfDecision.pending && !perfDecision.failed) {
       const tps = getPerfData({ model: m })?.throughput?.p50;
       if (tps == null || tps < minToks) return false;
     }
@@ -1590,15 +1762,23 @@ function computeAndRender() {
     .filter((r) => r.cost !== null && r.cost !== undefined)
     .map((r) => ({ ...r, cost: r.cost * modeMultiplier }));
 
-  // Sort by current sort column
-  sortRows(rows);
+  // Sort by current sort column. If the active sort depends on performance data
+  // that is still pending (or unavailable), fall back to a provisional cost
+  // order and surface the pending state rather than presenting a false ranking.
+  const perfDecision = currentPerfDecision();
+  if (perfDecision.provisionalSort) {
+    sortRowsBy(rows, 'cost', budgetMode ? 'desc' : 'asc');
+  } else {
+    sortRows(rows);
+  }
 
   // Update sort indicator on headers (+ aria-sort for screen readers)
+  const effectiveRanking = rankingMetric();
   document.querySelectorAll('th.sortable').forEach((th) => {
     th.classList.remove('sort-asc', 'sort-desc');
-    if (th.dataset.sort === state.sortBy) {
-      th.classList.add(state.sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
-      th.setAttribute('aria-sort', state.sortDir === 'asc' ? 'ascending' : 'descending');
+    if (th.dataset.sort === effectiveRanking.by) {
+      th.classList.add(effectiveRanking.dir === 'asc' ? 'sort-asc' : 'sort-desc');
+      th.setAttribute('aria-sort', effectiveRanking.dir === 'asc' ? 'ascending' : 'descending');
     } else {
       th.setAttribute('aria-sort', 'none');
     }
@@ -1609,8 +1789,11 @@ function computeAndRender() {
 
   state.currentRows = rows;
   renderBenchmarkBox(rows);
-  renderModelSummary(matchingOfferings(), tokens);
+  renderModelSummary(rows, tokens);
   renderTable(rows, tokens);
+  updateActiveFilters();
+  updateResultsBasis();
+  updatePresetDescription();
   updateHash();
 }
 
@@ -1656,6 +1839,7 @@ function sortValue(r, sortBy) {
     case 'input':      return r.model.pricing.input;
     case 'output':     return r.model.pricing.output;
     case 'cache_read': return r.model.pricing.cache_read;
+    case 'quantization': return r.model.quantization ? String(r.model.quantization).toLowerCase() : null;
     case 'context':    return r.model.context_length;
     case 'speed':      return getPerfData(r)?.throughput?.p50 ?? null;
     case 'ttft':         return getPerfData(r)?.latency?.p50 ?? null;
@@ -1668,9 +1852,8 @@ function sortValue(r, sortBy) {
   }
 }
 
-/** Sort rows by the current sort column/direction. Null values always sort to END. */
-function sortRows(rows) {
-  const { sortBy, sortDir } = state;
+/** Sort rows by an explicit column/direction. Null values always sort to END. */
+function sortRowsBy(rows, sortBy, sortDir) {
   const dir = sortDir === 'asc' ? 1 : -1;
   rows.sort((a, b) => {
     const va = sortValue(a, sortBy);
@@ -1684,8 +1867,15 @@ function sortRows(rows) {
   });
 }
 
+/** Sort rows by the current sort column/direction. */
+function sortRows(rows) {
+  sortRowsBy(rows, state.sortBy, state.sortDir);
+}
+
 function rankingMetric() {
-  const by = state.sortBy;
+  const fallback = currentPerfDecision().provisionalSort;
+  const by = fallback ? 'cost' : state.sortBy;
+  const dir = fallback ? (state.computeBy === 'budget' ? 'desc' : 'asc') : state.sortDir;
   let label;
   switch (by) {
     case 'org':        label = 'model creator'; break;
@@ -1694,6 +1884,7 @@ function rankingMetric() {
     case 'input':      label = 'input price'; break;
     case 'output':     label = 'output price'; break;
     case 'cache_read': label = 'cache-read price'; break;
+    case 'quantization': label = 'quantization'; break;
     case 'context':    label = 'context window'; break;
     case 'speed':      label = 'throughput'; break;
     case 'ttft':         label = 'time to first token'; break;
@@ -1704,7 +1895,7 @@ function rankingMetric() {
     case 'cost':
     default:           label = state.computeBy === 'budget' ? 'affordable tokens' : (state.costMode === 'monthly' ? 'monthly cost' : 'session cost'); break;
   }
-  return { by, dir: state.sortDir, label };
+  return { by, dir, label };
 }
 
 function formatRankingValue(value, by) {
@@ -1854,6 +2045,7 @@ function renderModelRow(r, rank, groupKey, cheapest) {
     <td data-label="Org"><span class="org-badge">${esc(orgDisplay(r.model.org))}</span></td>
     <td data-label="Provider">${renderProviderCell(r)}</td>
     <td data-label="Model">${esc(modelDisplay)}${promo}</td>
+    <td data-label="Quantization">${r.model.quantization ? esc(String(r.model.quantization)) : '<span class="missing">Unknown</span>'}</td>
     <td class="num" data-label="Input $/M">${fmtPrice(p.input)}</td>
     <td class="num" data-label="Output $/M">${fmtPrice(p.output)}</td>
     <td class="num" data-label="Cache $/M">${fmtPrice(p.cache_read)} / ${fmtPrice(p.cache_write)}</td>
@@ -1879,7 +2071,7 @@ function renderFlatTable(rows, tokens) {
     })
     .join('');
   if (capped) {
-    const colCount = els.showOrg?.checked ? 13 : 12;
+    const colCount = els.showOrg?.checked ? 14 : 13;
     html += `<tr class="show-all-row"><td colspan="${colCount}">
       <button type="button" id="showAllRows">Show all ${rows.length} models</button>
     </td></tr>`;
@@ -1916,7 +2108,7 @@ function renderGroupedTable(rows, tokens, groupBy) {
     const bestLabel = groupBest !== null
       ? (budgetMode ? `up to ${fmtAffordability(groupBest)}` : `from ${fmtCost(groupBest)}`)
       : '';
-    const colCount = els.showOrg?.checked ? 13 : 12;
+    const colCount = els.showOrg?.checked ? 14 : 13;
     html += `<tr class="group-header" data-group="${esc(key)}">
       <td colspan="${colCount}">
         <span class="collapse-arrow">▼</span>
@@ -1941,9 +2133,9 @@ function effectiveColOrder() {
   return state.colOrder || DEFAULT_COL_ORDER;
 }
 
-/** Resolve the effective hidden set (empty if state.colHidden is null). */
+/** Resolve the effective hidden set (default hidden set if state.colHidden is null). */
 function effectiveColHidden() {
-  return state.colHidden || new Set();
+  return state.colHidden || new Set(DEFAULT_HIDDEN_COLS);
 }
 
 /**
@@ -2170,76 +2362,135 @@ function canonicalSummary(offerings, { canonical, mix, perfByKey } = {}) {
   };
 }
 
-/** Canonical-model summary panel.
+/** Compact canonical-model summary.
  *  Shown only when the current selection resolves to exactly one canonical id.
- *  Reuses the same mix-aware ranking as the results table (shared/model-summary
- *  mirrors app.js blendedCostFor) and presents provider-offering ranges, the
- *  cheapest offering for the current mix, a price distribution, and the full
- *  sortable offering table. Labels are source-accurate: uptime is the 30-minute
- *  endpoint metric, TTFT/latency is whatever source published it, and no
- *  cache-hit-rate claim is made. */
-function renderModelSummary(offerings, tokens) {
+ *  Describes the SAME eligible cohort as the results table (rows), never a
+ *  separately filtered set. The headline winner is chosen by the full
+ *  `costFor` result — including fresh-input write pricing and monthly scaling —
+ *  regardless of the active table sort. Blended $/M uses the same mix and
+ *  pricing assumption, without volume or the monthly multiplier.
+ *  The price-distribution bars are generated lazily when
+ *  the native <details> is opened. */
+function renderModelSummary(rows, tokens) {
   if (!els.modelSummary) return;
-  const canonical = (els.modelSearch?.value || '').trim();
-  const summary = canonical
-    ? canonicalSummary(offerings, { canonical, mix: tokens, perfByKey: state.perfData })
+  const query = (els.modelSearch?.value || '').trim();
+  const offerings = (rows || []).map((r) => r.model);
+  const summary = query
+    ? canonicalSummary(offerings, { canonical: query, mix: tokens, perfByKey: state.perfData })
     : null;
 
-  if (!summary || summary.rows.length < MIN_PROVIDER_ROWS) {
+  // Preserve the expanded distribution state across re-renders where reasonable.
+  const prevDetails = els.modelSummary.querySelector('details.model-summary-distribution');
+  const wasOpen = prevDetails ? prevDetails.open : !!state.summaryDistOpen;
+
+  if (!summary || !rows || rows.length < MIN_PROVIDER_ROWS) {
     els.modelSummary.hidden = true;
     els.modelSummary.innerHTML = '';
     return;
   }
 
-  const fmt = (v) => (v == null ? '—' : fmtPrice(v));
-  const range = (r) => (r ? `${fmt(r.min)} – ${fmt(r.max)}` : '—');
-  const dist = summary.distribution;
-  const maxEff = Math.max(...summary.rows.map((r) => r.eff || 0), 0);
-  const bars = summary.rows.map((row) => {
-    const pct = maxEff > 0 ? Math.max(4, Math.round((row.eff / maxEff) * 100)) : 4;
-    const promo = row.model.discount > 0 ? ' <span class="promo-badge" title="' + (row.model.discount * 100).toFixed(0) + '% off">promo</span>' : '';
-    const quant = row.model.quantization ? ` <span class="quant-badge">${esc(row.model.quantization)}</span>` : '';
-    return `<div class="model-summary-bar-row"><span class="model-summary-bar-label">${esc(providerName(row.model.provider, row.model.provider_display))}${promo}${quant}</span>` +
-      `<span class="model-summary-bar-track"><span class="model-summary-bar-fill" style="width:${pct}%"></span></span>` +
-      `<span class="model-summary-bar-value">${fmtPrice(row.eff)}</span></div>`;
-  }).join('');
+  const providerCount = new Set(offerings.map((m) => m.provider)).size;
+  const offeringCount = offerings.length;
 
-  const rows = summary.rows.map((row) => {
-    const m = row.model;
-    const p = m.pricing || {};
-    const promo = m.discount > 0 ? ` <span class="promo-badge" title="${(m.discount * 100).toFixed(0)}% off">promo</span>` : '';
-    const uptime = m.uptime_30m != null ? `${m.uptime_30m.toFixed(2)}%` : '—';
-    const tps = row.perf?.throughput?.p50;
-    const ttftMs = row.perf?.latency?.p50;
-    return `<tr><td>${esc(providerName(m.provider, m.provider_display))}${promo}</td>` +
-      `<td>${m.quantization ? esc(m.quantization) : '—'}</td>` +
-      `<td class="num">${fmt(p.input)}</td><td class="num">${fmt(p.output)}</td><td class="num">${fmt(p.cache_read)}</td>` +
-      `<td class="num">${fmtPrice(row.eff)}</td>` +
-      `<td class="num">${tps != null ? Math.round(tps * 10) / 10 : '—'}</td>` +
-      `<td class="num">${ttftMs != null ? (Math.round(ttftMs) / 1000) : '—'}</td>` +
-      `<td class="num">${uptime}</td></tr>`;
-  }).join('');
+  const modeMultiplier = state.costMode === 'monthly' ? 30 : 1;
+  const budgetMode = state.computeBy === 'budget';
+  const budgetVal = budgetMode ? Math.max(0, parseFloat(els.budgetInput?.value) || 0) : 0;
+  const perSessionBudget = budgetMode ? budgetVal / modeMultiplier : 0;
+  const { costWinner, costValue, blendedWinner, blendedValue } =
+    summaryWinners(rows, tokens, { budgetMode, modeMultiplier, perSessionBudget });
+
+  const headlineLabel = budgetMode ? 'Most tokens for your budget' : 'Lowest estimated cost';
+  const headlineValue = costWinner
+    ? `${esc(providerName(costWinner.model.provider, costWinner.model.provider_display))} · ${budgetMode ? fmtAffordability(costValue) + 'M tokens' : fmtCost(costValue)}`
+    : '<span class="missing">—</span>';
+  const blendedValueHtml = blendedWinner
+    ? `${esc(providerName(blendedWinner.model.provider, blendedWinner.model.provider_display))} · ${fmtPrice(blendedValue)}`
+    : '<span class="missing">—</span>';
+
+  // Bars use the current headline metric (cost / affordability) and carry no
+  // quantization badges — quantization identity lives in the table column.
+  const barsFor = () => {
+    const finite = rows.map((r) => (r.cost != null && isFinite(r.cost) ? r.cost : null)).filter((v) => v != null);
+    const maxValue = finite.length ? Math.max(...finite) : 0;
+    return rows.slice().sort((a, b) => a.cost === b.cost ? 0 : (a.cost < b.cost ? -1 : 1) * (budgetMode ? -1 : 1)).map((r) => {
+      const infinite = r.cost != null && !isFinite(r.cost);
+      const value = infinite ? maxValue : (r.cost == null ? 0 : r.cost);
+      const pct = infinite ? 100 : (maxValue > 0 ? Math.round((value / maxValue) * 100) : 0);
+      const provider = providerName(r.model.provider, r.model.provider_display);
+      const promo = r.model.discount > 0
+        ? ` <span class="promo-badge" title="${(r.model.discount * 100).toFixed(0)}% off">promo</span>`
+        : '';
+      return `<div class="model-summary-bar-row"><span class="model-summary-bar-label">${esc(provider)}${promo}</span>` +
+        `<span class="model-summary-bar-track"><span class="model-summary-bar-fill" style="width:${pct}%"></span></span>` +
+        `<span class="model-summary-bar-value">${budgetMode ? fmtAffordability(r.cost) : fmtCost(r.cost)}</span></div>`;
+    }).join('');
+  };
 
   els.modelSummary.innerHTML =
-    `<h3 class="model-summary-title">${esc(summary.name)} — ${summary.providerCount} provider offering${summary.providerCount === 1 ? '' : 's'}</h3>` +
-    `<p class="model-summary-sub">Cheapest for your current workload mix: <strong>${esc(providerName(summary.cheapest.provider, summary.cheapest.provider_display))}</strong> at ${fmtPrice(summary.cheapestEff)}/M</p>` +
+    `<h3 class="model-summary-title">${esc(summary.name)}</h3>` +
+    `<p class="model-summary-sub">${offeringCount} offering${offeringCount === 1 ? '' : 's'} across ${providerCount} provider${providerCount === 1 ? '' : 's'} · exact match for “${esc(summary.canonical)}”</p>` +
     `<div class="model-summary-metrics">` +
-      `<div class="model-summary-metric"><span class="model-summary-metric-label">Input range (provider offerings)</span><span class="model-summary-metric-value">${range(dist.input)}</span></div>` +
-      `<div class="model-summary-metric"><span class="model-summary-metric-label">Output range (provider offerings)</span><span class="model-summary-metric-value">${range(dist.output)}</span></div>` +
-      `<div class="model-summary-metric"><span class="model-summary-metric-label">Cache-read coverage</span><span class="model-summary-metric-value">${dist.cacheRead ? `${dist.cacheRead.count} of ${dist.total}` : 'none published'}</span></div>` +
-      `<div class="model-summary-metric"><span class="model-summary-metric-label">Offering count</span><span class="model-summary-metric-value">${summary.offeringCount}</span></div>` +
+      `<div class="model-summary-metric"><span class="model-summary-metric-label">${headlineLabel}</span><span class="model-summary-metric-value">${headlineValue}</span></div>` +
+      `<div class="model-summary-metric"><span class="model-summary-metric-label">Lowest blended $/M</span><span class="model-summary-metric-value">${blendedValueHtml}</span></div>` +
     `</div>` +
-    `<div class="model-summary-bars" aria-label="Provider price distribution for the current mix">${bars}</div>` +
-    `<div class="table-wrap"><table class="model-summary-table"><caption>Provider offerings for ${esc(summary.name)}</caption>` +
-      `<thead><tr><th scope="col">Provider</th><th scope="col">Quant</th><th scope="col" class="num">Input $/M</th><th scope="col" class="num">Output $/M</th><th scope="col" class="num">Cache $/M</th><th scope="col" class="num">Blended $/M</th><th scope="col" class="num">Speed (tps p50)</th><th scope="col" class="num">Latency (s p50)</th><th scope="col" class="num">Uptime (30m)</th></tr></thead>` +
-      `<tbody>${rows}</tbody></table></div>` +
-    `<p class="model-summary-note">Prices are USD per million tokens and describe provider offerings, not a single intrinsic model price. Uptime is the 30-minute endpoint metric where a provider publishes it; latency/TTFT comes from the source that published it (OpenRouter endpoint metrics or the provider's own status API).</p>`;
+    `<details class="model-summary-distribution"${wasOpen ? ' open' : ''}><summary>Show ${budgetMode ? 'affordability' : 'price'} distribution</summary>` +
+      `<p class="model-summary-note">All ${offeringCount} offerings · ${budgetMode ? 'Affordable tokens (millions); higher is better. Bars scale to the largest finite value; ∞ means unlimited at the published rate.' : 'Estimated workload cost (USD), using the fresh-input cache-write assumption; lower is cheaper. Bars scale from $0 to the highest cost.'}</p>` +
+      `<div class="model-summary-bars" role="group" aria-label="Provider ${budgetMode ? 'affordability' : 'price'} distribution for the current workload"></div>` +
+    `</details>`;
+
+  const details = els.modelSummary.querySelector('details.model-summary-distribution');
+  if (details) {
+    const bars = details.querySelector('.model-summary-bars');
+    const fill = () => {
+      if (bars && !bars.dataset.filled) { bars.innerHTML = barsFor(); bars.dataset.filled = '1'; }
+    };
+    if (wasOpen) fill();
+    details.addEventListener('toggle', () => {
+      state.summaryDistOpen = details.open;
+      if (details.open) fill();
+    });
+  }
   els.modelSummary.hidden = false;
 }
 
+/** Pick the summary headline winner by the FULL workload cost (or greatest
+ *  affordability in budget mode) and, separately, the lowest effective blended
+ *  $/M. Zero-valued offerings are valid candidates: a free or fully-cached
+ *  offering is not excluded. Pure so the asymmetric contract is testable. */
+function summaryWinners(rows, tokens, { budgetMode, modeMultiplier, perSessionBudget }) {
+  let costWinner = null;
+  let costValue = null;
+  let blendedWinner = null;
+  let blendedValue = null;
+  for (const r of rows || []) {
+    const value = budgetMode
+      ? affordabilityFor(r.model.pricing, tokens, perSessionBudget) * modeMultiplier
+      : costFor(r.model.pricing, tokens) * modeMultiplier;
+    if (value !== null && value !== undefined && !Number.isNaN(value)) {
+      if (costWinner === null || (budgetMode ? value > costValue : value < costValue)) {
+        costWinner = r;
+        costValue = value;
+      }
+    }
+    const blended = blendedCostFor(r.model.pricing, tokens);
+    if (blended !== null && blended !== undefined && !Number.isNaN(blended)) {
+      if (blendedWinner === null || blended < blendedValue) {
+        blendedWinner = r;
+        blendedValue = blended;
+      }
+    }
+  }
+  return { costWinner, costValue, blendedWinner, blendedValue };
+}
+
 function renderTable(rows, tokens) {
+  const perfNotice = perfNoticeText();
   if (rows.length === 0) {
-    const colCount = els.showOrg?.checked ? 13 : 12;
+    const colCount = els.showOrg?.checked ? 14 : 13;
+    if (perfNotice) {
+      els.resultsBody.innerHTML = `<tr class="perf-pending-row"><td colspan="${colCount}">${esc(perfNotice)}</td></tr>`;
+      return;
+    }
     els.resultsBody.innerHTML = `<tr><td colspan="${colCount}" class="empty">No offerings match your criteria. Some providers may not support the token types you entered.</td></tr>`;
     return;
   }
@@ -2251,7 +2502,31 @@ function renderTable(rows, tokens) {
       renderGroupedTable(rows, tokens, groupBy);
     }
     applyColumnLayout();
+    if (perfNotice) {
+      const colCount = els.showOrg?.checked ? 14 : 13;
+      els.resultsBody.insertAdjacentHTML('afterbegin', `<tr class="perf-pending-row"><td colspan="${colCount}">${esc(perfNotice)}</td></tr>`);
+    }
   }
+
+/** Honest message for a performance-dependent view whose optional data is not
+ *  ready. Returns '' for cost-only views, which never depend on performance. */
+function perfNoticeText() {
+  const decision = currentPerfDecision();
+  const minToks = parseFloat(els.minToks?.value) || 0;
+  if (decision.pending) {
+    if (minToks > 0) {
+      return `Waiting for performance data to apply the speed minimum (≥ ${minToks} tok/s). Cost results below are provisional and will be filtered automatically when it arrives.`;
+    }
+    return 'Performance data is still loading — cost results are ready. Speed/TTFT ranking will update automatically when it arrives.';
+  }
+  if (decision.failed) {
+    if (minToks > 0) {
+      return `Performance data is unavailable, so the speed minimum (≥ ${minToks} tok/s) cannot be evaluated. Rows below are provisional candidates, not final eligible results — clear the speed minimum to see the full set.`;
+    }
+    return 'Performance data is unavailable — showing cost-based ordering. Speed/TTFT ranking could not be applied.';
+  }
+  return '';
+}
 
 /** Export current results table to CSV and trigger download. Returns the filename, or null. */
 function exportCsv() {
@@ -2259,7 +2534,7 @@ function exportCsv() {
   if (!rows || rows.length === 0) return null;
 
   const headers = [
-    'Rank', 'Org', 'Provider', 'Model', 'Input $/M', 'Output $/M',
+    'Rank', 'Org', 'Provider', 'Model', 'Quantization', 'Input $/M', 'Output $/M',
     'Cache Read $/M', 'Cache Write $/M', 'Context', 'Speed (tps p50)', 'TTFT (s p50)',
     'IQ', 'Coding', 'Agentic',
     'Blended $/M', state.computeBy === 'budget' ? 'Affordable (M tokens)' : 'Total Cost',
@@ -2274,7 +2549,16 @@ function exportCsv() {
     return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
 
-  const lines = [headers.join(',')];
+  const perf = currentPerfDecision();
+  const provisional = perf.pending || perf.failed;
+  const lines = [];
+  if (provisional) {
+    const minToks = parseFloat(els.minToks?.value) || 0;
+    const reason = perf.pending ? 'performance data still loading' : 'performance data unavailable';
+    const threshold = minToks > 0 ? ` Speed minimum (>= ${minToks} tok/s) was not applied.` : '';
+    lines.push(`# TokenWatch export is provisional: ${reason}.${threshold} Rows are unfiltered candidates, not final eligible results.`);
+  }
+  lines.push(headers.join(','));
   rows.forEach((r, i) => {
     const m = r.model;
     const p = m.pricing;
@@ -2288,6 +2572,7 @@ function exportCsv() {
       orgDisplay(m.org),
       providerName(m.provider, m.provider_display),
       (m.name && m.name !== m.id) ? m.name : m.id,
+      m.quantization ?? '',
       p.input ?? '',
       p.output ?? '',
       p.cache_read ?? '',
@@ -2352,6 +2637,7 @@ function snapshotRow(r, rank) {
     id: m.id,
     name: (m.name && m.name !== m.id) ? m.name : m.id,
     org: m.org || null,
+    quantization: m.quantization ?? null,
     cost: roundMoney(r.cost),
     blended: roundMoney(r.blended),
     zdr: !!m.zdr,
@@ -2368,6 +2654,8 @@ function getView(input) {
   const rows = state.currentRows || [];
   const tokens = getTokens();
   const warning = mixWarning();
+  const perf = currentPerfDecision();
+  const provisional = perf.pending || perf.failed;
   const snapshot = {
     page: 'text',
     generated_at: state.data?.generated_at || null,
@@ -2377,8 +2665,6 @@ function getView(input) {
       totalTokensM: parseFloat(els.totalTokens.value) || 0,
       mix: [tokens.inputPct, tokens.cacheReadPct, tokens.outputPct],
       budget: parseFloat(els.budgetInput?.value) || 0,
-      cacheWrite: parseFloat(els.cacheWriteTokens?.value) || 0,
-      amortizeN: parseInt(els.amortizeN?.value, 10) || 100,
     },
     filters: {
       provider: els.providerSearch.value.trim(),
@@ -2401,12 +2687,22 @@ function getView(input) {
       by: state.sortBy,
       dir: state.sortDir,
     },
+    effectiveSort: perf.provisionalSort ? rankingMetric() : undefined,
     compare: state.compareSelection.map((m) => ({ provider: m.provider, id: m.id })),
+    performance: {
+      status: state.perfStatus,
+      dependent: perf.dependent,
+      pending: perf.pending,
+      failed: perf.failed,
+      speedMinimumApplied: !(perf.pending || perf.failed),
+    },
+    provisional: provisional || undefined,
     rowCount: rows.length,
     top: rows.slice(0, n).map((r, i) => snapshotRow(r, i + 1)),
     shareUrl: location.href,
   };
   if (warning) snapshot.warning = warning;
+  if (provisional) snapshot.note = perfNoticeText();
   return snapshot;
 }
 
@@ -2486,7 +2782,6 @@ function explainRanking() {
       input: roundMoney(wBreak.input),
       output: roundMoney(wBreak.output),
       cacheRead: roundMoney(wBreak.cacheRead),
-      cacheWrite: roundMoney(wBreak.cacheWrite),
       sessionTotal: roundMoney(wBreak.total),
       displayed: roundMoney(winner.cost),
       modeMultiplier,
@@ -2495,7 +2790,6 @@ function explainRanking() {
       input: roundMoney(rBreak.input),
       output: roundMoney(rBreak.output),
       cacheRead: roundMoney(rBreak.cacheRead),
-      cacheWrite: roundMoney(rBreak.cacheWrite),
       sessionTotal: roundMoney(rBreak.total),
       displayed: roundMoney(runner.cost),
       modeMultiplier,
@@ -2504,6 +2798,9 @@ function explainRanking() {
     excludedForUnsupportedMix: excludedCount,
     excludedSample: excluded,
     warning: mixWarning() || undefined,
+    performance: (() => { const d = currentPerfDecision(); return { status: state.perfStatus, dependent: d.dependent, pending: d.pending, failed: d.failed, speedMinimumApplied: !(d.pending || d.failed) }; })(),
+    provisional: (() => { const d = currentPerfDecision(); return (d.pending || d.failed) || undefined; })(),
+    provisionalNote: perfNoticeText() || undefined,
   };
 }
 
@@ -2591,7 +2888,7 @@ function applyPresetFromCatalog(name) {
   return getView();
 }
 
-const SORT_COLUMNS = ['org', 'provider', 'model', 'input', 'output', 'cache_read', 'context', 'speed', 'ttft', 'intelligence', 'coding', 'agentic', 'blended', 'cost'];
+const SORT_COLUMNS = ['org', 'provider', 'model', 'quantization', 'input', 'output', 'cache_read', 'context', 'speed', 'ttft', 'intelligence', 'coding', 'agentic', 'blended', 'cost'];
 
 function setSort(input) {
   input = input || {};
@@ -2603,22 +2900,6 @@ function setSort(input) {
   }
   state.sortBy = input.by;
   state.sortDir = input.dir;
-  computeAndRender();
-  return getView();
-}
-
-function setCacheWrite(input) {
-  input = input || {};
-  if (input.tokens != null) {
-    const t = Number(input.tokens);
-    if (!Number.isFinite(t) || t < 0) return { error: 'tokens must be a non-negative number (millions).' };
-    els.cacheWriteTokens.value = t;
-  }
-  if (input.amortizeN != null) {
-    const n = parseInt(input.amortizeN, 10);
-    if (!Number.isFinite(n) || n < 1) return { error: 'amortizeN must be an integer ≥ 1.' };
-    els.amortizeN.value = n;
-  }
   computeAndRender();
   return getView();
 }
@@ -2815,12 +3096,18 @@ function highlightTradeoff(input) {
 function exportCsvView() {
   const filename = exportCsv();
   if (!filename) return { error: 'No rows to export. Broaden filters first.' };
+  const perf = currentPerfDecision();
+  const provisional = perf.pending || perf.failed;
   return {
     ok: true,
     filename,
     rowCount: state.currentRows.length,
     triggeredDownload: true,
-    note: 'In-app browsers (including ChatGPT) may block the file download. The ranking is still on screen; use get_share_url as a portable artifact.',
+    provisional: provisional || undefined,
+    performance: { status: state.perfStatus, dependent: perf.dependent, pending: perf.pending, failed: perf.failed, speedMinimumApplied: !provisional },
+    note: provisional
+      ? perfNoticeText()
+      : 'In-app browsers (including ChatGPT) may block the file download. The ranking is still on screen; use get_share_url as a portable artifact.',
   };
 }
 
@@ -2897,7 +3184,6 @@ function publishTwCatalog() {
     setWorkload,
     applyPreset: applyPresetFromCatalog,
     setSort,
-    setCacheWrite,
     setFilters,
     clearFilters,
     compareModels,

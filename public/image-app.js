@@ -455,16 +455,18 @@ function showCompareModal() {
     : costForImage(r.pricing, imageCount);
   const headlineFmt = (v) => budgetMode ? fmtAffordability(v) : fmtCost(v);
 
+  // Lead with the cost outcome, then unit rate and variant information, then
+  // model identity / provenance.
   const metricRows = [
-    { label: 'Org', getValue: (r) => esc(orgDisplay(r.model.org)) },
-    { label: 'Provider', getValue: (r) => esc(r.model.provider) },
-    { label: 'Model', getValue: (r) => esc(r.model.name || r.model.id) },
+    { label: els.costColumnHeader?.textContent || 'Total Cost', getValue: (r) => headlineFmt(headlineGet(r)), getRaw: headlineGet, isCost: true, isBudget: budgetMode },
+    { label: '$/Unit', getValue: (r) => fmtPrice(r.costPerUnit), getRaw: (r) => r.pricing.unit === 'token' ? r.pricing.cost_per_million : r.pricing.cost_per_unit, isCost: true },
     { label: 'Unit', getValue: (r) => {
       const variantSuffix = r.variant ? ' @' + r.variant.toUpperCase() : '';
       return esc(r.unit + variantSuffix);
     }},
-    { label: '$/Unit', getValue: (r) => fmtPrice(r.costPerUnit), getRaw: (r) => r.pricing.unit === 'token' ? r.pricing.cost_per_million : r.pricing.cost_per_unit, isCost: true },
-    { label: els.costColumnHeader?.textContent || 'Total Cost', getValue: (r) => headlineFmt(headlineGet(r)), getRaw: headlineGet, isCost: true, isBudget: budgetMode },
+    { label: 'Model', getValue: (r) => esc(r.model.name || r.model.id) },
+    { label: 'Provider', getValue: (r) => esc(r.model.provider) },
+    { label: 'Org', getValue: (r) => esc(orgDisplay(r.model.org)) },
   ];
 
   const snapshot = budgetMode
@@ -630,7 +632,6 @@ function attachListeners() {
       computeAndRender();
     };
     th.setAttribute('tabindex', '0');
-    th.setAttribute('role', 'button');
     th.addEventListener('click', sort);
     th.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sort(); }

@@ -35,12 +35,15 @@ models here; catalogs and prices are dynamic.
    one unit. Preserve the billing unit and state the workload basis.
 9. Hide-batch is on by default (`filters.hideBatch: true`). `:batch` rows are
    absent from `get_view` until `set_filters({ hideBatch: false })`.
+10. Performance loads separately from pricing. A `provisional` view is not a
+    final speed ranking or eligible speed-filtered set. Read `performance`,
+    `effectiveSort`, and `note`; do not claim its speed minimum was applied.
 
 ## Page capability map
 
 | Page | Registered tools | Sortable fields |
 |---|---|---|
-| Text `/` | `about_tokenwatch` plus the 19 tools below | `org`, `provider`, `model`, `input`, `output`, `cache_read`, `context`, `speed`, `ttft`, `intelligence`, `coding`, `agentic`, `blended`, `cost` |
+| Text `/` | `about_tokenwatch` plus the 19 tools below | `org`, `provider`, `model`, `quantization` (best effort), `input`, `output`, `cache_read`, `context`, `speed`, `ttft`, `intelligence`, `coding`, `agentic`, `blended`, `cost` |
 | Image `/image` | `about_tokenwatch`, `get_view`, `get_catalog_info`, `set_sort` | `org`, `model`, `cost_per_unit`, `cost` |
 | Video `/video` | `about_tokenwatch`, `get_view`, `get_catalog_info`, `set_sort` | `org`, `model`, `resolution`, `audio`, `cost_per_second`, `cost` |
 | Benchmarks `/benchmarks` | `about_tokenwatch`, `get_view`, `get_catalog_info`, `get_model`, `set_sort`, `set_use_case`, `set_filters` | `score`, `value`, `price`, `name`, `org`, plus the tab’s score keys |
@@ -149,9 +152,7 @@ Returns:
     "costMode": "perRequest|monthly",
     "totalTokensM": 0,
     "mix": ["input_percent", "cache_percent", "output_percent"],
-    "budget": 0,
-    "cacheWrite": 10,
-    "amortizeN": 100
+    "budget": 0
   },
   "filters": {
     "provider": "",
@@ -180,12 +181,30 @@ Returns:
 
 Each text row contains `rank`, `provider`, `id`, `name`, `org`, `cost`,
 `blended`, `zdr`, `speedP50`, `ttftP50`, `intelligence`, `coding`, and
-`agentic`. `cost` is the calculated workload cost (or the inverse
+`agentic`, plus best-effort `quantization`. Quantization is hidden in the UI
+by default, without collapsing distinct model/SKU identities.
+`cost` is the calculated workload cost (or the inverse
 affordability value in budget mode); `blended` is the mix-weighted comparison
 rate in $/M and is not the same thing as session `cost`. `ttftP50` is
 time-to-first-token in seconds (null when unknown). Quality scores are AA
 0–100 indices or null — never treat missing as zero. `hideBatch` defaults to
 true, so `:batch` SKUs are excluded until turned off.
+
+The estimate uses the same mix math for `blended` and total cost. Monthly mode
+multiplies only total cost by 30; blended remains a per-million-token rate.
+For fresh input, a finite positive `cache_write` is used only when it is
+strictly greater than valid numeric `input`; otherwise normal input pricing
+applies. Cached reads use published `cache_read` or the original input rate.
+There is no separate fixed write or amortization charge. This assumes all fresh
+input is cached where a higher write rate is published; additional cache-storage
+charges are excluded. It is an estimate, not an exact invoice or a guarantee of
+overestimation. Raw published component prices remain available under `pricing`.
+Views also report `performance.status` (`pending`, `ready`, `unavailable`, or
+`error`), `dependent`, `pending`, `failed`, and `speedMinimumApplied`.
+When `provisional` is true, read `note`: a speed minimum has not been applied
+and the rows are candidates, not a final eligible set. A speed/TTFT sort falls
+back to cost; `effectiveSort` describes that order while `sort` preserves the
+requested sort. Existing non-speed sorts are preserved.
 
 ### `get_model({ provider, id })`
 
@@ -209,7 +228,7 @@ reports `inView: false` and tells the agent to call `get_view`,
 Valid `by` values are:
 
 ```text
-org, provider, model, input, output, cache_read,
+org, provider, model, quantization, input, output, cache_read,
 context, speed, ttft, intelligence, coding, agentic, blended, cost
 ```
 
@@ -232,8 +251,8 @@ excludedSample,
 warning?
 ```
 
-`components` contains `input`, `output`, `cacheRead`, `cacheWrite`,
-`sessionTotal`, `displayed`, and `modeMultiplier`. `why` is the concise human
+`components` contains `input`, `output`, `cacheRead`, `sessionTotal`,
+`displayed`, and `modeMultiplier`. `why` is the concise human
 explanation. `rankingValue` follows the active sort: it may be a cost, price,
 context length, throughput, or alphabetical value. With fewer than two rows,
 the tool returns an error.
@@ -243,10 +262,9 @@ the tool returns an error.
 - `list_presets()` → `{ presets: [{ name, totalTokensM, mix: { input, cache, output } }], note }`.
 - `get_share_url()` → `{ shareUrl, note }`. It updates the current hash first.
 - `get_catalog_info()` → `{ page, generated_at, catalogSize, providerCount, note }`.
-- `set_workload({ totalTokensM?, mix?, costMode?, computeBy?, budget? })` → a fresh `get_view`; mix values must sum to 100 ±0.5 and are not silently normalized. It is a partial update: omitted workload fields, including existing `cacheWrite` and `amortizeN`, are preserved.
+- `set_workload({ totalTokensM?, mix?, costMode?, computeBy?, budget? })` → a fresh `get_view`; mix values must sum to 100 ±0.5 and are not silently normalized. It is a partial update to workload volume, mix, and mode.
 - `apply_preset({ name })` → a fresh `get_view`; valid names are `agentic`, `balanced`, `heavy-output`, and `no-cache`.
-- `set_cache_write({ tokens?, amortizeN? })` → a fresh `get_view`; tokens are millions and `amortizeN` must be at least 1. Cache-write cost is included only when an offering has a numeric `pricing.cache_write`; `null` means the component is treated as $0, so the ranking may remain unchanged.
-- `set_filters({ provider?, model?, zdr?, sub?, promo?, groupBy?, minIntelligence?, minCoding?, minAgentic?, benchmarked?, hideBatch?, cacheOnly?, maxBlended?, minToks?, hq? })` → a fresh `get_view` with its default 10-row `top` preview; this resets the large-row display state. `hideBatch` defaults to true on the page (omit to leave it; pass `false` to include `:batch` SKUs). `cacheOnly` keeps rows with a numeric cache-read price. `maxBlended` is a $/M cap at the current mix; `minToks` is minimum throughput p50 and drops rows with no speed data. `hq` is a country code (`US`, `SG`, `CN`, `FR`, `ES`, `NL`, `SE`) or `unknown`. `minCoding` / `minAgentic` drop offerings without that AA score. `benchmarked` keeps rows that have a benchmarks block. `groupBy` organizes the visible table into provider/org sections but does not change the active ranking or the global `top` preview; explain section placement separately from rank. The `model` filter is a case-insensitive substring match against the display name or the raw trailing id segment; runs of spaces and hyphens are the same separator (`glm-5.3-flash` matches `GLM 5.3 Flash`). It does not collapse glued tokens (`GLM-5.3Flash` will miss) and it does not collapse every backend of that model into one row — compare/open-detail still need exact `{provider, id}`.
+- `set_filters({ provider?, model?, zdr?, sub?, promo?, groupBy?, minIntelligence?, minCoding?, minAgentic?, benchmarked?, hideBatch?, cacheOnly?, maxBlended?, minToks?, hq? })` → a fresh `get_view` with its default 10-row `top` preview; this resets the large-row display state. `hideBatch` defaults to true on the page (omit to leave it; pass `false` to include `:batch` SKUs). `cacheOnly` keeps rows with a numeric cache-read price. `maxBlended` is a $/M cap at the current mix; `minToks` is minimum throughput p50 and drops rows with no speed data once performance is ready. While pending/unavailable, the result explicitly reports provisional candidates and an unapplied speed minimum. `hq` is a country code (`US`, `SG`, `CN`, `FR`, `ES`, `NL`, `SE`) or `unknown`. `minCoding` / `minAgentic` drop offerings without that AA score. `benchmarked` keeps rows that have a benchmarks block. `groupBy` organizes the visible table into provider/org sections but does not change the active ranking or the global `top` preview; explain section placement separately from rank. An unambiguous canonical `model` selection resolves against the full catalog before other filters and matches exactly; partial searches remain case-insensitive substring matches. Spaces and hyphens are equivalent (`GLM 5.2` selects `glm-5.2`, not `glm-5.2-fp8` or `glm-5.2-fast`). Quant/SKU/batch identities stay distinct; compare/open-detail still need exact `{provider, id}`.
 - `clear_filters()` → a fresh `get_view`; workload and sort are kept. Hide-batch returns to on.
 
 ### Text comparison, detail, and export tools
@@ -254,7 +272,7 @@ the tool returns an error.
 - `compare_models({ action, models?, open? })` → a fresh view, with optional `missing` and `note`. Actions are `add`, `remove`, `clear`, and `set`; models use `{ provider, id }`; the tray maximum is six. `open: true` opens the modal and requires at least two selected models.
 - `open_detail({ provider, id })` → `{ ok, opened: { provider, id }, note }`; opens the detail modal for an offering in the current view.
 - `highlight_tradeoff({ kinds? })` → a fresh view after selecting and opening cheapest, fastest, `zdr_cheapest`, and/or `smartest` (highest AA intelligence with a score) rows. If omitted, all four kinds are attempted. It errors when those kinds collapse to fewer than two distinct `{provider, id}` rows. Retry after `clear_filters` or on a mixed catalog.
-- `export_csv()` → `{ ok, filename, rowCount, triggeredDownload, note }`; the download can be blocked by an in-app browser.
+- `export_csv()` → `{ ok, filename, rowCount, triggeredDownload, note }`, plus `performance` and optional `provisional`; pending/unavailable speed views carry an explicit provisional CSV preamble. The download can be blocked by an in-app browser.
 - `snapshot_compare()` → `{ ok, filename, triggeredDownload, note }`, or an error if fewer than two models are selected or PNG capture fails.
 - `download_cost_card({ provider, id })` → `{ ok, filename, triggeredDownload, note }`, or an error if the row is not in view. `triggeredDownload: true` means the page started a download click. Chrome may still show a multiple-file download permission prompt; the file is not on disk until that is allowed.
 - `switch_catalog({ page })` → `{ ok, navigatingTo, note }`; valid pages are `text`, `image`, `video`, and `benchmarks`, and navigation leaves the current page.
@@ -278,7 +296,7 @@ and what the returned fields mean. Use the following output-to-response rules:
   direction, and summarize the returned top rows. It is a state change, not a
   filter operation.
 - `explain_ranking`: report `metric`, `sort`, winner and runner-up values,
-  `why`, cost components, unsupported-mix exclusions, and warnings. Preserve
+  `why`, computed mix components, unsupported-mix exclusions, and warnings. Preserve
   the distinction between the ranking value and displayed workload cost.
 - `list_presets`: present the returned preset names and input/cache/output
   percentages; do not apply a preset unless the user asks.
@@ -286,7 +304,7 @@ and what the returned fields mean. Use the following output-to-response rules:
   hash state; do not imply it is a snapshot of future catalog data.
 - `get_catalog_info`: report `generated_at`, catalog size, and provider count;
   describe freshness only relative to that timestamp.
-- `set_workload`, `apply_preset`, and `set_cache_write`: state the accepted
+- `set_workload` and `apply_preset`: state the accepted
   workload change, then report the returned live ranking and its new basis.
   If validation returns `error`, explain what must be corrected and do not
   claim that the page changed.

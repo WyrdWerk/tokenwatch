@@ -45,7 +45,7 @@
     return '$' + c.toFixed(2);
   }
 
-  function computeCost(pricing, totalTokens, mix, cacheWriteTokens, amortizeN) {
+  function computeCost(pricing, totalTokens, mix) {
     var parts = mix.split(',').map(parseFloat);
     var inputPct = parts[0] || 0, cachePct = parts[1] || 0, outputPct = parts[2] || 0;
     var total = totalTokens * 1e6;
@@ -58,7 +58,12 @@
 
     if (inputTokens > 0) {
       if (pricing.input === null || pricing.input === undefined) { valid = false; }
-      else cost += (pricing.input * inputTokens) / 1e6;
+      else {
+        var inputPrice = Number.isFinite(pricing.input) && Number.isFinite(pricing.cache_write)
+          && pricing.cache_write > 0 && pricing.cache_write > pricing.input
+          ? pricing.cache_write : pricing.input;
+        cost += (inputPrice * inputTokens) / 1e6;
+      }
     }
     if (cacheTokens > 0) {
       var crPrice = pricing.cache_read != null ? pricing.cache_read : pricing.input;
@@ -68,9 +73,6 @@
     if (outputTokens > 0) {
       if (pricing.output === null || pricing.output === undefined) { valid = false; }
       else cost += (pricing.output * outputTokens) / 1e6;
-    }
-    if (cacheWriteTokens > 0 && pricing.cache_write != null) {
-      cost += (pricing.cache_write * cacheWriteTokens * 1e6) / 1e6 / (amortizeN || 1);
     }
 
     return valid ? cost : null;
@@ -91,8 +93,6 @@
     var model = target.getAttribute('data-tw-model');
     if (tokens === undefined) tokens = parseFloat(target.getAttribute('data-tw-tokens')) || DEFAULTS.tokens;
     if (mix === undefined) mix = target.getAttribute('data-tw-mix') || DEFAULTS.mix;
-    var cacheWrite = parseFloat(target.getAttribute('data-tw-cache-write')) || 0;
-    var amortizeN = parseInt(target.getAttribute('data-tw-amortize'), 10) || 100;
     var theme = getTheme(target.getAttribute('data-tw-theme'));
     var c = STYLES[theme];
 
@@ -110,7 +110,7 @@
     }
 
     var cheapest = providers[0]; // API returns sorted by cost
-    var cost = computeCost(cheapest.pricing, tokens, mix, cacheWrite, amortizeN || 100);
+    var cost = computeCost(cheapest.pricing, tokens, mix);
     var promo = cheapest.discount > 0 ? ' <span class="tw-promo">' + (cheapest.discount * 100).toFixed(0) + '% off</span>' : '';
 
     var html = '<style>' + getCss(c) + '</style>' +

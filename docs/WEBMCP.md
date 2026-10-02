@@ -22,6 +22,17 @@ The image and video pages load the same registrar and expose page-specific `get_
 3. Write tools call existing UI functions (`setCostMode`, `applyPreset`, `computeAndRender`, …) and return a fresh `get_view` snapshot so the agent cannot describe a stale ranking.
 4. `get_view.top` and `explain_ranking` follow the table's active sort, returned as `sort: { by, dir }`. The default is total/session cost ascending (`by: "cost", dir: "asc"`); the human can change it with the table controls. `explain_ranking` uses that same metric rather than assuming cost. Row identity is `{ provider, id }`, never a DOM rank (`ROW_CAP = 250` would otherwise lie).
 
+### Cost estimate
+
+For fresh input, a finite positive published `cache_write` rate is used only
+when strictly greater than valid numeric input; otherwise normal input pricing
+applies. Cached reads use published `cache_read` or original input. Blended and
+total share the same mix math; monthly ×30 applies only to total. There is no
+separate fixed write/amortization charge. The estimate assumes all fresh input
+is cached where a higher write rate is published; additional cache-storage
+charges are excluded. It is not an exact invoice or a guarantee of
+overestimation. Raw published rates are unchanged.
+
 Without WebMCP support the site is unchanged (progressive enhancement).
 
 ## Media-page tool catalog
@@ -54,7 +65,6 @@ Starred tools are the contest-demo minimum.
 | See | `get_catalog_info` | none (read) |
 | Workload | `set_workload` ★ | re-renders the table |
 | Workload | `apply_preset` | re-renders the table |
-| Workload | `set_cache_write` | re-renders the table |
 | Filters | `set_filters` ★ | re-renders the table (incl. hideBatch, cacheOnly, maxBlended, minToks, hq) |
 | Filters | `clear_filters` | re-renders the table (workload kept) |
 | Decide | `compare_models` ★ | updates tray; optional modal |
@@ -85,7 +95,7 @@ npm test                 # includes webmcp-schema + twcatalog-contract (no brows
 npm run serve            # public/ on :3000
 ```
 
-Chrome: enable the WebMCP testing flag, open a catalog page, and run `await document.modelContext.getTools()` in DevTools. The text page exposes 20 tools (including `about_tokenwatch`); image and video expose `about_tokenwatch`, `get_view`, `get_catalog_info`, and `set_sort`; benchmarks expose `about_tokenwatch`, `get_view`, `get_catalog_info`, `get_model`, `set_sort`, `set_use_case`, and `set_filters`. Use `set_sort` to change any visible sortable column programmatically; `get_view` reports the resulting sort.
+Chrome: enable the WebMCP testing flag, open a catalog page, and run `await document.modelContext.getTools()` in DevTools. The text page exposes 19 tools (including `about_tokenwatch`); image and video expose `about_tokenwatch`, `get_view`, `get_catalog_info`, and `set_sort`; benchmarks expose `about_tokenwatch`, `get_view`, `get_catalog_info`, `get_model`, `set_sort`, `set_use_case`, and `set_filters`. Use `set_sort` to change any visible sortable column programmatically; `get_view` reports the resulting sort.
 
 ChatGPT: desktop app, Settings → Browser → Permissions, open the live URL, Site tools in the address bar. Luna has WebMCP disabled; Enterprise/Edu are excluded.
 
