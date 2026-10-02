@@ -24,10 +24,18 @@
     restoreFocus: null, // element to refocus when the detail modal closes
   };
 
-  // Mirror of shared/cost.mjs blendedRate (classic script — no ESM imports).
+  // Mirror of shared/cost.mjs cost helpers (classic script — no ESM imports).
   // Parity pinned by test/benchmarks-page.test.mjs.
+  function freshInputRate(pricing) {
+    const { input, cache_write: write } = pricing;
+    return typeof input === 'number' && Number.isFinite(input)
+      && typeof write === 'number' && Number.isFinite(write)
+      && write > 0 && write > input ? write : input;
+  }
+
   function blendedRate(pricing, mix) {
-    const inRate = pricing.input != null ? pricing.input * mix.inputPct / 100 : null;
+    const inputPrice = freshInputRate(pricing);
+    const inRate = inputPrice != null ? inputPrice * mix.inputPct / 100 : null;
     const outRate = pricing.output != null ? pricing.output * mix.outputPct / 100 : null;
     const crPrice = pricing.cache_read != null ? pricing.cache_read : pricing.input;
     const crRate = crPrice != null ? crPrice * mix.cacheReadPct / 100 : null;
@@ -244,13 +252,13 @@
     // Header — every column sorts; arrow shows current sort + direction
     const arrow = (key) => state.sort === key ? (state.dir === 'asc' ? ' ▲' : ' ▼') : '';
     const th = (key, label, extra = '') =>
-      `<th class="sortable${/\$|Value|^#/.test(label) ? ' num' : ''}" data-col="${key}" title="${extra}" tabindex="0" role="button" aria-sort="${state.sort === key ? (state.dir === 'asc' ? 'ascending' : 'descending') : 'none'}">${label}${arrow(key)}</th>`;
+      `<th class="sortable${/\$|Value|^#/.test(label) ? ' num' : ''}" data-col="${key}" title="${extra}" tabindex="0" aria-sort="${state.sort === key ? (state.dir === 'asc' ? 'ascending' : 'descending') : 'none'}">${label}${arrow(key)}</th>`;
     $('benchHead').innerHTML =
       th('rank', '#') +
       th('name', 'Model') +
       th('org', 'Org') +
       uc.columns.map((c) => th(c.key, c.label, c.scale)).join('') +
-      th('price', 'From $/M', 'Cheapest provider blended rate at the agentic mix') +
+      th('price', 'From $/M', 'Cheapest provider blended rate at your current token mix') +
       th('value', 'Value', 'Capability per dollar, normalized to the best model in view (100)');
 
     // Body

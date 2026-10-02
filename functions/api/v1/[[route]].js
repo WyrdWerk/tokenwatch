@@ -17,6 +17,7 @@
 
 import { canonicalId } from '../../../shared/normalize.mjs';
 import { endpointDirectory } from '../../../shared/api-meta.mjs';
+import { blendedRate } from '../../../shared/cost.mjs';
 import {
   DEFAULT_MIX,
   MAX_HISTORY_DAYS,
@@ -296,21 +297,9 @@ export async function onRequestGet(context) {
       if (reqTokens > 0 && reqMix) {
         const parts = reqMix.split(',').map(parseFloat);
         const inputPct = parts[0] || 0, cachePct = parts[1] || 0, outputPct = parts[2] || 0;
-        const total = reqTokens * 1e6;
         const costFn = (m) => {
-          const p = m.pricing;
-          let c = 0, valid = true;
-          const iT = total * inputPct / 100;
-          const cT = total * cachePct / 100;
-          const oT = total * outputPct / 100;
-          if (iT > 0) { if (p.input == null) valid = false; else c += (p.input * iT) / 1e6; }
-          // Cache-read null → fall back to input price (no cache discount); do NOT invalidate
-          if (cT > 0) {
-            const crPrice = p.cache_read != null ? p.cache_read : p.input;
-            c += (crPrice * cT) / 1e6;
-          }
-          if (oT > 0) { if (p.output == null) valid = false; else c += (p.output * oT) / 1e6; }
-          return valid ? c : Infinity;
+          const rate = blendedRate(m.pricing, { inputPct, cacheReadPct: cachePct, outputPct });
+          return rate == null ? Infinity : rate * reqTokens;
         };
         sorted = matches.sort((a, b) => costFn(a) - costFn(b));
       } else {

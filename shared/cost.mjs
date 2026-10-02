@@ -10,8 +10,17 @@
  * docs/canonicalization-edge-cases.md §10 for the same pattern on canonicalId.
  */
 
+/** Fresh input uses a higher finite positive write tariff; published input is unchanged. */
+export function freshInputRate(pricing) {
+  const { input, cache_write: write } = pricing;
+  return typeof input === 'number' && Number.isFinite(input)
+    && typeof write === 'number' && Number.isFinite(write)
+    && write > 0 && write > input ? write : input;
+}
+
 /**
  * Effective $/M rate for a token mix. Prices are $/M tokens; pct are 0-100.
+ * Fresh input uses freshInputRate; additional cache-storage charges are excluded.
  *
  * Null semantics (mirrors app.js blendedCostFor):
  *  - inputPct > 0 && input price null  → returns null (offering can't serve the mix)
@@ -25,7 +34,8 @@
  * (i.e. blendedCostFor's return) — NOT a per-token cost.
  */
 export function blendedRate(pricing, { inputPct, cacheReadPct, outputPct }) {
-  const inRate = pricing.input != null ? pricing.input * inputPct / 100 : null;
+  const inputPrice = freshInputRate(pricing);
+  const inRate = inputPrice != null ? inputPrice * inputPct / 100 : null;
   const outRate = pricing.output != null ? pricing.output * outputPct / 100 : null;
   const crPrice = pricing.cache_read != null ? pricing.cache_read : pricing.input;
   const crRate = crPrice != null ? crPrice * cacheReadPct / 100 : null;

@@ -10,7 +10,7 @@ const SKILL = join(ROOT, '.agents', 'skills', 'operating-tokenwatch-webmcp', 'SK
 const TEXT_TOOLS = [
   'about_tokenwatch', 'get_view', 'get_model', 'set_sort', 'explain_ranking', 'list_presets',
   'get_share_url', 'get_catalog_info', 'set_workload', 'apply_preset',
-  'set_cache_write', 'set_filters', 'clear_filters', 'compare_models',
+  'set_filters', 'clear_filters', 'compare_models',
   'open_detail', 'highlight_tradeoff', 'export_csv', 'snapshot_compare',
   'download_cost_card', 'switch_catalog',
 ];
@@ -36,6 +36,7 @@ test('TokenWatch WebMCP skill documents tool contracts and human-readable report
   assert.match(skill, /cost_per_second/);
   assert.match(skill, /`get_catalog_info\(\)` is also available on this page/);
   assert.match(skill, /excludedForUnsupportedMix/);
+  assert.doesNotMatch(skill, /set_cache_write|amortizeN|cacheWrite/);
 });
 
 test('about_tokenwatch brief is sliced from SKILL.md and public/skill.md matches source', async () => {

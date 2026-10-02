@@ -30,7 +30,7 @@
     <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Text pricing</a><span aria-hidden="true">/</span><a href="/docs/methodology/">Methodology</a></nav>
     <article class="seo-prose">
       <h2>How TokenWatch builds a comparable catalog</h2>
-      <p>The current text catalog contains 1561 provider-specific offerings across 100 inference providers. Its source timestamp is <time datetime="2026-09-25T14:50:24.076Z">2026-09-25T14:50:24.076Z</time>.</p>
+      <p>The current text catalog contains 1572 provider-specific offerings across 99 inference providers. Its source timestamp is <time datetime="2026-10-02T01:11:10.771Z">2026-10-02T01:11:10.771Z</time>.</p>
       <h2>Source order</h2>
       <p>Direct provider APIs are the first source because a provider is authoritative for its own prices. OpenRouter endpoint data comes next and is split into provider-specific rows. CSV and maintained fallback records fill gaps after live sources.</p>
       <h2>Price normalization</h2>
@@ -38,7 +38,7 @@
       <h2>Model identity and provider precedence</h2>
       <p>The deduplication key combines a canonical model ID with a normalized provider. Provider prefixes, dated aliases, and selected routing suffixes can normalize to one identity. Quantization suffixes remain part of the key, so FP8, NVFP4, and INT4 rows stay separate.</p>
       <h2>Cost calculations</h2>
-      <p>Blended $/M applies the selected input, cached-input, and output percentages. If a provider does not publish a cache-read price, cached input falls back to the normal input rate. Cache-write charges stay separate because they are one-time costs amortized across reuse.</p>
+      <p>Blended $/M and total cost use the same input, cached-input, and output percentages. Fresh input uses a finite positive cache-write rate only when it is higher than normal input pricing; otherwise normal input applies. Cached reads use the published cache-read price or the original input rate. There is no separate write charge. Additional cache-storage charges are excluded, so this simplified estimate is not an exact bill.</p>
       <h2>Privacy and policy data</h2>
       <p>ZDR tags come from endpoint-level OpenRouter data or reviewed provider metadata. Missing metadata does not become a positive or negative privacy claim. Provider pages link to reviewed policies when TokenWatch has them.</p>
       <h2>Benchmarks and performance</h2>

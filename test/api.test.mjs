@@ -87,6 +87,23 @@ test('/api/v1/models/:id/providers orders by mix-aware cost (inversion proves mi
     'mix-aware sort must rank google (1480) before deepinfra (1530)');
 });
 
+test('/models/:id/providers applies higher write tariffs only in the mix-aware ranking', async () => {
+  const catalog = { models: [
+    { id: 'cache-tariff-test', provider: 'alpha', pricing: { input: 1, cache_write: 10, cache_read: 0.1, output: 1 } },
+    { id: 'cache-tariff-test', provider: 'beta', pricing: { input: 2, cache_write: 0, cache_read: 0.2, output: 1 } },
+  ] };
+  const ctx = makeContext('/api/v1/models/cache-tariff-test/providers', '?tokens=2&mix=20,50,30');
+  ctx.env.ASSETS = { fetch: async () => new Response(JSON.stringify(catalog)) };
+  const { status, body } = await getJson(ctx);
+  assert.equal(status, 200);
+  // Alpha: (10×0.2 + 0.1×0.5 + 1×0.3)×2 = $4.70; beta: $1.60.
+  assert.deepEqual(body.providers.map(p => p.provider), ['beta', 'alpha']);
+  assert.equal(body.providers[1].pricing.input, 1, 'published input price is never replaced');
+  ctx.request = new Request('https://tokenwatch.test/api/v1/models/cache-tariff-test/providers');
+  const raw = await getJson(ctx);
+  assert.deepEqual(raw.body.providers.map(p => p.provider), ['alpha', 'beta'], 'no-mix sorting keeps raw-price semantics');
+});
+
 test('/api/v1/models/:id/providers mix-aware cost formula (formula-data coverage, not sort)', async () => {
   // Pins the documented hand-computed cost for the deepinfra row. This validates the
   // cost FORMULA against known pricing — it does NOT exercise ordering (see the test above).

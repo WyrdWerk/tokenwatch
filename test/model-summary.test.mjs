@@ -207,7 +207,7 @@ test('app.js mirrors shared/model-summary.mjs summary math (drift guard)', async
   // The mirror must exist and be used by the renderer + computeAndRender.
   assert.match(src, /function rankCanonicalOfferings\(/, 'app.js must define rankCanonicalOfferings');
   assert.match(src, /function canonicalSummary\(/, 'app.js must define canonicalSummary');
-  assert.match(src, /renderModelSummary\(matchingOfferings\(\), tokens\)/, 'computeAndRender must render the canonical summary');
+  assert.match(src, /renderModelSummary\(rows, tokens\)/, 'computeAndRender must render the canonical summary from the same eligible rows');
   assert.match(src, /const MIN_PROVIDER_ROWS = 1;/, 'app.js must carry MIN_PROVIDER_ROWS');
 
   // Extract and execute the app.js mirror, then compare its output to the

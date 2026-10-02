@@ -188,6 +188,13 @@ test('blendedRateFor applies the mix at read time from raw components', () => {
   assert.deepEqual(row, { input_price: 2, output_price: 8, cache_read: 0.2 });
 });
 
+test('history blending uses cache_write only for fresh input, leaving cached reads at cache_read', () => {
+  const row = { input_price: 2, output_price: 7, cache_read: 0.2, cache_write: 5 };
+  // 20% × 5 + 50% × 0.2 + 30% × 7 = 1 + 0.1 + 2.1
+  assert.equal(blendedRateFor(row, { inputPct: 20, cacheReadPct: 50, outputPct: 30 }), 3.2);
+  assert.equal(row.input_price, 2, 'history retains the original catalog input price');
+});
+
 test('cache_read null falls back to the input price, never to zero', () => {
   const row = { input_price: 2, output_price: 8, cache_read: null };
   // 97% of cached tokens bill at the input rate: 0.05 + 1.94 + 0.04

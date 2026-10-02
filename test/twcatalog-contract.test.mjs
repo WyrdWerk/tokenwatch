@@ -17,7 +17,6 @@ const REQUIRED_METHODS = [
   'getCatalogInfo',
   'setWorkload',
   'applyPreset',
-  'setCacheWrite',
   'setFilters',
   'clearFilters',
   'compareModels',
@@ -110,9 +109,9 @@ test('explainRanking uses the active sort metric instead of assuming cost', asyn
 
 test('TWCatalog exposes setSort and uses the same sortable columns as the table', async () => {
   const src = await readFile(APP_JS, 'utf8');
-  assert.match(src, /const SORT_COLUMNS = \['org', 'provider', 'model', 'input', 'output', 'cache_read', 'context', 'speed', 'ttft', 'intelligence', 'coding', 'agentic', 'blended', 'cost'\]/);
+  assert.match(src, /const SORT_COLUMNS = \['org', 'provider', 'model', 'quantization', 'input', 'output', 'cache_read', 'context', 'speed', 'ttft', 'intelligence', 'coding', 'agentic', 'blended', 'cost'\]/);
   assert.match(src, /function setSort\(input\)/);
-  assert.match(src, /setSort,\s*setCacheWrite/);
+  assert.doesNotMatch(src, /setCacheWrite/);
 });
 
 test('getView snapshot includes the new text-page filters and ttftP50', async () => {
