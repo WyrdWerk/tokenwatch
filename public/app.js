@@ -990,7 +990,21 @@ function showDetailModal(idx) {
   parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Output</div><div class="detail-pricing-cell-value">${p.output != null ? fmtPrice(p.output) : '—'}</div></div>`);
   parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Cache read</div><div class="detail-pricing-cell-value">${p.cache_read != null ? fmtPrice(p.cache_read) : '—'}</div></div>`);
   parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Cache write</div><div class="detail-pricing-cell-value">${p.cache_write != null ? fmtPrice(p.cache_write) : '—'}</div></div>`);
-  parts.push('</div></div>');
+  parts.push('</div>');
+  if (p.input_billing === 'cache_write') {
+    parts.push('<div class="detail-provenance">Fresh input uses the cache-write tariff under the provider\'s default billing.</div>');
+  }
+  parts.push('</div>');
+
+  if (r.capabilities) {
+    const caps = r.capabilities;
+    parts.push('<div class="detail-section"><div class="detail-section-title">Provider capabilities</div>');
+    for (const [label, supported] of [['Chat', caps.chat], ['Image input', caps.image_input], ['Tool call', caps.tool_call]]) {
+      if (supported == null) continue;
+      parts.push(`<div class="detail-quality-row"><span class="detail-quality-label">${label}</span><span class="detail-quality-value">${supported ? 'Supported' : 'Not supported'}</span></div>`);
+    }
+    parts.push('<div class="detail-quality-source">Source: provider model catalog</div></div>');
+  }
 
   // Section: Capabilities + About (from provider-specific OR model-level fallback)
   // Prefer md (provider-specific); fall back to md_model (model-level from any provider).
@@ -1121,25 +1135,37 @@ function showDetailModal(idx) {
   if (state.perfData) {
     const perfKey = canonicalModelId(r.id) + '|' + r.provider;
     const perf = state.perfData[perfKey];
-    if (perf && (perf.latency || perf.throughput)) {
+    if (perf && (perf.latency || perf.throughput || perf.cache_hit_rate)) {
       parts.push('<div class="detail-section"><div class="detail-section-title">Performance</div>');
       if (perf.latency) {
         const l = perf.latency;
         parts.push('<div class="detail-pricing-grid">');
-        parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Latency p50</div><div class="detail-pricing-cell-value">${l.p50 != null ? Math.round(l.p50 * 100) / 100 : '—'} ms</div></div>`);
-        parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Latency p90</div><div class="detail-pricing-cell-value">${l.p90 != null ? Math.round(l.p90 * 100) / 100 : '—'} ms</div></div>`);
-        parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Latency p99</div><div class="detail-pricing-cell-value">${l.p99 != null ? Math.round(l.p99 * 100) / 100 : '—'} ms</div></div>`);
+        parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">${l.window ? 'TTFT p50 (' + esc(l.window) + ')' : 'Latency p50'}</div><div class="detail-pricing-cell-value">${l.p50 != null ? Math.round(l.p50 * 100) / 100 : '—'} ms</div></div>`);
+        if (perf.source !== 'coralbricks') {
+          parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Latency p90</div><div class="detail-pricing-cell-value">${l.p90 != null ? Math.round(l.p90 * 100) / 100 : '—'} ms</div></div>`);
+          parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Latency p99</div><div class="detail-pricing-cell-value">${l.p99 != null ? Math.round(l.p99 * 100) / 100 : '—'} ms</div></div>`);
+        }
         parts.push('</div>');
       }
       if (perf.throughput) {
         const t = perf.throughput;
         parts.push('<div class="detail-pricing-grid">');
-        parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Throughput p50</div><div class="detail-pricing-cell-value">${t.p50 != null ? Math.round(t.p50 * 100) / 100 : '—'} tps</div></div>`);
-        parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Throughput p90</div><div class="detail-pricing-cell-value">${t.p90 != null ? Math.round(t.p90 * 100) / 100 : '—'} tps</div></div>`);
-        parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Throughput p99</div><div class="detail-pricing-cell-value">${t.p99 != null ? Math.round(t.p99 * 100) / 100 : '—'} tps</div></div>`);
+        if (t.reported != null) {
+          parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Decode speed (reported, ${esc(t.window)})</div><div class="detail-pricing-cell-value">${Math.round(t.reported * 100) / 100} tps</div></div>`);
+        } else {
+          parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Throughput p50</div><div class="detail-pricing-cell-value">${t.p50 != null ? Math.round(t.p50 * 100) / 100 : '—'} tps</div></div>`);
+          parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Throughput p90</div><div class="detail-pricing-cell-value">${t.p90 != null ? Math.round(t.p90 * 100) / 100 : '—'} tps</div></div>`);
+          parts.push(`<div class="detail-pricing-cell"><div class="detail-pricing-cell-label">Throughput p99</div><div class="detail-pricing-cell-value">${t.p99 != null ? Math.round(t.p99 * 100) / 100 : '—'} tps</div></div>`);
+        }
         parts.push('</div>');
       }
-      parts.push('<div class="detail-quality-source">Source: OpenRouter endpoint metrics (30m window)</div>');
+      if (perf.cache_hit_rate) {
+        const hit = perf.cache_hit_rate;
+        parts.push(`<div class="detail-quality-row"><span class="detail-quality-label">Cache-hit rate (${esc(hit.window)})</span><span class="detail-quality-value">${hit.percent}%</span></div>`);
+      }
+      parts.push(perf.source === 'coralbricks'
+        ? '<div class="detail-quality-source">Source: CoralBricks measured API traffic; provider-reported and workload-dependent.</div>'
+        : '<div class="detail-quality-source">Source: OpenRouter endpoint metrics (30m window)</div>');
       parts.push('</div>');
     }
   }
@@ -1228,8 +1254,9 @@ function buildCostCard(r) {
   const blendedVal = blended != null ? fmtPrice(blended) : '\u2014';
   const zdrVal = r.zdr === true ? 'Yes' : r.zdr === false ? 'No' : '\u2014';
   const perf = getPerfData({ model: r });
-  const tps = perf && perf.throughput ? perf.throughput.p50 : null;
-  const speedVal = tps == null ? '\u2014' : `${Math.round(tps * 10) / 10} tps`;
+  const tps = speedFor({ model: r });
+  const speedVal = tps == null ? '\u2014' : `${Math.round(tps * 10) / 10} tps` +
+    (perf?.throughput?.reported != null ? ` (reported, ${perf.throughput.window})` : '');
 
   // Two-column metric/value table. All four published rates are always shown.
   const rows = [
@@ -1241,7 +1268,9 @@ function buildCostCard(r) {
     ['Blended $/M', blendedVal, true, false],
     ['Token mix', esc(mixVal), false, false],
   ];
-  rows.push(['Fresh input', 'Higher write rate when published; additional storage excluded', false, false]);
+  rows.push(['Fresh input', pricing.input_billing === 'cache_write'
+    ? 'Default cache-write tariff; additional storage excluded'
+    : 'Higher write rate when published; additional storage excluded', false, false]);
   rows.push(['ZDR', zdrVal, false, false]);
   rows.push(['Speed', speedVal, true, false]);
   // Headline outcome \u2014 accent (compare-cheapest) so it reads as the result.
@@ -1373,16 +1402,18 @@ function showCompareModal() {
         const v = m.benchmarks?.agentic_index;
         return v != null ? String(v) : '<span class="missing">—</span>';
       }, getRaw: m => m.benchmarks?.agentic_index ?? null, bestHigh: true },
-    { label: 'Speed (tps p50)', getValue: m => {
+    { label: 'Speed (tps)', getValue: m => {
         const perf = getPerfData({ model: m });
-        const tps = perf?.throughput?.p50;
+        const tps = speedFor({ model: m });
         if (tps == null) return '<span class="missing">—</span>';
-        return `${Math.round(tps * 10) / 10} tps`;
-      }, getRaw: m => getPerfData({ model: m })?.throughput?.p50 ?? null, bestHigh: true },
+        return `${Math.round(tps * 10) / 10} tps` + (perf.throughput.reported != null
+          ? ` (reported, ${esc(perf.throughput.window)})` : ' (p50)');
+      }, getRaw: m => speedFor({ model: m }), bestHigh: true },
     { label: 'TTFT (s p50)', getValue: m => {
-        const ms = getPerfData({ model: m })?.latency?.p50;
+        const latency = getPerfData({ model: m })?.latency;
+        const ms = latency?.p50;
         if (ms == null) return '<span class="missing">—</span>';
-        return `${fmtTtftSeconds(ms)} s`;
+        return `${fmtTtftSeconds(ms)} s` + (latency.window ? ` (${esc(latency.window)})` : '');
       }, getRaw: m => getPerfData({ model: m })?.latency?.p50 ?? null, isCost: true },
     { label: 'Input $/M', getValue: m => fmtPrice(m.pricing.input), getRaw: m => m.pricing.input, isCost: true },
     { label: 'Output $/M', getValue: m => fmtPrice(m.pricing.output), getRaw: m => m.pricing.output, isCost: true },
@@ -1477,10 +1508,13 @@ function getTokens() {
   };
 }
 
-/** Mirror of shared/cost.mjs: fresh input uses the higher write tariff where
- *  published. Additional cache-storage charges are excluded from the estimate. */
+/** Mirror of shared/cost.mjs: explicit default billing wins; otherwise use the
+ *  higher write tariff. Additional cache-storage charges are excluded. */
 function freshInputRate(pricing) {
   const { input, cache_write: write } = pricing;
+  if (pricing.input_billing === 'cache_write') {
+    return typeof write === 'number' && Number.isFinite(write) && write >= 0 ? write : null;
+  }
   return typeof input === 'number' && Number.isFinite(input)
     && typeof write === 'number' && Number.isFinite(write)
     && write > 0 && write > input ? write : input;
@@ -1488,11 +1522,11 @@ function freshInputRate(pricing) {
 
 /** cost = (tokens × $/M) / 1e6  — prices are $/M tokens
  *
- *  Null-price semantics: a model is only filtered out (returns null) if it
- *  lacks an input or output price AND the user requested those token types.
- *  Cache fields never disqualify an offering. Missing cache-read pricing falls
- *  back to ORIGINAL input pricing. Fresh input uses the higher write tariff
- *  where published, without a separate cache-write charge. */
+ *  A model is filtered out (returns null) when a requested fresh-input or output
+ *  tariff is missing. Missing cache-read pricing falls back to ORIGINAL input.
+ *  An explicit cache-write billing rule requires a write tariff for fresh input;
+ *  otherwise use the higher write tariff where published, without a separate
+ *  cache-write charge. */
 function costBreakdown(pricing, tokens) {
   const c = (price, tok) => (price != null ? (price * tok) / 1e6 : null);
   const input = c(freshInputRate(pricing), tokens.input);
@@ -1660,7 +1694,7 @@ function matchingOfferings() {
       if (blended == null || blended > maxBlended) return false;
     }
     if (Number.isFinite(minToks) && minToks > 0 && !perfDecision.pending && !perfDecision.failed) {
-      const tps = getPerfData({ model: m })?.throughput?.p50;
+      const tps = speedFor({ model: m });
       if (tps == null || tps < minToks) return false;
     }
     if (hq) {
@@ -1841,7 +1875,7 @@ function sortValue(r, sortBy) {
     case 'cache_read': return r.model.pricing.cache_read;
     case 'quantization': return r.model.quantization ? String(r.model.quantization).toLowerCase() : null;
     case 'context':    return r.model.context_length;
-    case 'speed':      return getPerfData(r)?.throughput?.p50 ?? null;
+    case 'speed':      return speedFor(r);
     case 'ttft':         return getPerfData(r)?.latency?.p50 ?? null;
     case 'intelligence': return r.model.benchmarks?.intelligence_index ?? null;
     case 'coding':       return r.model.benchmarks?.coding_index ?? null;
@@ -1956,6 +1990,12 @@ function getPerfData(r) {
   return state.perfData[key] || null;
 }
 
+/** Display/filter/sort a measured speed without treating reported values as percentiles. */
+function speedFor(r) {
+  const throughput = getPerfData(r)?.throughput;
+  return throughput?.p50 ?? throughput?.reported ?? null;
+}
+
 function isBatchOrFreeId(id) {
   const s = String(id || '').toLowerCase();
   return s.includes(':batch') || s.includes(':free') || s.endsWith('-batch');
@@ -1990,11 +2030,12 @@ function renderProviderCell(r) {
  *  TTFT is a separate column (seconds, lower = faster). */
 function renderSpeedCell(r) {
     const perf = getPerfData(r);
-    const tps = perf?.throughput?.p50;
+    const tps = speedFor(r);
     if (tps == null) return '<span class="missing">—</span>';
     const t = perf.throughput;
     const r1 = (v) => v != null ? Math.round(v * 10) / 10 : '—';
-    const title = `Throughput p50/p75/p90/p99: ${r1(t.p50)}/${r1(t.p75)}/${r1(t.p90)}/${r1(t.p99)} tps`;
+    const title = t.reported != null ? `CoralBricks reported decode speed (${t.window}): ${r1(tps)} tps`
+      : `Throughput p50/p75/p90/p99: ${r1(t.p50)}/${r1(t.p75)}/${r1(t.p90)}/${r1(t.p99)} tps`;
     return '<span class="perf-pill" title="' + esc(title) + '">⚡' + esc(String(r1(tps))) + 'tps</span>';
   }
 
@@ -2005,7 +2046,8 @@ function renderTtftCell(r) {
     const sec = fmtTtftSeconds(ms);
     const l = perf.latency;
     const r1 = (v) => v != null ? fmtTtftSeconds(v) : '—';
-    const title = `TTFT p50/p75/p90/p99: ${r1(l.p50)}/${r1(l.p75)}/${r1(l.p90)}/${r1(l.p99)} s`;
+    const title = perf.source === 'coralbricks' ? `CoralBricks median TTFT (${l.window}): ${sec} s`
+      : `TTFT p50/p75/p90/p99: ${r1(l.p50)}/${r1(l.p75)}/${r1(l.p90)}/${r1(l.p99)} s`;
     return '<span class="perf-pill" title="' + esc(title) + '">' + esc(String(sec)) + 's</span>';
   }
 
@@ -2535,10 +2577,10 @@ function exportCsv() {
 
   const headers = [
     'Rank', 'Org', 'Provider', 'Model', 'Quantization', 'Input $/M', 'Output $/M',
-    'Cache Read $/M', 'Cache Write $/M', 'Context', 'Speed (tps p50)', 'TTFT (s p50)',
+    'Cache Read $/M', 'Cache Write $/M', 'Context', 'Speed (tps)', 'TTFT (s p50)',
     'IQ', 'Coding', 'Agentic',
     'Blended $/M', state.computeBy === 'budget' ? 'Affordable (M tokens)' : 'Total Cost',
-    'ZDR', 'Subscription', 'Discount',
+    'ZDR', 'Subscription', 'Discount', 'Speed statistic', 'Speed window', 'TTFT window',
   ];
 
   const escapeCsv = (v) => {
@@ -2562,7 +2604,8 @@ function exportCsv() {
   rows.forEach((r, i) => {
     const m = r.model;
     const p = m.pricing;
-    const tps = getPerfData(r)?.throughput?.p50;
+    const perfData = getPerfData(r);
+    const tps = speedFor(r);
     const headline = r.cost == null ? ''
       : (state.computeBy === 'budget'
           ? (r.cost === Infinity ? 'Infinity' : r.cost)
@@ -2588,6 +2631,9 @@ function exportCsv() {
       m.zdr ? 'yes' : 'no',
       m.subscription ? 'yes' : 'no',
       m.discount > 0 ? m.discount : '',
+      tps == null ? '' : perfData.throughput.reported != null ? 'provider-reported' : 'p50',
+      perfData?.throughput?.window ?? '',
+      perfData?.latency?.window ?? '',
     ].map(escapeCsv).join(','));
   });
 
@@ -2642,6 +2688,9 @@ function snapshotRow(r, rank) {
     blended: roundMoney(r.blended),
     zdr: !!m.zdr,
     speedP50: getPerfData(r)?.throughput?.p50 ?? null,
+    speedReported: getPerfData(r)?.throughput?.reported ?? null,
+    speedWindow: getPerfData(r)?.throughput?.window ?? null,
+    ttftWindow: getPerfData(r)?.latency?.window ?? null,
     ttftP50: ttftP50Seconds(r),
     intelligence: m.benchmarks?.intelligence_index ?? null,
     coding: m.benchmarks?.coding_index ?? null,
@@ -2732,6 +2781,10 @@ function getModel(input) {
     cost: roundMoney(r.cost),
     blended: roundMoney(r.blended),
     speedP50: getPerfData(r)?.throughput?.p50 ?? null,
+    speedReported: getPerfData(r)?.throughput?.reported ?? null,
+    speedWindow: getPerfData(r)?.throughput?.window ?? null,
+    ttftWindow: getPerfData(r)?.latency?.window ?? null,
+    capabilities: m.capabilities ?? null,
     ttftP50: ttftP50Seconds(r),
   };
 }
@@ -3062,10 +3115,10 @@ function highlightTradeoff(input) {
     ? finiteCost.reduce((a, b) => (better(a, b) ? a : b))
     : null;
   const fastest = rows.reduce((best, r) => {
-    const tps = getPerfData(r)?.throughput?.p50;
+    const tps = speedFor(r);
     if (tps == null) return best;
     if (!best) return r;
-    return tps > (getPerfData(best)?.throughput?.p50 ?? -Infinity) ? r : best;
+    return tps > (speedFor(best) ?? -Infinity) ? r : best;
   }, null);
   const zdrPool = finiteCost.filter((r) => r.model.zdr);
   const zdrCheapest = zdrPool.length

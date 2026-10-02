@@ -73,6 +73,7 @@ jobs:
           SINGULARITY_API_KEY: ${{ secrets.SINGULARITY_API_KEY }}
           RUNINFRA_API_KEY: ${{ secrets.RUNINFRA_API_KEY }}
           LLMGATEWAY_API_KEY: ${{ secrets.LLMGATEWAY_API_KEY }}
+          CORAL_API_KEY: ${{ secrets.CORAL_API_KEY }}
         run: node scripts/fetch-pricing.mjs
 
       - name: Prefetch fal.ai catalog (shared by image + video pipelines)
@@ -95,6 +96,7 @@ jobs:
       - name: Fetch performance data (latency/tput every 2h)
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          CORAL_API_KEY: ${{ secrets.CORAL_API_KEY }}
         run: node scripts/fetch-performance.mjs
 
       - name: Fetch benchmarks data (scores + price join)

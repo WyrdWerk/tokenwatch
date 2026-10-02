@@ -60,6 +60,16 @@ test('cheapestModels ranks by the shared Agentic blended-rate contract', () => {
   assert.equal(rows[0].eff, blendedRate(textModels[0].pricing, AGENTIC_MIX));
 });
 
+test('SEO ranks explicit lower cache-write billing using the default billable rate', () => {
+  const rows = cheapestModels([
+    { id: 'deepseek-flash', provider: 'coralbricks', pricing: { input: 0.3, cache_write: 0.09, cache_read: 0, output: 1.2, input_billing: 'cache_write' } },
+    { id: 'other-flash', provider: 'other', pricing: { input: 0.12, cache_read: 0, output: 1.2 } },
+  ]);
+  assert.equal(rows[0].m.provider, 'coralbricks');
+  assert.equal(rows[0].eff, 0.00825);
+  assert.ok(Math.abs(rows[1].eff - 0.009) < 1e-12);
+});
+
 test('renderSeoTable escapes data and exposes the price columns', () => {
   const html = renderSeoTable(cheapestModels(textModels), '2026-08-11');
   assert.match(html, /Cheap &lt;Model&gt;/);

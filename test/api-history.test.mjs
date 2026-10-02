@@ -250,6 +250,7 @@ test('history queries only the requested model and day window, with bound parame
   assert.equal(db.captured.length, 1);
   const query = db.captured[0];
   assert.match(query.sql, /FROM price_snapshot/);
+  assert.match(query.sql, /SELECT .*cache_write, input_billing, discount/);
   assert.match(query.sql, /canonical_model = \?/);
   assert.match(query.sql, /ORDER BY utc_day ASC/);
   assert.deepEqual(query.bindings, ['gemini-3.1-pro', dayBefore(TODAY, 6), TODAY]);

@@ -226,7 +226,7 @@
         <span id="tokenBreakdown">Input: 25M · Cached: 970M · Output: 5M</span>
         <span id="pctSum" class="pct-ok">100%</span>
       </div>
-      <p class="cache-assumption">Assumes all fresh input is cached where a higher cache-write rate is published. Additional cache-storage charges are excluded.</p>
+      <p class="cache-assumption">Assumes all fresh input is cached where a higher cache-write rate is published, unless provider-specific default billing is known. Additional cache-storage charges are excluded.</p>
     </section>
 
     <section class="benchmark-bar hidden" id="benchmarkBar" aria-live="polite"></section>
@@ -311,7 +311,7 @@
               <th class="sortable num" data-sort="speed" id="speedColumnHeader"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>Speed</th>
               <th class="sortable num" data-sort="ttft" id="ttftColumnHeader"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>TTFT</th>
               <th class="sortable num" data-sort="intelligence"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>IQ</th>
-              <th class="sortable num" data-sort="blended" title="Mix-weighted rate using higher published cache-write rates for fresh input; additional storage charges excluded"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>Blended $/M</th>
+              <th class="sortable num" data-sort="blended" title="Mix-weighted rate using provider default billing or higher published cache-write rates for fresh input; additional storage charges excluded"><span class="col-handle" title="Drag to reorder" aria-hidden="true">⠿</span>Blended $/M</th>
               <th class="sortable num" data-sort="cost" id="costColumnHeader">Total Cost</th>
             </tr>
           </thead>

@@ -51,6 +51,7 @@ jobs:
       - name: Fetch performance data
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          CORAL_API_KEY: ${{ secrets.CORAL_API_KEY }}
         run: node scripts/fetch-performance.mjs
 
       - name: Commit performance data

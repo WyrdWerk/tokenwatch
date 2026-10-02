@@ -130,7 +130,7 @@ async function historyResponse(context, pricing, rawId) {
     const result = await db
       .prepare(
         `SELECT utc_day, offering_key, provider, model_id, quantization,
-                input_price, output_price, cache_read, cache_write, discount
+                input_price, output_price, cache_read, cache_write, input_billing, discount
            FROM price_snapshot
           WHERE canonical_model = ? AND utc_day >= ? AND utc_day <= ?
           ORDER BY utc_day ASC`,

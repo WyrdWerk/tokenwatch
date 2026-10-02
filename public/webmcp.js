@@ -20,7 +20,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "get_view",
     "title": "Get current results",
-    "description": "Read-only snapshot of the TokenWatch text calculator the human is looking at: current mix, modes, filters, active sort, compare tray, rowCount, and the top ranked offerings (rank, provider, id, name, cost, blended $/M, quantization, zdr, speedP50, ttftP50 in seconds, intelligence, coding, agentic). Missing quality scores are null, never zero. By default, top is sorted by total session cost ascending; use set_sort to change the field and direction programmatically. Check provisional, performance, effectiveSort, and note before calling a pending speed view final. Use this after any write so you describe the live table, not a stale one. Row identity is {provider, id}, never a row number. For operational details, call about_tokenwatch.",
+    "description": "Read-only snapshot of the TokenWatch text calculator the human is looking at: current mix, modes, filters, active sort, compare tray, rowCount, and the top ranked offerings (rank, provider, id, name, cost, blended $/M, quantization, zdr, speedP50, speedReported, speedWindow, ttftP50 in seconds, ttftWindow, intelligence, coding, agentic). Provider-reported decode speed is speedReported, not a median; measurement windows remain explicit. Missing quality scores are null, never zero. By default, top is sorted by total session cost ascending; use set_sort to change the field and direction programmatically. Check provisional, performance, effectiveSort, and note before calling a pending speed view final. Use this after any write so you describe the live table, not a stale one. Row identity is {provider, id}, never a row number. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": true },
     "inputSchema": {
       "type": "object",
@@ -38,7 +38,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "get_model",
     "title": "Get one offering",
-    "description": "Read-only detail for one offering in the current view: pricing, context, cache, ZDR/subscription, benchmarks, Neuralwatt energy if present, speedP50, and ttftP50 (seconds). Requires {provider, id} from get_view. For operational details, call about_tokenwatch.",
+    "description": "Read-only detail for one offering in the current view: pricing, context, cache, ZDR/subscription, benchmarks, Neuralwatt energy if present, capabilities, speedP50, speedReported, speedWindow, ttftP50 (seconds), and ttftWindow. Provider-reported decode speed is not a median. Requires {provider, id} from get_view. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": true },
     "inputSchema": {
       "type": "object",
@@ -304,7 +304,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
         "minToks": {
           "type": "number",
           "minimum": 0,
-          "description": "Minimum throughput p50 in tokens/sec. Offerings with no speed data are excluded when this is set."
+          "description": "Minimum displayed speed in tokens/sec (p50 or provider-reported decode speed). Offerings with no speed data are excluded when this is set."
         },
         "hq": {
           "type": "string",
