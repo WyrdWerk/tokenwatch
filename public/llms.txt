@@ -1,6 +1,8 @@
 # TokenWatch
 
-> Pay-as-you-go LLM API pricing and practical benchmarks: 1561 text offerings across 100 providers, 200 image models, 125 video models. Data generated 2026-09-25T14:50:24.076Z.
+> Pay-as-you-go LLM API pricing and practical benchmarks: 1576 provider-specific text offerings across 100 inference providers, 199 image models, 123 video models. Text catalog generated 2026-10-02T14:16:56.685Z.
+
+TokenWatch compares published provider prices, not a single intrinsic price for each model. One model can have multiple provider, quantization, and endpoint offerings. Each catalog has its own generated_at timestamp; the text timestamp above does not establish image, video, or benchmark freshness.
 
 ## Pages
 
@@ -8,7 +10,8 @@
 - [Image generation pricing](https://tokenwatch.wyrdwerk.com/image): per-image, per-megapixel, and image-token units kept separate
 - [Video generation pricing](https://tokenwatch.wyrdwerk.com/video): per-second rates by resolution and audio mode
 - [Benchmarks by use case](https://tokenwatch.wyrdwerk.com/benchmarks): agentic coding, reasoning, knowledge work, and UI quality scores joined to cheapest-provider blended pricing
-- [Provider directory](https://tokenwatch.wyrdwerk.com/providers/): policy links, HQ, datacenters, and per-provider model catalogs
+- [Model comparison directory](https://tokenwatch.wyrdwerk.com/models/): established canonical model comparisons with current catalog coverage; batch variants are excluded and quantized IDs remain distinct
+- [Provider directory](https://tokenwatch.wyrdwerk.com/providers/): reviewed policy links and per-provider text, image, and video catalogs
 - [Methodology](https://tokenwatch.wyrdwerk.com/docs/methodology/): sourcing, normalization, dedup, and cost-calculation rules
 - [API docs](https://tokenwatch.wyrdwerk.com/docs/api/): queryable JSON endpoints for all catalogs
 - [FAQ](https://tokenwatch.wyrdwerk.com/faq/): pricing, image/video billing, and plain-language benchmark explainers
@@ -16,9 +19,17 @@
 
 ## API
 
-- JSON endpoints under https://tokenwatch.wyrdwerk.com/api/v1/ — models, providers, orgs, stats, images, videos (no auth, CORS enabled)
+- [API endpoint directory](https://tokenwatch.wyrdwerk.com/api/v1/): models, providers, orgs, stats, images, and videos (no auth, CORS enabled)
+- [OpenAPI specification](https://tokenwatch.wyrdwerk.com/openapi.json): endpoint paths, query parameters, response schemas, and error responses
+- For a model's provider comparison, use /api/v1/models/:canonicalId/providers. Use canonical IDs from the catalog, not display names. Send a mix explicitly when comparing a non-default workload; the API docs describe tokens and mix units.
+- Price history is optional. A history endpoint can return 503 when storage is not enabled; missing history is not a zero price.
 
 ## Data notes
 
-- Prices are USD per million tokens (images/video use native units). Direct-provider APIs take precedence, then OpenRouter de-aggregated, then maintained fallbacks.
-- Benchmark scores come from Artificial Analysis, LiveBench, and Design Arena; they measure models, not providers. "From $/M" on the benchmarks page is the cheapest provider's blended rate at a cached-heavy workload mix.
+- Text prices are USD per million tokens. Image prices use per-image, per-megapixel, or image-token units; video prices use USD per output second. Do not rank incompatible units or resolutions as equivalent.
+- Direct-provider APIs take precedence, then OpenRouter de-aggregated endpoint data, then maintained fallbacks. Verify current rates and billing conditions with the provider before committing spend.
+- Established comparison URLs remain available when provider/model coverage drops. Pages without current priced offerings say so explicitly. Missing coverage is not a zero price or proof of retirement; use the current catalog and provider sources, not old quotes.
+- Static text comparisons use 2.5% input, 97% cached input, 0.5% output. The interactive calculator and benchmarks can use the visitor's saved mix, so the cheapest provider can change. Cite the workload and data date with a price comparison.
+- Fresh-input estimates honor an explicit pricing.input_billing='cache_write' rule, even when the write rate is lower than input. A missing explicit write rate makes fresh-input workloads unpriceable. Otherwise a higher finite positive write rate is used, or normal input applies. Cached reads use cache_read or the original input rate. No separate write charge is added; cache-storage charges are excluded. This is an estimate, not an exact invoice.
+- Benchmark scores come from Artificial Analysis, LiveBench, and Design Arena; they measure models, not providers. "From $/M" is workload-specific blended pricing, not the raw input tariff. Missing benchmark or performance measurements are unknown, not zero.
+- ZDR and other policy fields reflect endpoint data or reviewed provider metadata. Missing fields do not establish a privacy guarantee; consult the provider's current policy and the methodology.

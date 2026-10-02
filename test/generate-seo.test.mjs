@@ -16,14 +16,19 @@ import {
   renderHomepageMeta,
   collectProviderPages,
   providerSlug,
+  renderProviderPage,
   renderProviderDirectoryPage,
   collectModelPages,
   renderModelPage,
   providerPageSlugs,
+  renderMethodologyPage,
+  renderExploreLinks,
+  renderBenchmarksSeoSection,
   renderApiDocsPage,
   buildOpenApiDocument,
   buildSitemap,
   buildRobots,
+  buildLlmsTxt,
 } from '../scripts/seo-pages.mjs';
 import { AGENTIC_MIX, blendedRate } from '../shared/cost.mjs';
 import { API_ENDPOINTS, endpointDirectory } from '../shared/api-meta.mjs';
@@ -135,7 +140,44 @@ test('renderCounts substitutes all count tokens and rejects drifted placeholders
   assert.throws(() => renderCounts('{{model_count}}', 1, 1), /unreplaced count placeholder/);
 });
 
-test('renderHomepageMeta refreshes stale literal homepage counts, preserves OG/canonical markup, and is byte-idempotent', () => {
+test('website structured data names the product and publisher rather than a changing headline', () => {
+  const website = calculatorStructuredData({ page: 'text', title: 'Keyword headline with counts', description: 'Pricing', rows: [] })['@graph'][0];
+  assert.equal(website.name, 'TokenWatch');
+  assert.equal(website.publisher.name, 'WyrdWerk');
+  assert.equal(website.publisher.url, 'https://wyrdwerk.com');
+  const image = calculatorStructuredData({ page: 'image', title: 'Image pricing', description: 'Images', rows: [] })['@graph'][0];
+  assert.equal(image.name, 'Image pricing', 'non-website page titles stay specific');
+});
+
+test('benchmark structured data describes the collection and benchmark breadcrumb without rating claims', () => {
+  const data = calculatorStructuredData({ page: 'benchmarks', title: 'LLM benchmarks by use case', description: 'Model evaluations' });
+  const page = data['@graph'][0];
+  assert.equal(page['@type'], 'CollectionPage');
+  assert.equal(page.url, 'https://tokenwatch.wyrdwerk.com/benchmarks');
+  const breadcrumb = data['@graph'].find(node => node['@type'] === 'BreadcrumbList');
+  assert.equal(breadcrumb.itemListElement[1].name, 'Benchmarks');
+  assert.equal(breadcrumb.itemListElement[1].item, page.url);
+  assert.equal(data['@graph'].length, 2, 'no unsupported ratings or offer schema');
+});
+
+test('llms manifest distinguishes offerings and freshness and exposes model and API discovery', () => {
+  const manifest = buildLlmsTxt({
+    modelCount: 23, providerCount: 7, imageCount: 11, videoCount: 5,
+    generatedAt: '2026-10-01T03:04:05.000Z',
+  });
+  assert.match(manifest, /23 provider-specific text offerings across 7 inference providers, 11 image models, 5 video models/);
+  assert.match(manifest, /Text catalog generated 2026-10-01T03:04:05\.000Z/);
+  for (const path of ['/models/', '/providers/', '/docs/methodology/', '/docs/api/', '/openapi.json', '/skill.md']) {
+    assert.ok(manifest.includes(`](https://tokenwatch.wyrdwerk.com${path})`), `missing discovery link: ${path}`);
+  }
+  assert.match(manifest, /2\.5% input, 97% cached input, 0\.5% output/);
+  assert.match(manifest, /input_billing/);
+  assert.match(manifest, /not an exact invoice/);
+  assert.match(manifest, /Established comparison URLs remain available/);
+  assert.match(manifest, /Missing coverage is not a zero price or proof of retirement/);
+});
+
+test('homepage metadata uses current offering counts in search, social, and visible copy', () => {
   const stale = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -145,26 +187,26 @@ test('renderHomepageMeta refreshes stale literal homepage counts, preserves OG/c
   <link rel="canonical" href="https://tokenwatch.wyrdwerk.com/" />
   <meta property="og:title" content="LLM API Pricing Comparison — Know What Your AI Actually Costs | TokenWatch" />
   <meta property="og:description" content="Compare pay-as-you-go LLM API pricing across 82 providers and 1180 models. Enter your token mix or budget and find the cheapest option for your agentic workload." />
+  <meta name="twitter:title" content="Stale title" />
+  <meta name="twitter:description" content="1180 models across 82 providers" />
 </head>
 <body>
   <header><h2 class="tagline">Know what your AI actually costs before the bill arrives</h2><p class="subtitle">Compare pay-as-you-go LLM API pricing across 82 providers and 1180 models. Enter your token mix or set a budget — see exactly what your agents cost before you commit.</p></header>
 </body>
 </html>`;
-  const refreshed = renderHomepageMeta(stale, 1181, 82);
-  // title, meta description, and visible subtitle carry the current model count (1181)
-  assert.match(refreshed, /<title>LLM API Pricing Comparison — Compare 1181 Models Across 82 Providers \| TokenWatch<\/title>/);
-  assert.match(refreshed, /<meta name="description" content="[^"]*across 82 providers and 1181 models[^"]*" \/>/);
-  assert.match(refreshed, /<p class="subtitle">Compare pay-as-you-go LLM API pricing across 82 providers and 1181 models\./);
-  // stale 1180 is gone from the overwritten fields
-  assert.doesNotMatch(refreshed, /Compare 1180 Models/);
-  // canonical and OG metadata are preserved untouched (OG retains the stale 1180, proving it was not rewritten)
+  const refreshed = renderHomepageMeta(stale, 1181, 83);
+  assert.match(refreshed, /<title>LLM API Pricing Comparison — 83 Providers \| TokenWatch<\/title>/);
+  for (const field of ['name="description"', 'property="og:description"', 'name="twitter:description"']) {
+    assert.ok(refreshed.includes(`<meta ${field} content="Compare pay-as-you-go LLM API pricing across 83 providers and 1181 text-model offerings.`));
+  }
+  for (const field of ['property="og:title"', 'name="twitter:title"']) {
+    assert.ok(refreshed.includes(`<meta ${field} content="LLM API Pricing Comparison — 83 Providers | TokenWatch"`));
+  }
+  assert.match(refreshed, /<p class="subtitle">Compare pay-as-you-go LLM API pricing across 83 providers and 1181 text-model offerings\./);
+  assert.doesNotMatch(refreshed, /1180|82 providers|1181 models|Stale title/);
   assert.match(refreshed, /<link rel="canonical" href="https:\/\/tokenwatch\.wyrdwerk\.com\/" \/>/);
-  assert.match(refreshed, /<meta property="og:title" content="LLM API Pricing Comparison — Know What Your AI Actually Costs \| TokenWatch" \/>/);
-  assert.match(refreshed, /<meta property="og:description" content="[^"]*across 82 providers and 1180 models[^"]*" \/>/);
-  // unrelated header markup survives intact
   assert.match(refreshed, /<h2 class="tagline">Know what your AI actually costs before the bill arrives<\/h2>/);
-  // repeated application is byte-idempotent
-  assert.equal(renderHomepageMeta(refreshed, 1181, 82), refreshed);
+  assert.equal(renderHomepageMeta(refreshed, 1181, 83), refreshed);
 });
 
 test('renderHomepageMeta overwrites placeholder homepage fields after token substitution', () => {
@@ -172,10 +214,57 @@ test('renderHomepageMeta overwrites placeholder homepage fields after token subs
 <meta name="description" content="Compare across {{providerCount}} providers and {{modelCount}} models." />
 <p class="subtitle">Compare across {{providerCount}} providers and {{modelCount}} models.</p>`;
   const refreshed = renderHomepageMeta(renderCounts(templated, 1181, 82), 1181, 82);
-  assert.match(refreshed, /Compare 1181 Models Across 82 Providers/);
-  assert.match(refreshed, /<meta name="description" content="Know what your AI actually costs[^"]*across 82 providers and 1181 models[^"]*" \/>/);
-  assert.match(refreshed, /<p class="subtitle">Compare pay-as-you-go LLM API pricing across 82 providers and 1181 models\./);
+  assert.match(refreshed, /LLM API Pricing Comparison — 82 Providers/);
+  assert.match(refreshed, /<meta name="description" content="Compare [^"]*across 82 providers and 1181 text-model offerings[^"]*" \/>/);
+  assert.match(refreshed, /<p class="subtitle">Compare pay-as-you-go LLM API pricing across 82 providers and 1181 text-model offerings\./);
   assert.doesNotMatch(refreshed, /{{/);
+});
+
+test('pricing and provider tables link only models and providers with generated pages', () => {
+  const linkedModelPages = new Map([['cheap', 'cheap']]);
+  const rows = cheapestModels(textModels);
+  const table = renderSeoTable(rows, '2026-10-01', { linkedModelPages, linkedProviderSlugs: new Set(['alpha']) });
+  assert.match(table, /<a href="\/models\/cheap\/">Cheap &lt;Model&gt;<\/a>/);
+  assert.match(table, /<a href="\/providers\/alpha\/">alpha<\/a>/);
+  assert.doesNotMatch(table, /href="\/(?:models\/(?:expensive|other)|providers\/beta)\//);
+  assert.match(table, /<td>Other<\/td>/);
+  const provider = collectProviderPages({ pricing: { models: textModels }, imagePricing: { models: imageModels }, videoPricing: { models: videoModels } })[0];
+  const html = renderProviderPage(provider, { text: '2026-10-01', image: '2026-09-30', video: '2026-09-29' }, { linkedModelPages });
+  assert.match(html, /href="\/models\/cheap\//);
+  assert.match(html, /href="\/models\/">Models<\/a>/);
+  assert.match(renderExploreLinks(), /href="\/models\//);
+});
+
+test('benchmark snapshot links eligible models and names its own date and workload', () => {
+  const bench = { generated_at: '2026-09-29T04:05:06Z', model_count: 2, models: [
+    { id: 'org/cheap', name: 'Cheap <Model>', org: 'org', scores: { aa_intelligence: 80 }, from: { blended_per_m: 0.04 } },
+    { id: 'other', name: 'Other', org: 'org', scores: { aa_intelligence: 90 }, from: { blended_per_m: 1.2 } },
+  ] };
+  const html = renderBenchmarksSeoSection(bench, new Map([['cheap', 'cheap']]));
+  assert.match(html, /href="\/models\/cheap\/">Cheap &lt;Model&gt;<\/a>/);
+  assert.doesNotMatch(html, /href="\/models\/other\//);
+  assert.match(html, /2026-09-29T04:05:06Z/);
+  assert.match(html, /2\.5% input, 97% cached input, 0\.5% output/);
+});
+
+test('methodology gives attributed, workload-specific examples without conflating offerings and models', () => {
+  const models = [
+    { id: 'cache', name: 'Cache', provider: 'a', pricing: { input: 1, cache_read: 0.01, output: 12 } },
+    { id: 'output', name: 'Output', provider: 'b', pricing: { input: 3, cache_read: 1, output: 1 } },
+    { id: 'rag', name: 'RAG', provider: 'c', pricing: { input: 0.5, cache_read: 2, output: 5 } },
+  ];
+  const html = renderMethodologyPage({ modelCount: 3, providerCount: 3, generatedAt: '2026-10-01T01:02:03Z', models });
+  assert.match(html, /Cache-heavy agents[\s\S]*?<td>Cache[\s\S]*?\$0\.095/);
+  assert.match(html, /Uncached retrieval\/RAG[\s\S]*?<td>RAG[\s\S]*?\$1\.40/);
+  assert.match(html, /Balanced uncached[\s\S]*?<td>Output[\s\S]*?\$2\.00/);
+  assert.match(html, /Output-heavy generation[\s\S]*?<td>Output[\s\S]*?\$1\.20/);
+  assert.match(html, /Yash Jain/);
+  assert.match(html, /https:\/\/github\.com\/WyrdWerk\/tokenwatch\/issues/);
+  assert.match(html, /href="\/pricing\.json"/);
+  assert.match(html, /provider-specific offerings/);
+  const article = JSON.parse(html.match(/id="seo-structured-data" type="application\/ld\+json">(.*?)<\/script>/)[1])['@graph'][0];
+  assert.equal(article.author.name, 'Yash Jain');
+  assert.equal(article.publisher.name, 'WyrdWerk');
 });
 
 test('provider pages require three distinct priced model identities across catalogs', () => {
@@ -198,6 +287,38 @@ test('provider pages require three distinct priced model identities across catal
   assert.equal((directory.match(/<link rel="canonical"/g) || []).length, 1);
   assert.match(directory, /<h1 class="tagline">Inference provider directory<\/h1>/);
   assert.equal((directory.match(/<h1\b/g) || []).length, 1);
+});
+
+test('published provider URLs survive missing coverage without admitting new landing pages', () => {
+  const pricing = {
+    providers: [{ key: 'missing', name: 'Missing Provider' }], providers_meta: {},
+    models: [textModels[0], ...[1, 2, 3].map(n => ({ ...textModels[0], id: `new-${n}`, provider: 'new' }))],
+  };
+  const pages = collectProviderPages({ pricing, imagePricing: { models: [] }, videoPricing: { models: [] }, publishedProviders: new Set(['alpha', 'missing']) });
+  assert.deepEqual(pages.map(p => p.key).sort(), ['alpha', 'missing']);
+  assert.equal(pages.find(p => p.key === 'alpha').modelCount, 1);
+  const missing = pages.find(p => p.key === 'missing');
+  assert.equal(missing.modelCount, 0);
+  const html = renderProviderPage(missing, { text: '2026-10-02' });
+  assert.match(html, /data-catalog-unavailable/);
+  assert.match(html, /No current priced offerings/);
+  assert.doesNotMatch(html, /\$0|<tbody>[\s\S]*?<tr>/);
+});
+
+test('published model URLs survive low or absent coverage and do not authorize new models', () => {
+  const pricing = { models: [textModels[0], ...['a', 'b', 'c'].map(provider => ({ ...textModels[0], id: 'new-model', provider }))] };
+  const pages = collectModelPages({ pricing }, { publishedModels: new Set(['cheap', 'missing-model']) });
+  assert.deepEqual(pages.map(p => p.canonical), ['cheap', 'missing-model']);
+  assert.equal(pages[0].providerCount, 1);
+  const thinHtml = renderModelPage(pages[0], { historyEnabled: false });
+  assert.match(thinHtml, /API Pricing Across 1 Provider \| TokenWatch/);
+  assert.match(thinHtml, /across 1 tracked provider\./);
+  assert.match(thinHtml, /1 tracked provider; 1 priced offering/);
+  assert.equal(pages[1].cheapestEff, null);
+  const html = renderModelPage(pages[1], { historyEnabled: false });
+  assert.match(html, /data-catalog-unavailable/);
+  assert.match(html, /No current priced offerings/);
+  assert.doesNotMatch(html, /\$0|<tbody>\s*<tr>/);
 });
 
 test('provider slug collisions fail instead of overwriting generated pages', () => {
@@ -237,7 +358,8 @@ test('dynamic sitemap rejects duplicates and includes generated routes', () => {
   assert.equal((sitemap.match(/<url>/g) || []).length, 3);
   assert.match(sitemap, /https:\/\/tokenwatch\.wyrdwerk\.com\/providers\/alpha\//);
   assert.throws(() => buildSitemap([{ path: '/' }, { path: '/' }]), /duplicate sitemap path/);
-  assert.match(buildRobots(), /Disallow: \/api\//);
+  assert.match(buildRobots(), /User-agent: \*\nAllow: \//);
+  assert.doesNotMatch(buildRobots(), /Disallow:/, 'crawlers must be able to read public API noindex responses');
 });
 
 /** A three-provider model, eligible at the PR 1 parity threshold of 3. */

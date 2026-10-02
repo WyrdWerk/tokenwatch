@@ -37,6 +37,17 @@ async function assertFile(path, label) {
   }
 }
 
+export function assertModelHistory(html, label) {
+  // A disabled feature must not leave scripts or an unsupported history claim.
+  if (!/data-price-history|model-history\.js|price-sparkline\.js|up to 90 days/.test(html)) return;
+  requireMatch(html, /data-price-history="[^"]+"/, `${label} price-history mount point`);
+  requireMatch(html, /data-price-history-chart/, `${label} chart container`);
+  requireMatch(html, /src="[^"]*model-history\.js/, `${label} does not load model-history.js`);
+  requireMatch(html, /src="[^"]*price-sparkline\.js/, `${label} does not load price-sparkline.js`);
+  requireMatch(html, /Loading price history/, `${label} initial chart state`);
+  requireMatch(html, /up to 90 days/, `${label} must describe history as retained for up to 90 days`);
+}
+
 function assertCalculatorPage(html, label, minFaqs) {
   for (const className of ['seo-models', 'seo-faq', 'seo-links']) {
     const marker = `<!-- TW:SEO:${className}:START -->`;
@@ -109,12 +120,10 @@ export async function main() {
     ...modelDirs.map((entry) => assertFile(join(PUBLIC, 'models', entry.name, 'index.html'), `model page ${entry.name}`)),
   ]);
 
-  // Every generated model page must carry a server-rendered provider table, a
-  // canonical URL, breadcrumbs, JSON-LD, a calculator deep link, and the
-  // price-history panel wired to the client scripts. It must also not emit a
-  // /providers/<slug>/ link without a generated page: provider pages require
-  // MODEL_MIN_PROVIDERS distinct priced identities, so an unconditional link
-  // 404s for thin providers.
+  // Model pages need a provider table or an explicit unavailable state, plus a
+  // canonical URL, breadcrumbs, JSON-LD, calculator link, and coherent optional
+  // history wiring. Provider links must use the actual generated page set;
+  // coverage thresholds no longer determine the established URL set.
   const providerSlugs = new Set(providerDirs.map((entry) => entry.name));
   const deadProviderLinks = [];
   for (const entry of modelDirs) {
@@ -123,20 +132,16 @@ export async function main() {
     requireMatch(html, new RegExp(`<link rel="canonical" href="${canonical.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}" />`), `model page ${entry.name} canonical URL`);
     requireMatch(html, /class="breadcrumbs"/, `model page ${entry.name} breadcrumbs`);
     requireMatch(html, /id="seo-structured-data"/, `model page ${entry.name} JSON-LD`);
-    requireMatch(html, /<section class="seo-models"[\s\S]*?<tbody>[\s\S]*?<tr>/, `model page ${entry.name} provider rows`);
+    if (html.includes('data-catalog-unavailable')) {
+      requireMatch(html, /No current priced offerings/, `model page ${entry.name} must explain missing coverage`);
+      if (/<tbody>\s*<tr>/.test(html)) throw new Error(`verify-seo: unavailable model page ${entry.name} must not advertise pricing rows`);
+    } else {
+      requireMatch(html, /<section class="seo-models"[\s\S]*?<tbody>[\s\S]*?<tr>/, `model page ${entry.name} provider rows`);
+    }
     requireMatch(html, /href="\/#model=/, `model page ${entry.name} calculator deep link`);
     if (entry.name.includes(':batch')) throw new Error(`verify-seo: model page ${entry.name} must not be a :batch variant`);
 
-    // Price-history wiring: an empty container the client hydrates, both
-    // scripts, and an initial state. A page missing any of these is a broken
-    // chart in production.
-    requireMatch(html, /data-price-history="[^"]+"/, `model page ${entry.name} price-history mount point`);
-    requireMatch(html, /data-price-history-chart/, `model page ${entry.name} chart container`);
-    requireMatch(html, /src="[^"]*model-history\.js/, `model page ${entry.name} does not load model-history.js`);
-    requireMatch(html, /src="[^"]*price-sparkline\.js/, `model page ${entry.name} does not load price-sparkline.js`);
-    requireMatch(html, /Loading price history/, `model page ${entry.name} initial chart state`);
-    // History is retained for up to 90 days, not guaranteed to exist for 90 days.
-    requireMatch(html, /up to 90 days/, `model page ${entry.name} must describe history as retained for up to 90 days`);
+    assertModelHistory(html, `model page ${entry.name}`);
 
     for (const match of html.matchAll(/href="\/providers\/([^/"]+)\/"/g)) {
       if (!providerSlugs.has(match[1])) deadProviderLinks.push(`${entry.name} → /providers/${match[1]}/`);
@@ -152,7 +157,41 @@ export async function main() {
   if (urls.length !== expectedUrls) throw new Error(`verify-seo: sitemap has ${urls.length} URLs; expected ${expectedUrls}`);
   await Promise.all(urls.map((url) => assertFile(localFileForUrl(url), `sitemap target ${url}`)));
 
+  // Discovery is an HTML-link graph, not merely a valid sitemap. Starting at
+  // the homepage must reach every submitted URL without executing JavaScript.
+  const linkGraph = new Map();
+  const titles = new Set();
+  for (const url of urls) {
+    const html = await readFile(localFileForUrl(url), 'utf8');
+    parseStructuredData(html, url);
+    const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1];
+    if (canonical !== url) throw new Error(`verify-seo: canonical mismatch for ${url}`);
+    if (/<meta name="robots" content="[^"]*noindex/.test(html)) throw new Error(`verify-seo: sitemap URL is noindex: ${url}`);
+    const title = html.match(/<title>(.*?)<\/title>/)?.[1];
+    if (!title || titles.has(title)) throw new Error(`verify-seo: missing or duplicate title: ${url}`);
+    titles.add(title);
+    requireMatch(html, /href="\/models\/">/, `${url} has no model directory link`);
+    const links = [...html.matchAll(/<a\b[^>]*href="([^"]+)"/g)].map((match) => {
+      const target = new URL(match[1].replaceAll('&amp;', '&'), url);
+      target.hash = '';
+      target.search = '';
+      return target.href;
+    });
+    linkGraph.set(url, links);
+  }
+  const reached = new Set();
+  const pending = [SITE + '/'];
+  while (pending.length) {
+    const url = pending.pop();
+    if (reached.has(url) || !linkGraph.has(url)) continue;
+    reached.add(url);
+    pending.push(...linkGraph.get(url));
+  }
+  const orphaned = urls.filter((url) => !reached.has(url));
+  if (orphaned.length) throw new Error(`verify-seo: sitemap URLs unreachable through HTML links: ${orphaned.join(', ')}`);
+
   const htmlFiles = await findHtmlFiles(PUBLIC);
+  const modelSlugs = new Set(modelDirs.map((entry) => entry.name));
   for (const path of htmlFiles) {
     const html = await readFile(path, 'utf8');
     if (html.includes('{{')) throw new Error(`verify-seo: unresolved template placeholder in ${path}`);
@@ -160,6 +199,10 @@ export async function main() {
     const skipCanonical = path.endsWith(join('widget', 'demo.html')) || path.endsWith('404.html');
     if (!skipCanonical && count(html, /<link rel="canonical"/g) !== 1) {
       throw new Error(`verify-seo: ${path} must contain one canonical link`);
+    }
+    for (const match of html.matchAll(/href="\/(models|providers)\/([^/"]+)\/"/g)) {
+      const slugs = match[1] === 'models' ? modelSlugs : providerSlugs;
+      if (!slugs.has(match[2])) throw new Error(`verify-seo: ${path} links to absent /${match[1]}/${match[2]}/`);
     }
   }
 
@@ -181,7 +224,7 @@ export async function main() {
   }
 
   console.log(`verify-seo: ${htmlFiles.length} HTML pages, ${providerDirs.length} providers, ${modelDirs.length} models, ${urls.length} sitemap URLs`);
-  console.log('verify-seo: calculator pricing, visible FAQ/JSON-LD parity, metadata, model-page history wiring, and sitemap targets passed');
+  console.log('verify-seo: calculator pricing, FAQ/JSON-LD parity, optional history, canonical targets, and full HTML-link discovery passed');
 }
 
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
