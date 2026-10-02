@@ -1,10 +1,10 @@
 services:
   web:
-    command: serve public -l tcp://0.0.0.0:"$PORT"
+    command: node .agents/build-preview.mjs && serve .amp/preview -l tcp://0.0.0.0:"$PORT" --config "$PWD/.agents/preview-serve.json"
     health: /
     portal:
       title: TokenWatch
-      description: Static site from public/ (text, image, video, benchmarks). Data is the committed JSON catalogs; fetch pipelines need API keys and are not started here.
+      description: Preview snapshot of public/ with combined text-page scripts. Restart web after source edits to rebuild. Production assets and committed catalogs are unchanged; API Functions are not served here.
   bb-pilot:
     command: bash .agents/bb-service.sh
     cwd: .
