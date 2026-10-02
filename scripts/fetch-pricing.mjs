@@ -7,7 +7,8 @@
  *
  * Tier 1 — Direct providers: DeepInfra, EmberCloud, Wafer, Synthetic, Lilac,
  *          SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs,
- *          SingularityAPI, RunInfra, LLM Gateway (differential hosts only)
+ *          CoralBricks (authenticated, public fallback), SingularityAPI, RunInfra,
+ *          LLM Gateway (differential hosts only)
  *          (authoritative source for their own offerings; Singularity + RunInfra
  *          are auth-gated via SINGULARITY_API_KEY / RUNINFRA_API_KEY;
  *          LLM Gateway via LLMGATEWAY_API_KEY emits only providers TokenWatch
@@ -42,7 +43,7 @@
 import { readFile } from 'node:fs/promises';
 import {
   perTokToPerM, centsToDollars, passthrough, parseSference, parseNeuralwatt, parseMerius, parseAster,
-  parseSingularity, parseRuninfra, parseLlmgateway,
+  parseCoralbricks, fetchCoralbricksCatalog, parseSingularity, parseRuninfra, parseLlmgateway,
   parseOpenCodeGoDocs,
   NON_TEXT_ID, isTextModel,
   ORG_ALIASES, PROVIDER_NAME_MAP,
@@ -133,6 +134,12 @@ const DIRECT_PROVIDERS = [
     name: 'Aster Labs',
     url: 'https://api.asterlab.ai/v1/models',
     parse: parseAster,
+  },
+  {
+    key: 'coralbricks',
+    name: 'CoralBricks',
+    fetch: () => fetchCoralbricksCatalog(process.env.CORAL_API_KEY),
+    parse: parseCoralbricks,
   },
   {
     key: 'singularity',
@@ -294,6 +301,16 @@ const MANUAL_PROVIDER_META = {
     retains_prompts: false,  // Inference FAQ: zero data retention by default — prompts/outputs run in memory and are never stored
     may_train: null,         // Terms/privacy make no explicit no-training promise for the inference API; cannot claim false
     retention_days: 0,       // Inference FAQ: ZDR by default — token counts are the only thing retained (for billing)
+  },
+  coralbricks: {
+    privacy_policy_url: 'https://www.coralbricks.ai/privacy',
+    terms_of_service_url: 'https://www.coralbricks.ai/terms',
+    status_page_url: 'https://www.coralbricks.ai/status',
+    headquarters: null,
+    datacenters: null,
+    retains_prompts: true,  // Privacy §6: content retained up to 30 days by default; organization-level ZDR is opt-in
+    may_train: false,       // Privacy §4: customer inputs/outputs not used for model training; Terms §4.3 covers usage data, not raw content
+    retention_days: 30,
   },
   singularity: {
     privacy_policy_url: 'https://www.singularityapi.dev/privacy',
@@ -907,7 +924,8 @@ async function main() {
       }
       let data;
       try {
-        data = await fetchJson(prov.url, prov.apiKeyEnv ? { apiKey: process.env[prov.apiKeyEnv] } : {});
+        data = prov.fetch ? await prov.fetch()
+          : await fetchJson(prov.url, prov.apiKeyEnv ? { apiKey: process.env[prov.apiKeyEnv] } : {});
       } catch (err) {
         // Transport/upstream failure — distinct from parse failure so tests can
         // skip outages without also skipping broken-parser regressions.

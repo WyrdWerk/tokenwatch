@@ -4,7 +4,8 @@
  *
  *   - Primary source: OpenRouter `/endpoints` API (requires OPENROUTER_API_KEY)
  *     → ~1000+ records with full latency + throughput percentiles
- *   - Supplementary: Lilac, Umans (direct providers, no key needed)
+ *   - Supplementary: Lilac, Umans (direct providers, no key needed),
+ *     CoralBricks (/v1/models, CORAL_API_KEY)
  *     → Lilac/Umans: latency + throughput from their status APIs
  *
  * Writes a compact lookup table to public/performance.json, keyed by the same
@@ -28,7 +29,7 @@ import {
     parseArgs,
 } from './lib.mjs';
 import { extractUmansSnapshot } from '../shared/umans-status.mjs';
-import { mergeDirectIntoExisting } from '../shared/performance.mjs';
+import { mergeDirectIntoExisting, parseCoralbricksPerformance } from '../shared/performance.mjs';
 
 const OR_MODELS_URL = 'https://openrouter.ai/api/v1/models';
 const OR_ENDPOINT_BASE = 'https://openrouter.ai/api/v1/models';
@@ -202,6 +203,23 @@ async function main() {
     console.log(`    Umans AI: ${umansCount} models indexed`);
   } catch (err) {
     console.warn(`    ⚠ Umans status fetch failed: ${err.message} — continuing without Umans perf data`);
+  }
+
+  // CoralBricks publishes measured decode speed, median TTFT, and cache-hit rates.
+  // Decode speed is provider-reported, never relabelled as a throughput percentile.
+  if (process.env.CORAL_API_KEY) {
+    try {
+      const catalog = await fetchJson('https://inference.coralbricks.ai/v1/models', {
+        apiKey: process.env.CORAL_API_KEY,
+      });
+      const records = parseCoralbricksPerformance(catalog);
+      Object.assign(perfData, records);
+      console.log(`    CoralBricks: ${Object.keys(records).length} models indexed`);
+    } catch (err) {
+      console.warn(`    ⚠ CoralBricks performance fetch failed: ${err.message} — continuing`);
+    }
+  } else {
+    console.warn('    ⚠ CORAL_API_KEY not set — skipping CoralBricks performance');
   }
 
   const ms = Date.now() - t0;

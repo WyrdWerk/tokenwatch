@@ -5,6 +5,36 @@
  * No `node:` imports — Worker-safe.
  */
 
+import { canonicalId } from './normalize.mjs';
+
+/** CoralBricks measurements: prefer 30m per metric, with an explicitly labelled 1d fallback. */
+export function parseCoralbricksPerformance(catalog) {
+  const result = {};
+  for (const model of catalog?.data || []) {
+    if (!model?.id) continue;
+    const measurement = (field, max = Infinity) => {
+      for (const window of ['30m', '1d']) {
+        const value = model[`${field}_last_${window}`];
+        if (typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= max) {
+          return {value, window};
+        }
+      }
+      return null;
+    };
+    const latency = measurement('latency');
+    const speed = measurement('decode_speed');
+    const hit = measurement('cache_hit_rate', 100);
+    if (!latency && !speed && !hit) continue;
+    result[`${canonicalId(model.id)}|coralbricks`] = {
+      source: 'coralbricks',
+      latency: latency ? {p50: Math.round(latency.value * 1000), window: latency.window} : null,
+      throughput: speed ? {reported: speed.value, window: speed.window} : null,
+      cache_hit_rate: hit ? {percent: hit.value, window: hit.window} : null,
+    };
+  }
+  return result;
+}
+
 /**
  * Merge fresh direct-provider records into existing performance data.
  * Preserves OR records while overwriting direct-provider keys with fresh values.

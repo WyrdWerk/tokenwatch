@@ -57,11 +57,13 @@
     var valid = true;
 
     if (inputTokens > 0) {
-      if (pricing.input === null || pricing.input === undefined) { valid = false; }
-      else {
-        var inputPrice = Number.isFinite(pricing.input) && Number.isFinite(pricing.cache_write)
+      var inputPrice = pricing.input_billing === 'cache_write'
+        ? (Number.isFinite(pricing.cache_write) && pricing.cache_write >= 0 ? pricing.cache_write : null)
+        : Number.isFinite(pricing.input) && Number.isFinite(pricing.cache_write)
           && pricing.cache_write > 0 && pricing.cache_write > pricing.input
           ? pricing.cache_write : pricing.input;
+      if (inputPrice === null || inputPrice === undefined) { valid = false; }
+      else {
         cost += (inputPrice * inputTokens) / 1e6;
       }
     }

@@ -104,6 +104,21 @@ test('/models/:id/providers applies higher write tariffs only in the mix-aware r
   assert.deepEqual(raw.body.providers.map(p => p.provider), ['alpha', 'beta'], 'no-mix sorting keeps raw-price semantics');
 });
 
+test('/models/:id/providers ranks explicit lower write billing ahead of cheaper raw input', async () => {
+  const catalog = { models: [
+    { id: 'default-billing-test', provider: 'coralbricks', pricing: { input: 0.3, cache_write: 0.09, cache_read: 0, output: 1.2, input_billing: 'cache_write' } },
+    { id: 'default-billing-test', provider: 'other', pricing: { input: 0.12, cache_read: 0, output: 1.2 } },
+  ] };
+  const ctx = makeContext('/api/v1/models/default-billing-test/providers', '?tokens=1000&mix=2.5,97,0.5');
+  ctx.env.ASSETS = { fetch: async () => new Response(JSON.stringify(catalog)) };
+  const { status, body } = await getJson(ctx);
+  assert.equal(status, 200);
+  // CoralBricks: $8.25; other: $9. Raw-input comparison would invert the winner.
+  assert.deepEqual(body.providers.map(p => p.provider), ['coralbricks', 'other']);
+  assert.equal(body.providers[0].pricing.input_billing, 'cache_write');
+  assert.equal(body.providers[0].pricing.input, 0.3);
+});
+
 test('/api/v1/models/:id/providers mix-aware cost formula (formula-data coverage, not sort)', async () => {
   // Pins the documented hand-computed cost for the deepinfra row. This validates the
   // cost FORMULA against known pricing — it does NOT exercise ordering (see the test above).

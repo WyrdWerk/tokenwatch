@@ -57,7 +57,7 @@ const DB_NAME = 'tokenwatch-price-history';
 const COLUMNS = [
   'utc_day', 'offering_key', 'canonical_model', 'provider', 'quantization', 'sku',
   'model_id', 'model_name', 'org', 'input_price', 'output_price', 'cache_read',
-  'cache_write', 'discount', 'source_generated_at',
+  'cache_write', 'input_billing', 'discount', 'source_generated_at',
 ];
 
 /** Monotonic counter making claim tokens unique even within one millisecond. */

@@ -1,0 +1,71 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "deepseek-v4.1-flash-fast-fp4",
+      "object": "model",
+      "owned_by": "coralbricks",
+      "context_length": 1048576,
+      "created": 1789000000,
+      "pricing": {
+        "cache_write_multiple": 0.3,
+        "cache_write_per_m": 0.09,
+        "cached_input_per_m": 0,
+        "input_per_m": 0.3,
+        "output_per_m": 1.2
+      },
+      "supports_chat": true,
+      "supports_image_input": true,
+      "supports_tools": true,
+      "decode_speed_last_1d": 453.4,
+      "cache_hit_rate_last_1d": 97.9,
+      "latency_last_30m": 0.57,
+      "decode_speed_last_30m": 529.5,
+      "cache_hit_rate_last_30m": 94.6,
+      "latency_last_1d": 0.71
+    },
+    {
+      "id": "glm-5.3-flash-fp4",
+      "object": "model",
+      "owned_by": "coralbricks",
+      "context_length": 1048576,
+      "created": 1787700000,
+      "pricing": {
+        "cache_write_multiple": 1.5333333333333334,
+        "cache_write_per_m": 0.23,
+        "cached_input_per_m": 0,
+        "input_per_m": 0.15,
+        "output_per_m": 0.5
+      },
+      "supports_chat": true,
+      "supports_image_input": true,
+      "supports_tools": true,
+      "decode_speed_last_1d": 291.7,
+      "cache_hit_rate_last_1d": 96,
+      "latency_last_1d": 0.35
+    },
+    {
+      "id": "glm-5.3-fp4",
+      "object": "model",
+      "owned_by": "coralbricks",
+      "context_length": 1048576,
+      "created": 1787000000,
+      "pricing": {
+        "cache_write_multiple": 1.5,
+        "cache_write_per_m": 1.68,
+        "cached_input_per_m": 0,
+        "input_per_m": 1.12,
+        "output_per_m": 4.4
+      },
+      "supports_chat": true,
+      "supports_image_input": false,
+      "supports_tools": true,
+      "latency_last_1d": 0.27,
+      "cache_hit_rate_last_30m": 97.9,
+      "latency_last_30m": 0.45,
+      "decode_speed_last_1d": 320.9,
+      "decode_speed_last_30m": 317.5,
+      "cache_hit_rate_last_1d": 98.8
+    }
+  ]
+}

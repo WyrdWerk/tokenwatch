@@ -192,6 +192,7 @@ async function main() {
         provider: name,
         input: o.pricing.input,
         cache_write: o.pricing.cache_write,
+        input_billing: o.pricing.input_billing,
         output: o.pricing.output,
         cache_read: o.pricing.cache_read,
       });

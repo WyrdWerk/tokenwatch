@@ -28,6 +28,9 @@
   // Parity pinned by test/benchmarks-page.test.mjs.
   function freshInputRate(pricing) {
     const { input, cache_write: write } = pricing;
+    if (pricing.input_billing === 'cache_write') {
+      return typeof write === 'number' && Number.isFinite(write) && write >= 0 ? write : null;
+    }
     return typeof input === 'number' && Number.isFinite(input)
       && typeof write === 'number' && Number.isFinite(write)
       && write > 0 && write > input ? write : input;

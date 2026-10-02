@@ -10,9 +10,13 @@
  * docs/canonicalization-edge-cases.md §10 for the same pattern on canonicalId.
  */
 
-/** Fresh input uses a higher finite positive write tariff; published input is unchanged. */
+/** Explicit default billing wins; otherwise estimate with a higher write tariff.
+ * Published input is unchanged. A missing explicit tariff is unpriceable. */
 export function freshInputRate(pricing) {
   const { input, cache_write: write } = pricing;
+  if (pricing.input_billing === 'cache_write') {
+    return typeof write === 'number' && Number.isFinite(write) && write >= 0 ? write : null;
+  }
   return typeof input === 'number' && Number.isFinite(input)
     && typeof write === 'number' && Number.isFinite(write)
     && write > 0 && write > input ? write : input;
@@ -23,7 +27,7 @@ export function freshInputRate(pricing) {
  * Fresh input uses freshInputRate; additional cache-storage charges are excluded.
  *
  * Null semantics (mirrors app.js blendedCostFor):
- *  - inputPct > 0 && input price null  → returns null (offering can't serve the mix)
+ *  - inputPct > 0 && fresh-input tariff null → returns null (mix can't be priced)
  *  - outputPct > 0 && output price null → returns null
  *  - cache_read null → cached tokens are charged at the INPUT rate (no cache
  *    discount; the provider simply doesn't publish one)

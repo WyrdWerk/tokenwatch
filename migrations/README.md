@@ -42,6 +42,11 @@ attempt to bind the placeholder `PRICE_HISTORY` database to production.**
 2. `npx wrangler d1 migrations apply tokenwatch-price-history --local`
 3. Re-run `npm test` and the snapshot writer's `--dry-run`.
 
+Migration `0003_snapshot_input_billing.sql` preserves the optional default
+fresh-input billing rule alongside raw prices. Apply it before using the updated
+snapshot writer or history route against an existing local database. Existing
+rows get `NULL` and keep their original cost semantics; no prices are rewritten.
+
 ## Not yet wired into CI (deliberate)
 
 `scripts/snapshot-prices.mjs` supports `--local` only. A daily production

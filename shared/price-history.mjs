@@ -106,6 +106,7 @@ export function toSnapshotRow(model, day, generatedAt) {
     output_price: output,
     cache_read: cacheRead,
     cache_write: cacheWrite,
+    input_billing: pricing.input_billing ?? null,
     discount: num(model.discount) ?? 0,
     source_generated_at: generatedAt ?? null,
   };
@@ -142,7 +143,7 @@ function num(value) {
  */
 export function blendedRateFor(row, mix = DEFAULT_MIX) {
   return blendedRate(
-    { input: row.input_price, output: row.output_price, cache_read: row.cache_read, cache_write: row.cache_write },
+    { input: row.input_price, output: row.output_price, cache_read: row.cache_read, cache_write: row.cache_write, input_billing: row.input_billing },
     mix,
   );
 }

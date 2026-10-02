@@ -180,9 +180,14 @@ Returns:
 ```
 
 Each text row contains `rank`, `provider`, `id`, `name`, `org`, `cost`,
-`blended`, `zdr`, `speedP50`, `ttftP50`, `intelligence`, `coding`, and
+`blended`, `zdr`, `speedP50`, `speedReported`, `speedWindow`, `ttftP50`,
+`ttftWindow`, `intelligence`, `coding`, and
 `agentic`, plus best-effort `quantization`. Quantization is hidden in the UI
 by default, without collapsing distinct model/SKU identities.
+`speedReported` is a provider-reported decode rate, not a percentile;
+`speedP50` stays null when only a reported rate exists. The display, speed sort,
+and speed minimum use the available measured rate. Preserve its statistic and
+`speedWindow` (`30m` or `1d`) when reporting it. `ttftWindow` labels TTFT's window.
 `cost` is the calculated workload cost (or the inverse
 affordability value in budget mode); `blended` is the mix-weighted comparison
 rate in $/M and is not the same thing as session `cost`. `ttftP50` is
@@ -192,12 +197,14 @@ true, so `:batch` SKUs are excluded until turned off.
 
 The estimate uses the same mix math for `blended` and total cost. Monthly mode
 multiplies only total cost by 30; blended remains a per-million-token rate.
-For fresh input, a finite positive `cache_write` is used only when it is
-strictly greater than valid numeric `input`; otherwise normal input pricing
-applies. Cached reads use published `cache_read` or the original input rate.
-There is no separate fixed write or amortization charge. This assumes all fresh
-input is cached where a higher write rate is published; additional cache-storage
-charges are excluded. It is an estimate, not an exact invoice or a guarantee of
+For fresh input, `pricing.input_billing: "cache_write"` uses the finite
+non-negative write tariff even when lower than input. A missing explicit write
+tariff makes fresh-input workloads unpriceable. Otherwise a finite positive
+`cache_write` applies only when greater than valid numeric `input`; normal
+input pricing applies in other cases. Cached reads use published `cache_read`
+or the original input rate. There is no separate fixed write or amortization
+charge; additional cache-storage charges are excluded. This is an estimate,
+not an exact invoice or a guarantee of
 overestimation. Raw published component prices remain available under `pricing`.
 Views also report `performance.status` (`pending`, `ready`, `unavailable`, or
 `error`), `dependent`, `pending`, `failed`, and `speedMinimumApplied`.
@@ -214,12 +221,15 @@ Requires the exact identity from `get_view`. On success it returns:
 provider, id, name, org,
 pricing, context_length, max_completion_tokens, quantization,
 zdr, subscription, discount, benchmarks, energy,
-cost, blended, speedP50, ttftP50
+cost, blended, speedP50, speedReported, speedWindow, ttftP50, ttftWindow,
+capabilities
 ```
 
 `pricing` contains the offering's component rates. `benchmarks` and `energy`
 may be `null`; absence is not evidence that the model has no capability or
-energy measurement. If the offering exists but is filtered out, the result
+energy measurement. Provider `capabilities`, when published, report chat,
+image-input, and tool support; missing flags remain unknown.
+If the offering exists but is filtered out, the result
 reports `inView: false` and tells the agent to call `get_view`,
 `clear_filters`, or `set_filters`.
 
@@ -264,7 +274,7 @@ the tool returns an error.
 - `get_catalog_info()` → `{ page, generated_at, catalogSize, providerCount, note }`.
 - `set_workload({ totalTokensM?, mix?, costMode?, computeBy?, budget? })` → a fresh `get_view`; mix values must sum to 100 ±0.5 and are not silently normalized. It is a partial update to workload volume, mix, and mode.
 - `apply_preset({ name })` → a fresh `get_view`; valid names are `agentic`, `balanced`, `heavy-output`, and `no-cache`.
-- `set_filters({ provider?, model?, zdr?, sub?, promo?, groupBy?, minIntelligence?, minCoding?, minAgentic?, benchmarked?, hideBatch?, cacheOnly?, maxBlended?, minToks?, hq? })` → a fresh `get_view` with its default 10-row `top` preview; this resets the large-row display state. `hideBatch` defaults to true on the page (omit to leave it; pass `false` to include `:batch` SKUs). `cacheOnly` keeps rows with a numeric cache-read price. `maxBlended` is a $/M cap at the current mix; `minToks` is minimum throughput p50 and drops rows with no speed data once performance is ready. While pending/unavailable, the result explicitly reports provisional candidates and an unapplied speed minimum. `hq` is a country code (`US`, `SG`, `CN`, `FR`, `ES`, `NL`, `SE`) or `unknown`. `minCoding` / `minAgentic` drop offerings without that AA score. `benchmarked` keeps rows that have a benchmarks block. `groupBy` organizes the visible table into provider/org sections but does not change the active ranking or the global `top` preview; explain section placement separately from rank. An unambiguous canonical `model` selection resolves against the full catalog before other filters and matches exactly; partial searches remain case-insensitive substring matches. Spaces and hyphens are equivalent (`GLM 5.2` selects `glm-5.2`, not `glm-5.2-fp8` or `glm-5.2-fast`). Quant/SKU/batch identities stay distinct; compare/open-detail still need exact `{provider, id}`.
+- `set_filters({ provider?, model?, zdr?, sub?, promo?, groupBy?, minIntelligence?, minCoding?, minAgentic?, benchmarked?, hideBatch?, cacheOnly?, maxBlended?, minToks?, hq? })` → a fresh `get_view` with its default 10-row `top` preview; this resets the large-row display state. `hideBatch` defaults to true on the page (omit to leave it; pass `false` to include `:batch` SKUs). `cacheOnly` keeps rows with a numeric cache-read price. `maxBlended` is a $/M cap at the current mix; `minToks` is minimum displayed speed (p50 or provider-reported) and drops rows with no speed data once performance is ready. While pending/unavailable, the result explicitly reports provisional candidates and an unapplied speed minimum. `hq` is a country code (`US`, `SG`, `CN`, `FR`, `ES`, `NL`, `SE`) or `unknown`. `minCoding` / `minAgentic` drop offerings without that AA score. `benchmarked` keeps rows that have a benchmarks block. `groupBy` organizes the visible table into provider/org sections but does not change the active ranking or the global `top` preview; explain section placement separately from rank. An unambiguous canonical `model` selection resolves against the full catalog before other filters and matches exactly; partial searches remain case-insensitive substring matches. Spaces and hyphens are equivalent (`GLM 5.2` selects `glm-5.2`, not `glm-5.2-fp8` or `glm-5.2-fast`). Quant/SKU/batch identities stay distinct; compare/open-detail still need exact `{provider, id}`.
 - `clear_filters()` → a fresh `get_view`; workload and sort are kept. Hide-batch returns to on.
 
 ### Text comparison, detail, and export tools

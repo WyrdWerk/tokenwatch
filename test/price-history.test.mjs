@@ -195,6 +195,22 @@ test('history blending uses cache_write only for fresh input, leaving cached rea
   assert.equal(row.input_price, 2, 'history retains the original catalog input price');
 });
 
+test('snapshots retain explicit input billing without rewriting raw tariffs or legacy history', () => {
+  const model = { id: 'deepseek-v4.1-flash-fast-fp4', provider: 'coralbricks', pricing: {
+    input: 0.3, output: 1.2, cache_read: 0, cache_write: 0.09, input_billing: 'cache_write',
+  } };
+  const row = toSnapshotRow(model, '2026-10-02', 'gen');
+  assert.equal(row.input_price, 0.3);
+  assert.equal(row.cache_write, 0.09);
+  assert.equal(row.input_billing, 'cache_write');
+  assert.equal(blendedRateFor(row, CACHE_MIX), 0.00825);
+  assert.equal(blendedRateFor({ ...row, input_billing: null }, CACHE_MIX), 0.0135);
+  const batch = buildSnapshotStatements([model], '2026-10-02', 'gen');
+  const insert = batch.statements.find(s => s.phase === 'insert').sql;
+  assert.match(insert, /cache_write, input_billing, discount/);
+  assert.match(insert, /0\.09, 'cache_write', 0/);
+});
+
 test('cache_read null falls back to the input price, never to zero', () => {
   const row = { input_price: 2, output_price: 8, cache_read: null };
   // 97% of cached tokens bill at the input rate: 0.05 + 1.94 + 0.04

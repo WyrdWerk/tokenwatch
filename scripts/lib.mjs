@@ -168,6 +168,87 @@ function orgFromBareModelId(id) {
   return null;
 }
 
+// Reviewed public fallback rates, confirmed against /v1/models on 2026-10-02.
+// /api/public/models omits these; authenticated explicit tariffs take precedence.
+// Keep the fallback bounded to reviewed SKUs rather than guessing for new ones.
+const CORALBRICKS_CACHE_WRITE_MULTIPLIERS = {
+  'glm-5.3-fp4': 1.5,
+  'glm-5.3-flash-fp4': 0.23 / 0.15,
+  'deepseek-v4.1-flash-fast-fp4': 0.3,
+};
+
+/** Authenticated CoralBricks tariffs, or its public catalog when no key is available. */
+export function parseCoralbricks(data) {
+  const authenticated = Array.isArray(data?.data);
+  const models = authenticated ? data.data : Array.isArray(data?.models) ? data.models : [];
+  return models.flatMap((m) => {
+    const id = authenticated ? m?.id : m?.slug;
+    if (!m || typeof id !== 'string' || !id) return [];
+    if (authenticated ? m.supports_chat !== true : m.products?.tokenApi !== true) return [];
+    const input = passthrough(authenticated ? m.pricing?.input_per_m : m.inputPerM);
+    const output = passthrough(authenticated ? m.pricing?.output_per_m : m.outputPerM);
+    if ((input ?? 0) < 0 || (output ?? 0) < 0 || !((input ?? 0) > 0 || (output ?? 0) > 0)) return [];
+    const multiplier = m.cacheWriteMultiplier > 0
+      ? passthrough(m.cacheWriteMultiplier)
+      : CORALBRICKS_CACHE_WRITE_MULTIPLIERS[id];
+    const write = authenticated ? passthrough(m.pricing?.cache_write_per_m)
+      : input !== null && multiplier != null ? Number((input * multiplier).toFixed(12)) : null;
+    const context = typeof m.contextWindow === 'string'
+      ? m.contextWindow.match(/^(\d+(?:\.\d+)?)([KM])?$/i)
+      : null;
+    return [{
+      id,
+      name: m.name || id,
+      org: orgFromBareModelId(id),
+      provider: 'coralbricks',
+      quantization: m.precision?.toLowerCase().replace(/^native\s+/, '') ?? null,
+      discount: 0,
+      context_length: authenticated ? passthrough(m.context_length)
+        : context ? Number(context[1]) * ({ K: 1e3, M: 1e6 }[context[2]?.toUpperCase()] ?? 1) : null,
+      max_completion_tokens: null,
+      ...(authenticated ? {capabilities: {
+        chat: m.supports_chat,
+        image_input: typeof m.supports_image_input === 'boolean' ? m.supports_image_input : null,
+        tool_call: typeof m.supports_tools === 'boolean' ? m.supports_tools : null,
+      }} : {}),
+      pricing: {
+        input,
+        output,
+        cache_read: authenticated ? passthrough(m.pricing?.cached_input_per_m) : 0,
+        cache_write: write !== null && write >= 0 ? write : null,
+        input_billing: 'cache_write', // Default retention bills novel input at this tariff, even when lower than input
+      },
+    }];
+  });
+}
+
+/** Public names/precision enrich authenticated rows; they never replace API tariffs. */
+export async function fetchCoralbricksCatalog(apiKey, load = fetchJson) {
+  let authenticated = null;
+  if (apiKey) {
+    try {
+      authenticated = await load('https://inference.coralbricks.ai/v1/models', {apiKey});
+      if (!Array.isArray(authenticated?.data) || !authenticated.data.length) {
+        throw new Error('Empty authenticated catalog');
+      }
+    } catch {
+      authenticated = null;
+      console.warn('⚠ CoralBricks authenticated catalog unavailable — using public pricing fallback');
+    }
+  }
+  let publicCatalog;
+  try {
+    publicCatalog = await load('https://www.coralbricks.ai/api/public/models');
+  } catch (err) {
+    if (!authenticated) throw err;
+    console.warn('⚠ CoralBricks public metadata unavailable — keeping authenticated tariffs');
+    return authenticated;
+  }
+  if (!authenticated) return publicCatalog;
+  const metadata = new Map((publicCatalog.models || []).map(m => [m.slug, m]));
+  return {...authenticated, data: authenticated.data.map(m => ({...metadata.get(m.id), ...m}))};
+}
+
 function singularityChatCapability(m) {
   const caps = Array.isArray(m.capabilities) ? m.capabilities : [];
   return caps.find((c) => c?.endpoint === '/v1/chat/completions')
@@ -825,6 +906,8 @@ export const PROVIDER_NAME_MAP = {
   'singularity api': 'singularity',
   'runinfra': 'runinfra',
   'run infra': 'runinfra',
+  'coralbricks': 'coralbricks',
+  'coral bricks': 'coralbricks',
   'nanogpt': 'nanogpt',
   'runware': 'runware',
   'scx-ai': 'scx-ai',
