@@ -27,7 +27,7 @@ test('only the orb preview command opts into the generated preview and preload c
 });
 
 test('preview combines classic scripts in order without changing production sources or sharing resolution', async () => {
-  const names = ['shared-ui.js', 'app.js', 'advisor-widget.js', 'webmcp.js'];
+  const names = ['shared-ui.js', 'price-sparkline.js', 'model-history.js', 'app.js', 'advisor-widget.js', 'webmcp.js'];
   const sourceHtml = await readFile(new URL('public/index.html', root), 'utf8');
   const sourceScripts = await Promise.all(names.map(name => readFile(new URL(`public/${name}`, root), 'utf8')));
   execFileSync(process.execPath, [new URL('.agents/build-preview.mjs', root).pathname]);

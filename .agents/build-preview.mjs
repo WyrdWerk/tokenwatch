@@ -4,12 +4,12 @@ import { cp, readFile, rm, writeFile } from 'node:fs/promises';
 
 const source = new URL('../public/', import.meta.url);
 const output = new URL('../.amp/preview/', import.meta.url);
-const names = ['shared-ui.js', 'app.js', 'advisor-widget.js', 'webmcp.js'];
+const names = ['shared-ui.js', 'price-sparkline.js', 'model-history.js', 'app.js', 'advisor-widget.js', 'webmcp.js'];
 const html = await readFile(new URL('index.html', source), 'utf8');
 const pattern = /  <script src="\/([^"]+)" defer><\/script>\n/g;
 const tags = [...html.matchAll(pattern)];
 assert.deepEqual(tags.map(tag => tag[1].split('?')[0]), names,
-  'Preview expects the four classic scripts in their original deferred order');
+  'Preview expects the classic scripts in their original deferred order');
 const scripts = await Promise.all(names.map(name => readFile(new URL(name, source), 'utf8')));
 
 // These styles use absolute /fonts/ URLs. Inlining preserves their cascade and
