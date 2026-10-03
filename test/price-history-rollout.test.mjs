@@ -137,6 +137,20 @@ test('failure reports keep oversized output within the GitHub issue body limit',
   assert.match(calls[0].body, /FINAL ERROR/);
 });
 
+test('feature-branch dispatches cannot refresh, write production history, commit, or deploy', async () => {
+  const workflow = await readFile(new URL('../.github/workflows/refresh-pricing.yml', import.meta.url), 'utf8');
+  const condition = workflow.match(/  refresh:\n    if: (.+)/)?.[1];
+  assert.ok(condition, 'the refresh job must have a condition');
+  // This job uses a JavaScript-compatible subset of GitHub expressions.
+  const shouldRun = new Function('github', `return (${condition});`);
+  for (const event_name of ['schedule', 'workflow_dispatch']) {
+    assert.equal(shouldRun({ ref: 'refs/heads/main', event_name }), true);
+    assert.equal(shouldRun({ ref: 'refs/heads/feat/price-history-production', event_name }), false);
+    assert.equal(shouldRun({ ref: 'refs/tags/main', event_name }), false);
+  }
+  assert.equal(shouldRun({ ref: 'refs/heads/main', event_name: 'push' }), false);
+});
+
 test('CI history and reporting failures cannot gate the ordinary pricing deploy', async () => {
   const workflow = await readFile(new URL('../.github/workflows/refresh-pricing.yml', import.meta.url), 'utf8');
   const history = workflow.match(/      - name: Snapshot daily price history\n([\s\S]*?)(?=\n      - )/)?.[1];

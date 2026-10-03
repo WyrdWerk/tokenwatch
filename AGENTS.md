@@ -217,7 +217,7 @@ Cloudflare Pages project: `payg-inference-calculator`
 - Production branch: `main`
 - Build output: `public/`
 - GitHub secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `DATA_BOT_APP_ID`, `DATA_BOT_PRIVATE_KEY`, `FAL_API_KEY`, `OPENROUTER_API_KEY`, `ARTIFICIAL_ANALYSIS_API_KEY`, `SINGULARITY_API_KEY`, `RUNINFRA_API_KEY`, `LLMGATEWAY_API_KEY`, `CORAL_API_KEY` (11 total)
-- History writes additionally use the existing `CLOUDFLARE_D1_TOKEN` (Account → D1 → Edit), not the Pages deployment token. The refresh job snapshots after successful fetching, outside the changed/force gate. Snapshot and issue-report failures both use `continue-on-error`, so normal pricing deployment continues; one open issue collects failures with run links and errors. See `migrations/README.md` for target identity, approved migrations, and operator commands.
+- History writes additionally use the existing `CLOUDFLARE_D1_TOKEN` (Account → D1 → Edit), not the Pages deployment token. The main-only refresh job snapshots after successful fetching, outside the changed/force gate; feature-branch dispatches skip the entire job. Snapshot and issue-report failures both use `continue-on-error`, so normal pricing deployment continues; one open issue collects failures with run links and errors. See `migrations/README.md` for target identity, approved migrations, and operator commands.
 - Auto-deploy on push to main (deploy-only) + 2-hourly cron (fetch+commit+deploy)
 
 Manual deploy: `npx wrangler pages deploy public --project-name payg-inference-calculator --branch main --commit-dirty true`

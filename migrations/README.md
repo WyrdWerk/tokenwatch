@@ -96,6 +96,11 @@ normal price commit or deploy: both snapshot and failure-report steps use
 `continue-on-error`. After retries are exhausted, the reporter opens one issue
 with the run link and bounded, token-redacted error output, or comments on the
 existing open issue carrying `<!-- tokenwatch-price-history-failure -->`.
+The entire refresh job is restricted to `refs/heads/main`: a feature-branch
+dispatch cannot fetch, write production history, push data, or deploy Pages.
+Operator identity checks and approved migrations use the explicit D1 commands
+above, never a feature-branch pricing refresh. Production deployment follows
+the normal merge-to-main path.
 The refresh job alone has `issues: write`; serialized refreshes prevent duplicate
 issue creation races. If GitHub reporting itself fails, the workflow log remains
 the fallback and normal deployment still proceeds. Close the issue after recovery.

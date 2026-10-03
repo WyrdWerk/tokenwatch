@@ -58,6 +58,9 @@ written from the successful refresh's `public/pricing.json` by
   deploy is skipped for unchanged data. Failed writes and failed issue reporting
   cannot block ordinary pricing deployment. A bounded, token-redacted error and
   run link open one GitHub issue or become a comment on the existing open issue.
+- **Release boundary.** Only `refs/heads/main` can run the refresh job. Feature
+  branches cannot write production history, push refreshed data, or deploy Pages
+  through that workflow. Production frontend deployment follows merge to main.
 
 ## Consequences
 
