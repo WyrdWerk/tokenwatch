@@ -22,3 +22,22 @@ jobs:
         env:
           TW_PARITY_LIVE: '0'
         run: node --test test/*.test.mjs
+
+      # Exercise the deploy build before merge using the committed catalogs.
+      # No provider API keys or Cloudflare deployment credentials are needed.
+      - name: Generate SEO
+        run: node scripts/generate-seo.mjs
+
+      - name: Verify generated SEO surface
+        run: node scripts/verify-seo.mjs
+
+      - name: Bust cache (content-hashed asset paths)
+        run: node scripts/bust-cache.mjs
+
+      - name: Minify JSON
+        run: node scripts/minify-json.mjs
+
+      - name: Compile Pages Functions (no deployment)
+        env:
+          WRANGLER_SEND_METRICS: 'false'
+        run: npx --yes wrangler@3.90.0 pages functions build functions --outdir "$RUNNER_TEMP/tokenwatch-functions"

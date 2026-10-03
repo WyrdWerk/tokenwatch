@@ -51,7 +51,7 @@ Static site comparing pay-as-you-go LLM API pricing across inference providers. 
   - `refresh-pricing.yml` — 2-hourly cron (fetch all pipelines → commit JSON → generate-seo → bust-cache → minify → deploy; the post-commit steps are **gated on `changed == 'true'` or `inputs.force`**) + push-to-main trigger (deploy-only: generate-seo → bust → minify → deploy). Both jobs end with a `/h/*` content-type smoke check.
   - `refresh-performance.yml` — 2-hourly at :30 (offset, no collision; serialized via `concurrency: repo-refresh`), same gating pattern, commits `public/performance.json`.
   - `refresh-aa.yml` — weekly (Mon 06:00 UTC), refreshes `data/aa-benchmarks.json` + re-runs fetch-pricing, gated the same way.
-  - `ci.yml` — PR → main, tests only.
+  - `ci.yml` — PR → main: tests → generate-seo → SEO integrity check → bust-cache → minify → compile Pages Functions with the deployment's pinned Wrangler. Uses committed catalogs; never fetches provider data or deploys, and needs no secrets.
   - Manual `workflow_dispatch` on the three refresh workflows accepts `inputs.force` (boolean) to force a deploy even when nothing changed (recovery lever after a failed deploy).
 
 ## Key conventions
