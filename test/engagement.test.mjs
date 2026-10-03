@@ -42,11 +42,25 @@ test('pickHeroModel picks the canonical with the most distinct priced providers,
     offering('acme/alpha:batch', 'p9', 0.01, 0.01, 0.001), // batch never counts
   ];
   const pick = pickHeroModel(models);
-  assert.equal(pick.canonical, 'alpha');
+  assert.equal(pick.canonical, 'alpha', 'grouped by search family (same as the calculator)');
   assert.equal(pick.providerCount, 3);
   assert.deepEqual(pick.ranked.map((r) => r.model.provider), ['p3', 'p1', 'p2']);
   const expected = blendedRate(models[1].pricing, AGENTIC_MIX) / blendedRate(models[3].pricing, AGENTIC_MIX);
   assert.ok(Math.abs(pick.spread - expected) < 1e-9, 'spread is most expensive / cheapest provider');
+});
+
+test('hero groups spelling/SKU variants like the model search and labels promo lanes', () => {
+  const models = [
+    offering('deepseek/deepseek-v4.1-flash', 'p1', 1, 1, 0.1),
+    offering('deepseek-v4-1-flash', 'p2', 2, 2, 0.2),
+    offering('deepseek-v4.1-flash-flex', 'p3', 3, 3, 0.3, { discount: 0.5 }),
+  ];
+  const pick = pickHeroModel(models);
+  assert.equal(pick.canonical, 'deepseek-4.1-flash');
+  assert.equal(pick.providerCount, 3);
+  const html = renderHero({ models, providers: [] });
+  assert.match(html, /tw-hero-promo">\s?promo</);
+  assert.match(html, /\(promo\)/);
 });
 
 test('pickHeroModel returns null below three providers and ties break by id', () => {

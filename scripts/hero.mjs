@@ -1,7 +1,7 @@
 // Build-time homepage hero: "same model, different bill". Pure — takes the
 // pricing catalog, returns markup. Injected by generate-seo via replaceSection.
 import { blendedRate, AGENTIC_MIX } from '../shared/cost.mjs';
-import { canonicalId } from '../shared/normalize.mjs';
+import { modelFamilyId } from '../shared/normalize.mjs';
 import { esc, fmtPrice } from './seo-pages.mjs';
 
 export const HERO_LANES = 5;
@@ -18,15 +18,16 @@ function heroModelName(models, canonical) {
   return canonical;
 }
 
-/** Pick the canonical model with the most distinct priced providers at
- *  AGENTIC_MIX (ties → id), keeping each provider's cheapest offering. */
+/** Pick the model family (the same grouping as the calculator's model search)
+ *  with the most distinct priced providers at AGENTIC_MIX (ties → id), keeping
+ *  each provider's cheapest offering. */
 export function pickHeroModel(models) {
   const groups = new Map();
   for (const m of models || []) {
     if (!m?.pricing || isBatchOrFree(m.id)) continue;
     const eff = blendedRate(m.pricing, AGENTIC_MIX);
     if (eff == null || !(eff > 0)) continue;
-    const canonical = canonicalId(m.id);
+    const canonical = modelFamilyId(m.id);
     if (!groups.has(canonical)) groups.set(canonical, { canonical, offerings: [], byProvider: new Map() });
     const g = groups.get(canonical);
     g.offerings.push(m);
@@ -88,14 +89,16 @@ function renderScene(lanes, providers) {
     parts.push(`<rect class="tw-hero-track" x="${meterX}" y="${y - 7}" width="${meterMax}" height="14" rx="3"/>`);
     parts.push(`<rect class="tw-hero-meter${cls}" style="animation-delay:${(1.6 + i * 0.12).toFixed(2)}s" x="${meterX}" y="${y - 7}" width="${w}" height="14" rx="3"/>`);
     parts.push(`<text class="tw-hero-prov${cls}" x="${laneX}" y="${y - 6}">${esc(providerLabel(lane.model, providers))}</text>`);
-    parts.push(`<text class="tw-hero-rate${cls}" x="${meterX + meterMax + 8}" y="${y + 4}">${esc(fmtPrice(lane.eff))}/M${cheapest ? ' 🏆' : ''}</text>`);
+    // Rule: promos are always labelled — a discounted lane says so.
+    const promo = lane.model.discount > 0 ? ' promo' : '';
+    parts.push(`<text class="tw-hero-rate${cls}" x="${meterX + meterMax + 8}" y="${y + 4}">${esc(fmtPrice(lane.eff))}/M${cheapest ? ' 🏆' : ''}${promo ? `<tspan class="tw-hero-promo">${promo}</tspan>` : ''}</text>`);
     // Three staggered token dots per lane, transform-only keyframes.
     css.push(`@keyframes tw-hero-flow-${i}{0%{transform:translate(34px,100px);opacity:0}8%{opacity:1}45%{transform:translate(200px,100px)}55%{transform:translate(${laneX}px,${y}px)}72%{transform:translate(${meterX - 8}px,${y}px);opacity:1}78%,100%{transform:translate(${meterX - 8}px,${y}px);opacity:0}}`);
     for (let d = 0; d < 3; d++) {
       parts.push(`<circle class="tw-hero-dot${cls}" r="3.2" style="animation-name:tw-hero-flow-${i};animation-delay:${(d * 0.45 + i * 0.08).toFixed(2)}s"/>`);
     }
   });
-  const label = lanes.map((l) => `${providerLabel(l.model, providers)} ${fmtPrice(l.eff)} per million tokens`).join('; ');
+  const label = lanes.map((l) => `${providerLabel(l.model, providers)} ${fmtPrice(l.eff)} per million tokens${l.model.discount > 0 ? ' (promo)' : ''}`).join('; ');
   return `<svg class="tw-hero-scene" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Blended price at an agentic mix: ${label}`)}">
     <style>${css.join('')}</style>
     <path class="tw-hero-trunk" d="M34 100 L 200 100"/>
