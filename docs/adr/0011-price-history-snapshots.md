@@ -1,6 +1,11 @@
 # ADR 0011 — Price-history snapshots in D1, blended at read time
 
-**Status:** Accepted (local-only implementation; production rollout not approved)
+**Status:** Accepted; production migrations, daily writes, and deployment approved 2026-10-03.
+
+The user reported completing production database/binding/token setup on
+2026-09-14 in the [implementation continuation thread](https://ampcode.com/threads/T-01a09e90-659c-761e-856b-5489818b2981).
+Remote execution was deferred until local review. The later approval and rollout
+are recorded in the [rollout thread](https://ampcode.com/threads/T-01a100dc-a9a1-7150-9081-b16b14409a79).
 
 ## Context
 
@@ -39,13 +44,29 @@ written from the successful refresh's `public/pricing.json` by
   failed run commits nothing. `--force` is an explicit operator repair that
   replaces a day's rows and refreshes its claim in the same transaction; it is
   not a normal crash-recovery path.
+- **Production target.** Use the existing `tokenwatch-price-history-prod` D1
+  database, UUID `980879e7-cc90-489b-9203-d81cf3ef265e`, through the existing
+  dashboard-managed Pages `PRICE_HISTORY` binding. `wrangler.history.toml` is
+  explicitly selected for migrations/writes and never auto-discovered by Pages.
+  Migrations 0001–0003 were applied after verifying the database metadata,
+  configured/deployed bindings, and absence of application tables/ledger.
+- **Remote execution.** Pin Wrangler 4.147.0 and import the whole SQL file; never
+  split the claim and rows into separate requests. Remote fault injection proved
+  a failed import leaves no claim. Retry the same file up to three times with
+  1s/2s waits. Reverify remote rollback before upgrading Wrangler.
+- **Nonblocking failures.** The pricing refresh runs the writer even when a
+  deploy is skipped for unchanged data. Failed writes and failed issue reporting
+  cannot block ordinary pricing deployment. A bounded, token-redacted error and
+  run link open one GitHub issue or become a comment on the existing open issue.
 
 ## Consequences
 
 - **Enables:** arbitrary-mix history with no re-ingestion; per-day cheapest
   provider; sparse-day gaps that stay visibly distinct from $0 pricing.
-- **Costs:** history begins at the first snapshot and cannot be backfilled;
-  production needs a real D1 database, bindings, a remote migration, and a CI
-  writer step, each requiring separate approval.
+- **Costs:** history begins at the first snapshot (2026-10-03), with no invented
+  backfill. D1 retains up to 90 days, not necessarily 90 recorded points.
+  Future remote migrations and operator repairs still require explicit approval.
+- **Credentials:** reuse `CLOUDFLARE_D1_TOKEN` for writes; do not use the Pages
+  deployment token. The refresh job needs `issues: write` for failure reports.
 - **Binding is runtime config, not a secret**, but it must exist for the
   endpoint to answer; without it the API returns 503 rather than an empty chart.

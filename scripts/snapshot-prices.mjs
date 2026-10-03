@@ -29,18 +29,19 @@
  *
  * Usage:
  *   node scripts/snapshot-prices.mjs --local [--date 2026-09-14] [--dry-run]
+ *   node scripts/snapshot-prices.mjs --remote   # requires CLOUDFLARE_D1_TOKEN
  *   node scripts/snapshot-prices.mjs --local --force   # operator repair: replace
  *                                                      # an already claimed day
  *
- * `--local` is the only supported mode in this repository: it drives the local
- * Wrangler D1 database via `wrangler d1 execute --local`, with no Cloudflare
- * credentials and no network access. Remote writes require a separate, explicit
- * rollout approval and are intentionally not wired up here.
+ * Remote operations explicitly select wrangler.history.toml, leaving Pages'
+ * dashboard binding intact. Failed remote operations retry up to three times
+ * with the same SQL file; a completed day's claim keeps retries idempotent.
  */
 
 import { readFile } from 'node:fs/promises';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
@@ -166,14 +167,31 @@ function sqlLiteral(value) {
   return `'${String(value).replace(/'/g, "''")}'`;
 }
 
-/**
- * Execute a statement batch against the local Wrangler D1 database.
- *
- * `wrangler d1 execute --file` runs the whole file as one batch, which D1
- * applies transactionally — the property the writer relies on for "all of a
- * day, or none of it".
- */
-export function runLocalBatch(statements, { cwd = ROOT, log = () => {} } = {}) {
+/** Run a D1 read or import; pin the Wrangler version whose rollback is verified. */
+export async function runD1(extraArgs, {
+  remote = false, cwd = ROOT, env = process.env, execute = spawnSync, wait = delay,
+} = {}) {
+  if (remote && !env.CLOUDFLARE_D1_TOKEN) throw new Error('CLOUDFLARE_D1_TOKEN is required for --remote');
+  const args = ['--yes', 'wrangler@4.147.0', 'd1', 'execute', remote ? 'PRICE_HISTORY' : DB_NAME,
+    remote ? '--remote' : '--local', '--yes', '--json',
+    ...(remote ? ['--config', 'wrangler.history.toml'] : []), ...extraArgs];
+  const attempts = remote ? 3 : 1;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const result = execute('npx', args, {
+      cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
+      // The Pages deploy token is not the history writer credential.
+      env: remote ? { ...env, CLOUDFLARE_API_TOKEN: env.CLOUDFLARE_D1_TOKEN } : env,
+    });
+    if (!result.error && result.status === 0) return result.stdout;
+    if (attempt === attempts) {
+      throw new Error(`wrangler d1 execute failed after ${attempt} attempt(s): ${result.error?.message || result.stderr || result.stdout}`);
+    }
+    await wait(1000 * 2 ** (attempt - 1));
+  }
+}
+
+/** Import the complete day's SQL file, never separate claim/row transactions. */
+export async function runSnapshotBatch(statements, { cwd = ROOT, log = () => {}, ...options } = {}) {
   const sql = statements
     .map((statement) => `${statement.sql.replace(/;\s*$/, '')};`)
     .join('\n');
@@ -184,59 +202,40 @@ export function runLocalBatch(statements, { cwd = ROOT, log = () => {} } = {}) {
   const file = join(tmpDir, `snapshot-${process.pid}-${Date.now()}.sql`);
   writeFileSync(file, sql, 'utf8');
   try {
-    const result = spawnSync(
-      'npx',
-      ['--yes', 'wrangler', 'd1', 'execute', DB_NAME, '--local', '--yes', '--json', '--file', file],
-      { cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
-    );
-    if (result.error) throw result.error;
-    if (result.status !== 0) {
-      throw new Error(`wrangler d1 execute failed (${result.status}): ${result.stderr || result.stdout}`);
-    }
-    log(result.stdout.trim());
-    return result.stdout;
+    const output = await runD1(['--file', file], { cwd, ...options });
+    log(output.trim());
+    return output;
   } finally {
     rmSync(file, { force: true });
   }
 }
 
 /** True when the day already has a claim row. */
-export function readDayClaim(day, { cwd = ROOT } = {}) {
-  const result = spawnSync(
-    'npx',
-    ['--yes', 'wrangler', 'd1', 'execute', DB_NAME, '--local', '--yes', '--json',
-      '--command', `SELECT utc_day, offering_count, source_generated_at, claimed_at FROM price_snapshot_day WHERE utc_day = '${day}'`],
-    { cwd, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 },
-  );
-  if (result.error) throw result.error;
-  if (result.status !== 0) {
-    throw new Error(`wrangler d1 execute failed (${result.status}): ${result.stderr || result.stdout}`);
-  }
-  const parsed = JSON.parse(result.stdout);
+export async function readDayClaim(day, options = {}) {
+  const output = await runD1(['--command',
+    `SELECT utc_day, offering_count, source_generated_at, claimed_at FROM price_snapshot_day WHERE utc_day = ${sqlLiteral(day)}`], options);
+  const parsed = JSON.parse(output);
   return parsed?.[0]?.results?.[0] || null;
 }
 
 export function parseArgs(argv) {
-  const args = { local: false, dryRun: false, force: false, date: null, pricing: join(ROOT, 'public', 'pricing.json') };
+  const args = { local: false, remote: false, dryRun: false, force: false, date: null, pricing: join(ROOT, 'public', 'pricing.json') };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--local') args.local = true;
+    else if (arg === '--remote') args.remote = true;
     else if (arg === '--dry-run') args.dryRun = true;
     else if (arg === '--force') args.force = true;
     else if (arg === '--date') args.date = argv[++i];
     else if (arg === '--pricing') args.pricing = argv[++i];
     else throw new Error(`unknown argument: ${arg}`);
   }
+  if (args.local === args.remote) throw new Error('choose exactly one of --local or --remote');
   return args;
 }
 
 export async function main(argv = process.argv.slice(2)) {
   const args = parseArgs(argv);
-  if (!args.local) {
-    throw new Error(
-      'only --local is supported: remote D1 writes require a separate, explicitly approved rollout',
-    );
-  }
   const day = args.date || utcDay(new Date());
   const pricing = JSON.parse(await readFile(args.pricing, 'utf8'));
   const batch = buildSnapshotStatements(pricing.models, day, pricing.generated_at, RETENTION_DAYS, { force: args.force });
@@ -246,18 +245,19 @@ export async function main(argv = process.argv.slice(2)) {
     return batch;
   }
 
-  const claim = readDayClaim(day);
+  const options = { remote: args.remote, log: (out) => process.stdout.write(out + '\n') };
+  const claim = await readDayClaim(day, options);
   if (claim && !args.force) {
     // The day is already owned by an earlier successful catalog. The batch is
     // still executed so retention runs, but every row write is gated on this
     // run's claim token, which `INSERT OR IGNORE` did not install — so no price
     // is rewritten and no newly appearing offering is appended.
-    runLocalBatch(batch.statements, { log: (out) => process.stdout.write(out + '\n') });
+    await runSnapshotBatch(batch.statements, options);
     console.log(`snapshot-prices: ${day} already claimed by ${claim.source_generated_at ?? 'an earlier run'} at ${claim.claimed_at}; prices left unchanged (${claim.offering_count} offerings)`);
     return batch;
   }
 
-  runLocalBatch(batch.statements, { log: (out) => process.stdout.write(out + '\n') });
+  await runSnapshotBatch(batch.statements, options);
   console.log(args.force && claim
     ? `snapshot-prices: force-replaced ${day} with ${batch.rowCount} rows (retention cutoff ${batch.cutoff})`
     : `snapshot-prices: claimed ${day} with ${batch.rowCount} rows (retention cutoff ${batch.cutoff})`);
