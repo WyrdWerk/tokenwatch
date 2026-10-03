@@ -536,19 +536,80 @@ function zroFlightChunks(html) {
 }
 
 /**
- * Flatten the Flight payload into one string plus a `$L<n>` reference map, so
- * an article row can be joined to the chunk that holds its price `<dl>`.
- * The Zro page keeps the first API row inline and emits the rest as `$L16`…
- * `$L19` references with their price cells in sibling chunks.
+ * Flatten the Flight payload into one string plus a row-id → row-text map, so
+ * a `"$L<hex>"` element reference can be resolved to the row that defines it.
+ *
+ * Rows are newline-delimited `<hex>:<json>` records; one push chunk may carry
+ * several rows (or a row may be the whole chunk), so split on lines rather
+ * than trusting chunk boundaries.
  */
 function zroFlightPayload(html) {
   const chunks = zroFlightChunks(html);
+  const payload = chunks.join('\n');
   const refs = new Map();
-  for (const chunk of chunks) {
-    const id = chunk.slice(0, chunk.indexOf(':'));
-    if (id) refs.set(`$L${id}`, chunk.slice(chunk.indexOf(':') + 1));
+  for (const line of payload.split('\n')) {
+    const m = line.match(/^([0-9a-f]+):(.*)$/i);
+    if (m && !refs.has(m[1].toLowerCase())) refs.set(m[1].toLowerCase(), m[2]);
   }
-  return { payload: chunks.join('\n'), refs };
+  return { payload, refs };
+}
+
+/**
+ * Return the balanced JSON array literal starting at `start` (which must point
+ * at `[`), honouring string literals so brackets inside text don't count.
+ * Returns null when the array is unterminated.
+ */
+function zroBalancedArray(text, start) {
+  let depth = 0;
+  let inString = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (ch === '\\') i++;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === '[' || ch === '{') depth++;
+    else if (ch === ']' || ch === '}') {
+      depth--;
+      if (depth === 0) return text.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
+/** True for a Flight element node: ["$", type, key, props]. */
+function zroIsElement(node) {
+  return Array.isArray(node) && node[0] === '$' && typeof node[1] === 'string';
+}
+
+/** Depth-first search for the first element node matching `pred`. */
+function zroFindElement(node, pred) {
+  if (Array.isArray(node)) {
+    if (zroIsElement(node) && pred(node)) return node;
+    for (const child of node) {
+      const hit = zroFindElement(child, pred);
+      if (hit) return hit;
+    }
+  } else if (node && typeof node === 'object') {
+    for (const value of Object.values(node)) {
+      const hit = zroFindElement(value, pred);
+      if (hit) return hit;
+    }
+  }
+  return null;
+}
+
+/** Concatenate the visible text (`children` strings) under a node. */
+function zroText(node) {
+  if (typeof node === 'string') return node;
+  if (typeof node === 'number') return String(node);
+  if (Array.isArray(node)) {
+    if (zroIsElement(node)) return zroText(node[3]?.children);
+    return node.map(zroText).join('');
+  }
+  return '';
 }
 
 /**
@@ -592,85 +653,80 @@ export function parseZroPricingHtml(html) {
     return [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]);
   })();
 
-  // Resolve a Flight element reference (\`$L15\`) to its chunk text so an
-  // article can be joined with the sibling chunk holding its price <dl>.
-  const resolve = (value) => {
-    if (typeof value !== 'string') return '';
-    const ref = value.match(/^\$L([0-9a-f]+)$/i);
-    return ref && refs.has(`$L${ref[1]}`) ? refs.get(`$L${ref[1]}`) : value;
+  // Resolve `"$L<hex>"` element references to their parsed Flight rows,
+  // recursively, so each article becomes one self-contained tree. The live
+  // page keeps the first rows' <article> markup inline but streams some price
+  // <dl> blocks (e.g. `"$L14"`) as separate rows — each row's prices must be
+  // read from ITS OWN article subtree, never paired by chunk order.
+  const parsedRefs = new Map();
+  const resolveTree = (node, depth = 0, stack = new Set()) => {
+    if (depth > 64) return null;
+    if (typeof node === 'string') {
+      const ref = node.match(/^\$L([0-9a-f]+)$/i);
+      if (!ref) return node;
+      const key = ref[1].toLowerCase();
+      if (!refs.has(key) || stack.has(key)) return null;
+      if (!parsedRefs.has(key)) {
+        let parsed = null;
+        try { parsed = JSON.parse(refs.get(key)); } catch { parsed = null; }
+        parsedRefs.set(key, parsed);
+      }
+      const next = new Set(stack).add(key);
+      return resolveTree(parsedRefs.get(key), depth + 1, next);
+    }
+    if (Array.isArray(node)) return node.map((child) => resolveTree(child, depth + 1, stack));
+    if (node && typeof node === 'object') {
+      const out = {};
+      for (const [k, v] of Object.entries(node)) out[k] = resolveTree(v, depth + 1, stack);
+      return out;
+    }
+    return node;
   };
 
-  // Collect every article body. The panel keeps the first row's markup inline
-  // and emits the rest as `$L<n>` references, while each row's price <dl>
-  // lives in its own chunk. Pair the ordered id list with the ordered set of
-  // chunks that contain an Input/Output/Cache-read <dl>; this avoids leaking a
-  // sibling row's promo badge into an adjacent row.
+  // Locate each id's own <article> node (keyed by the model id) anywhere in
+  // the payload, extract exactly that balanced subtree, and resolve its refs.
+  const orderedIds = idList.length
+    ? idList
+    : [...payload.matchAll(/\["\$","article","([^"]+)"/g)].map((m) => m[1]);
   const articles = [];
-  const articleById = new Map();
-  const dlChunks = [...refs.entries()]
-    .filter(([, chunk]) => chunk.includes('["$","div","Input"'))
-    .map(([, chunk]) => chunk);
-  const articleChunkById = new Map();
-  for (const chunk of refs.values()) {
-    const re = /\["\$","article","([^"]+)"/g;
-    let m;
-    while ((m = re.exec(chunk))) {
-      if (!articleChunkById.has(m[1])) articleChunkById.set(m[1], chunk);
-    }
-  }
-  const orderedIds = idList.length ? idList : [...articleChunkById.keys()];
-  orderedIds.forEach((id, index) => {
-    const inlineIdx = apiSlice.indexOf(`["$","article","${id}"`);
-    const inline = inlineIdx === -1 ? "" : apiSlice.slice(inlineIdx);
-    const own = articleChunkById.get(id) || "";
-    const dl = dlChunks[index] || "";
-    const body = `${own || inline}
-${dl}`;
-    if (body.trim()) articleById.set(id, body);
-  });
   for (const id of orderedIds) {
-    if (articleById.has(id)) articles.push({ id, body: articleById.get(id) });
+    const needle = `["$","article",${JSON.stringify(id)},`;
+    const at = payload.indexOf(needle);
+    if (at === -1) continue;
+    const literal = zroBalancedArray(payload, at);
+    if (!literal) continue;
+    let node;
+    try { node = JSON.parse(literal); } catch { continue; }
+    articles.push({ id, tree: resolveTree(node) });
   }
   if (!articles.length) return [];
 
   for (const article of articles) {
     const id = article.id.trim().toLowerCase();
     if (!id || seen.has(id)) continue;
-    const body = article.body;
+    const tree = article.tree;
+    const body = JSON.stringify(tree);
 
-    const nameMatch = body.match(/\["\$","h3",null,\{[^}]*?"children":"([^"]+)"\}/);
-    const name = nameMatch ? nameMatch[1].trim() : id;
+    const heading = zroFindElement(tree, (n) => n[1] === 'h3');
+    const name = (heading ? zroText(heading).trim() : '') || id;
 
     // Context is rendered as ["Context ","1M tokens"].
-    const ctxMatch = body.match(/"Context ","([0-9.]+)\s*([KM]) tokens"/i);
+    const ctxMatch = zroText(tree).match(/Context\s*([0-9.]+)\s*([KM]) tokens/i);
     let contextLength = null;
     if (ctxMatch) {
       const n = Number.parseFloat(ctxMatch[1]);
       if (Number.isFinite(n)) contextLength = Math.round(n * (ctxMatch[2].toUpperCase() === 'M' ? 1_000_000 : 1_000));
     }
 
-    // Each price cell is a <div> keyed by its visible label. The value is
-    // either a bare "$$1.23" string or a span pair [original, current] when the
-    // model is discounted. Slice from the label's div up to the next labelled
-    // price cell (or the end of the row) rather than balancing brackets.
-    const cellSlice = (label) => {
-      const start = body.indexOf(`["$","div","${label}"`);
-      if (start === -1) return null;
-      const rest = body.slice(start + label.length + 16);
-      const nextLabels = ['["$","div","Input"', '["$","div","Output"', '["$","div","Cache read"']
-        .filter((needle) => needle !== `["$","div","${label}"`);
-      let end = rest.length;
-      for (const needle of nextLabels) {
-        const at = rest.indexOf(needle);
-        if (at !== -1 && at < end) end = at;
-      }
-      return rest.slice(0, end);
-    };
-
+    // Each price cell is a <div> keyed by its visible label inside this
+    // article. The value is either a bare "$$1.23" string or a span pair
+    // [original, current] when the model is discounted ("$$" is Flight's
+    // escape for a literal "$").
     const cell = (label) => {
-      const block = cellSlice(label);
-      if (!block) return { current: null, original: null };
-      const prices = [...block.matchAll(/\$\$([0-9]+(?:\.[0-9]+)?)/g)].map((p) => Number.parseFloat(p[1]));
+      const div = zroFindElement(tree, (n) => n[1] === 'div' && n[2] === label);
+      if (!div) return { current: null, original: null };
+      const dd = zroFindElement(div, (n) => n[1] === 'dd') || div;
+      const prices = [...zroText(dd).matchAll(/\$\$?([0-9]+(?:\.[0-9]+)?)/g)].map((p) => Number.parseFloat(p[1]));
       if (!prices.length) return { current: null, original: null };
       if (prices.length >= 2) return { current: prices[prices.length - 1], original: prices[0] };
       return { current: prices[0], original: null };
@@ -723,6 +779,19 @@ ${dl}`;
 }
 
 /**
+ * Loose sanity check that a display name belongs to an id: the name's first
+ * alphanumeric word (e.g. "kimi" from "Kimi K3") must appear in the id with
+ * punctuation removed ("kimik3"). Catches cross-row mis-pairing such as
+ * kimi-k3 ↔ "DeepSeek V4.1 Flash" without depending on exact marketing names.
+ */
+export function zroNameMatchesId(name, id) {
+  const first = String(name ?? '').toLowerCase().match(/[a-z0-9]+/);
+  if (!first) return true;
+  const flatId = String(id ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return flatId.includes(first[0]);
+}
+
+/**
  * Validate a freshly parsed Zro snapshot before it may replace the last-good
  * copy. Fail-closed: throws instead of returning a partial slice.
  * @param {{models?: Array}} snapshot
@@ -735,6 +804,7 @@ export function validateZroSnapshot(snapshot, { previous = null } = {}) {
     throw new Error(`zro snapshot: ${models.length} rows is below the ${ZRO_MIN_ROWS}-row minimum floor`);
   }
   const seen = new Set();
+  const names = new Map();
   for (const [index, m] of models.entries()) {
     if (!m || typeof m !== 'object') throw new Error(`zro snapshot: row ${index} is not an object`);
     const id = typeof m.id === 'string' ? m.id.trim() : '';
@@ -743,6 +813,19 @@ export function validateZroSnapshot(snapshot, { previous = null } = {}) {
     seen.add(id);
     if (!Number.isFinite(m.input) || m.input <= 0) throw new Error(`zro snapshot: "${id}" has a non-positive input price`);
     if (!Number.isFinite(m.output) || m.output <= 0) throw new Error(`zro snapshot: "${id}" has a non-positive output price`);
+    // Name/id pairing guards: a mis-paired row (another model's name on this
+    // id) is far more likely to come from a parser regression than from Zro.
+    const name = typeof m.name === 'string' ? m.name.trim() : '';
+    if (name && name.toLowerCase() !== id.toLowerCase()) {
+      const key = name.toLowerCase();
+      if (names.has(key)) {
+        throw new Error(`zro snapshot: display name "${name}" is shared by "${names.get(key)}" and "${id}"`);
+      }
+      names.set(key, id);
+      if (!zroNameMatchesId(name, id)) {
+        throw new Error(`zro snapshot: display name "${name}" does not match id "${id}"`);
+      }
+    }
   }
   const previousModels = previous?.models;
   if (Array.isArray(previousModels) && previousModels.length > 0) {

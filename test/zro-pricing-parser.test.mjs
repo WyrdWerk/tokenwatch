@@ -12,6 +12,7 @@ import {
   ZRO_SNAPSHOT_TTL_MS,
   zroSnapshotFresh,
   zroRowsFromSnapshot,
+  zroNameMatchesId,
 } from '../scripts/lib.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -108,7 +109,7 @@ test('validateZroSnapshot rejects a >20% row-count drop versus last-good', () =>
   const rows = parseZroPricingHtml(fixture);
   // Build a last-good snapshot of 20 rows, then present 5 (a 75% drop). The
   // floor (5) still passes, so the drop guard is what must reject it.
-  const previous = { models: Array.from({ length: 20 }, (_, i) => ({ ...rows[i % rows.length], id: `row-${i}` })) };
+  const previous = { models: Array.from({ length: 20 }, (_, i) => ({ ...rows[i % rows.length], id: `row-${i}`, name: `Row ${i}` })) };
   assert.throws(
     () => validateZroSnapshot({ models: rows }, { previous }),
     /drop|20%/i,
@@ -167,4 +168,51 @@ test('zroRowsFromSnapshot never represents zero/unpatched models as free', () =>
 
 test('ZRO_PRICING_URL points at the official public pricing page', () => {
   assert.equal(ZRO_PRICING_URL, 'https://zro.moonmath.ai/pricing');
+});
+// ── regression: name/price pairing on the live 2026-10-03 layout ─────────────
+// Live layout: the first two <article> rows are inline in one Flight chunk,
+// while kimi-k3's price <dl> is streamed separately as "$L14". The old parser
+// took the whole containing chunk as kimi-k3's body and read the first <h3>
+// and first price <dl> in it — DeepSeek V4.1 Flash's — so kimi-k3 shipped as
+// "DeepSeek V4.1 Flash" at $0.30/$1.20/$0.006 instead of $2.50/$12.00/$0.45.
+
+const liveFixture = await readFile(join(__dirname, 'fixtures', 'zro-pricing-live-20261003.html'), 'utf8');
+
+test('parseZroPricingHtml pairs each id with its own name and prices (live layout)', () => {
+  const rows = parseZroPricingHtml(liveFixture);
+  assert.deepEqual(
+    rows.map((r) => [r.id, r.name, r.input, r.output, r.cache_read, r.context_length]),
+    [
+      ['deepseek-v4.1-flash', 'DeepSeek V4.1 Flash', 0.3, 1.2, 0.006, 1000000],
+      ['kimi-k3', 'Kimi K3', 2.5, 12, 0.45, 1000000],
+      ['glm-5.3', 'GLM-5.3', 1.4, 4.4, 0.26, 1000000],
+      ['glm-5.3-flash', 'GLM-5.3 Flash', 0.15, 0.5, 0.03, 1000000],
+      ['dolly1-security', 'Dolly 1 Security', 0.45, 1.5, 0.09, 1000000],
+    ],
+  );
+  for (const r of rows) assert.equal(r.discount, 0);
+  assert.doesNotThrow(() => validateZroSnapshot({ models: rows }, { previous: null }));
+});
+
+test('validateZroSnapshot rejects a display name shared by two distinct ids', () => {
+  const rows = parseZroPricingHtml(liveFixture);
+  const misPaired = rows.map((r) => (r.id === 'kimi-k3' ? { ...r, name: 'DeepSeek V4.1 Flash' } : r));
+  assert.throws(() => validateZroSnapshot({ models: misPaired }, { previous: null }), /display name/i);
+});
+
+test('validateZroSnapshot rejects a display name that does not match its id', () => {
+  const rows = parseZroPricingHtml(liveFixture);
+  const shifted = rows.map((r) => (r.id === 'glm-5.3-flash' ? { ...r, name: 'Dolly 1 Security' } : r))
+    .map((r) => (r.id === 'dolly1-security' ? { ...r, name: 'Kimi K4' } : r));
+  assert.throws(() => validateZroSnapshot({ models: shifted }, { previous: null }), /does not match|shared/i);
+});
+
+test('zroNameMatchesId accepts real Zro names and rejects cross-row pairs', () => {
+  for (const [name, id] of [
+    ['DeepSeek V4 Flash 0731', 'deepseek-v4-flash-0731'],
+    ['Kimi K3', 'kimi-k3'],
+    ['GLM-5.3 Flash', 'glm-5.3-flash'],
+    ['Dolly 1 Security', 'dolly1-security'],
+  ]) assert.equal(zroNameMatchesId(name, id), true, `${name} ↔ ${id}`);
+  assert.equal(zroNameMatchesId('DeepSeek V4.1 Flash', 'kimi-k3'), false);
 });
