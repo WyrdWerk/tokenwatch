@@ -144,7 +144,8 @@ test('crossoverSeries finds the provider that wins at each cached share', async 
   ];
   const tokens = { inputPct: 80, cacheReadPct: 0, outputPct: 20 };
   const series = crossoverSeries(models, tokens, { step: 10 });
-  assert.equal(series.xs.length, 11);
+  assert.equal(series.xs.length, 12, '0–100 in 10s plus the 99% anchor');
+  assert.ok(series.xs.includes(99));
   assert.equal(series.currentX, 0);
   assert.deepEqual(series.lines.map((l) => l.label).sort(), ['cachey', 'flat']);
   assert.equal(series.segments[0].label, 'flat');
@@ -156,7 +157,11 @@ test('crossoverSeries finds the provider that wins at each cached share', async 
   assert.ok(Math.abs(flat.points[0] - (0.2 * 0.8 + 1 * 0.2)) < 1e-9);
   assert.equal(crossoverSeries([], tokens), null);
   // The visitor's own cache share is always a sampled point.
-  assert.ok(crossoverSeries(models, { inputPct: 2.5, cacheReadPct: 97, outputPct: 0.5 }).xs.includes(97));
+  const agentic = crossoverSeries(models, { inputPct: 2.5, cacheReadPct: 97, outputPct: 0.5 });
+  assert.deepEqual(agentic.xs.slice(-4), [95, 97, 99, 100], 'visitor mix and the 99% anchor sit between 95 and 100');
+  // The 99% point is a real sample on every line.
+  const i99 = agentic.xs.indexOf(99);
+  for (const line of agentic.lines) assert.ok(line.points[i99] != null, line.label);
 });
 
 test('crossoverSeries caps lines but always keeps every crossover winner', async () => {

@@ -2828,9 +2828,12 @@ function historyPlan(rows, tokens) {
 function crossoverSeries(offerings, tokens, { step = 5, maxLines = 6, nameFor = (m) => m.provider } = {}) {
   const xs = [];
   for (let x = 0; x <= 100; x += step) xs.push(x);
-  // Always sample the visitor's own mix so the winner there is exact.
+  // Always sample the visitor's own mix so the winner there is exact, plus a
+  // 99% anchor: heavily cached agents live between 95% and 100%, where the
+  // ranking often flips.
   const here = Math.min(100, Math.max(0, tokens.cacheReadPct));
-  if (!xs.includes(here)) { xs.push(here); xs.sort((a, b) => a - b); }
+  for (const extra of [here, 99]) if (!xs.includes(extra)) xs.push(extra);
+  xs.sort((a, b) => a - b);
   let fresh = tokens.inputPct;
   let out = tokens.outputPct;
   if (!(fresh + out > 0)) { fresh = 2.5; out = 0.5; } // all-cached mix: fall back to the agentic ratio
