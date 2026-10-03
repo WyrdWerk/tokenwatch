@@ -66,6 +66,22 @@ for (const { file, source, body } of workflows) {
   });
 }
 
+test('PR CI tests and builds the production surface without fetching or deploying', () => {
+  const ci = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
+  const commands = [...ci.matchAll(/^        run: (.+)$/gm)].map(match => match[1]);
+  assert.deepEqual(commands, [
+    'node --test test/*.test.mjs',
+    'node scripts/generate-seo.mjs',
+    'node scripts/verify-seo.mjs',
+    'node scripts/bust-cache.mjs',
+    'node scripts/minify-json.mjs',
+    'npx --yes wrangler@3.90.0 pages functions build functions --outdir "$RUNNER_TEMP/tokenwatch-functions"',
+  ], 'PRs must exercise the production build before merge, in deployment order');
+  assert.match(ci, /permissions:\n  contents: read/);
+  assert.doesNotMatch(ci, /continue-on-error:|^\s+if:|secrets\.|pages deploy|node scripts\/(?:fetch-|deploy-pages)/m,
+    'preflight must be mandatory, read-only, and independent of live catalog APIs');
+});
+
 test('push tests and deploy still check out the event commit, not latest main', () => {
   const source = workflows[0].source;
   const testJob = source.split('\n  test:\n')[1].split('\n  refresh:\n')[0];
