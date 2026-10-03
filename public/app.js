@@ -2771,14 +2771,29 @@ function renderModelSummary(rows, tokens) {
   const crossover = els.modelSummary.querySelector('details.model-summary-crossover');
   if (crossover) {
     const body = crossover.querySelector('.xo-body');
+    let series = null;
+    const draw = () => {
+      body.innerHTML = renderCrossoverChart(series, body.clientWidth);
+      attachCrossoverHover(body, series);
+    };
     const fillChart = () => {
       if (body.dataset.filled) return;
-      const series = crossoverSeries(offerings, tokens, {
+      series = crossoverSeries(offerings, tokens, {
         nameFor: (m) => providerName(m.provider, m.provider_display),
       });
-      body.innerHTML = renderCrossoverChart(series);
-      attachCrossoverHover(body, series);
+      draw();
       body.dataset.filled = '1';
+      // Redraw at the new width when the window or layout changes size.
+      if ('ResizeObserver' in window) {
+        let lastWidth = body.clientWidth;
+        const ro = new ResizeObserver(debounce(() => {
+          if (!body.isConnected) { ro.disconnect(); return; }
+          if (Math.abs(body.clientWidth - lastWidth) < 8) return;
+          lastWidth = body.clientWidth;
+          draw();
+        }, 150));
+        ro.observe(body);
+      }
     };
     if (crossover.open) fillChart();
     crossover.addEventListener('toggle', () => {
@@ -2887,13 +2902,21 @@ const CROSSOVER_COLORS = ['var(--xo-1)', 'var(--xo-2)', 'var(--xo-3)', 'var(--xo
 
 /** Crosshair + tooltip for the crossover chart: snaps to the nearest sweep
  *  step and lists every provider's blended rate there, cheapest first. */
+/** Chart geometry. Width follows the container (1 SVG unit = 1 CSS px) so the
+ *  chart fills a desktop screen without scaling its text up; 640 is the floor
+ *  (narrow screens scroll horizontally inside .xo-wrap). */
+function crossoverDims(width) {
+  const W = Math.max(640, Math.round(width || 640));
+  return { W, H: W >= 1000 ? 280 : 220, L: 48, R: 12, T: 12, B: 30 };
+}
+
 function attachCrossoverHover(container, series) {
   const svg = container.querySelector('.xo-chart');
   const hit = container.querySelector('.xo-hit');
   const group = container.querySelector('.xo-hover');
   const tip = container.querySelector('.xo-tip');
   if (!svg || !hit || !group || !tip || !series) return;
-  const W = 640, H = 220, L = 48, R = 12, T = 12, B = 30;
+  const { W, H, L, R, T, B } = crossoverDims(Number(svg.dataset.width));
   const max = Math.max(...series.lines.flatMap((l) => l.points.filter((v) => v != null))) || 1;
   const x = (v) => L + (v / 100) * (W - L - R);
   const y = (v) => T + (1 - v / max) * (H - T - B);
@@ -2933,9 +2956,9 @@ function attachCrossoverHover(container, series) {
 }
 
 /** Hand-drawn SVG line chart for crossoverSeries output. */
-function renderCrossoverChart(series) {
+function renderCrossoverChart(series, width) {
   if (!series || !series.lines.length) return '<p class="model-summary-note">Not enough priced offerings to chart.</p>';
-  const W = 640, H = 220, L = 48, R = 12, T = 12, B = 30;
+  const { W, H, L, R, T, B } = crossoverDims(width);
   const max = Math.max(...series.lines.flatMap((l) => l.points.filter((v) => v != null))) || 1;
   const x = (v) => L + (v / 100) * (W - L - R);
   const y = (v) => T + (1 - v / max) * (H - T - B);
@@ -2961,7 +2984,7 @@ function renderCrossoverChart(series) {
     `<li><span class="xo-swatch" style="background:${CROSSOVER_COLORS[i % CROSSOVER_COLORS.length]}"></span>${esc(line.label)} <span class="xo-legend-now">${fmtPrice(line.now)}/M now</span></li>`).join('');
   const segs = series.segments.map((seg) => `${seg.from === seg.to ? `${seg.from}%` : `${seg.from}–${seg.to}%`}: <strong>${esc(seg.label)}</strong>`).join(' · ');
   return `<p class="model-summary-note">Blended $/M as the cached share of input grows (your fresh-input:output ratio is kept). Cheapest by cache share — ${segs}.</p>` +
-    `<div class="xo-wrap"><svg class="xo-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Cheapest provider by cached-input share: ${series.segments.map((s) => `${s.from}–${s.to}% ${s.label}`).join(', ')}`)}">` +
+    `<div class="xo-wrap"><svg class="xo-chart" data-width="${W}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Cheapest provider by cached-input share: ${series.segments.map((s) => `${s.from}–${s.to}% ${s.label}`).join(', ')}`)}">` +
     grid + xTicks + paths + marker +
     `<g class="xo-hover" hidden><line class="xo-cross" y1="${T}" y2="${H - B}"/></g>` +
     `<rect class="xo-hit" x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}"/>` +
