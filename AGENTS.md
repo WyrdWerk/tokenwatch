@@ -134,7 +134,7 @@ Two cost modes: **Per Session** (default — enter total tokens, see per-session
 ### Resilience
 
 The pipeline includes unattended-operation safeguards:
-- **Retry on failure**: 429/5xx responses retried once with 2s backoff
+- **Retry on failure**: shared JSON GETs retry transport/body failures, timeouts, and 429/5xx twice by default with 2s/4s backoff; explicit caller retry limits are honored. Invalid JSON, cancellation, and other HTTP errors fail immediately; exhausted retries stay fatal.
 - **Abort on >20% failure rate**: if >20% of OpenRouter `/endpoints` calls fail, the entire refresh aborts (prevents shipping a half-missing catalog)
 - **Coverage-drop check**: if model count drops >15% vs previous `pricing.json`, the refresh aborts to preserve last-good data
 - **Dry-run mode**: `node scripts/fetch-pricing.mjs --dry-run` runs the full pipeline without writing pricing.json
