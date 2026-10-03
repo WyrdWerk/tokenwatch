@@ -167,54 +167,54 @@
               <label>Eligibility</label>
               <div class="promo-toggle">
                 <input type="checkbox" id="promoOnly" />
-                <label for="promoOnly">Promos only</label>
+                <label for="promoOnly">Promos only</label> <span class="tip-i" tabindex="0" role="button" aria-label="What is Promos only?" data-tip="Show only offerings with a promotional discount right now. Promos are temporary and can end without notice.">ⓘ</span>
               </div>
               <div class="promo-toggle">
                 <input type="checkbox" id="zdrOnly" />
-                <label for="zdrOnly">ZDR only</label>
+                <label for="zdrOnly">ZDR only</label> <span class="tip-i" tabindex="0" role="button" aria-label="What is ZDR?" data-tip="Zero Data Retention: listed by OpenRouter as a ZDR endpoint, or the provider's published policy says prompts are not retained. Check the provider's policy for conditional exceptions.">ⓘ</span>
               </div>
               <div class="promo-toggle">
                 <input type="checkbox" id="subscriptionOnly" />
-                <label for="subscriptionOnly">Sub only</label>
+                <label for="subscriptionOnly">Sub only</label> <span class="tip-i" tabindex="0" role="button" aria-label="What is Sub?" data-tip="Providers that also sell subscription or coding plans. Prices shown are still pay-as-you-go.">ⓘ</span>
               </div>
               <div class="promo-toggle">
                 <input type="checkbox" id="hideBatch" checked />
-                <label for="hideBatch">Hide :batch/:free</label>
+                <label for="hideBatch">Hide :batch/:free</label> <span class="tip-i" tabindex="0" role="button" aria-label="What is batch?" data-tip="Batch endpoints are discounted but asynchronous (results can take hours); :free routes are rate-limited. Hidden by default.">ⓘ</span>
               </div>
               <div class="promo-toggle">
                 <input type="checkbox" id="cacheOnly" />
-                <label for="cacheOnly">Cache pricing only</label>
+                <label for="cacheOnly">Cache pricing only</label> <span class="tip-i" tabindex="0" role="button" aria-label="What is cache pricing?" data-tip="Only offerings that publish a cached-input (cache read) price. Without one, cached tokens are estimated at the normal input price.">ⓘ</span>
               </div>
             </div>
             <div class="control-group promo-control">
               <label>Quality</label>
               <div class="promo-toggle">
                 <input type="checkbox" id="benchmarkedOnly" />
-                <label for="benchmarkedOnly">Benchmarked only</label>
+                <label for="benchmarkedOnly">Benchmarked only</label> <span class="tip-i" tabindex="0" role="button" aria-label="What is benchmarked?" data-tip="Only models with Artificial Analysis or Design Arena benchmark scores.">ⓘ</span>
               </div>
             </div>
             <div class="control-group">
-              <label for="minIntelligence">Min intelligence</label>
+              <label for="minIntelligence">Min intelligence <span class="tip-i" tabindex="0" role="button" aria-label="What is intelligence?" data-tip="Artificial Analysis Intelligence Index (0–100). Hides models below this score.">ⓘ</span></label>
               <input type="number" id="minIntelligence" min="0" max="100" step="1" placeholder="No filter" />
             </div>
             <div class="control-group">
-              <label for="minCoding">Min coding</label>
+              <label for="minCoding">Min coding <span class="tip-i" tabindex="0" role="button" aria-label="What is coding?" data-tip="Artificial Analysis Coding Index (0–100). Hides models below this score.">ⓘ</span></label>
               <input type="number" id="minCoding" min="0" max="100" step="1" placeholder="No filter" />
             </div>
             <div class="control-group">
-              <label for="minAgentic">Min agentic</label>
+              <label for="minAgentic">Min agentic <span class="tip-i" tabindex="0" role="button" aria-label="What is agentic?" data-tip="Artificial Analysis Agentic Index (0–100). Hides models below this score.">ⓘ</span></label>
               <input type="number" id="minAgentic" min="0" max="100" step="1" placeholder="No filter" />
             </div>
             <div class="control-group">
-              <label for="maxBlended">Max blended $/M</label>
+              <label for="maxBlended">Max blended $/M <span class="tip-i" tabindex="0" role="button" aria-label="What is blended $/M?" data-tip="Blended $/M is one effective price per million tokens at your input / cached / output mix. Hides offerings above this rate.">ⓘ</span></label>
               <input type="number" id="maxBlended" min="0" step="0.01" placeholder="Any" />
             </div>
             <div class="control-group">
-              <label for="minToks">Min tok/s</label>
+              <label for="minToks">Min tok/s <span class="tip-i" tabindex="0" role="button" aria-label="What is tok/s?" data-tip="Median output speed (tokens per second, p50) from performance data. Offerings without a measurement are hidden when set.">ⓘ</span></label>
               <input type="number" id="minToks" min="0" step="1" placeholder="Any" />
             </div>
             <div class="control-group">
-              <label for="hqFilter">HQ country</label>
+              <label for="hqFilter">HQ country <span class="tip-i" tabindex="0" role="button" aria-label="What is HQ country?" data-tip="Country where the inference provider is headquartered (not necessarily where your data is processed).">ⓘ</span></label>
               <select id="hqFilter">
                 <option value="">Any</option>
                 <option value="US">US</option>
@@ -274,7 +274,7 @@
           <small>Fresh (uncached) prompt tokens</small>
         </div>
         <div class="token-field">
-          <label for="cacheReadPct">Cached input %</label>
+          <label for="cacheReadPct">Cached input % <span class="tip-i" tabindex="0" role="button" aria-label="What is cached input?" data-tip="Share of prompt tokens served from the provider's prompt cache, billed at the cache-read price where published. Agents re-sending long context are typically 90%+ cached.">ⓘ</span></label>
           <input type="number" id="cacheReadPct" value="97" min="0" max="100" step="0.5" />
           <small>Cached prompt tokens (discounted)</small>
         </div>

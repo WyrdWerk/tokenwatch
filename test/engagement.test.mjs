@@ -141,6 +141,8 @@ test('crossoverSeries finds the provider that wins at each cached share', async 
   const flat = series.lines.find((l) => l.label === 'flat');
   assert.ok(Math.abs(flat.points[0] - (0.2 * 0.8 + 1 * 0.2)) < 1e-9);
   assert.equal(crossoverSeries([], tokens), null);
+  // The visitor's own cache share is always a sampled point.
+  assert.ok(crossoverSeries(models, { inputPct: 2.5, cacheReadPct: 97, outputPct: 0.5 }).xs.includes(97));
 });
 
 test('crossoverSeries caps lines but always keeps every crossover winner', async () => {
@@ -204,4 +206,47 @@ test('matchingOfferings applies the shared filter registry', async () => {
   for (const key of ['zdr', 'subscription', 'promo', 'intelligence', 'coding', 'agentic', 'benchmarked', 'batch', 'cache', 'maxBlended', 'minToks', 'hq']) {
     assert.match(registry, new RegExp(`add\\('${key}'`), `registry covers ${key}`);
   }
+});
+
+// ── Model-search families ────────────────────────────────────────────────────
+
+test('app.js modelSpellingKey/modelFamilyId mirror shared/normalize.mjs over the whole catalog', async () => {
+  const { modelSpellingKey: sharedSpelling, modelFamilyId: sharedFamily } = await import('../shared/normalize.mjs');
+  const app = await loadAppHelpers(['canonicalModelId', 'modelSpellingKey', 'modelFamilyId']);
+  const pricing = JSON.parse(await readFile(join(ROOT, 'public', 'pricing.json'), 'utf8'));
+  const ids = [...new Set(pricing.models.map((m) => m.id)), 'DeepSeek V4.1 Flash', 'deepseek-v4-1-flash', 'glm-5.2-fp8', 'x/model-(peak)'];
+  for (const id of ids) {
+    assert.equal(app.modelSpellingKey(id), sharedSpelling(id), `spelling ${id}`);
+    assert.equal(app.modelFamilyId(id), sharedFamily(id), `family ${id}`);
+  }
+});
+
+test('family keys are idempotent so a resolved key re-resolves to itself', async () => {
+  const { modelSpellingKey, modelFamilyId } = await import('../shared/normalize.mjs');
+  const pricing = JSON.parse(await readFile(join(ROOT, 'public', 'pricing.json'), 'utf8'));
+  for (const m of pricing.models) {
+    const f = modelFamilyId(m.id);
+    assert.equal(modelFamilyId(f), f, m.id);
+    const s = modelSpellingKey(m.id);
+    assert.equal(modelSpellingKey(s), s, m.id);
+  }
+});
+
+test('familyLabel prefers the human "Org: Name" display name without variant tags', async () => {
+  const { familyLabel } = await loadAppHelpers(['familyLabel']);
+  assert.equal(familyLabel([
+    { id: 'deepseek-ai/DeepSeek-V4.1-Flash', name: 'deepseek-ai/DeepSeek-V4.1-Flash' },
+    { id: 'deepseek/deepseek-v4.1-flash', name: 'DeepSeek: DeepSeek V4.1 Flash' },
+    { id: 'deepseek/deepseek-v4.1-flash:batch', name: 'DeepSeek: DeepSeek V4.1 Flash (batch)' },
+    { id: 'deepseek-v4-1-flash', name: 'DeepSeek V4.1 Flash' },
+  ]), 'DeepSeek V4.1 Flash');
+  assert.equal(familyLabel([{ id: 'org/raw-id', name: 'org/raw-id' }]), 'raw-id');
+});
+
+test('agent prompt always points at the public site, never the current host', async () => {
+  const src = await readFile(APP_JS, 'utf8');
+  assert.match(src, /const PUBLIC_ORIGIN = 'https:\/\/tokenwatch\.wyrdwerk\.com';/);
+  const body = extractFn(src, 'copyAgentPrompt');
+  assert.match(body, /origin: PUBLIC_ORIGIN/);
+  assert.doesNotMatch(body, /location\.origin/);
 });

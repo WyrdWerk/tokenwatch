@@ -14,7 +14,8 @@ const state = {
   providerSearch: '',     // provider name filter text
   modelSearch: '',        // canonical model name filter text
   providerDisplayName: {},// provider display name lowercase → pretty (e.g. "deepinfra" → "DeepInfra")
-  modelDisplayName: {},   // canonical → display name
+  modelDisplayName: {},   // model family → search label
+  familyIndex: { byLabel: {}, alias: {} }, // search label → family; merged family → primary
   sortBy: 'cost',         // current sort column key
   sortDir: 'asc',         // 'asc' or 'desc'
   costMode: 'perRequest', // 'perRequest' or 'monthly'
@@ -552,6 +553,79 @@ function canonicalModelId(id) {
   return k;
 }
 
+/** Mirror of modelSpellingKey() in shared/normalize.mjs (parity-tested):
+ *  canonical id with separator/version spelling unified, SKU suffixes kept. */
+function modelSpellingKey(id) {
+  const tidy = (v) => canonicalModelId(String(v).replace(/:(batch|nitro|floor|exacto|online)$/i, ''))
+    .replace(/[()[\]]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .replace(/(^|-)v(\d+)-(\d{1,2})(?=-|$)/g, '$1v$2.$3')
+    .replace(/(^|-)v(\d)/g, '$1$2');
+  let k = String(id);
+  let prev;
+  do { prev = k; k = tidy(k); } while (k !== prev);
+  return k;
+}
+
+/** Mirror of modelFamilyId() in shared/normalize.mjs: one search option per
+ *  model; SKU/tier/quant variants stay distinct rows in the results. */
+function modelFamilyId(id) {
+  const suffix = /-(fast|flex|speed|highspeed|off-peak|peak|batch|nvfp4|mxfp4|fp8|fp6|fp4|int4-mixed-ar|int4|int8|bf16|fp16)$/;
+  let k = modelSpellingKey(id);
+  let prev;
+  do { prev = k; k = k.replace(suffix, ''); } while (k !== prev);
+  return k;
+}
+
+/** Human label for a model family: the most common "Org: Name" display name
+ *  without variant tags, else the most common raw id tail. Pure. */
+function familyLabel(models) {
+  const counts = new Map();
+  const bump = (label, weight) => counts.set(label, (counts.get(label) || 0) + weight);
+  for (const m of models) {
+    const name = String(m.name || '');
+    if (/^[^/:]+: /.test(name)) bump(name.split(': ').slice(1).join(': ').replace(/\s*\([^)]*\)\s*$/, '').trim(), 3);
+    else if (name && !name.includes('/') && !/\(/.test(name)) bump(name.trim(), 2);
+    else bump(m.id.split('/').slice(-1)[0], 1);
+  }
+  return [...counts].sort((a, b) => b[1] - a[1] || a[0].length - b[0].length || a[0].localeCompare(b[0]))[0]?.[0] || '';
+}
+
+/** Resolve the model search box to a selection. Pure.
+ *  - A typed variant (e.g. "glm-5.2-fp8") selects exactly that variant.
+ *  - Anything else that names a known family ("DeepSeek V4.1 Flash",
+ *    "deepseek-v4-1-flash", a datalist label) selects the whole family.
+ *  Returns { level: 'variant' | 'family', key } or null (broad search). */
+function resolveModelSelection(offerings, query, index) {
+  const raw = String(query || '').trim();
+  if (!raw) return null;
+  const alias = index?.alias || {};
+  const family = (key) => ({ level: 'family', key: alias[key] || key });
+  const fromLabel = index?.byLabel?.[raw.toLowerCase()];
+  if (fromLabel) return family(fromLabel);
+  const spelling = modelSpellingKey(raw);
+  const fam = modelFamilyId(raw);
+  let hasSpelling = false;
+  let hasFamily = false;
+  for (const m of offerings || []) {
+    if (!m || !m.id) continue;
+    if (!hasSpelling && modelSpellingKey(m.id) === spelling) hasSpelling = true;
+    if (!hasFamily && modelFamilyId(m.id) === fam) hasFamily = true;
+    if (hasSpelling && hasFamily) break;
+  }
+  if (hasSpelling && spelling !== fam) return { level: 'variant', key: spelling };
+  if (hasFamily) return family(fam);
+  return null;
+}
+
+/** Key function for a resolved selection level. */
+function selectionKeyOf(selection, alias = (typeof state !== 'undefined' && state.familyIndex?.alias) || {}) {
+  if (selection?.level === 'variant') return modelSpellingKey;
+  return (id) => { const f = modelFamilyId(id); return alias[f] || f; };
+}
+
 // ── Selectors ──────────────────────────────────────────────────────────────────
 
 function populateDatalists() {
@@ -570,19 +644,38 @@ function populateDatalists() {
     })
     .join('');
 
-  // Build canonical model display names and populate model datalist
-  const modelKeys = new Map(); // canonical -> display name
+  // One model-search option per family: spelling, SKU, tier and quant variants
+  // ("-fast", "-flex", "(off-peak)", "-fp8", "v4-1" vs "V4.1") collapse into a
+  // single label; the results still list every variant as its own row.
+  const families = new Map(); // family → models
   for (const m of state.data.models) {
-    const c = canonicalModelId(m.id);
-    if (!modelKeys.has(c)) modelKeys.set(c, m.id.includes('/') ? m.id.split('/').slice(-1)[0] : m.id);
+    const f = modelFamilyId(m.id);
+    if (!families.has(f)) families.set(f, []);
+    families.get(f).push(m);
+  }
+  // Families whose human labels agree ("DeepSeek V3.1" from deepseek-chat-v3.1
+  // and DeepSeek-V3.1) are the same model under different provider ids: merge
+  // them behind one option, keyed by the family with the most offerings.
+  const normLabel = (l) => l.toLowerCase().replace(/[\s_-]+/g, ' ').trim();
+  const byNorm = new Map();
+  for (const [f, models] of families) {
+    const label = familyLabel(models) || f;
+    const n = normLabel(label);
+    if (!byNorm.has(n)) byNorm.set(n, []);
+    byNorm.get(n).push({ f, label, size: models.length });
   }
   state.modelDisplayName = {};
-  const sortedKeys = [...modelKeys.keys()].sort();
-  els.modelList.innerHTML = sortedKeys
-    .map((k) => {
-      state.modelDisplayName[k] = modelKeys.get(k);
-      return `<option value="${modelKeys.get(k)}">`;
-    })
+  state.familyIndex = { byLabel: {}, alias: {} };
+  for (const group of byNorm.values()) {
+    group.sort((a, b) => b.size - a.size || a.f.localeCompare(b.f));
+    const primary = group[0];
+    for (const member of group) state.familyIndex.alias[member.f] = primary.f;
+    state.modelDisplayName[primary.f] = primary.label;
+    state.familyIndex.byLabel[primary.label.toLowerCase()] = primary.f;
+  }
+  els.modelList.innerHTML = Object.entries(state.modelDisplayName)
+    .sort((a, b) => a[1].localeCompare(b[1]))
+    .map(([, label]) => `<option value="${esc(label)}">`)
     .join('');
 }
 
@@ -1679,16 +1772,16 @@ function renderBenchmarkBox(rows) {
  *  SKU siblings (`-fp8`, `-nvfp4`, `-fast`, `umans-glm-5.2`) cannot broaden the
  *  cohort. Partial searches keep the broad substring behaviour. Pure so the
  *  matching rule is testable in isolation. */
-function modelMatchesSearch(model, query, resolvedCanonical, displayName) {
+function modelMatchesSearch(model, query, selection, displayName) {
   if (!query) return true;
-  const canon = canonicalModelId(model.id);
-  if (resolvedCanonical) return canon === resolvedCanonical;
+  if (selection) return selectionKeyOf(selection)(model.id) === selection.key;
   const norm = (s) => String(s).toLowerCase().replace(/[\s-]+/g, ' ');
   const q = norm(query);
   if (!q) return true;
-  const modDisplay = norm(displayName || canon);
+  const modDisplay = norm(displayName || modelFamilyId(model.id));
   const rawId = norm(model.id.split('/').slice(-1)[0]);
-  return modDisplay.includes(q) || rawId.includes(q);
+  const modName = norm(model.name || '');
+  return modDisplay.includes(q) || rawId.includes(q) || modName.includes(q);
 }
 
 /** Secondary filters as a registry: one place defines each filter's label,
@@ -1710,7 +1803,7 @@ function secondaryFilterChecks() {
   if (minAgentic) add('agentic', `Agentic ≥ ${minAgentic}`, (m) => m.benchmarks?.agentic_index != null && m.benchmarks.agentic_index >= minAgentic, () => { els.minAgentic.value = DEFAULTS.minAgentic; });
   if (els.benchmarkedOnly?.checked) add('benchmarked', 'Benchmarked only', (m) => !!m.benchmarks, () => { els.benchmarkedOnly.checked = DEFAULTS.benchmarked; });
   const hideBatch = els.hideBatch ? els.hideBatch.checked : DEFAULTS.hideBatch;
-  if (hideBatch) add('batch', 'Batch hidden', (m) => !isBatchOrFreeId(m.id), () => { if (els.hideBatch) els.hideBatch.checked = false; }, false);
+  if (hideBatch) add('batch', 'Batch & :free hidden (default)', (m) => !isBatchOrFreeId(m.id), () => { if (els.hideBatch) els.hideBatch.checked = false; }, false);
   if (els.cacheOnly?.checked) add('cache', 'Cache pricing only', (m) => m.pricing?.cache_read != null, () => { els.cacheOnly.checked = DEFAULTS.cacheOnly; });
   const maxBlended = parseFloat(els.maxBlended?.value);
   if (Number.isFinite(maxBlended) && maxBlended > 0) {
@@ -1746,15 +1839,14 @@ function searchMatchingOfferings() {
   const modSearch = els.modelSearch.value.trim().toLowerCase();
   // Resolve the selection against the FULL catalog before any other filter, so
   // filters can only narrow — never broaden — an exact selection.
-  const resolvedCanonical = modSearch ? resolveCanonicalQuery(state.data.models, modSearch) : null;
+  const selection = modSearch ? resolveModelSelection(state.data.models, modSearch, state.familyIndex) : null;
   return state.data.models.filter((m) => {
     if (provSearch) {
       const provName = providerName(m.provider, m.provider_display).toLowerCase();
       if (!provName.includes(provSearch) && !m.provider.toLowerCase().includes(provSearch)) return false;
     }
     if (modSearch) {
-      const canon = canonicalModelId(m.id);
-      if (!modelMatchesSearch(m, modSearch, resolvedCanonical, state.modelDisplayName[canon])) return false;
+      if (!modelMatchesSearch(m, modSearch, selection, state.modelDisplayName[selectionKeyOf(null)(m.id)])) return false;
     }
     return true;
   });
@@ -2501,27 +2593,27 @@ function rankCanonicalOfferings(offerings, tokens, perfByKey) {
  *  The results filter normalizes spaces/hyphens to the same separator, so the
  *  summary must resolve the query the same way — otherwise "GLM 5.3" filters
  *  the table but yields no summary. Exact canonical ids win first. */
-function resolveCanonicalQuery(offerings, query) {
+function resolveCanonicalQuery(offerings, query, keyOf = canonicalModelId) {
   const raw = String(query || '').trim();
   if (!raw) return null;
-  const target = canonicalModelId(raw);
-  if (target && (offerings || []).some((m) => m && canonicalModelId(m.id) === target)) return target;
+  const target = keyOf(raw);
+  if (target && (offerings || []).some((m) => m && keyOf(m.id) === target)) return target;
   const norm = (s) => s.toLowerCase().replace(/[\s-]+/g, ' ').trim();
   const q = norm(raw);
   if (!q) return null;
   const ids = new Set();
   for (const m of offerings || []) {
     if (!m || !m.id) continue;
-    const id = canonicalModelId(m.id);
+    const id = keyOf(m.id);
     if (id && norm(id) === q) ids.add(id);
   }
   return ids.size === 1 ? [...ids][0] : null;
 }
 
-function canonicalSummary(offerings, { canonical, mix, perfByKey } = {}) {
-  const target = resolveCanonicalQuery(offerings, canonical);
+function canonicalSummary(offerings, { canonical, mix, perfByKey, keyOf = canonicalModelId } = {}) {
+  const target = resolveCanonicalQuery(offerings, canonical, keyOf);
   if (!target) return null;
-  const matching = (offerings || []).filter((m) => m && canonicalModelId(m.id) === target);
+  const matching = (offerings || []).filter((m) => m && keyOf(m.id) === target);
   if (!matching.length) return null;
   const rows = rankCanonicalOfferings(matching, mix, perfByKey);
   const collect = (pick) => {
@@ -2561,8 +2653,9 @@ function renderModelSummary(rows, tokens) {
   if (!els.modelSummary) return;
   const query = (els.modelSearch?.value || '').trim();
   const offerings = (rows || []).map((r) => r.model);
-  const summary = query
-    ? canonicalSummary(offerings, { canonical: query, mix: tokens, perfByKey: state.perfData })
+  const selection = query ? resolveModelSelection(state.data?.models || offerings, query.toLowerCase(), state.familyIndex) : null;
+  const summary = selection
+    ? canonicalSummary(offerings, { canonical: selection.key, mix: tokens, perfByKey: state.perfData, keyOf: selectionKeyOf(selection) })
     : null;
 
   // Preserve the expanded distribution state across re-renders where reasonable.
@@ -2593,34 +2686,57 @@ function renderModelSummary(rows, tokens) {
     ? `${esc(providerName(blendedWinner.model.provider, blendedWinner.model.provider_display))} · ${fmtPrice(blendedValue)}`
     : '<span class="missing">—</span>';
 
-  // Bars use the current headline metric (cost / affordability) and carry no
+  // Dot plot (lollipop): one row per offering, a thin dotted stem from zero
+  // to a dot at the value, a shared dashed median line, and the best value in
+  // the accent colour. Uses the headline metric (cost / affordability) and no
   // quantization badges — quantization identity lives in the table column.
   const barsFor = () => {
     const finite = rows.map((r) => (r.cost != null && isFinite(r.cost) ? r.cost : null)).filter((v) => v != null);
     const maxValue = finite.length ? Math.max(...finite) : 0;
-    return rows.slice().sort((a, b) => a.cost === b.cost ? 0 : (a.cost < b.cost ? -1 : 1) * (budgetMode ? -1 : 1)).map((r) => {
+    const sorted = rows.slice().sort((a, b) => a.cost === b.cost ? 0 : (a.cost < b.cost ? -1 : 1) * (budgetMode ? -1 : 1));
+    // A wide spread (one $137 outlier against $8 offerings) squashes a linear
+    // axis, so switch to a log axis past 5× and say so.
+    const positives = finite.filter((v) => v > 0);
+    const minPos = positives.length ? Math.min(...positives) : 0;
+    const useLog = positives.length > 1 && maxValue / minPos > 5;
+    const lo = useLog ? Math.log(minPos) - 0.08 * (Math.log(maxValue) - Math.log(minPos)) : 0;
+    const pctOf = (v) => {
+      if (!(maxValue > 0)) return 0;
+      const t = useLog ? (v > 0 ? (Math.log(v) - lo) / (Math.log(maxValue) - lo) : 0) : v / maxValue;
+      return Math.max(0, Math.min(100, t * 100));
+    };
+    const med = finite.length ? median(finite) : null;
+    const fmtV = (v) => (budgetMode ? fmtAffordability(v) : fmtCost(v));
+    const best = sorted[0];
+    const head = finite.length
+      ? `<p class="dist-head">${budgetMode ? 'Most' : 'Cheapest'} ${fmtV(budgetMode ? Math.max(...finite) : Math.min(...finite))} · median ${fmtV(med)} · ${budgetMode ? 'least' : 'priciest'} ${fmtV(budgetMode ? Math.min(...finite) : maxValue)}` +
+        `${!budgetMode && Math.min(...finite) > 0 ? ` · ${(maxValue / Math.min(...finite)).toFixed(1)}× spread` : ''}${useLog ? ' · log scale' : ''}</p>`
+      : '';
+    const medianStyle = med != null ? ` style="--dist-median:${pctOf(med).toFixed(2)}%"` : '';
+    return head + `<div class="dist-rows"${medianStyle}>` + sorted.map((r, i) => {
       const infinite = r.cost != null && !isFinite(r.cost);
       const value = infinite ? maxValue : (r.cost == null ? 0 : r.cost);
-      const pct = infinite ? 100 : (maxValue > 0 ? Math.round((value / maxValue) * 100) : 0);
+      const pct = infinite ? 100 : pctOf(value);
       const provider = providerName(r.model.provider, r.model.provider_display);
       const promo = r.model.discount > 0
         ? ` <span class="promo-badge" title="${(r.model.discount * 100).toFixed(0)}% off">promo</span>`
         : '';
-      return `<div class="model-summary-bar-row"><span class="model-summary-bar-label">${esc(provider)}${promo}</span>` +
-        `<span class="model-summary-bar-track"><span class="model-summary-bar-fill" style="width:${pct}%"></span></span>` +
-        `<span class="model-summary-bar-value">${budgetMode ? fmtAffordability(r.cost) : fmtCost(r.cost)}</span></div>`;
-    }).join('');
+      const tip = `${provider}: ${fmtPlain(fmtV(r.cost))} — #${i + 1} of ${sorted.length}`;
+      return `<div class="model-summary-bar-row${r === best ? ' is-best' : ''}" data-tip="${esc(tip)}"><span class="model-summary-bar-label">${esc(provider)}${promo}</span>` +
+        `<span class="model-summary-bar-track"><span class="dist-stem" style="width:${pct.toFixed(2)}%"></span><span class="dist-dot" style="left:${pct.toFixed(2)}%"></span></span>` +
+        `<span class="model-summary-bar-value">${fmtV(r.cost)}</span></div>`;
+    }).join('') + `</div>`;
   };
 
   els.modelSummary.innerHTML =
-    `<h3 class="model-summary-title">${esc(summary.name)}</h3>` +
-    `<p class="model-summary-sub">${offeringCount} offering${offeringCount === 1 ? '' : 's'} across ${providerCount} provider${providerCount === 1 ? '' : 's'} · exact match for “${esc(summary.canonical)}”</p>` +
+    `<h3 class="model-summary-title">${esc(selection.level === 'family' ? (state.modelDisplayName[summary.canonical] || summary.name) : summary.name)}</h3>` +
+    `<p class="model-summary-sub">${offeringCount} offering${offeringCount === 1 ? '' : 's'} across ${providerCount} provider${providerCount === 1 ? '' : 's'} · ${selection.level === 'variant' ? `exact variant “${esc(summary.canonical)}”` : `all variants of “${esc(state.modelDisplayName[summary.canonical] || summary.canonical)}”`}</p>` +
     `<div class="model-summary-metrics">` +
       `<div class="model-summary-metric"><span class="model-summary-metric-label">${headlineLabel}</span><span class="model-summary-metric-value">${headlineValue}</span></div>` +
       `<div class="model-summary-metric"><span class="model-summary-metric-label">Lowest blended $/M</span><span class="model-summary-metric-value">${blendedValueHtml}</span></div>` +
     `</div>` +
     `<details class="model-summary-distribution"${wasOpen ? ' open' : ''}><summary>Show ${budgetMode ? 'affordability' : 'price'} distribution</summary>` +
-      `<p class="model-summary-note">All ${offeringCount} offerings · ${budgetMode ? 'Affordable tokens (millions); higher is better. Bars scale to the largest finite value; ∞ means unlimited at the published rate.' : 'Estimated workload cost (USD), using the fresh-input cache-write assumption; lower is cheaper. Bars scale from $0 to the highest cost.'}</p>` +
+      `<p class="model-summary-note">All ${offeringCount} offerings · ${budgetMode ? 'Affordable tokens (millions); higher is better. Dots scale to the largest finite value; ∞ means unlimited at the published rate. Dashed line = median.' : 'Estimated workload cost (USD), using the fresh-input cache-write assumption; lower is cheaper. Dots sit on a cost scale (log when the spread is wide); the dashed line is the median.'}</p>` +
       `<div class="model-summary-bars" role="group" aria-label="Provider ${budgetMode ? 'affordability' : 'price'} distribution for the current workload"></div>` +
     `</details>`;
   els.modelSummary.insertAdjacentHTML('beforeend',
@@ -2630,9 +2746,11 @@ function renderModelSummary(rows, tokens) {
     const body = crossover.querySelector('.xo-body');
     const fillChart = () => {
       if (body.dataset.filled) return;
-      body.innerHTML = renderCrossoverChart(crossoverSeries(offerings, tokens, {
+      const series = crossoverSeries(offerings, tokens, {
         nameFor: (m) => providerName(m.provider, m.provider_display),
-      }));
+      });
+      body.innerHTML = renderCrossoverChart(series);
+      attachCrossoverHover(body, series);
       body.dataset.filled = '1';
     };
     if (crossover.open) fillChart();
@@ -2664,6 +2782,9 @@ function renderModelSummary(rows, tokens) {
 function crossoverSeries(offerings, tokens, { step = 5, maxLines = 6, nameFor = (m) => m.provider } = {}) {
   const xs = [];
   for (let x = 0; x <= 100; x += step) xs.push(x);
+  // Always sample the visitor's own mix so the winner there is exact.
+  const here = Math.min(100, Math.max(0, tokens.cacheReadPct));
+  if (!xs.includes(here)) { xs.push(here); xs.sort((a, b) => a - b); }
   let fresh = tokens.inputPct;
   let out = tokens.outputPct;
   if (!(fresh + out > 0)) { fresh = 2.5; out = 0.5; } // all-cached mix: fall back to the agentic ratio
@@ -2713,7 +2834,54 @@ function crossoverSeries(offerings, tokens, { step = 5, maxLines = 6, nameFor = 
   };
 }
 
-const CROSSOVER_COLORS = ['var(--accent-text)', 'var(--yellow)', 'var(--green)', 'var(--blue)', '#b5527a', 'var(--text-dim)'];
+const CROSSOVER_COLORS = ['var(--xo-1)', 'var(--xo-2)', 'var(--xo-3)', 'var(--xo-4)', 'var(--xo-5)', 'var(--xo-6)'];
+
+/** Crosshair + tooltip for the crossover chart: snaps to the nearest sweep
+ *  step and lists every provider's blended rate there, cheapest first. */
+function attachCrossoverHover(container, series) {
+  const svg = container.querySelector('.xo-chart');
+  const hit = container.querySelector('.xo-hit');
+  const group = container.querySelector('.xo-hover');
+  const tip = container.querySelector('.xo-tip');
+  if (!svg || !hit || !group || !tip || !series) return;
+  const W = 640, H = 220, L = 48, R = 12, T = 12, B = 30;
+  const max = Math.max(...series.lines.flatMap((l) => l.points.filter((v) => v != null))) || 1;
+  const x = (v) => L + (v / 100) * (W - L - R);
+  const y = (v) => T + (1 - v / max) * (H - T - B);
+  const ns = 'http://www.w3.org/2000/svg';
+  const move = (evt) => {
+    const box = svg.getBoundingClientRect();
+    const sx = ((evt.clientX - box.left) / box.width) * W;
+    const pct = Math.max(0, Math.min(100, ((sx - L) / (W - L - R)) * 100));
+    const i = series.xs.reduce((best, v, j) => (Math.abs(v - pct) < Math.abs(series.xs[best] - pct) ? j : best), 0);
+    const cx = x(series.xs[i]);
+    group.hidden = false;
+    const cross = group.querySelector('.xo-cross');
+    cross.setAttribute('x1', cx); cross.setAttribute('x2', cx);
+    group.querySelectorAll('circle').forEach((c) => c.remove());
+    const values = series.lines.map((line, k) => ({ line, k, v: line.points[i] })).filter((d) => d.v != null);
+    for (const d of values) {
+      const dot = document.createElementNS(ns, 'circle');
+      dot.setAttribute('class', 'xo-hover-dot');
+      dot.setAttribute('cx', cx); dot.setAttribute('cy', y(d.v)); dot.setAttribute('r', 4.5);
+      dot.style.fill = CROSSOVER_COLORS[d.k % CROSSOVER_COLORS.length];
+      group.appendChild(dot);
+    }
+    values.sort((a, b) => a.v - b.v);
+    tip.innerHTML = `<strong>${series.xs[i]}% cached</strong><br>` + values.map((d) =>
+      `<span class="xo-swatch" style="background:${CROSSOVER_COLORS[d.k % CROSSOVER_COLORS.length]}"></span>${esc(d.line.label)} ${fmtPrice(d.v)}/M`).join('<br>');
+    tip.hidden = false;
+    const wrap = container.querySelector('.xo-wrap').getBoundingClientRect();
+    const px = (cx / W) * box.width + (box.left - wrap.left);
+    const left = px + 12 + tip.offsetWidth > wrap.width ? px - tip.offsetWidth - 12 : px + 12;
+    tip.style.left = `${Math.max(0, left)}px`;
+    tip.style.top = `${(box.top - wrap.top) + 8}px`;
+  };
+  const leave = () => { group.hidden = true; tip.hidden = true; };
+  hit.addEventListener('pointermove', move);
+  hit.addEventListener('pointerdown', move);
+  hit.addEventListener('pointerleave', leave);
+}
 
 /** Hand-drawn SVG line chart for crossoverSeries output. */
 function renderCrossoverChart(series) {
@@ -2746,7 +2914,9 @@ function renderCrossoverChart(series) {
   return `<p class="model-summary-note">Blended $/M as the cached share of input grows (your fresh-input:output ratio is kept). Cheapest by cache share — ${segs}.</p>` +
     `<div class="xo-wrap"><svg class="xo-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(`Cheapest provider by cached-input share: ${series.segments.map((s) => `${s.from}–${s.to}% ${s.label}`).join(', ')}`)}">` +
     grid + xTicks + paths + marker +
-    `<text class="xo-axis" x="${W - R}" y="${H - 1}" text-anchor="end">cached input share →</text></svg></div>` +
+    `<g class="xo-hover" hidden><line class="xo-cross" y1="${T}" y2="${H - B}"/></g>` +
+    `<rect class="xo-hit" x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}"/>` +
+    `<text class="xo-axis" x="${W - R}" y="${H - 1}" text-anchor="end">cached input share →</text></svg><div class="xo-tip" hidden></div></div>` +
     `<ul class="xo-legend">${legend}</ul>`;
 }
 
@@ -3224,6 +3394,18 @@ function buildAgentPrompt({ origin, shareUrl, generatedAt, tokens, costMode, com
   return lines.join('\n');
 }
 
+const PUBLIC_ORIGIN = 'https://tokenwatch.wyrdwerk.com';
+
+/** Most common canonical id among result rows (the API's /models/:id key). */
+function dominantCanonical(rows) {
+  const counts = new Map();
+  for (const r of rows || []) {
+    const c = canonicalModelId(r.model.id);
+    counts.set(c, (counts.get(c) || 0) + 1);
+  }
+  return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || null;
+}
+
 /** Gather the current view and copy the agent prompt. */
 async function copyAgentPrompt() {
   if (!state.data) return;
@@ -3236,8 +3418,9 @@ async function copyAgentPrompt() {
     value: fmtPlain(budgetMode ? fmtAffordability(r.cost) : fmtCost(r.cost)),
   }));
   const text = buildAgentPrompt({
-    origin: location.origin,
-    shareUrl: getShareUrl().shareUrl,
+    // Always the public site, never the preview/pages.dev host the visitor is on.
+    origin: PUBLIC_ORIGIN,
+    shareUrl: `${PUBLIC_ORIGIN}/${new URL(getShareUrl().shareUrl).hash}`,
     generatedAt: state.data.generated_at,
     tokens: getTokens(),
     costMode: state.costMode,
@@ -3245,7 +3428,7 @@ async function copyAgentPrompt() {
     budget: parseFloat(els.budgetInput?.value) || 0,
     providerSearch: els.providerSearch.value.trim(),
     modelSearch: els.modelSearch.value.trim(),
-    canonical: els.modelSearch.value.trim() ? resolveCanonicalQuery(state.data.models, els.modelSearch.value.trim().toLowerCase()) : null,
+    canonical: els.modelSearch.value.trim() ? dominantCanonical(state.currentRows) : null,
     filters: activeSecondaryFilters(),
     top,
   });

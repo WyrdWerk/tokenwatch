@@ -54,6 +54,8 @@
   --blue: #315a7a;
   --radius: 14px;
   --radius-sm: 8px;
+  /* Chart categorical slots (validated: dataviz validate_palette, light on #FFF). */
+  --xo-1: #2a78d6; --xo-2: #eb6834; --xo-3: #1baf7a; --xo-4: #eda100; --xo-5: #e87ba4; --xo-6: #008300;
 }
 
 [data-theme="dark"] {
@@ -79,6 +81,8 @@
   --blue: #82aed2;
   --radius: 14px;
   --radius-sm: 8px;
+  /* Same hues stepped for the dark surface (validated on #242020). */
+  --xo-1: #3987e5; --xo-2: #d95926; --xo-3: #199e70; --xo-4: #c98500; --xo-5: #d55181; --xo-6: #008300;
 }
 
 
@@ -1680,16 +1684,47 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
 .model-summary-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .model-summary-bar-track {
   display: block;
-  height: 0.55rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--border) 60%, transparent);
-  overflow: hidden;
+  position: relative;
+  height: 1rem;
 }
-.model-summary-bar-fill {
-  display: block;
-  height: 100%;
-  background: color-mix(in srgb, var(--accent, var(--green)) 70%, transparent);
+/* Dot plot: faint baseline, dotted stem to the value, dot at the value,
+   shared dashed median line (custom property set on .dist-rows). */
+.model-summary-bar-track::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
 }
+.dist-rows .model-summary-bar-track::after {
+  content: '';
+  position: absolute;
+  left: var(--dist-median, -10px);
+  top: -0.2rem; bottom: -0.2rem;
+  border-left: 1px dashed var(--text-dim);
+  opacity: 0.7;
+}
+.dist-stem {
+  position: absolute;
+  left: 0; top: 50%;
+  border-top: 2px dotted var(--text-dim);
+  transform: translateY(-1px);
+}
+.dist-dot {
+  position: absolute;
+  top: 50%;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  box-shadow: 0 0 0 2px var(--surface);
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+.model-summary-bar-row.is-best .dist-dot { width: 12px; height: 12px; background: var(--accent-text); }
+.model-summary-bar-row.is-best .dist-stem { border-top-style: solid; border-top-color: var(--accent-text); }
+.model-summary-bar-row.is-best .model-summary-bar-value { color: var(--accent-text); font-weight: 600; }
+.dist-rows { display: flex; flex-direction: column; gap: 0.3rem; padding-right: 6px; }
+.dist-head { font-size: 0.82rem; color: var(--text-dim); margin: 0.2rem 0 0.5rem; font-variant-numeric: tabular-nums; }
+.model-summary-bar-row[data-tip] { cursor: default; }
 .model-summary-bar-value {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.8rem;
@@ -1994,3 +2029,30 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
 .tw-rules-more a { color: var(--accent-text); }
 .seo-prose .tw-rules-list { margin: 0.5rem 0 1.25rem; }
 .filter-explain[hidden], .close-matches[hidden] { display: none; }
+
+.xo-wrap { position: relative; }
+.xo-cross { stroke: var(--text-dim); stroke-width: 1; }
+.xo-hover-dot { stroke: var(--surface); stroke-width: 2; }
+.xo-hit { fill: transparent; cursor: crosshair; }
+.xo-tip {
+  position: absolute; z-index: 5; pointer-events: none;
+  padding: 0.4rem 0.6rem; border-radius: var(--radius-sm);
+  background: var(--text); color: var(--surface);
+  font-size: 0.78rem; line-height: 1.45; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.xo-tip .xo-swatch { margin-right: 0.35rem; vertical-align: middle; }
+.tip-i {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.05rem; height: 1.05rem; margin-left: 0.2rem;
+  font-size: 0.75rem; line-height: 1; border-radius: 50%;
+  color: var(--accent-text); cursor: help; user-select: none;
+  vertical-align: middle;
+}
+.tip-i:hover, .tip-i:focus-visible { background: var(--accent-faint); }
+/* Fixed value column so every track (and the median line) shares one x-scale. */
+.dist-rows .model-summary-bar-row { grid-template-columns: minmax(7rem, 12rem) 1fr 5.5rem; }
+.dist-rows .model-summary-bar-value { text-align: right; }
+@media (max-width: 640px) {
+  .dist-rows .model-summary-bar-row { grid-template-columns: minmax(5rem, 8rem) 1fr 4.5rem; }
+}

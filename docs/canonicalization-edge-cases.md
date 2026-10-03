@@ -208,3 +208,30 @@ test's copy without updating `public/app.js` makes the test green while the
 live frontend drifts — the most dangerous failure mode, since CI reports
 success. Strengthening the guard (importing the live `public/app.js`, or
 expanding the corpus) is a code change, out of scope here — see ADR 0010.
+
+## 11. Search families (`modelSpellingKey` / `modelFamilyId`) — search only
+
+The text calculator's model search offers **one option per model**, not per
+canonical id. `shared/normalize.mjs` adds two search-only keys (mirrored in
+`public/app.js`, parity-tested over the whole catalog in
+`test/engagement.test.mjs`):
+
+- `modelSpellingKey(id)` — `canonicalId` plus spelling cleanup: routing tags
+  (`:batch`, `:nitro`, …) dropped, `(off-peak)` → `off-peak`, spaces/underscores
+  → hyphens, `v4-1` → `v4.1` (minor ≤ 2 digits, so `v3-0324` stays a date), and
+  the `v` before a version dropped. Iterated to a fixpoint so it is idempotent.
+- `modelFamilyId(id)` — the spelling key with trailing SKU/tier/quant tags
+  removed (`-fast`, `-flex`, `-speed`, `-highspeed`, `-(off-)peak`, `-batch`,
+  `-fp8`/`-nvfp4`/`-fp4`/`-int4`/…). **`-turbo` is deliberately kept**:
+  `gpt-4-turbo` and `glm-5-turbo` are different models. Dated releases
+  (`-0731`) also stay separate.
+
+In the browser, families whose human labels agree (OpenRouter's
+`deepseek-chat-v3.1` = "DeepSeek V3.1" and DeepInfra's `DeepSeek-V3.1`) are
+merged behind one option (`state.familyIndex.alias`). Typing a precise variant
+(`glm-5.2-fp8`) still selects just that variant.
+
+These keys never touch dedup, org lookup, SEO model pages or the API's
+`/models/:canonicalId` — every variant stays its own row with its own id.
+Regression: "DeepSeek V4.1 Flash" used to resolve to RunInfra's
+`deepseek-v4-1-flash` only; it now selects all 44 offerings.
