@@ -1,0 +1,11 @@
+# Explicit config for D1 migrations and the snapshot writer only.
+# Not auto-discovered by Pages deploys. PRICE_HISTORY stays dashboard-managed.
+name = "tokenwatch-price-history-writer"
+account_id = "04679cba466d1d41d88325944b461c18"
+compatibility_date = "2026-09-01"
+
+[[d1_databases]]
+binding = "PRICE_HISTORY"
+database_name = "tokenwatch-price-history-prod"
+database_id = "980879e7-cc90-489b-9203-d81cf3ef265e"
+migrations_dir = "migrations"

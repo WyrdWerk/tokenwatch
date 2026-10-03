@@ -120,9 +120,7 @@ async function stageModelPages(pages, dates, linkedProviderSlugs) {
     await mkdir(dir, { recursive: true });
     // Only providers with a generated page are linked; the rest render as plain
     // text so a model page can never emit a 404 link.
-    // Production history storage is not enabled. Keep the local renderer and
-    // state gallery usable without advertising an unavailable production API.
-    await writeFile(join(dir, 'index.html'), renderModelPage(page, { lastmod: dates.text, linkedProviderSlugs, historyEnabled: false }));
+    await writeFile(join(dir, 'index.html'), renderModelPage(page, { lastmod: dates.text, linkedProviderSlugs }));
   }
 
   const backup = join(PUBLIC, `.models-${process.pid}.bak`);
