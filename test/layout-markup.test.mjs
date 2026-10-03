@@ -167,7 +167,7 @@ test('Columns trigger and Blended $/M cache-write explanation are present', asyn
 
   const blendedTh = html.match(/<th[^>]*data-sort="blended"[^>]*>/);
   assert.ok(blendedTh, 'index.html must keep the Blended $/M header');
-  assert.match(blendedTh[0], /title="[^"]*higher published cache-write rates for fresh input/i);
+  assert.match(blendedTh[0], /data-tip="[^"]*higher published cache-write rate for fresh input/i);
   assert.doesNotMatch(blendedTh[0], /excluding one-time cache-write/);
 });
 

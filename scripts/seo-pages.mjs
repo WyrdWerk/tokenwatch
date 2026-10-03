@@ -877,6 +877,30 @@ TokenWatch compares published provider prices, not a single intrinsic price for 
 `;
 }
 
+/** Principles the catalog and calculator never break. Rendered on the homepage
+ *  strip and the methodology page; each line must stay true to the pipeline. */
+export const RULES = [
+  ['Unknown stays unknown', 'An unpublished price shows as “—”, never as $0. Missing privacy metadata is not a privacy claim.'],
+  ['Zero is not free', 'Zero-priced placeholders and :free routes are dropped, never shown as a free offering.'],
+  ['Promos are labelled', 'Discounted prices always carry a promo badge, so a sale is never mistaken for the regular rate.'],
+  ['Published rates stay raw', 'We normalize units to $/M but never edit a provider’s rate; estimates are computed on top.'],
+  ['The provider’s own price wins', 'A direct provider API outranks aggregators and resellers for the same offering.'],
+  ['Estimates, not invoices', 'Costs use your stated token mix; cache-storage charges and taxes are excluded.'],
+];
+
+export function renderRulesList(tag = 'ul') {
+  return `<${tag} class="tw-rules-list">\n${RULES.map(([title, body]) => `        <li><strong>${esc(title)}.</strong> ${esc(body)}</li>`).join('\n')}\n      </${tag}>`;
+}
+
+/** Homepage "Rules we don't bend" strip. */
+export function renderRulesStrip() {
+  return `<section class="tw-rules" aria-labelledby="rules-title">
+      <h2 id="rules-title">Rules we don’t bend</h2>
+      ${renderRulesList()}
+      <p class="tw-rules-more"><a href="/docs/methodology/#rules">How these rules shape the data</a></p>
+    </section>`;
+}
+
 export function renderMethodologyPage({ modelCount, providerCount, generatedAt, models = [], linkedModelPages = new Map() }) {
   const path = '/docs/methodology/';
   const description = 'How TokenWatch sources, normalizes, deduplicates, enriches, and compares pay-as-you-go AI inference pricing.';
@@ -897,6 +921,8 @@ export function renderMethodologyPage({ modelCount, providerCount, generatedAt, 
     return `<tr><td>${esc(name)}</td><td>${mix.inputPct}% / ${mix.cacheReadPct}% / ${mix.outputPct}%</td><td>${model}</td><td>${esc(cheapest.m.provider)}</td><td class="num">${fmtPrice(cheapest.eff)}</td></tr>`;
   }).join('\n');
   const body = `    <article class="seo-prose">
+      <h2 id="rules">Rules we don’t bend</h2>
+      ${renderRulesList()}
       <h2>How TokenWatch builds a comparable catalog</h2>
       <p>The current text catalog contains ${modelCount} provider-specific offerings across ${providerCount} inference providers. Its source timestamp is <time datetime="${esc(generatedAt)}">${esc(generatedAt)}</time>.</p>
       <p>An offering is a model-and-provider combination, not a unique model. Quantization and endpoint variants remain distinct. See the <a href="/models/">model directory</a> for comparisons across providers.</p>

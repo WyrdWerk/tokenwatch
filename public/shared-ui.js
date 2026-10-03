@@ -474,11 +474,81 @@
     });
   }
 
+  /** Lightweight tooltips for any [data-tip] element: hover or keyboard focus
+   *  shows it; tapping a non-interactive element pins it until the next tap or
+   *  Escape. One shared, aria-linked bubble; native title stays untouched. */
+  function initTooltips() {
+    let bubble = null;
+    let owner = null;
+    let pinned = false;
+    const ensure = () => {
+      if (bubble) return bubble;
+      bubble = document.createElement('div');
+      bubble.id = 'twTip';
+      bubble.className = 'tw-tip';
+      bubble.setAttribute('role', 'tooltip');
+      bubble.hidden = true;
+      document.body.appendChild(bubble);
+      return bubble;
+    };
+    const place = (el) => {
+      const r = el.getBoundingClientRect();
+      const b = bubble.getBoundingClientRect();
+      const left = Math.min(Math.max(8, r.left + r.width / 2 - b.width / 2), window.innerWidth - b.width - 8);
+      const above = r.top - b.height - 8;
+      bubble.style.left = `${left + window.scrollX}px`;
+      bubble.style.top = `${(above > 8 ? above : r.bottom + 8) + window.scrollY}px`;
+    };
+    const show = (el) => {
+      ensure();
+      owner = el;
+      bubble.textContent = el.getAttribute('data-tip');
+      bubble.hidden = false;
+      el.setAttribute('aria-describedby', 'twTip');
+      place(el);
+    };
+    const hide = () => {
+      if (!bubble) return;
+      bubble.hidden = true;
+      owner?.removeAttribute('aria-describedby');
+      owner = null;
+      pinned = false;
+    };
+    const tipTarget = (e) => e.target instanceof Element ? e.target.closest('[data-tip]') : null;
+    document.addEventListener('pointerover', (e) => {
+      if (pinned || e.pointerType === 'touch') return;
+      const el = tipTarget(e);
+      if (el && el !== owner) show(el);
+    });
+    document.addEventListener('pointerout', (e) => {
+      if (pinned || !owner) return;
+      const to = e.relatedTarget instanceof Element ? e.relatedTarget.closest('[data-tip]') : null;
+      if (to !== owner) hide();
+    });
+    document.addEventListener('focusin', (e) => { const el = tipTarget(e); if (el) show(el); else if (!pinned) hide(); });
+    document.addEventListener('focusout', () => { if (!pinned) hide(); });
+    document.addEventListener('click', (e) => {
+      const el = tipTarget(e);
+      // Interactive owners (headers sort, buttons act) keep their own click.
+      if (el && !el.matches('a, button, th, input, select')) {
+        e.stopPropagation();
+        if (pinned && owner === el) { hide(); return; }
+        show(el);
+        pinned = true;
+        return;
+      }
+      if (pinned) hide();
+    }, true);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hide(); });
+    window.addEventListener('scroll', () => { if (owner && !bubble.hidden) place(owner); }, { passive: true });
+  }
+
   // Auto-wire capture (defer scripts run after DOM parse)
   initCompareCapture();
+  initTooltips();
 
   window.TW = {
     $, esc, median, fmtIST, debounce, round3, makeFormatters, initTheme, applyTheme, modal,
-    domToPngBlob, downloadBlob, copyElementAsImage, snapshotFromCard, shareElementAsUrl, initCompareCapture,
+    domToPngBlob, downloadBlob, copyText, copyElementAsImage, snapshotFromCard, shareElementAsUrl, initCompareCapture,
   };
 })();

@@ -198,7 +198,7 @@ test('budget distribution preserves unlimited affordability instead of displayin
   ];
   const bars = { dataset: {}, innerHTML: '' };
   const details = { open: true, querySelector: () => bars, addEventListener() {} };
-  const summaryElement = { innerHTML: '', querySelector: () => details };
+  const summaryElement = { innerHTML: '', insertAdjacentHTML() {}, querySelector: (sel) => (sel.includes('crossover') ? null : details) };
   const els = { modelSearch: { value: 'sample' }, modelSummary: summaryElement, budgetInput: { value: '20' } };
   const render = new Function('els', 'state', 'canonicalSummary', 'MIN_PROVIDER_ROWS', 'summaryWinners',
     'providerName', 'esc', 'fmtAffordability', 'fmtCost', 'fmtPrice',

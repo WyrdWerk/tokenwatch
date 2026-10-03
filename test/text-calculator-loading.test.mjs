@@ -182,10 +182,13 @@ test('init starts performance concurrently and renders pricing without awaiting 
 
 test('performance-dependent filtering/ordering is gated by perfViewDecision', async () => {
   const src = await readFile(APP_JS, 'utf8');
-  const matchStart = src.indexOf('function matchingOfferings()');
+  // Filter predicates live in the secondaryFilterChecks() registry that
+  // matchingOfferings() applies.
+  assert.match(src, /function matchingOfferings\(\) \{[\s\S]*?secondaryFilterChecks\(\)/);
+  const matchStart = src.indexOf('function secondaryFilterChecks()');
   const matchEnd = src.indexOf('\n}\n', matchStart);
   const matchBody = src.slice(matchStart, matchEnd);
-  assert.match(matchBody, /perfViewDecision\(/, 'matchingOfferings must consult perfViewDecision');
+  assert.match(matchBody, /perfViewDecision\(/, 'the filter registry must consult perfViewDecision');
   assert.match(matchBody, /perfDecision\.pending/, 'minToks filter must be skipped while performance is pending');
   assert.match(matchBody, /perfDecision\.failed/, 'minToks filter must be skipped when performance failed');
 

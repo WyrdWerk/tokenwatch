@@ -154,8 +154,8 @@ test('setFilters and clearFilters wire minCoding, minAgentic, and benchmarked', 
     assert.match(setBody, new RegExp(key), `setFilters must accept ${key}`);
     assert.match(clearBody, new RegExp(key), `clearFilters must reset ${key}`);
   }
-  const matchStart = src.indexOf('function matchingOfferings()');
-  const matchEnd = src.indexOf('\n}\n\nfunction computeAndRender', matchStart);
+  const matchStart = src.indexOf('function secondaryFilterChecks()');
+  const matchEnd = src.indexOf('\n}\n', matchStart);
   const matchBody = src.slice(matchStart, matchEnd);
   assert.match(matchBody, /minCoding/);
   assert.match(matchBody, /minAgentic/);
