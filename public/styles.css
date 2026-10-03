@@ -2057,3 +2057,6 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
   .dist-rows .model-summary-bar-row { grid-template-columns: minmax(5rem, 8rem) 1fr 4.5rem; }
 }
 .tw-hero-promo { fill: var(--yellow); font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+.model-summary-history .price-history-inline { margin: 0.6rem 0 0; padding: 0.75rem; }
+/* The sparkline stretches its fixed viewBox; cap the width so points stay round. */
+.price-history-inline .tw-spark-svg, .price-history-inline .tw-spark-message { max-width: 760px; }

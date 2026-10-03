@@ -30,6 +30,8 @@ const state = {
   colOrder: null,         // array of the draggable column keys in display order (null = default)
   colHidden: null,        // Set of hidden column keys (null = default hidden set)
   summaryDistOpen: false, // whether the summary price-distribution <details> is expanded
+  summaryCrossoverOpen: false, // whether the crossover chart <details> is expanded
+  summaryHistoryOpen: false,   // whether the daily price-history <details> is expanded
 };
 
 // Flat-table render cap: first paint shows this many rows + a "Show all" row.
@@ -2741,6 +2743,31 @@ function renderModelSummary(rows, tokens) {
     `</details>`;
   els.modelSummary.insertAdjacentHTML('beforeend',
     `<details class="model-summary-crossover"${state.summaryCrossoverOpen ? ' open' : ''}><summary>How the cheapest provider shifts with caching</summary><div class="xo-body"></div></details>`);
+  els.modelSummary.insertAdjacentHTML('beforeend',
+    `<details class="model-summary-history"${state.summaryHistoryOpen ? ' open' : ''}><summary>Daily price history</summary>` +
+    `<div class="price-history price-history-inline"><div data-price-history-chart></div><p class="price-history-note" data-price-history-note></p></div></details>`);
+  const historyDetails = els.modelSummary.querySelector('details.model-summary-history');
+  if (historyDetails) {
+    const mountHistory = () => {
+      if (historyDetails.dataset.mounted) return;
+      historyDetails.dataset.mounted = '1';
+      const plan = historyPlan(rows, tokens);
+      const chart = historyDetails.querySelector('[data-price-history-chart]');
+      const note = historyDetails.querySelector('[data-price-history-note]');
+      if (!plan || !window.ModelHistory) {
+        note.textContent = 'Price history is unavailable here.';
+        return;
+      }
+      window.ModelHistory.createModelHistory(chart, plan.canonical, { mix: plan.mix, note }).load().then(() => {
+        if (plan.caveat) note.textContent = `${note.textContent} ${plan.caveat}`.trim();
+      });
+    };
+    if (historyDetails.open) mountHistory();
+    historyDetails.addEventListener('toggle', () => {
+      state.summaryHistoryOpen = historyDetails.open;
+      if (historyDetails.open) mountHistory();
+    });
+  }
   const crossover = els.modelSummary.querySelector('details.model-summary-crossover');
   if (crossover) {
     const body = crossover.querySelector('.xo-body');
@@ -2773,6 +2800,25 @@ function renderModelSummary(rows, tokens) {
     });
   }
   els.modelSummary.hidden = false;
+}
+
+/** What the history chart should request for the summary's cohort. Pure.
+ *  History is stored per canonical id, so a family selection charts its most
+ *  common canonical id (and says so). The API needs a mix summing to 100%;
+ *  an unbalanced mix falls back to the agentic default with a caveat. */
+function historyPlan(rows, tokens) {
+  const canonical = dominantCanonical(rows);
+  if (!canonical) return null;
+  const variants = new Set((rows || []).map((r) => canonicalModelId(r.model.id)));
+  const balanced = Math.abs(tokens.inputPct + tokens.cacheReadPct + tokens.outputPct - 100) < 0.5;
+  const caveats = [];
+  if (variants.size > 1) caveats.push(`History covers the “${canonical}” offerings; other variants are not included.`);
+  if (!balanced) caveats.push('Your mix does not add up to 100%, so the default agentic mix is used.');
+  return {
+    canonical,
+    mix: balanced ? [tokens.inputPct, tokens.cacheReadPct, tokens.outputPct] : [2.5, 97, 0.5],
+    caveat: caveats.join(' '),
+  };
 }
 
 /** Blended $/M per provider as the cached-input share sweeps 0–100%, keeping

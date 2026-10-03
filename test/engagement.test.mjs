@@ -264,3 +264,30 @@ test('agent prompt always points at the public site, never the current host', as
   assert.match(body, /origin: PUBLIC_ORIGIN/);
   assert.doesNotMatch(body, /location\.origin/);
 });
+
+// ── Calculator price history ─────────────────────────────────────────────────
+
+test('historyPlan charts the dominant canonical id at the visitor mix, with honest caveats', async () => {
+  const { historyPlan } = await loadAppHelpers(['canonicalModelId', 'dominantCanonical', 'historyPlan']);
+  const rows = [
+    { model: { id: 'deepseek/deepseek-v4.1-flash' } },
+    { model: { id: 'deepseek-ai/DeepSeek-V4.1-Flash' } },
+    { model: { id: 'deepseek-v4-1-flash' } },
+  ];
+  const plan = historyPlan(rows, { inputPct: 10, cacheReadPct: 0, outputPct: 90 });
+  assert.equal(plan.canonical, 'deepseek-v4.1-flash');
+  assert.deepEqual(plan.mix, [10, 0, 90]);
+  assert.match(plan.caveat, /other variants are not included/);
+  const unbalanced = historyPlan(rows.slice(0, 1), { inputPct: 50, cacheReadPct: 0, outputPct: 40 });
+  assert.deepEqual(unbalanced.mix, [2.5, 97, 0.5]);
+  assert.match(unbalanced.caveat, /default agentic mix/);
+  assert.doesNotMatch(unbalanced.caveat, /variants/);
+  assert.equal(historyPlan([], { inputPct: 2.5, cacheReadPct: 97, outputPct: 0.5 }), null);
+});
+
+test('calculator loads the sparkline scripts before app.js', async () => {
+  const html = await readFile(join(ROOT, 'public', 'index.html'), 'utf8');
+  const order = ['shared-ui.js', 'price-sparkline.js', 'model-history.js', 'app.js'].map((n) => html.indexOf(`src="/${n}`));
+  assert.ok(order.every((i) => i > 0), 'all scripts present');
+  assert.deepEqual([...order].sort((a, b) => a - b), order, 'deferred order');
+});
