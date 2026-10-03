@@ -169,8 +169,7 @@ const DIRECT_PROVIDERS = [
 const OPENROUTER_MODELS_URL = 'https://openrouter.ai/api/v1/models';
 const OPENROUTER_ENDPOINT_BASE = 'https://openrouter.ai/api/v1/models';
 const OR_CONCURRENCY = 20;
-// OR_MAX_RETRIES / OR_RETRY_DELAY_MS removed — fetchJsonWithRetry (from lib.mjs)
-// has equivalent defaults (retries=1, delayMs=2000) as parameters.
+// fetchJsonWithRetry (from lib.mjs) owns the bounded GET retry policy.
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 // (num, perTokToPerM, centsToDollars, passthrough, NON_TEXT_ID, isTextModel,

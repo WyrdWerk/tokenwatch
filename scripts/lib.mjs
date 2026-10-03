@@ -1180,29 +1180,36 @@ export async function fetchJson(url, opts = {}) {
   return res.json();
 }
 
-/** Fetch JSON with retry on 429/5xx. */
-export async function fetchJsonWithRetry(url, retries = 1, delayMs = 2000, opts = {}) {
+/** GET JSON with bounded backoff for transport failures, timeouts, and 429/5xx. */
+export async function fetchJsonWithRetry(url, retries = 2, delayMs = 2000, opts = {}) {
   const baseHeaders = { Accept: 'application/json', ...(opts.headers || {}) };
   if (opts.apiKey) baseHeaders.Authorization = `Bearer ${opts.apiKey}`;
   for (let attempt = 0; attempt <= retries; attempt++) {
+    let res;
+    let error;
     try {
-      const res = await fetch(url, {
+      res = await fetch(url, {
         headers: baseHeaders,
         signal: AbortSignal.timeout(45_000),
       });
-      if (res.ok) return res.json();
-      if ((res.status === 429 || res.status >= 500) && attempt < retries) {
-        await new Promise((r) => setTimeout(r, delayMs));
-        continue;
-      }
-      throw new Error(`HTTP ${res.status} for ${url}`);
+      // A socket can fail after headers arrive; consume the body inside the
+      // retry boundary, but do not hide malformed JSON or explicit cancellation.
+      if (res.ok) return await res.json();
     } catch (err) {
-      if (attempt < retries && err.name !== 'AbortError') {
-        await new Promise((r) => setTimeout(r, delayMs));
-        continue;
-      }
-      throw err;
+      if (err.name === 'AbortError' || err.name === 'SyntaxError') throw err;
+      error = err;
     }
+    if (res && !res.ok) {
+      // Release the unused error response before retrying another GET.
+      await res.body?.cancel().catch(() => {});
+      error = new Error(`HTTP ${res.status} for ${url}`);
+      if (res.status !== 429 && res.status < 500) throw error;
+    }
+    if (attempt === retries) throw error;
+    const backoff = delayMs * 2 ** attempt;
+    const reason = res && !res.ok ? `HTTP ${res.status}` : error.cause?.code || error.name;
+    console.warn(`JSON GET attempt ${attempt + 1}/${retries + 1} failed (${reason}); retrying in ${backoff / 1000}s`);
+    await new Promise((r) => setTimeout(r, backoff));
   }
 }
 
