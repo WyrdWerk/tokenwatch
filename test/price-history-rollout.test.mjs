@@ -158,6 +158,7 @@ test('CI history and reporting failures cannot gate the ordinary pricing deploy'
   assert.match(history, /id: history/);
   assert.match(history, /continue-on-error: true/);
   assert.match(history, /shell: bash/, 'explicit bash enables pipefail so tee cannot hide a writer failure');
+  assert.match(history, /^          CLOUDFLARE_ACCOUNT_ID: \$\{\{ secrets\.CLOUDFLARE_ACCOUNT_ID \}\}/m);
   assert.match(history, /snapshot-prices\.mjs --remote/);
   assert.doesNotMatch(history, /if:|changed|inputs\.force/);
   assert.ok(workflow.indexOf('Fetch & normalize text pricing') < workflow.indexOf('Snapshot daily price history'));
@@ -167,6 +168,29 @@ test('CI history and reporting failures cannot gate the ordinary pricing deploy'
   assert.match(report, /steps\.history\.outcome == 'failure'/);
   assert.match(report, /continue-on-error: true/);
   assert.match(workflow, /issues: write/);
+});
+
+test('commit and all downstream pricing steps never depend on history in conditions or environment', async () => {
+  const workflow = await readFile(new URL('../.github/workflows/refresh-pricing.yml', import.meta.url), 'utf8');
+  const commit = '      - name: Commit pricing + performance data\n';
+  const assertIndependent = (source) => {
+    const steps = source.slice(source.indexOf(commit)).split('\n  deploy:')[0]
+      .split(/^      - name: /m).slice(1);
+    assert.equal(steps.length, 7, 'cover commit, SEO generation/verification, cache, minify, deploy, and smoke');
+    for (const step of steps) {
+      const fields = step.match(/^        (?:if|env):[^\n]*(?:\n {10,}[^\n]*)*/gm) || [];
+      for (const field of fields) {
+        assert.doesNotMatch(field, /\bsteps\.history\b/, `history must not gate ${step.split('\n')[0]}`);
+      }
+    }
+  };
+  assertIndependent(workflow);
+  // Prove the guard catches both an early conditional and a late env dependency.
+  assert.throws(() => assertIndependent(workflow.replace(commit,
+    commit + "        if: ${{ steps.history.outcome == 'success' }}\n")), /history must not gate/);
+  assert.throws(() => assertIndependent(workflow.replace(
+    /^      - name: Verify hashed asset content-type[^\n]*\n/m,
+    '$&        env:\n          HISTORY_OK: ${{ steps.history.outcome }}\n')), /history must not gate/);
 });
 
 test('the production SEO generator no longer suppresses model-page history', async () => {
