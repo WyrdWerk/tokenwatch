@@ -51,8 +51,8 @@ const MIX = {
   sum: 100,
 };
 
-test('exact/unambiguous canonical selection uses exact canonical equality and excludes quant/SKU siblings', async () => {
-  const app = await loadAppHelpers(['canonicalModelId', 'resolveCanonicalQuery', 'modelMatchesSearch']);
+test('model search resolves one family: spelling, SKU, tier and quant variants collapse; prefixed models do not', async () => {
+  const app = await loadAppHelpers(['canonicalModelId', 'modelSpellingKey', 'modelFamilyId', 'resolveModelSelection', 'selectionKeyOf', 'modelMatchesSearch']);
   const catalog = [
     { id: 'z-ai/glm-5.2', provider: 'z-ai' },
     { id: 'z-ai/glm-5.2', provider: 'novita' },
@@ -60,43 +60,75 @@ test('exact/unambiguous canonical selection uses exact canonical equality and ex
     { id: 'z-ai/glm-5.2-nvfp4', provider: 'fireworks', quantization: 'nvfp4' },
     { id: 'glm-5.2-fast', provider: 'hyper' },
     { id: 'umans-glm-5.2', provider: 'umans' },
+    { id: 'glm-5-turbo', provider: 'z-ai' },
   ];
+  const sel = app.resolveModelSelection(catalog, 'GLM 5.2');
+  assert.deepEqual(sel, { level: 'family', key: 'glm-5.2' });
+  const matched = catalog.filter((m) => app.modelMatchesSearch(m, 'glm 5.2', sel, undefined)).map((m) => m.id);
+  assert.deepEqual(matched, ['z-ai/glm-5.2', 'z-ai/glm-5.2', 'z-ai/glm-5.2-fp8', 'z-ai/glm-5.2-nvfp4', 'glm-5.2-fast']);
+  assert.ok(!matched.includes('umans-glm-5.2'), 'a different model that merely contains the name stays out');
 
-  const target = app.resolveCanonicalQuery(catalog, 'GLM 5.2');
-  assert.equal(target, 'glm-5.2', 'space-separated unambiguous query resolves to the canonical id');
+  // A typed variant stays a precise selection.
+  const fp8 = app.resolveModelSelection(catalog, 'glm-5.2-fp8');
+  assert.deepEqual(fp8, { level: 'variant', key: 'glm-5.2-fp8' });
+  assert.deepEqual(catalog.filter((m) => app.modelMatchesSearch(m, 'glm-5.2-fp8', fp8, undefined)).map((m) => m.id), ['z-ai/glm-5.2-fp8']);
 
-  const matched = catalog.filter((m) => app.modelMatchesSearch(m, 'glm 5.2', target, undefined));
-  assert.equal(matched.length, 2, 'only exact canonical offerings remain');
-  for (const m of matched) assert.equal(m.id, 'z-ai/glm-5.2');
-  for (const bad of ['glm-5.2-fp8', 'glm-5.2-nvfp4', 'glm-5.2-fast', 'umans-glm-5.2']) {
-    assert.ok(!matched.some((m) => m.id === bad), `${bad} must not broaden an exact selection`);
-  }
-
-  // Hyphen and space spellings resolve to the same canonical selection.
-  assert.equal(app.resolveCanonicalQuery(catalog, 'glm-5.2'), 'glm-5.2');
-  assert.deepEqual(
-    catalog.filter((m) => app.modelMatchesSearch(m, 'glm-5.2', app.resolveCanonicalQuery(catalog, 'glm-5.2'), undefined)).map((m) => m.id),
-    matched.map((m) => m.id),
-  );
-
-  // A quant-specific query stays exact to its own canonical id.
-  const fp8Target = app.resolveCanonicalQuery(catalog, 'glm-5.2-fp8');
-  assert.equal(fp8Target, 'glm-5.2-fp8');
-  const fp8Matched = catalog.filter((m) => app.modelMatchesSearch(m, 'glm-5.2-fp8', fp8Target, undefined));
-  assert.deepEqual(fp8Matched.map((m) => m.id), ['z-ai/glm-5.2-fp8']);
+  // Turbo is a distinct model, never folded into its base.
+  assert.equal(app.modelFamilyId('glm-5-turbo'), 'glm-5-turbo');
 });
 
-test('partial searches retain substring search across quant/SKU variants', async () => {
-  const app = await loadAppHelpers(['canonicalModelId', 'resolveCanonicalQuery', 'modelMatchesSearch']);
+test('DeepSeek V4.1 Flash spellings all select every provider (regression: only RunInfra matched)', async () => {
+  const app = await loadAppHelpers(['canonicalModelId', 'modelSpellingKey', 'modelFamilyId', 'resolveModelSelection', 'selectionKeyOf', 'modelMatchesSearch']);
+  const catalog = [
+    { id: 'deepseek-ai/DeepSeek-V4.1-Flash', provider: 'deepinfra' },
+    { id: 'deepseek/deepseek-v4.1-flash', provider: 'relace' },
+    { id: 'deepseek-v4-1-flash', provider: 'runinfra' },
+    { id: 'deepseek-v4.1-flash-flex', provider: 'neuralwatt' },
+    { id: 'deepseek-v4.1-flash-(off-peak)', provider: 'opencode' },
+    { id: 'deepseek-v4.1-flash-fast-fp4', provider: 'coralbricks' },
+    { id: 'deepseek-v4-flash-0731', provider: 'streamlake' },
+  ];
+  for (const q of ['DeepSeek V4.1 Flash', 'deepseek 4.1 flash', 'deepseek-v4-1-flash', 'DeepSeek-V4.1-Flash']) {
+    const sel = app.resolveModelSelection(catalog, q.toLowerCase());
+    assert.equal(sel?.level, 'family', q);
+    const providers = catalog.filter((m) => app.modelMatchesSearch(m, q, sel, undefined)).map((m) => m.provider);
+    assert.deepEqual(providers, ['deepinfra', 'relace', 'runinfra', 'neuralwatt', 'opencode', 'coralbricks'], q);
+  }
+  // A dated release is a different model and stays separate.
+  assert.notEqual(app.modelFamilyId('deepseek-v4-flash-0731'), app.modelFamilyId('deepseek-v4-flash'));
+  // Datalist labels resolve through the label map.
+  assert.deepEqual(app.resolveModelSelection(catalog, 'my label', { byLabel: { 'my label': 'deepseek-4.1-flash' } }), { level: 'family', key: 'deepseek-4.1-flash' });
+  // A dated release suffix is never read as a minor version (v3-0324 ≠ v3.0324).
+  assert.equal(app.modelFamilyId('deepseek/deepseek-chat-v3-0324'), 'deepseek-chat-3-0324');
+});
+
+test('families with the same human label merge behind one search option', async () => {
+  const app = await loadAppHelpers(['canonicalModelId', 'modelSpellingKey', 'modelFamilyId', 'resolveModelSelection', 'selectionKeyOf', 'modelMatchesSearch']);
+  const catalog = [
+    { id: 'deepseek/deepseek-chat-v3.1', provider: 'siliconflow' },
+    { id: 'deepseek-ai/DeepSeek-V3.1', provider: 'deepinfra' },
+    { id: 'deepseek/deepseek-v3.2', provider: 'novita' },
+  ];
+  const index = { byLabel: { 'deepseek v3.1': 'deepseek-chat-3.1' }, alias: { 'deepseek-3.1': 'deepseek-chat-3.1', 'deepseek-chat-3.1': 'deepseek-chat-3.1' } };
+  for (const q of ['DeepSeek V3.1', 'deepseek-ai/DeepSeek-V3.1', 'deepseek-chat-v3.1']) {
+    const sel = app.resolveModelSelection(catalog, q.toLowerCase(), index);
+    assert.deepEqual(sel, { level: 'family', key: 'deepseek-chat-3.1' }, q);
+    const keyOf = app.selectionKeyOf(sel, index.alias);
+    assert.deepEqual(catalog.filter((m) => keyOf(m.id) === sel.key).map((m) => m.provider), ['siliconflow', 'deepinfra'], q);
+  }
+});
+
+test('partial searches retain broad substring search', async () => {
+  const app = await loadAppHelpers(['canonicalModelId', 'modelSpellingKey', 'modelFamilyId', 'resolveModelSelection', 'selectionKeyOf', 'modelMatchesSearch']);
   const catalog = [
     { id: 'z-ai/glm-5.2', provider: 'z-ai' },
     { id: 'z-ai/glm-5.2-fp8', provider: 'deepinfra', quantization: 'fp8' },
     { id: 'glm-5.2-fast', provider: 'hyper' },
     { id: 'umans-glm-5.2', provider: 'umans' },
   ];
-  const target = app.resolveCanonicalQuery(catalog, 'glm');
-  assert.equal(target, null, 'a broad partial query must not resolve to one canonical id');
-  const matched = catalog.filter((m) => app.modelMatchesSearch(m, 'glm', target, undefined));
+  const sel = app.resolveModelSelection(catalog, 'glm');
+  assert.equal(sel, null, 'a broad partial query must not resolve to one family');
+  const matched = catalog.filter((m) => app.modelMatchesSearch(m, 'glm', sel, undefined));
   assert.equal(matched.length, 4, 'partial search keeps the broad substring cohort');
 });
 
@@ -198,15 +230,17 @@ test('budget distribution preserves unlimited affordability instead of displayin
   ];
   const bars = { dataset: {}, innerHTML: '' };
   const details = { open: true, querySelector: () => bars, addEventListener() {} };
-  const summaryElement = { innerHTML: '', querySelector: () => details };
+  const summaryElement = { innerHTML: '', insertAdjacentHTML() {}, querySelector: (sel) => (sel.includes('crossover') ? null : details) };
   const els = { modelSearch: { value: 'sample' }, modelSummary: summaryElement, budgetInput: { value: '20' } };
   const render = new Function('els', 'state', 'canonicalSummary', 'MIN_PROVIDER_ROWS', 'summaryWinners',
-    'providerName', 'esc', 'fmtAffordability', 'fmtCost', 'fmtPrice',
+    'providerName', 'esc', 'fmtAffordability', 'fmtCost', 'fmtPrice', 'resolveModelSelection', 'selectionKeyOf', 'median', 'fmtPlain',
     `${extractFn(src, 'renderModelSummary')}\nreturn renderModelSummary;`)(
-    els, { costMode: 'perRequest', computeBy: 'budget' },
+    els, { costMode: 'perRequest', computeBy: 'budget', modelDisplayName: {}, familyByLabel: {} },
     () => ({ name: 'Sample', canonical: 'sample' }), 1,
     () => ({ costWinner: rows[0], costValue: Infinity, blendedWinner: rows[0], blendedValue: 0 }),
     (p) => p, (v) => v, (v) => v === Infinity ? '∞' : String(v), String, String,
+    () => ({ level: 'family', key: 'sample' }), () => (id) => id,
+    (a) => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)], (v) => String(v),
   );
   render(rows, MIX);
   assert.match(bars.innerHTML, /model-summary-bar-value">∞<\/span>/);

@@ -86,12 +86,12 @@ export function priceDistribution(offerings) {
  * same way, otherwise a space-separated query filters the table but yields no
  * summary. Exact canonical ids (including `:batch`/quant variants) win first.
  */
-export function resolveCanonicalQuery(catalogModels, query) {
+export function resolveCanonicalQuery(catalogModels, query, keyOf = canonicalId) {
   const raw = String(query || '').trim();
   if (!raw) return null;
 
-  const target = canonicalId(raw);
-  if (target && (catalogModels || []).some((model) => model && canonicalId(model.id) === target)) return target;
+  const target = keyOf(raw);
+  if (target && (catalogModels || []).some((model) => model && keyOf(model.id) === target)) return target;
 
   const norm = (s) => s.toLowerCase().replace(/[\s-]+/g, ' ').trim();
   const q = norm(raw);
@@ -99,7 +99,7 @@ export function resolveCanonicalQuery(catalogModels, query) {
   const ids = new Set();
   for (const model of catalogModels || []) {
     if (!model || !model.id) continue;
-    const id = canonicalId(model.id);
+    const id = keyOf(model.id);
     if (id && norm(id) === q) ids.add(id);
   }
   return ids.size === 1 ? [...ids][0] : null;
@@ -113,11 +113,11 @@ export function resolveCanonicalQuery(catalogModels, query) {
  * @param {Array<object>} catalogModels full in-memory catalog rows
  * @param {{canonical: string, mix: object, perfByKey?: Record<string, object>}} options
  */
-export function canonicalSummary(catalogModels, { canonical, mix, perfByKey = {} } = {}) {
-  const target = resolveCanonicalQuery(catalogModels, canonical);
+export function canonicalSummary(catalogModels, { canonical, mix, perfByKey = {}, keyOf = canonicalId } = {}) {
+  const target = resolveCanonicalQuery(catalogModels, canonical, keyOf);
   if (!target) return null;
 
-  const offerings = (catalogModels || []).filter((model) => model && canonicalId(model.id) === target);
+  const offerings = (catalogModels || []).filter((model) => model && keyOf(model.id) === target);
   if (!offerings.length) return null;
 
   const rows = rankOfferings(offerings, mix, perfByKey);

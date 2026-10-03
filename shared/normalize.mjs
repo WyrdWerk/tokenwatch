@@ -71,3 +71,43 @@ export function quantFromId(id) {
   const match = canonicalId(id).match(QUANT_SUFFIX_RE);
   return match ? match[1] : null;
 }
+
+/** Trailing SKU / serving-tier / quantization tags that do not change which
+ *  model a visitor is looking for. Stripped only for SEARCH grouping
+ *  (modelFamilyId) — never for dedup, org lookup or the API's canonical ids.
+ *  `-turbo` is deliberately absent: gpt-4-turbo / glm-5-turbo are distinct models. */
+export const FAMILY_SUFFIX_RE = /-(fast|flex|speed|highspeed|off-peak|peak|batch|nvfp4|mxfp4|fp8|fp6|fp4|int4-mixed-ar|int4|int8|bf16|fp16)$/;
+
+/**
+ * Spelling-normalized model key: canonicalId plus separator/version spelling
+ * cleanup, so `deepseek-v4-1-flash`, `DeepSeek-V4.1-Flash` and
+ * "DeepSeek V4.1 Flash" agree. Keeps SKU/quant suffixes (a precise variant
+ * selection). Search-only; dedup keeps canonicalId.
+ */
+export function modelSpellingKey(id) {
+  const tidy = (v) => canonicalId(String(v).replace(/:(batch|nitro|floor|exacto|online)$/i, ''))
+    .replace(/[()[\]]/g, '')                // "(off-peak)" → "off-peak"
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .replace(/(^|-)v(\d+)-(\d{1,2})(?=-|$)/g, '$1v$2.$3') // v4-1 → v4.1 (not v3-0324)
+    .replace(/(^|-)v(\d)/g, '$1$2');                   // v4.1 → 4.1
+  // Repeat until stable so stacked suffixes (-preview-260328, :batch) settle
+  // and the key is idempotent.
+  let k = String(id);
+  let prev;
+  do { prev = k; k = tidy(k); } while (k !== prev);
+  return k;
+}
+
+/**
+ * Search family: modelSpellingKey with SKU/tier/quant suffixes removed, so the
+ * model search offers ONE option per model ("DeepSeek V4.1 Flash") while the
+ * results keep each variant as its own explicit row.
+ */
+export function modelFamilyId(id) {
+  let k = modelSpellingKey(id);
+  let prev;
+  do { prev = k; k = k.replace(FAMILY_SUFFIX_RE, ''); } while (k !== prev);
+  return k;
+}
