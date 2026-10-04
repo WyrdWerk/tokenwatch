@@ -5,6 +5,7 @@ import {
   buildCalculatorHref,
   isCloseCall,
   isStale,
+  modelDisplayName,
   parseChooseHash,
   parseChooseLocation,
   shellQuote,
@@ -242,7 +243,7 @@ function renderModelCard(candidate, option) {
   const signal = candidate.explanation.benchmark.signals.find((item) => item.field === USE_CASES[state.useCase].qualityFloor.field);
   return `<article class="choose-model-card${selected ? ' is-selected' : ''}" data-model-id="${escapeHtml(candidate.id)}">
     <div class="choose-card-topline"><p class="choose-pick-label">${escapeHtml(option.label)}</p><div class="choose-badges">${coverageBadge(candidate)}${batchBadge(candidate)}${confidenceBadge(candidate.confidence)}</div></div>
-    <h3>${escapeHtml(candidate.name || candidate.id)}</h3>
+    <h3>${escapeHtml(modelDisplayName(candidate))}</h3>
     <p class="choose-model-id">${escapeHtml(candidate.id)}</p>
     <p class="choose-card-provider">Suggested provider: <strong>${escapeHtml(bestProvider)}</strong></p>
     <div class="choose-score-block"><strong>${formatNumber(candidate.qualityScore)}/100</strong><span>relative benchmark score · ${coverage}% covered</span></div>
@@ -271,13 +272,13 @@ function renderOtherModels() {
   const rows = [...additional, ...partial].filter((candidate, index, candidates) =>
     candidates.findIndex((other) => other.id === candidate.id) === index);
   elements.alsoConsidered.innerHTML = cappedList(rows, 'models', (candidate) => `
-    <li class="choose-list-row"><span><strong>${escapeHtml(candidate.name || candidate.id)}</strong><small>${escapeHtml(candidate.id)}</small></span>
+    <li class="choose-list-row"><span><strong>${escapeHtml(modelDisplayName(candidate))}</strong><small>${escapeHtml(candidate.id)}</small></span>
       <span class="choose-list-meta">${formatNumber(candidate.qualityScore)}/100${coverageBadge(candidate)}${batchBadge(candidate)}${confidenceBadge(candidate.confidence)}</span></li>
   `);
 
   const notEnough = recommendations.unbenchmarked;
   elements.notEnoughData.innerHTML = cappedList(notEnough, 'models', (candidate) => `
-    <li class="choose-list-row"><span><strong>${escapeHtml(candidate.name || candidate.id)}</strong><small>${escapeHtml(candidate.id)}</small></span>
+    <li class="choose-list-row"><span><strong>${escapeHtml(modelDisplayName(candidate))}</strong><small>${escapeHtml(candidate.id)}</small></span>
       <span class="choose-list-meta">${candidate.blendedRate === null ? 'No workload price' : `${formatRate(candidate.blendedRate)} / M`}<span class="choose-badge choose-badge-partial">No benchmark score</span></span></li>
   `);
 }
@@ -347,7 +348,7 @@ function alternativeProviders(candidate) {
 }
 
 function renderProviders(candidate) {
-  elements.providerHeading.textContent = candidate ? `Providers for ${candidate.name || candidate.id}` : 'Providers for this model';
+  elements.providerHeading.textContent = candidate ? `Providers for ${modelDisplayName(candidate)}` : 'Providers for this model';
   if (!candidate) {
     elements.providerRows.innerHTML = '<p class="choose-empty-list">Choose a recommendation with eligible providers to see the comparison.</p>';
     elements.providerRows.setAttribute('aria-busy', 'false');
@@ -424,7 +425,7 @@ function agentPrompt(candidate, provider) {
   const modelId = provider.offering.modelsdev?.model_id || provider.offering.id;
   const scores = candidate.explanation.benchmark.signals.filter((signal) => signal.rawValue !== null)
     .map((signal) => `${signal.field} ${formatNumber(signal.rawValue, 2)} (${sourceName(signal.source)})`).join('; ');
-  return `I’m considering ${candidate.name} (provider model id ${modelId}) on ${providerName(provider.provider)} for ${useCaseLabel(state.useCase)}. TokenWatch’s benchmark-based score is ${formatNumber(candidate.qualityScore)}/100 with ${formatNumber(candidate.qualityCoverage * 100, 0)}% coverage. Available raw signals: ${scores || 'none disclosed'}. The assumed token mix is ${formatMix(useCase.mix)} and the current blended rate is ${formatRate(provider.blendedRate)} per million tokens. Please assess fit for my actual task, identify capability or privacy questions to verify, and compare alternatives rather than treating this snapshot as a guarantee. Check the provider’s current price and retention policy before use.`;
+  return `I’m considering ${modelDisplayName(candidate)} (provider model id ${modelId}) on ${providerName(provider.provider)} for ${useCaseLabel(state.useCase)}. TokenWatch’s benchmark-based score is ${formatNumber(candidate.qualityScore)}/100 with ${formatNumber(candidate.qualityCoverage * 100, 0)}% coverage. Available raw signals: ${scores || 'none disclosed'}. The assumed token mix is ${formatMix(useCase.mix)} and the current blended rate is ${formatRate(provider.blendedRate)} per million tokens. Please assess fit for my actual task, identify capability or privacy questions to verify, and compare alternatives rather than treating this snapshot as a guarantee. Check the provider’s current price and retention policy before use.`;
 }
 
 function renderActions(candidate) {

@@ -22,6 +22,42 @@ export function useCaseLabel(id) {
   return USE_CASE_CHOICES.find((choice) => choice.id === id)?.label ?? id;
 }
 
+const ID_ACRONYMS = new Set(['glm', 'gpt', 'oss', 'qwq', 'ai', 'ui', 'vl', 'moe', 'llm', 'r1', 'tts']);
+
+/** Readable name from a canonical or provider model id: `zai-org/GLM-5.3` → `GLM 5.3`, `gpt-oss-120b` → `GPT OSS 120B`. */
+export function prettifyModelId(id) {
+  const tail = String(id ?? '').split('/').pop().replace(/:[a-z]+$/i, '');
+  if (!tail) return '';
+  const keepCase = /[A-Z]/.test(tail);
+  return tail.split(/[-_\s]+/).filter(Boolean).map((token) => {
+    if (keepCase) return token;
+    const lower = token.toLowerCase();
+    if (ID_ACRONYMS.has(lower) || /^\d+(\.\d+)?[bkmt]?$/.test(lower) || /^[a-z]\d+(\.\d+)?[a-z]?$/.test(lower)) return token.toUpperCase();
+    return lower[0].toUpperCase() + lower.slice(1);
+  }).join(' ');
+}
+
+/**
+ * Display name for a recommendation candidate. Prefers a catalog name of the
+ * form "Org: Name" (from the group or any of its offerings) with the org
+ * prefix stripped, then any non-id catalog name, then a prettified id.
+ */
+export function modelDisplayName(candidate = {}) {
+  const id = String(candidate.id ?? '');
+  const names = [
+    candidate.name,
+    candidate.offering?.name,
+    ...(candidate.providers || []).map((provider) => provider?.offering?.name),
+    ...(candidate.unverifiedProviders || []).map((provider) => provider?.offering?.name),
+  ].filter((name) => typeof name === 'string' && name.trim());
+  const prefixed = names.find((name) => /^[^/:]+: \S/.test(name));
+  if (prefixed) return prefixed.slice(prefixed.indexOf(': ') + 2).trim();
+  const plain = names.find((name) => !name.includes('/') && name.toLowerCase() !== id.toLowerCase());
+  if (plain) return plain.trim();
+  const rawId = names.find((name) => name.includes('/'));
+  return prettifyModelId(rawId || id) || id;
+}
+
 export const DEFAULT_CHOOSE_STATE = Object.freeze({
   useCase: 'agentic-coding',
   priority: 'balanced',

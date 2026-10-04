@@ -108,3 +108,16 @@ test('coverage badge only flags coverage below the engine eligibility threshold;
   assert.doesNotMatch(app, /qualityCoverage < 1\b/);
   assert.match(app, /class="choose-coverage-line"><strong>Benchmark coverage: \$\{formatNumber\(explanation\.benchmark\.coverage \* 100, 0\)\}%/);
 });
+
+test('model display names strip the org prefix or prettify raw ids; the card keeps the canonical id underneath', async () => {
+  const { modelDisplayName, prettifyModelId } = await import('../shared/choose-page.mjs');
+  assert.equal(modelDisplayName({ id: 'glm-5.3', name: 'zai-org/GLM-5.3', providers: [{ offering: { name: 'Z.ai: GLM 5.3' } }] }), 'GLM 5.3');
+  assert.equal(modelDisplayName({ id: 'glm-5.3', name: 'zai-org/GLM-5.3' }), 'GLM 5.3');
+  assert.equal(modelDisplayName({ id: 'deepseek-v4-pro', name: 'deepseek-ai/DeepSeek-V4-Pro' }), 'DeepSeek V4 Pro');
+  assert.equal(modelDisplayName({ id: 'glm-5.3:batch', name: 'Z.ai: GLM 5.3 (batch)' }), 'GLM 5.3 (batch)');
+  assert.equal(modelDisplayName({ id: 'gpt-oss-120b' }), 'GPT OSS 120B');
+  assert.equal(prettifyModelId('qwen3-30b-a3b'), 'Qwen3 30B A3B');
+  const app = await readFile(new URL('../public/choose-app.js', import.meta.url), 'utf8');
+  assert.match(app, /<h3>\$\{escapeHtml\(modelDisplayName\(candidate\)\)\}<\/h3>\n\s*<p class="choose-model-id">\$\{escapeHtml\(candidate\.id\)\}<\/p>/);
+  assert.doesNotMatch(app, /candidate\.name \|\| candidate\.id/);
+});
