@@ -6,21 +6,13 @@ import {
   isCloseCall,
   isStale,
   parseChooseHash,
+  parseChooseLocation,
   shellQuote,
   serializeChooseState,
+  stripUseCaseQuery,
+  useCaseLabel,
 } from '/shared/choose-page.mjs';
 
-const USE_CASE_COPY = {
-  'agentic-coding': 'Coding agent',
-  'tool-agents': 'Tool-using agent',
-  'long-context-rag': 'Chat over my documents',
-  'structured-extraction': 'Extract data to JSON',
-  'high-volume-cheap': 'Cheap bulk processing',
-  'chat-assistant': 'Chatbot',
-  'creative-writing': 'Creative writing',
-  'reasoning-math': 'Reasoning / math',
-  'frontend-ui': 'Websites / UI',
-};
 
 const PICK_OPTIONS = [
   { key: 'quality', label: 'Best quality', resultKey: 'bestQuality', tone: 'quality' },
@@ -56,7 +48,7 @@ window.TW.initTheme();
 
 let catalogs;
 let recommendations;
-let state = parseChooseHash(location.hash);
+let state = parseChooseLocation(location.search, location.hash);
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -114,7 +106,7 @@ function selectedCandidate() {
 
 function syncHash() {
   const hash = serializeChooseState(state);
-  history.replaceState(null, '', `${location.pathname}${location.search}${hash}`);
+  history.replaceState(null, '', `${location.pathname}${stripUseCaseQuery(location.search)}${hash}`);
 }
 
 function writeControlState() {
@@ -429,7 +421,7 @@ function agentPrompt(candidate, provider) {
   const modelId = provider.offering.modelsdev?.model_id || provider.offering.id;
   const scores = candidate.explanation.benchmark.signals.filter((signal) => signal.rawValue !== null)
     .map((signal) => `${signal.field} ${formatNumber(signal.rawValue, 2)} (${sourceName(signal.source)})`).join('; ');
-  return `I’m considering ${candidate.name} (provider model id ${modelId}) on ${providerName(provider.provider)} for ${USE_CASE_COPY[state.useCase]}. TokenWatch’s benchmark-based score is ${formatNumber(candidate.qualityScore)}/100 with ${formatNumber(candidate.qualityCoverage * 100, 0)}% coverage. Available raw signals: ${scores || 'none disclosed'}. The assumed token mix is ${formatMix(useCase.mix)} and the current blended rate is ${formatRate(provider.blendedRate)} per million tokens. Please assess fit for my actual task, identify capability or privacy questions to verify, and compare alternatives rather than treating this snapshot as a guarantee. Check the provider’s current price and retention policy before use.`;
+  return `I’m considering ${candidate.name} (provider model id ${modelId}) on ${providerName(provider.provider)} for ${useCaseLabel(state.useCase)}. TokenWatch’s benchmark-based score is ${formatNumber(candidate.qualityScore)}/100 with ${formatNumber(candidate.qualityCoverage * 100, 0)}% coverage. Available raw signals: ${scores || 'none disclosed'}. The assumed token mix is ${formatMix(useCase.mix)} and the current blended rate is ${formatRate(provider.blendedRate)} per million tokens. Please assess fit for my actual task, identify capability or privacy questions to verify, and compare alternatives rather than treating this snapshot as a guarantee. Check the provider’s current price and retention policy before use.`;
 }
 
 function renderActions(candidate) {
@@ -466,7 +458,7 @@ function render() {
   renderProviders(candidate);
   renderActions(candidate);
   renderUseCaseNotice();
-  elements.chooseStatus.textContent = `Showing ${USE_CASE_COPY[state.useCase]} recommendations. Typical workload (assumed): ${formatMix(USE_CASES[state.useCase].mix)}.`;
+  elements.chooseStatus.textContent = `Showing ${useCaseLabel(state.useCase)} recommendations. Typical workload (assumed): ${formatMix(USE_CASES[state.useCase].mix)}.`;
 }
 
 function calculate() {

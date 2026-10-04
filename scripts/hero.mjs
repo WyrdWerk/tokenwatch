@@ -3,6 +3,7 @@
 import { blendedRate, AGENTIC_MIX } from '../shared/cost.mjs';
 import { modelFamilyId } from '../shared/normalize.mjs';
 import { esc, fmtPrice } from './seo-pages.mjs';
+import { USE_CASE_CHOICES } from '../shared/choose-page.mjs';
 
 export const HERO_LANES = 5;
 const MIN_PROVIDERS = 3;
@@ -132,9 +133,26 @@ export function renderHero(pricing) {
     <div class="tw-hero-ctas">
       <button type="button" class="tw-hero-cta" data-hero-action="estimate">Estimate my workload ↓</button>
       ${compare}
-      <a class="tw-hero-cta tw-hero-cta-ghost" href="/choose/">Find the right model for your use case →</a>
     </div>
   </div>
   ${scene}
+</section>`;
+}
+
+/** Slim strip under the homepage nav that hands a use case to /choose/.
+ *  A real GET form (`/choose/?useCase=<id>`) so it works without JS; app.js
+ *  upgrades it to `/choose/#useCase=<id>`. Labels come from the choose page. */
+export function renderUseCaseFinder() {
+  const options = USE_CASE_CHOICES
+    .map((choice) => `<option value="${esc(choice.id)}">${esc(choice.label)}</option>`)
+    .join('');
+  return `<section class="tw-finder" aria-label="Find a model for your workload">
+  <form class="tw-finder-form" id="twFinder" action="/choose/" method="get">
+    <label class="tw-finder-label" for="twFinderUseCase">Which model suits my workload?</label>
+    <div class="tw-finder-controls">
+      <select id="twFinderUseCase" name="useCase">${options}</select>
+      <button type="submit" class="tw-finder-go">Go →</button>
+    </div>
+  </form>
 </section>`;
 }

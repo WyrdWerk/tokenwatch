@@ -7,9 +7,12 @@ import {
   buildCalculatorHref,
   isCloseCall,
   isStale,
+  USE_CASE_CHOICES,
   parseChooseHash,
+  parseChooseLocation,
   shellQuote,
   serializeChooseState,
+  stripUseCaseQuery,
 } from '../shared/choose-page.mjs';
 
 test('choose URL hash round-trips use case, provider constraints, model pick, and provider selection', () => {
@@ -35,6 +38,26 @@ test('choose URL hash rejects unknown options and restores stable defaults', () 
     excludeHQ: ['CN'],
   });
   assert.deepEqual(parseChooseHash(''), DEFAULT_CHOOSE_STATE);
+});
+
+test('choose page accepts ?useCase= from the no-JS finder form; the hash wins when it names a use case', () => {
+  assert.equal(parseChooseLocation('?useCase=frontend-ui', '').useCase, 'frontend-ui');
+  assert.equal(parseChooseLocation('?useCase=frontend-ui', '#useCase=chat-assistant').useCase, 'chat-assistant');
+  assert.deepEqual(parseChooseLocation('?useCase=frontend-ui', '#zdr=1'), { ...DEFAULT_CHOOSE_STATE, useCase: 'frontend-ui', requireZdr: true });
+  assert.deepEqual(parseChooseLocation('?useCase=nope', ''), DEFAULT_CHOOSE_STATE);
+  assert.equal(stripUseCaseQuery('?useCase=frontend-ui'), '');
+  assert.equal(stripUseCaseQuery('?useCase=frontend-ui&ref=home'), '?ref=home');
+});
+
+test('choose cards use the shared USE_CASE_CHOICES labels and blurbs', async () => {
+  const html = await readFile(new URL('../public/choose/index.html', import.meta.url), 'utf8');
+  const cards = [...html.matchAll(/value="([^"]+)"[^>]*\/>[\s\S]*?<strong>([^<]+)<\/strong><small>([^<]+)<\/small>/g)]
+    .filter((m) => USE_CASE_CHOICES.some((choice) => choice.id === m[1]))
+    .map((m) => ({ id: m[1], label: m[2], blurb: m[3] }));
+  assert.deepEqual(cards, USE_CASE_CHOICES.map((choice) => ({ ...choice })));
+  const app = await readFile(new URL('../public/choose-app.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(app, /USE_CASE_COPY/, 'choose-app reuses the shared labels');
+  assert.match(app, /parseChooseLocation\(location\.search, location\.hash\)/);
 });
 
 test('calculator links carry the selected model and exact workload mix in the existing hash format', () => {

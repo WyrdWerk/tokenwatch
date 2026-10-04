@@ -1895,6 +1895,61 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
 }
 
 /* ── Homepage hero (build-time, scripts/hero.mjs) ─────────────────────── */
+/* Use-case finder strip under the homepage nav (scripts/hero.mjs, tw-finder marker) */
+.tw-finder {
+  background: var(--accent-faint);
+  border-bottom: 1px solid var(--border);
+  padding: 0.55rem 1rem;
+}
+.tw-finder-form {
+  max-width: calc(1600px - 3rem);
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 0.85rem;
+}
+.tw-finder-label {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+.tw-finder-controls { display: flex; gap: 0.5rem; align-items: center; min-width: 0; }
+.tw-finder select {
+  min-width: 0;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.6rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.tw-finder select:focus-visible,
+.tw-finder-go:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+.tw-finder-go {
+  min-height: 2.25rem;
+  padding: 0.35rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--on-accent);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.tw-finder-go:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+@media (max-width: 640px) {
+  .tw-finder-form { flex-direction: column; align-items: stretch; gap: 0.4rem; }
+  .tw-finder-label { text-align: center; }
+  .tw-finder-controls { width: 100%; }
+  .tw-finder select { flex: 1 1 auto; min-height: 2.5rem; }
+  .tw-finder-go { min-height: 2.5rem; }
+}
 .tw-hero {
   max-width: calc(1600px - 3rem);
   margin: 1.25rem auto;

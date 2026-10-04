@@ -4,6 +4,24 @@ const PRIORITIES = new Set(Object.keys(PRIORITY_PROVIDER_WEIGHTS));
 const PICKS = new Set(['quality', 'value', 'cheapest']);
 const HOUR = 60 * 60 * 1000;
 
+// Visitor-facing use-case wording shared by the /choose/ cards, its status
+// line, and the homepage finder strip. Ids match USE_CASES in use-cases.mjs.
+export const USE_CASE_CHOICES = Object.freeze([
+  { id: 'agentic-coding', label: 'Coding agent', blurb: 'Write, edit, and debug code with tools.' },
+  { id: 'tool-agents', label: 'Tool-using agent', blurb: 'Call tools and complete multi-step tasks.' },
+  { id: 'long-context-rag', label: 'Chat over my documents', blurb: 'Find and synthesize long-context information.' },
+  { id: 'structured-extraction', label: 'Extract data to JSON', blurb: 'Turn unstructured text into structured output.' },
+  { id: 'high-volume-cheap', label: 'Cheap bulk processing', blurb: 'Run lots of requests at a controlled cost.' },
+  { id: 'chat-assistant', label: 'Chatbot', blurb: 'Answer questions in an interactive conversation.' },
+  { id: 'creative-writing', label: 'Creative writing', blurb: 'Draft and revise expressive long-form text.' },
+  { id: 'reasoning-math', label: 'Reasoning / math', blurb: 'Work through multi-step questions and calculations.' },
+  { id: 'frontend-ui', label: 'Websites / UI', blurb: 'Build and refine front-end experiences.' },
+].map((choice) => Object.freeze(choice)));
+
+export function useCaseLabel(id) {
+  return USE_CASE_CHOICES.find((choice) => choice.id === id)?.label ?? id;
+}
+
 export const DEFAULT_CHOOSE_STATE = Object.freeze({
   useCase: 'agentic-coding',
   priority: 'balanced',
@@ -44,6 +62,29 @@ export function parseChooseHash(hash = '') {
     pick: params.get('pick'),
     provider: params.get('provider'),
   });
+}
+
+/**
+ * Initial page state from the URL. The hash is the page's own state; a
+ * `?useCase=` query (the homepage finder's no-JS GET form) applies only when
+ * the hash does not name a use case.
+ */
+export function parseChooseLocation(search = '', hash = '') {
+  const state = parseChooseHash(hash);
+  const hashParams = new URLSearchParams(String(hash).replace(/^#/, ''));
+  const query = new URLSearchParams(String(search).replace(/^\?/, ''));
+  if (!hashParams.has('useCase') && query.has('useCase')) {
+    return normalizeState({ ...state, useCase: query.get('useCase') });
+  }
+  return state;
+}
+
+/** Query string without the one-shot `useCase` entry point, so the hash owns state afterwards. */
+export function stripUseCaseQuery(search = '') {
+  const query = new URLSearchParams(String(search).replace(/^\?/, ''));
+  query.delete('useCase');
+  const rest = query.toString();
+  return rest ? `?${rest}` : '';
 }
 
 export function serializeChooseState(state) {

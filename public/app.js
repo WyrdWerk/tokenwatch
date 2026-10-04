@@ -432,9 +432,23 @@ function initHero() {
   document.addEventListener('visibilitychange', sync);
 }
 
+/** Homepage use-case finder: a GET form to /choose/?useCase=… that, with JS,
+ *  goes straight to the choose page's hash state instead. */
+function initUseCaseFinder() {
+  const form = document.getElementById('twFinder');
+  if (!form) return;
+  form.addEventListener('submit', (e) => {
+    const useCase = form.elements.useCase?.value;
+    if (!useCase) return;
+    e.preventDefault();
+    location.href = `/choose/#useCase=${encodeURIComponent(useCase)}`;
+  });
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────────
 async function init() {
   initHero();
+  initUseCaseFinder();
   // Kick off pricing + performance concurrently. Pricing is required; performance
   // is an optional enrichment, so we render usable pricing without waiting for it
   // and re-render when (or if) performance arrives.

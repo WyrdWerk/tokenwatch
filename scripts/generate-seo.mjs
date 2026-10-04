@@ -7,7 +7,7 @@
  * documentation pages; then writes sitemap.xml and robots.txt.
  */
 
-import { renderHero } from './hero.mjs';
+import { renderHero, renderUseCaseFinder } from './hero.mjs';
 import { readFile, writeFile, rename, mkdir, rm, copyFile } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -155,6 +155,7 @@ function renderHomepage(markup, pricing, rows, dates, links) {
   const faq = homeFaqItems(modelCount, providerCount);
   let out = renderCounts(markup, modelCount, providerCount);
   out = renderHomepageMeta(out, modelCount, providerCount);
+  out = replaceSection(out, 'tw-finder', renderUseCaseFinder());
   out = replaceSection(out, 'tw-hero', renderHero(pricing));
   out = replaceSection(out, 'tw-rules', renderRulesStrip());
   out = replaceSection(out, 'seo-models', renderSeoTable(rows, dates.text, links));
