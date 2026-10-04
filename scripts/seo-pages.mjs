@@ -969,14 +969,15 @@ export function renderApiDocsPage() {
       <h2>Public JSON API</h2>
       <p>All endpoints accept GET requests and return JSON with permissive CORS headers. List endpoints paginate with <code>limit</code> and <code>offset</code>; the limit is clamped to 1–500 and defaults to 100. A machine-readable <a href="/openapi.json">OpenAPI 3.1 description</a> is also available.</p>
       <p>Recommendation mixes are assumed workload defaults, not claims about your traffic. Model picks include best quality, best value, and the cheapest model above an absolute quality floor; explanations label benchmark coverage, provider ranking, missing signals, and confidence. Provider ranking requires confirmed capability and context metadata and keeps unverified options separate.</p>
+      <p>Recommendation responses default to compact candidate groups (up to 10 rows each, with total counts) and full explanations on the three model picks. Provider results keep full explanations on the top three. Add <code>detail=full</code> to expand explanations for returned rows, or set <code>limit=1..100</code> to change each group cap.</p>
       <div class="table-wrap"><table><caption>TokenWatch API endpoints</caption><thead><tr><th scope="col">Endpoint</th><th scope="col">Response</th><th scope="col">Query parameters</th><th scope="col">Sort values</th></tr></thead><tbody>${rows}</tbody></table></div>
       <h2>Examples</h2>
       <pre><code>curl '${SITE}/api/v1/models?provider=aster&amp;sort=input&amp;limit=20'
 curl '${SITE}/api/v1/models?open_weights=true&amp;limit=20'
 curl '${SITE}/api/v1/models/glm-5.2/providers?tokens=1000000&amp;mix=30,50,20'
 curl '${SITE}/api/v1/use-cases'
-curl '${SITE}/api/v1/recommend?use_case=agentic-coding&amp;priority=balanced&amp;zdr=true&amp;exclude_hq=CN'
-curl '${SITE}/api/v1/recommend/providers?use_case=agentic-coding&amp;model=deepseek-v4-flash&amp;priority=fastest'
+curl '${SITE}/api/v1/recommend?use_case=agentic-coding&amp;priority=balanced&amp;zdr=true&amp;exclude_hq=CN&amp;limit=5'
+curl '${SITE}/api/v1/recommend/providers?use_case=agentic-coding&amp;model=deepseek-v4-flash&amp;priority=fastest&amp;detail=full'
 curl '${SITE}/api/v1/providers?zdr=true'
 curl '${SITE}/api/v1/videos?provider=fal&amp;limit=25'</code></pre>
       <h2>Errors and freshness</h2>
@@ -1000,17 +1001,19 @@ const BOOLEAN_API_PARAMS = new Set(['cache_read', 'cache_write', 'promo', 'zdr',
 const INTEGER_API_PARAMS = new Set(['limit', 'offset']);
 const NUMBER_API_PARAMS = new Set(['min_context', 'min_output', 'min_intelligence', 'tokens']);
 
-function openApiParameter(name, required = false) {
+function openApiParameter(name, required = false, parameterLimits = {}) {
   let schema = BOOLEAN_API_PARAMS.has(name)
     ? { type: 'boolean' }
     : INTEGER_API_PARAMS.has(name)
-      ? { type: 'integer', minimum: name === 'limit' ? 1 : 0, maximum: name === 'limit' ? 500 : undefined }
+      ? { type: 'integer', minimum: name === 'limit' ? 1 : 0, maximum: name === 'limit' ? (parameterLimits.limit ?? 500) : undefined }
       : NUMBER_API_PARAMS.has(name)
         ? { type: 'number', minimum: 0 }
         : { type: 'string' };
   if (name === 'use_case') schema = { type: 'string', enum: Object.keys(USE_CASES) };
   if (name === 'priority') schema = { type: 'string', enum: Object.keys(PRIORITY_PROVIDER_WEIGHTS) };
   if (name === 'exclude_hq') schema = { type: 'string', pattern: '^[A-Za-z]{2}(,[A-Za-z]{2})*$' };
+  if (name === 'detail') schema = { type: 'string', enum: ['compact', 'full'], default: 'compact' };
+  if (name === 'limit' && parameterLimits.limit) schema.default = 10;
   if (schema.maximum === undefined) delete schema.maximum;
   return {
     name,
@@ -1030,6 +1033,12 @@ function openApiParameter(name, required = false) {
                 ? 'Include models not confirmed open-weight; defaults to false for model recommendations.'
                 : name === 'model'
                   ? 'Required canonical model id. An unknown model returns 404.'
+                  : name === 'detail'
+                    ? 'Defaults to compact; full returns explanations for all returned rows.'
+                    : name === 'limit'
+                      ? parameterLimits.limit
+                        ? `Maximum rows per recommendation group; defaults to 10 (range 1–${parameterLimits.limit}).`
+                        : 'Page size; defaults to 100 and is clamped to 1–500.'
                   : `Filter or control parameter: ${name}.`,
     schema,
   };
@@ -1051,7 +1060,7 @@ export function buildOpenApiDocument() {
       get: {
         summary: endpoint.summary,
         operationId: `get${endpoint.path.split('/').filter(Boolean).map((segment) => segment.replace(/^:/, '').split(/[^A-Za-z0-9]+/).filter(Boolean).map((part) => part[0].toUpperCase() + part.slice(1)).join('')).join('') || 'ApiDirectory'}`,
-        parameters: [...pathParams, ...endpoint.params.map((name) => openApiParameter(name, endpoint.requiredParams?.includes(name) === true))],
+        parameters: [...pathParams, ...endpoint.params.map((name) => openApiParameter(name, endpoint.requiredParams?.includes(name) === true, endpoint.parameterLimits))],
         responses: {
           200: { description: 'Successful JSON response.', content: { 'application/json': { schema: { type: 'object' } } } },
           400: { description: 'Invalid request parameter or malformed model ID.', content: { 'application/json': { schema: { type: 'object' } } } },

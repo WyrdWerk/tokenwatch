@@ -74,6 +74,13 @@ test('recommendation WebMCP tools use the recommender API contract and explicit 
     assert.equal(byName[name].inputSchema.properties.zdr.type, 'boolean');
     assert.equal(byName[name].inputSchema.properties.includeProprietary.type, 'boolean');
     assert.equal(byName[name].inputSchema.properties.excludeHq.items.pattern, '^[A-Z]{2}$');
+    assert.deepEqual(byName[name].inputSchema.properties.limit, {
+      type: 'integer', minimum: 1, maximum: 100,
+      description: name === 'recommend_model'
+        ? 'Maximum rows in each compact candidate group (default 10).'
+        : 'Maximum rows in each provider group (default 10).',
+    });
+    assert.ok(!Object.hasOwn(byName[name].inputSchema.properties, 'detail'), 'WebMCP stays on the compact default');
   }
   assert.deepEqual(byName.recommend_model.inputSchema.required, ['useCase']);
   assert.deepEqual(byName.recommend_provider.inputSchema.required, ['useCase', 'model']);

@@ -86,6 +86,8 @@ test('recommendation façade calls the recommender API instead of reimplementing
   assert.match(facade, /params\.set\('use_case', input\.useCase\)/);
   assert.match(facade, /params\.set\('exclude_hq', input\.excludeHq\.join\(','\)\)/);
   assert.match(facade, /params\.set\('include_proprietary', String\(input\.includeProprietary\)\)/);
+  assert.match(facade, /params\.set\('limit', String\(input\.limit\)\)/);
+  assert.doesNotMatch(facade, /params\.set\('detail'/, 'WebMCP recommendation calls must retain the compact API default');
   assert.match(facade, /recommendModel,/);
   assert.match(facade, /recommendProvider,/);
 });

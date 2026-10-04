@@ -3548,6 +3548,7 @@ function recommendationUrl(path, input) {
   if (typeof input?.includeProprietary === 'boolean') {
     params.set('include_proprietary', String(input.includeProprietary));
   }
+  if (Number.isSafeInteger(input?.limit)) params.set('limit', String(input.limit));
   return `/api/v1/recommend${path}?${params.toString()}`;
 }
 

@@ -362,9 +362,17 @@ test('API documentation renders from the same endpoint metadata as API discovery
     '^[A-Za-z]{2}(,[A-Za-z]{2})*$');
   assert.deepEqual(recommend.find((parameter) => parameter.name === 'include_proprietary').schema,
     { type: 'boolean' });
+  assert.deepEqual(recommend.find((parameter) => parameter.name === 'detail').schema,
+    { type: 'string', enum: ['compact', 'full'], default: 'compact' });
+  assert.deepEqual(recommend.find((parameter) => parameter.name === 'limit').schema,
+    { type: 'integer', minimum: 1, maximum: 100, default: 10 });
+  assert.match(recommend.find((parameter) => parameter.name === 'detail').description, /compact/);
   const providers = openApi.paths['/api/v1/recommend/providers'].get.parameters;
   assert.equal(providers.find((parameter) => parameter.name === 'model').required, true);
   assert.equal(providers.find((parameter) => parameter.name === 'include_proprietary').schema.type, 'boolean');
+  assert.equal(providers.find((parameter) => parameter.name === 'limit').schema.maximum, 100);
+  assert.match(docs, /full explanations on the three model picks/);
+  assert.match(docs, /limit=1\.\.100/);
   assert.equal(openApi.paths['/api/v1/use-cases'].get.summary.includes('assumed mixes'), true);
 });
 

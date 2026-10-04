@@ -297,10 +297,67 @@ test('/api/v1/recommend uses shared shortlist groups with explanations, confiden
   assert.deepEqual(body.mix, { inputPct: 2.5, cacheReadPct: 97, outputPct: 0.5, assumed: true });
   assert.ok(body.picks.bestQuality.explanation);
   assert.ok(body.picks.bestQuality.confidence);
-  assert.ok(body.alsoConsidered.every((candidate) => candidate.explanation && candidate.confidence));
-  assert.ok(body.partiallyBenchmarked.some((candidate) => candidate.id === 'partly-scored'));
-  assert.ok(body.unbenchmarked.some((candidate) => candidate.id === 'not-scored'));
+  for (const group of [body.alsoConsidered, body.partiallyBenchmarked, body.unbenchmarked, body.unverified]) {
+    assert.ok(Number.isInteger(group.totalCount));
+    assert.ok(Array.isArray(group.items));
+    assert.ok(group.items.length <= 10);
+    assert.ok(group.items.every((candidate) => {
+      assert.deepEqual(Object.keys(candidate).sort(), ['blendedRate', 'coverage', 'id', 'name', 'reason', 'score']);
+      return true;
+    }));
+  }
+  assert.ok(body.partiallyBenchmarked.items.some((candidate) => candidate.id === 'partly-scored'));
+  assert.ok(body.unbenchmarked.items.some((candidate) => candidate.id === 'not-scored'));
   assert.ok(!JSON.stringify(body).includes('cn-provider'), 'exclude_hq filters known CN provider offerings');
+});
+
+test('/api/v1/recommend supports full detail and a validated limit for candidate groups', async () => {
+  const context = makeContext('/api/v1/recommend', '?use_case=agentic-coding&detail=full&limit=1');
+  context.env.ASSETS = recommendationAssets(recommendationCatalog());
+  const { status, body } = await getJson(context);
+  assert.equal(status, 200);
+  assert.ok(body.picks.bestQuality.recommendedProvider.explanation);
+  for (const group of [body.alsoConsidered, body.partiallyBenchmarked, body.unbenchmarked, body.unverified]) {
+    assert.equal(group.items.length, Math.min(group.totalCount, 1));
+    assert.ok(group.items.every((candidate) => candidate.explanation));
+  }
+});
+
+test('/api/v1/recommend default response stays under 50 KB with the committed catalogs', async () => {
+  const publicDir = join(__dirname, '..', 'public');
+  const catalogFiles = Object.fromEntries(await Promise.all(
+    ['pricing.json', 'benchmarks.json', 'performance.json'].map(async (filename) => [
+      filename,
+      JSON.parse(await readFile(join(publicDir, filename), 'utf8')),
+    ]),
+  ));
+  const assets = {
+    async fetch(url) {
+      const filename = new URL(url).pathname.slice(1);
+      return catalogFiles[filename]
+        ? Response.json(catalogFiles[filename])
+        : new Response('Not found', { status: 404 });
+    },
+  };
+  const response = await onRequestGet({
+    request: new Request('https://tokenwatch.test/api/v1/recommend?use_case=agentic-coding'),
+    env: { ASSETS: assets },
+  });
+  const serialized = await response.text();
+  const body = JSON.parse(serialized);
+  assert.equal(response.status, 200);
+  assert.ok(Buffer.byteLength(serialized) < 50 * 1024, `default response was ${Buffer.byteLength(serialized)} bytes`);
+  assert.ok(body.picks.bestQuality.explanation);
+  for (const pick of Object.values(body.picks)) {
+    if (!pick) continue;
+    assert.ok(!pick.recommendedProvider?.explanation);
+    assert.ok(!pick.cheapestProvider?.explanation);
+  }
+  for (const group of [body.alsoConsidered, body.partiallyBenchmarked, body.unbenchmarked, body.unverified]) {
+    assert.ok(group.items.length <= 10);
+    assert.ok(group.totalCount >= group.items.length);
+    assert.ok(group.items.every((candidate) => !candidate.explanation));
+  }
 });
 
 test('/api/v1/recommend validates use case, priority, booleans, and HQ codes', async () => {
@@ -311,6 +368,9 @@ test('/api/v1/recommend validates use case, priority, booleans, and HQ codes', a
     '?use_case=agentic-coding&zdr=yes',
     '?use_case=agentic-coding&include_proprietary=1',
     '?use_case=agentic-coding&exclude_hq=CN,',
+    '?use_case=agentic-coding&detail=verbose',
+    '?use_case=agentic-coding&limit=0',
+    '?use_case=agentic-coding&limit=101',
   ]) {
     const context = makeContext('/api/v1/recommend', query);
     context.env.ASSETS = recommendationAssets(recommendationCatalog());
@@ -326,9 +386,10 @@ test('/api/v1/recommend/providers ranks a canonical model and returns 400/404 fo
   const { status, body } = await getJson(context);
   assert.equal(status, 200);
   assert.deepEqual(body.mix, { inputPct: 2.5, cacheReadPct: 97, outputPct: 0.5, assumed: true });
-  assert.deepEqual(body.ranked.map((provider) => provider.provider), ['us-provider']);
-  assert.ok(body.ranked[0].explanation);
-  assert.ok(body.ranked[0].confidence);
+  assert.deepEqual(body.ranked.items.map((provider) => provider.provider), ['us-provider']);
+  assert.equal(body.ranked.totalCount, 1);
+  assert.ok(body.ranked.items[0].explanation);
+  assert.ok(body.ranked.items[0].confidence);
 
   context.request = new Request('https://tokenwatch.test/api/v1/recommend/providers?use_case=agentic-coding');
   assert.equal((await getJson(context)).status, 400);
@@ -336,6 +397,31 @@ test('/api/v1/recommend/providers ranks a canonical model and returns 400/404 fo
   assert.equal((await getJson(context)).status, 404);
   context.request = new Request('https://tokenwatch.test/api/v1/recommend/providers?use_case=agentic-coding&model=agent-alpha&priority=balancedish');
   assert.equal((await getJson(context)).status, 400);
+});
+
+test('/api/v1/recommend/providers explains the top three, compacts the rest, and limits provider groups', async () => {
+  const catalog = recommendationCatalog();
+  const original = catalog.models[0];
+  const providers = ['alpha', 'bravo', 'charlie', 'delta', 'echo', 'foxtrot'];
+  catalog.models = providers.map((provider, index) => ({
+    ...original,
+    provider,
+    pricing: { ...original.pricing, input: 1 + index, output: 2 + index },
+  }));
+  const context = makeContext('/api/v1/recommend/providers', '?use_case=agentic-coding&model=agent-alpha&limit=4');
+  context.env.ASSETS = recommendationAssets(catalog);
+  const { status, body } = await getJson(context);
+  assert.equal(status, 200);
+  assert.equal(body.ranked.totalCount, 6);
+  assert.equal(body.ranked.items.length, 4);
+  assert.ok(body.ranked.items.slice(0, 3).every((provider) => provider.explanation));
+  assert.ok(!body.ranked.items[3].explanation);
+  assert.equal(body.unverified.totalCount, 0);
+  assert.deepEqual(Object.keys(body.ranked.items[3]).sort(), ['blendedRate', 'confidence', 'provider', 'reason', 'score']);
+
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend/providers?use_case=agentic-coding&model=agent-alpha&detail=full&limit=4');
+  const full = await getJson(context);
+  assert.ok(full.body.ranked.items.every((provider) => provider.explanation));
 });
 
 test('recommendation assets are required and unknown canonical models return 404 before asset loading', async () => {

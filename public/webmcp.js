@@ -129,7 +129,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "recommend_model",
     "title": "Recommend models for a workload",
-    "description": "Read-only workload recommendation using TokenWatch's shared benchmark, provider, and blended-price engine. Returns best quality, best value, cheapest above the absolute quality floor, other considered models, partially benchmarked and unbenchmarked options, explanations, and confidence. The preset mix is assumed unless you choose a different use case. For operational details, call about_tokenwatch.",
+    "description": "Read-only workload recommendation using TokenWatch's shared engine. The default response is compact: three fully explained picks plus compact candidate groups with total counts. The preset mix is assumed unless you choose a different use case. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": true },
     "inputSchema": {
       "type": "object",
@@ -156,6 +156,12 @@ const TEXT_TOOL_DEFS = JSON.parse(`
         "includeProprietary": {
           "type": "boolean",
           "description": "Include models not confirmed open-weight; defaults to false."
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Maximum rows in each compact candidate group (default 10)."
         }
       },
       "required": ["useCase"],
@@ -165,7 +171,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "recommend_provider",
     "title": "Rank providers for one model",
-    "description": "Read-only provider ranking for a canonical model id and workload using the shared recommender engine. Returns ranked and unverified providers with workload prices, source-attributed explanations, and confidence. Confirmed capabilities and context are hard gates; unknown required metadata is never treated as confirmed. For operational details, call about_tokenwatch.",
+    "description": "Read-only provider ranking for a canonical model and workload using the shared engine. The default response fully explains the top three providers and returns the rest as compact rows with total counts. Confirmed capabilities and context are hard gates; unknown required metadata is never treated as confirmed. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": true },
     "inputSchema": {
       "type": "object",
@@ -196,6 +202,12 @@ const TEXT_TOOL_DEFS = JSON.parse(`
         "includeProprietary": {
           "type": "boolean",
           "description": "Include models not confirmed open-weight; defaults to false."
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Maximum rows in each provider group (default 10)."
         }
       },
       "required": ["useCase", "model"],

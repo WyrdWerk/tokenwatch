@@ -70,6 +70,20 @@ function parseRecommendationParams(params, { requireModel = false } = {}) {
     return { ok: false, error: `priority must be one of: ${[...PRIORITIES].join(', ')}`, parameter: 'priority' };
   }
 
+  const detail = params.get('detail') ?? 'compact';
+  if (detail !== 'compact' && detail !== 'full') {
+    return { ok: false, error: 'detail must be compact or full', parameter: 'detail' };
+  }
+
+  let limit = 10;
+  if (params.has('limit')) {
+    const value = params.get('limit');
+    if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)) || Number(value) < 1 || Number(value) > 100) {
+      return { ok: false, error: 'limit must be an integer between 1 and 100', parameter: 'limit' };
+    }
+    limit = Number(value);
+  }
+
   const zdr = parseOptionalBoolean(params, 'zdr');
   if (!zdr.ok) return { ...zdr, parameter: 'zdr' };
   const includeProprietary = parseOptionalBoolean(params, 'include_proprietary');
@@ -94,6 +108,8 @@ function parseRecommendationParams(params, { requireModel = false } = {}) {
     ok: true,
     useCase,
     priority,
+    detail,
+    limit,
     requireZdr: zdr.value,
     includeProprietary: includeProprietary.value,
     excludeHQ,
@@ -135,19 +151,61 @@ function compactRecommendationOffering(offering) {
   };
 }
 
-function compactRecommendationProvider(provider) {
+function compactRecommendationProvider(provider, includeExplanation = true) {
   if (!provider) return null;
-  return { ...provider, offering: compactRecommendationOffering(provider.offering) };
+  const { explanation, ...summary } = provider;
+  return {
+    ...summary,
+    ...(includeExplanation && explanation ? { explanation } : {}),
+    offering: compactRecommendationOffering(provider.offering),
+  };
 }
 
-function compactRecommendationCandidate(candidate) {
+function compactRecommendationCandidate(candidate, includeProviderExplanations = true) {
   return {
     ...candidate,
-    recommendedProvider: compactRecommendationProvider(candidate.recommendedProvider),
-    cheapestProvider: compactRecommendationProvider(candidate.cheapestProvider),
+    recommendedProvider: compactRecommendationProvider(candidate.recommendedProvider, includeProviderExplanations),
+    cheapestProvider: compactRecommendationProvider(candidate.cheapestProvider, includeProviderExplanations),
     offering: compactRecommendationOffering(candidate.offering),
     cheapestOffering: compactRecommendationOffering(candidate.cheapestOffering),
-    unverifiedProviders: (candidate.unverifiedProviders || []).map(compactRecommendationProvider),
+    unverifiedProviders: (candidate.unverifiedProviders || []).map((provider) => compactRecommendationProvider(provider, includeProviderExplanations)),
+  };
+}
+
+function compactRecommendationRow(candidate) {
+  return {
+    id: candidate.id,
+    name: candidate.name,
+    score: candidate.qualityScore ?? null,
+    coverage: candidate.qualityCoverage ?? null,
+    blendedRate: candidate.blendedRate ?? null,
+    reason: candidate.reasons?.[0] ?? candidate.unknowns?.[0] ?? null,
+  };
+}
+
+function compactProviderRow(provider) {
+  const reason = provider.reasons?.find((item) => /lowest blended price|lowest .*ttft|highest throughput|reported uptime|only qualifying option|subscription plan|low-bit quantization/i.test(item));
+  return {
+    provider: provider.provider,
+    score: provider.score ?? null,
+    blendedRate: provider.blendedRate ?? null,
+    confidence: provider.confidence?.level ?? null,
+    reason: reason ?? provider.reasons?.[0] ?? provider.unknowns?.[0] ?? null,
+  };
+}
+
+function recommendationGroup(items, parsed, compactRow) {
+  return {
+    totalCount: items.length,
+    items: items.slice(0, parsed.limit).map((item) => parsed.detail === 'full' ? item : compactRow(item)),
+  };
+}
+
+function providerGroup(items, parsed, { explainTopThree = false } = {}) {
+  return {
+    totalCount: items.length,
+    items: items.slice(0, parsed.limit).map((item, index) =>
+      parsed.detail === 'full' || (explainTopThree && index < 3) ? item : compactProviderRow(item)),
   };
 }
 
@@ -329,7 +387,9 @@ async function recommendationResponse(context, pricing, providersOnly) {
       priority: parsed.priority,
       mix: { ...USE_CASES[parsed.useCase].mix, assumed: true },
       canonical_id: target,
-      ...result,
+      ranked: providerGroup(result.ranked, parsed, { explainTopThree: true }),
+      unverified: providerGroup(result.unverified, parsed),
+      message: result.message,
     });
   }
 
@@ -356,14 +416,14 @@ async function recommendationResponse(context, pricing, providersOnly) {
     mix: { ...USE_CASES[result.useCase].mix, assumed: true },
     qualityFloor: result.qualityFloor,
     picks: {
-      bestQuality: result.bestQuality ? compactRecommendationCandidate(result.bestQuality) : null,
-      bestValue: result.bestValue ? compactRecommendationCandidate(result.bestValue) : null,
-      cheapestAboveFloor: result.cheapestAboveFloor ? compactRecommendationCandidate(result.cheapestAboveFloor) : null,
+      bestQuality: result.bestQuality ? compactRecommendationCandidate(result.bestQuality, parsed.detail === 'full') : null,
+      bestValue: result.bestValue ? compactRecommendationCandidate(result.bestValue, parsed.detail === 'full') : null,
+      cheapestAboveFloor: result.cheapestAboveFloor ? compactRecommendationCandidate(result.cheapestAboveFloor, parsed.detail === 'full') : null,
     },
-    alsoConsidered: [...alsoConsideredById.values()].map(compactRecommendationCandidate),
-    partiallyBenchmarked: result.partiallyBenchmarked.map(compactRecommendationCandidate),
-    unbenchmarked: result.unbenchmarked.map(compactRecommendationCandidate),
-    unverified: result.unverified,
+    alsoConsidered: recommendationGroup([...alsoConsideredById.values()], parsed, compactRecommendationRow),
+    partiallyBenchmarked: recommendationGroup(result.partiallyBenchmarked, parsed, compactRecommendationRow),
+    unbenchmarked: recommendationGroup(result.unbenchmarked, parsed, compactRecommendationRow),
+    unverified: recommendationGroup(result.unverified, parsed, compactRecommendationRow),
   });
 }
 

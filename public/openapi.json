@@ -111,7 +111,7 @@
     },
     "/api/v1/recommend": {
       "get": {
-        "summary": "Recommend models for a workload with quality, value, and quality-floor picks",
+        "summary": "Recommend models for a workload with compact candidate groups and full explanations for the three picks",
         "operationId": "getApiV1Recommend",
         "parameters": [
           {
@@ -176,6 +176,32 @@
             "schema": {
               "type": "boolean"
             }
+          },
+          {
+            "name": "detail",
+            "in": "query",
+            "required": false,
+            "description": "Defaults to compact; full returns explanations for all returned rows.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "compact",
+                "full"
+              ],
+              "default": "compact"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum rows per recommendation group; defaults to 10 (range 1–100).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
           }
         ],
         "responses": {
@@ -224,7 +250,7 @@
     },
     "/api/v1/recommend/providers": {
       "get": {
-        "summary": "Rank providers for one canonical model and workload",
+        "summary": "Rank providers for one model with full explanations for the top three and compact remaining rows",
         "operationId": "getApiV1RecommendProviders",
         "parameters": [
           {
@@ -297,6 +323,32 @@
             "description": "Include models not confirmed open-weight; defaults to false for model recommendations.",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "detail",
+            "in": "query",
+            "required": false,
+            "description": "Defaults to compact; full returns explanations for all returned rows.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "compact",
+                "full"
+              ],
+              "default": "compact"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum rows per recommendation group; defaults to 10 (range 1–100).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
             }
           }
         ],
@@ -500,7 +552,7 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "Filter or control parameter: limit.",
+            "description": "Page size; defaults to 100 and is clamped to 1–500.",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -928,7 +980,7 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "Filter or control parameter: limit.",
+            "description": "Page size; defaults to 100 and is clamped to 1–500.",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -1103,7 +1155,7 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "description": "Filter or control parameter: limit.",
+            "description": "Page size; defaults to 100 and is clamped to 1–500.",
             "schema": {
               "type": "integer",
               "minimum": 1,

@@ -15,16 +15,18 @@ export const API_ENDPOINTS = [
   },
   {
     path: '/api/v1/recommend',
-    summary: 'Recommend models for a workload with quality, value, and quality-floor picks',
-    params: ['use_case', 'priority', 'zdr', 'exclude_hq', 'include_proprietary'],
+    summary: 'Recommend models for a workload with compact candidate groups and full explanations for the three picks',
+    params: ['use_case', 'priority', 'zdr', 'exclude_hq', 'include_proprietary', 'detail', 'limit'],
     requiredParams: ['use_case'],
+    parameterLimits: { limit: 100 },
     sort: [],
   },
   {
     path: '/api/v1/recommend/providers',
-    summary: 'Rank providers for one canonical model and workload',
-    params: ['use_case', 'model', 'priority', 'zdr', 'exclude_hq', 'include_proprietary'],
+    summary: 'Rank providers for one model with full explanations for the top three and compact remaining rows',
+    params: ['use_case', 'model', 'priority', 'zdr', 'exclude_hq', 'include_proprietary', 'detail', 'limit'],
     requiredParams: ['use_case', 'model'],
+    parameterLimits: { limit: 100 },
     sort: [],
   },
   {
