@@ -81,6 +81,22 @@ Downloads may be blocked inside ChatGPT's in-app browser. Tool results still rep
 
 `recommend_model` accepts a use-case id plus optional priority, ZDR, headquarters exclusions, proprietary-model opt-in, and a group `limit` (1–100, default 10). It returns full explanations for the three picks; considered, partially benchmarked, unbenchmarked, and unverified groups contain compact `{ totalCount, items }` results by default. `recommend_provider` takes the same constraints and one canonical model id; its ranked group fully explains the top three and compacts the rest. Both call the shared API engine; the selected preset mix is returned with `assumed: true`. They are read-only, use the compact default, and do not follow or alter the table's current workload or filters. The HTTP API also accepts `detail=full` to expand explanations for all returned rows. See `/api/v1/use-cases` for the nine preset mixes, weights, requirements, and quality floors.
 
+### Recommendation tools
+
+`recommend_model` and `recommend_provider` are thin wrappers over `GET /api/v1/recommend` and `GET /api/v1/recommend/providers` (built by `recommendModel`/`recommendProvider` in `public/app.js`), which run `shortlistModels()`/`rankProviders()` from `shared/recommend.mjs` with presets from `shared/use-cases.mjs`. The human-facing equivalent is the `/choose/` page (deep link `/choose/?useCase=<id>`); it runs the same engine in the browser and does not register WebMCP tools itself.
+
+| Input | API parameter | Notes |
+|---|---|---|
+| `useCase` (required) | `use_case` | one of the nine presets in `/api/v1/use-cases` |
+| `model` (provider tool only, required) | `model` | canonical model id; unknown → 404 |
+| `priority` | `priority` | `balanced` (default), `cheapest`, `fastest`, `most-reliable` |
+| `zdr` | `zdr=true` | confirmed zero-data-retention providers only |
+| `excludeHq` | `exclude_hq` | two-letter codes; unknown headquarters are not excluded |
+| `includeProprietary` | `include_proprietary=true` | default is open-weight only |
+| `limit` | `limit` | rows per group, 1–100 (default 10) |
+
+Results carry a `confidence.level` of `stable` (≥10-point margin over the runner-up), `moderately_stable` (3–10) or `close_call` (<3); agents should present a close call as a tie. For `chat-assistant` and `creative-writing`, `preference` carries the LMArena favourite and its CC BY 4.0 source attribution, which must be shown with any rating. Example prompt: *"Which open model should I use for a coding agent with ZDR, and who should host it?"* → `recommend_model({ useCase: "agentic-coding", zdr: true })` → `recommend_provider({ useCase: "agentic-coding", model: <bestValue.id>, zdr: true })` → share `/choose/?useCase=agentic-coding`.
+
 ## Demo walkthrough ("Priya")
 
 Priya runs a ~40-person SaaS support bot, ~20M tokens/month, cache-heavy, needs ZDR.
