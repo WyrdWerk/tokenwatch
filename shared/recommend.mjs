@@ -7,7 +7,7 @@
 
 import { blendedRate } from './cost.mjs';
 import { canonicalId, quantFromId } from './normalize.mjs';
-import { getUseCase } from './use-cases.mjs';
+import { getUseCase, resolveProviderWeights } from './use-cases.mjs';
 
 const BENCHMARK_FIELDS = new Set([
   'intelligence_index', 'coding_index', 'agentic_index', 'design_arena_best',
@@ -32,6 +32,35 @@ function finite(value) {
 
 function finiteNonNegative(value) {
   return finite(value) && value >= 0;
+}
+
+function normalizedWeights(weights, label) {
+  const entries = Object.entries(weights || {});
+  const total = entries.reduce((sum, [, weight]) => sum + weight, 0);
+  if (!entries.length || entries.some(([, weight]) => !finiteNonNegative(weight)) || total <= 0) {
+    throw new RangeError(`${label} must contain non-negative finite weights with a positive total`);
+  }
+  return Object.fromEntries(entries.map(([field, weight]) => [field, weight / total]));
+}
+
+function effectiveUseCase(useCaseId, options = {}) {
+  const base = getUseCase(useCaseId);
+  const scenario = options.scenario || {};
+  const priority = options.priority ?? 'balanced';
+  const priorityProviderWeights = resolveProviderWeights(base, priority);
+  const mix = scenario.mix ?? base.mix;
+  const mixTotal = mix.inputPct + mix.cacheReadPct + mix.outputPct;
+  if (![mix.inputPct, mix.cacheReadPct, mix.outputPct].every(finiteNonNegative) || Math.abs(mixTotal - 100) > 1e-9) {
+    throw new RangeError('scenario.mix percentages must be finite, non-negative, and sum to 100');
+  }
+  return {
+    ...base,
+    priority,
+    mix: { ...mix },
+    benchmarkWeights: normalizedWeights(scenario.benchmarkWeights ?? base.benchmarkWeights, 'benchmark weights'),
+    providerWeights: normalizedWeights(scenario.providerWeights ?? priorityProviderWeights, 'provider weights'),
+    qualityFloor: { ...(scenario.qualityFloor ?? base.qualityFloor) },
+  };
 }
 
 function openWeightInfo(model) {
@@ -168,19 +197,31 @@ function metricValue(record, field) {
   return finite(value) ? value : null;
 }
 
-function modelMetrics(group, benchmarkEntry, weights) {
+function benchmarkSignalSource(field, benchmarks) {
+  if (field === 'design_arena_best') {
+    return { name: 'Design Arena', transport: 'OpenRouter benchmark metadata' };
+  }
+  if (field.startsWith('livebench_')) {
+    return { name: 'LiveBench', release: benchmarks?.sources?.livebench?.release ?? null };
+  }
+  return { name: 'Artificial Analysis via OpenRouter', index: field };
+}
+
+function modelMetrics(group, benchmarkEntry, weights, benchmarks) {
   const metrics = {};
+  const sources = {};
   for (const field of Object.keys(weights)) {
     if (!BENCHMARK_FIELDS.has(field)) continue;
     for (const model of group.offerings) {
       const value = metricValue(model, field) ?? metricValue(benchmarkEntry, field);
       if (value !== null) {
         metrics[field] = value;
+        sources[field] = benchmarkSignalSource(field, benchmarks);
         break;
       }
     }
   }
-  return metrics;
+  return { metrics, sources };
 }
 
 function percentile(value, values) {
@@ -206,7 +247,9 @@ function median(values) {
 function scoreModelCandidates(groups, benchmarks, useCase) {
   const benchmarkIndex = buildBenchmarkIndex(benchmarks);
   for (const group of groups) {
-    group.metrics = modelMetrics(group, benchmarkIndex.get(group.id), useCase.benchmarkWeights);
+    const result = modelMetrics(group, benchmarkIndex.get(group.id), useCase.benchmarkWeights, benchmarks);
+    group.metrics = result.metrics;
+    group.metricSources = result.sources;
   }
   const totalWeight = Object.values(useCase.benchmarkWeights).reduce((sum, weight) => sum + weight, 0);
   const valuesByField = {};
@@ -216,13 +259,16 @@ function scoreModelCandidates(groups, benchmarks, useCase) {
 
   for (const group of groups) {
     const weightedScores = [];
+    group.metricPercentiles = {};
     let coveredWeight = 0;
     for (const [field, weight] of Object.entries(useCase.benchmarkWeights)) {
       const value = group.metrics[field];
       if (!finite(value)) continue;
       const values = valuesByField[field];
       if (!values.length) continue;
-      weightedScores.push({ score: percentile(value, values), weight });
+      const score = percentile(value, values);
+      group.metricPercentiles[field] = score;
+      weightedScores.push({ field, score, weight });
       coveredWeight += weight;
     }
     group.qualityCoverage = totalWeight ? coveredWeight / totalWeight : 0;
@@ -246,11 +292,116 @@ function blendedPrice(model, mix) {
   return finiteNonNegative(rate) ? rate : null;
 }
 
+function rounded(value, digits = 4) {
+  return finite(value) ? Number(value.toFixed(digits)) : null;
+}
+
+function confidenceFromRanking(ranked, selectedId, method) {
+  const index = ranked.findIndex((row) => row.id === selectedId);
+  const selected = ranked[index];
+  const runnerUp = index >= 0 ? ranked[index + 1] : null;
+  if (!selected || !runnerUp || !finite(selected.score) || !finite(runnerUp.score)) {
+    return { level: 'uncompared', method, scoreMargin: null, runnerUpId: runnerUp?.id ?? null, runnerUpScore: runnerUp?.score ?? null };
+  }
+  const scoreMargin = Math.max(0, selected.score - runnerUp.score);
+  const level = scoreMargin >= 10 ? 'stable' : scoreMargin >= 3 ? 'moderately_stable' : 'close_call';
+  return {
+    level,
+    method,
+    scoreMargin: rounded(scoreMargin, 2),
+    runnerUpId: runnerUp.id,
+    runnerUpScore: rounded(runnerUp.score, 2),
+  };
+}
+
+function capabilitySource(model) {
+  return Array.isArray(model?.supported_parameters) ? 'OpenRouter supported_parameters' : 'models.dev capability metadata';
+}
+
+function candidateGates(group, model, useCase, pick) {
+  const requirements = useCase.hardRequirements || {};
+  const openWeights = openWeightInfo(model);
+  const capacity = contextCapacity(model);
+  const primaryScore = group.metrics?.[useCase.qualityFloor.field] ?? null;
+  const qualityGateApplied = ['bestQuality', 'bestValue', 'qualityRanking'].includes(pick);
+  return [
+    { key: 'open_weights', applied: true, passed: openWeights.value === true || group.allowProprietary, required: !group.allowProprietary, overridden: group.allowProprietary && openWeights.value !== true, observed: openWeights.value, source: openWeights.source },
+    { key: 'subscription', applied: true, passed: model.subscription !== true || group.allowSubscription, observed: model.subscription === true, overridden: model.subscription === true && group.allowSubscription },
+    { key: 'tool_calling', applied: requirements.needsToolCalling === true, passed: capabilityValue(model, 'tool_call') !== false, required: requirements.needsToolCalling === true, observed: capabilityValue(model, 'tool_call'), source: capabilitySource(model) },
+    { key: 'structured_output', applied: requirements.needsStructuredOutput === true, passed: capabilityValue(model, 'structured_output') !== false, required: requirements.needsStructuredOutput === true, observed: capabilityValue(model, 'structured_output'), source: capabilitySource(model) },
+    { key: 'minimum_context', applied: finiteNonNegative(requirements.minContext) && requirements.minContext > 0, passed: capacity === null ? null : capacity >= (requirements.minContext || 0), minimum: requirements.minContext || 0, observed: capacity },
+    { key: 'priceable_mix', applied: true, passed: finiteNonNegative(group.blendedRate), mix: useCase.mix, observedBlendedRate: group.blendedRate },
+    { key: 'quantization_policy', applied: Boolean(useCase.quantizationPolicy?.reject?.length), passed: true, rejected: useCase.quantizationPolicy?.reject || [], fallbackUsed: Boolean(group.quantFallback) },
+    { key: 'benchmark_coverage', applied: qualityGateApplied, passed: group.qualityCoverage >= 0.5, minimumCoverage: 0.5, observedCoverage: group.qualityCoverage },
+    { key: 'quality_floor', applied: pick === 'cheapestAboveFloor', passed: pick === 'cheapestAboveFloor' ? finite(primaryScore) && primaryScore >= useCase.qualityFloor.min : null, field: useCase.qualityFloor.field, minimum: useCase.qualityFloor.min, observed: primaryScore },
+  ];
+}
+
+function candidateExplanation(group, model, useCase, pick) {
+  const weights = useCase.benchmarkWeights;
+  const totalWeight = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
+  const signals = Object.entries(weights).map(([field, weight]) => {
+    const rawValue = finite(group.metrics?.[field]) ? group.metrics[field] : null;
+    const percentileScore = finite(group.metricPercentiles?.[field]) ? group.metricPercentiles[field] : null;
+    return {
+      field,
+      rawValue,
+      source: group.metricSources?.[field] ?? benchmarkSignalSource(field, null),
+      weight,
+      percentileScore: rounded(percentileScore, 6),
+      weightedContribution: rawValue === null || percentileScore === null ? 0 : rounded(percentileScore * weight * 100, 4),
+    };
+  });
+  const missingSignals = signals
+    .filter((signal) => signal.rawValue === null)
+    .map((signal) => ({ ...signal, reason: 'No benchmark value is available for this model in the selected catalog snapshot.' }));
+  const missingWeight = signals.filter((signal) => signal.rawValue === null).reduce((sum, signal) => sum + signal.weight, 0);
+  const observedWeight = totalWeight - missingWeight;
+  const rawScore = group.rawQualityScore;
+  const cohortMedian = group.cohortMedianQualityScore;
+  const finalScore = group.qualityScore;
+  const observedContribution = finite(rawScore) ? rawScore * (group.qualityCoverage ?? 0) : null;
+  const missingContribution = finite(cohortMedian) ? cohortMedian * (1 - (group.qualityCoverage ?? 0)) : null;
+  const priority = useCase.priority || 'balanced';
+  return {
+    schemaVersion: 1,
+    useCase: useCase.id,
+    pick,
+    priority,
+    mix: { ...useCase.mix },
+    weights: {
+      benchmark: { ...weights },
+      provider: { ...useCase.providerWeights },
+    },
+    benchmark: {
+      signals,
+      missingSignals,
+      totalWeight: rounded(totalWeight, 6),
+      observedWeight: rounded(observedWeight, 6),
+      missingWeight: rounded(missingWeight, 6),
+      coverage: rounded(group.qualityCoverage ?? 0, 6),
+      unshrunkScore: rounded(rawScore, 4),
+      cohortMedianScore: rounded(cohortMedian, 4),
+      shrinkage: {
+        method: 'missing_weight_toward_eligible_cohort_median',
+        missingWeight: rounded(missingWeight, 6),
+        observedContribution: rounded(observedContribution, 4),
+        missingContribution: rounded(missingContribution, 4),
+        scoreDelta: finite(finalScore) && finite(rawScore) ? rounded(finalScore - rawScore, 4) : null,
+      },
+      finalScore: rounded(finalScore, 4),
+    },
+    gates: candidateGates(group, model, useCase, pick),
+  };
+}
+
 function candidateResult(group, useCase, {
   unbenchmarked = false,
   meetsQualityFloor = false,
   candidateCount = null,
   costsMoreThanBestValue = false,
+  pick = 'candidate',
+  confidence = null,
 } = {}) {
   const providerRanking = group.providerRanking || { ranked: [], unverified: [] };
   const recommendedProvider = providerRanking.ranked[0] || null;
@@ -321,6 +472,8 @@ function candidateResult(group, useCase, {
     license,
     reasons,
     unknowns,
+    confidence: confidence || { level: 'uncompared', method: 'not-ranked', scoreMargin: null, runnerUpId: null, runnerUpScore: null },
+    explanation: candidateExplanation(group, model, useCase, pick),
     unverifiedProviders: providerRanking.unverified,
     ...(unbenchmarked ? { group: 'unbenchmarked' } : {}),
     ...(group.qualityScore !== null && group.qualityCoverage < 0.5 ? { group: 'partiallyBenchmarked' } : {}),
@@ -377,6 +530,20 @@ function chooseParetoKnee(frontier) {
   })[0];
 }
 
+function paretoConfidenceScores(frontier) {
+  if (!frontier.length) return [];
+  const qualityMin = Math.min(...frontier.map((candidate) => candidate.qualityScore));
+  const qualityMax = Math.max(...frontier.map((candidate) => candidate.qualityScore));
+  const priceMin = Math.min(...frontier.map((candidate) => candidate.blendedRate));
+  const priceMax = Math.max(...frontier.map((candidate) => candidate.blendedRate));
+  return frontier.map((candidate) => {
+    const quality = qualityMax === qualityMin ? 1 : (candidate.qualityScore - qualityMin) / (qualityMax - qualityMin);
+    const price = priceMax === priceMin ? 1 : (priceMax - candidate.blendedRate) / (priceMax - priceMin);
+    const distance = Math.sqrt((1 - quality) ** 2 + (1 - price) ** 2);
+    return { id: candidate.id, score: 100 * (1 - distance / Math.sqrt(2)) };
+  }).sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+}
+
 function unverifiedModelResult(group, providerResults) {
   const reasons = ['No provider has confirmed all required capability and context metadata; this model remains unverified.'];
   const unknowns = [];
@@ -409,7 +576,9 @@ function unverifiedModelResult(group, providerResults) {
  * the same canonicalId|provider measurements used by rankProviders().
  */
 export function shortlistModels(useCaseId, catalog, opts = {}) {
-  const useCase = getUseCase(useCaseId);
+  const priority = opts.priority ?? opts.constraints?.priority ?? 'balanced';
+  const scenario = opts.scenario ?? opts.constraints?.scenario;
+  const useCase = effectiveUseCase(useCaseId, { priority, scenario });
   const allowBatch = includeBatchVariants(useCase, opts);
   const groupsById = new Map();
   for (const model of modelsFrom(catalog)) {
@@ -424,6 +593,8 @@ export function shortlistModels(useCaseId, catalog, opts = {}) {
         id,
         name: model.name || String(model.id),
         org: model.org || null,
+        allowProprietary: opts.includeProprietary === true,
+        allowSubscription: opts.includeSubscription === true,
         offerings: [],
       });
     }
@@ -434,11 +605,11 @@ export function shortlistModels(useCaseId, catalog, opts = {}) {
   }
 
   const performance = opts.performance ?? opts.perf ?? {};
-  const constraints = { ...opts, ...(opts.constraints || {}) };
+  const constraints = { ...opts, ...(opts.constraints || {}), priority, scenario };
   const eligibleGroups = [];
   const unverified = [];
   for (const group of groupsById.values()) {
-    const providerRanking = rankProviders(useCase.id, group.id, group.offerings, performance, constraints);
+    const providerRanking = rankProviders(useCase, group.id, group.offerings, performance, constraints);
     if (providerRanking.ranked.length) {
       group.providerRanking = providerRanking;
       group.blendedRate = Math.min(...providerRanking.ranked.map((provider) => provider.blendedRate));
@@ -475,21 +646,54 @@ export function shortlistModels(useCaseId, catalog, opts = {}) {
       && candidate.blendedRate !== null)
     .sort((a, b) => a.blendedRate - b.blendedRate || b.qualityScore - a.qualityScore || a.id.localeCompare(b.id));
   const cheapestAboveFloorGroup = floorEligible[0];
-  const bestValue = chooseParetoKnee(frontier);
+  const bestValueCandidate = chooseParetoKnee(frontier);
+  const bestValueGroup = bestValueCandidate
+    ? qualityEligible.find((candidate) => candidate.id === bestValueCandidate.id)
+    : null;
+  const qualityConfidenceScores = [...qualityEligible]
+    .map((candidate) => ({ id: candidate.id, score: candidate.qualityScore }))
+    .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+  const floorMinimum = floorEligible.length ? Math.min(...floorEligible.map((candidate) => candidate.blendedRate)) : null;
+  const floorConfidenceScores = floorEligible
+    .map((candidate) => ({ id: candidate.id, score: floorMinimum > 0 ? 100 * floorMinimum / candidate.blendedRate : 100 }))
+    .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+  const bestValue = bestValueGroup
+    ? candidateResult(bestValueGroup, useCase, {
+      pick: 'bestValue',
+      candidateCount: frontier.length,
+      confidence: confidenceFromRanking(paretoConfidenceScores(frontier), bestValueGroup.id, 'pareto_ideal_score_margin'),
+    })
+    : null;
   const cheapestAboveFloor = cheapestAboveFloorGroup
     ? candidateResult(cheapestAboveFloorGroup, useCase, {
       meetsQualityFloor: true,
       candidateCount: floorEligible.length,
       costsMoreThanBestValue: Boolean(bestValue && cheapestAboveFloorGroup.blendedRate > bestValue.blendedRate),
+      pick: 'cheapestAboveFloor',
+      confidence: confidenceFromRanking(floorConfidenceScores, cheapestAboveFloorGroup.id, 'relative_blended_cost_margin'),
     })
     : null;
+  const qualityRanking = [...qualityEligible]
+    .sort((a, b) => b.qualityScore - a.qualityScore || (a.blendedRate ?? Infinity) - (b.blendedRate ?? Infinity) || a.id.localeCompare(b.id))
+    .slice(0, 10)
+    .map((candidate) => candidateResult(candidate, useCase, {
+      pick: 'qualityRanking',
+      candidateCount: qualityEligible.length,
+      confidence: confidenceFromRanking(qualityConfidenceScores, candidate.id, 'quality_score_margin'),
+    }));
 
   return {
     useCase: useCase.id,
+    priority,
     qualityFloor,
-    bestQuality: bestQualityGroup ? candidateResult(bestQualityGroup, useCase, { candidateCount: qualityEligible.length }) : null,
+    bestQuality: bestQualityGroup ? candidateResult(bestQualityGroup, useCase, {
+      pick: 'bestQuality',
+      candidateCount: qualityEligible.length,
+      confidence: confidenceFromRanking(qualityConfidenceScores, bestQualityGroup.id, 'quality_score_margin'),
+    }) : null,
     bestValue,
     cheapestAboveFloor,
+    qualityRanking,
     paretoFrontier: frontier,
     unbenchmarked,
     partiallyBenchmarked,
@@ -584,14 +788,22 @@ function metricsForProvider(model, canonical, perf, useCase) {
   // Lilac is fetched with window=1h; Umans has no disclosed measurement window.
   const latencyWindow = record?.latency?.window
     || (source === 'openrouter' ? '30m' : source === 'lilac' ? '1h' : null);
+  const throughputWindow = record?.throughput?.window
+    || (source === 'openrouter' ? '30m' : source === 'lilac' ? '1h' : null);
+  const uptimeSource = model.uptime_source || 'openrouter';
+  const pricingSource = model.pricing_source || 'TokenWatch pricing catalog';
   return {
     price: rate,
+    priceSource: { name: pricingSource, provider: model.provider },
     ttft,
     ttftSource: performanceSourceLabel(source),
     ttftWindow: ttft !== null ? performanceWindowLabel(latencyWindow) : null,
+    ttftSourceInfo: { name: performanceSourceLabel(source), window: latencyWindow },
     throughput,
+    throughputSourceInfo: { name: performanceSourceLabel(source), window: throughputWindow },
     uptime: uptime?.value ?? null,
     uptimeWindow: uptime?.window ?? null,
+    uptimeSourceInfo: { name: performanceSourceLabel(uptimeSource), window: uptime?.window ?? '30m' },
   };
 }
 
@@ -627,12 +839,78 @@ function gateProvider(model, useCase, constraints, canonical) {
   };
 }
 
+function providerGates(model, useCase, constraints, gate, quantFallback, price) {
+  const requirements = useCase.hardRequirements || {};
+  const requireHQ = constraints.requireHQ ?? constraints.requireHq;
+  const minUptime = minUptimePercent(constraints.minUptime);
+  return [
+    { key: 'tool_calling', applied: requirements.needsToolCalling === true, passed: capabilityValue(model, 'tool_call') !== false, required: requirements.needsToolCalling === true, observed: capabilityValue(model, 'tool_call'), source: capabilitySource(model) },
+    { key: 'structured_output', applied: requirements.needsStructuredOutput === true, passed: capabilityValue(model, 'structured_output') !== false, required: requirements.needsStructuredOutput === true, observed: capabilityValue(model, 'structured_output'), source: capabilitySource(model) },
+    { key: 'minimum_context', applied: finiteNonNegative(requirements.minContext) && requirements.minContext > 0, passed: gate.capacity === null ? null : gate.capacity >= (requirements.minContext || 0), minimum: requirements.minContext || 0, observed: gate.capacity },
+    { key: 'zdr', applied: Boolean(constraints.requireZdr), passed: !constraints.requireZdr || model.zdr === true, observed: model.zdr === true },
+    { key: 'headquarters', applied: Boolean(requireHQ), passed: !requireHQ || matchesHeadquarters(gate.headquarters, requireHQ), requested: requireHQ ?? null, observed: gate.headquarters },
+    { key: 'minimum_uptime', applied: minUptime !== null, passed: minUptime === null || Boolean(gate.uptime && gate.uptime.value >= minUptime), minimum: minUptime, observed: gate.uptime?.value ?? null, window: gate.uptime?.window ?? null },
+    { key: 'known_issue', applied: true, passed: !gate.issues.some((issue) => BLOCKING_ISSUES.has(String(issue.verdict || '').toLowerCase())), blockingVerdicts: ['broken', 'unavailable'], observed: gate.issues.map((issue) => ({ verdict: issue.verdict || 'unspecified', source: issue.source || null })) },
+    { key: 'priceable_mix', applied: true, passed: finiteNonNegative(price), mix: useCase.mix, observedBlendedRate: price },
+    { key: 'quantization_policy', applied: Boolean(useCase.quantizationPolicy?.reject?.length), passed: true, rejected: useCase.quantizationPolicy?.reject || [], fallbackUsed: quantFallback },
+  ];
+}
+
+function providerExplanation(row, useCase, constraints, gate) {
+  const weights = useCase.providerWeights;
+  const signals = PROVIDER_METRICS.map((field) => {
+    const rawValue = finite(row.metrics[field]) ? row.metrics[field] : null;
+    const weight = weights[field] ?? 0;
+    const normalizedScore = finite(row.normalized[field]) ? row.normalized[field] : null;
+    return {
+      field,
+      rawValue,
+      source: row.metrics[`${field}SourceInfo`] ?? row.metrics[`${field}Source`] ?? null,
+      weight,
+      normalizedScore: rounded(normalizedScore, 6),
+      effectiveWeight: rawValue === null || row.availableWeight <= 0 ? 0 : rounded(weight / row.availableWeight, 6),
+      weightedContribution: rawValue === null || normalizedScore === null || row.availableWeight <= 0
+        ? 0
+        : rounded(normalizedScore * weight / row.availableWeight * 100, 4),
+    };
+  });
+  const missingSignals = signals
+    .filter((signal) => signal.rawValue === null)
+    .map((signal) => ({
+      ...signal,
+      reason: 'No value is available for this provider in the selected telemetry snapshot.',
+      scoreEffect: 'omitted; the remaining observed weights are renormalized rather than treated as zero',
+    }));
+  const missingWeight = signals.filter((signal) => signal.rawValue === null).reduce((sum, signal) => sum + signal.weight, 0);
+  return {
+    schemaVersion: 1,
+    useCase: useCase.id,
+    priority: useCase.priority || 'balanced',
+    mix: { ...useCase.mix },
+    weights: { ...weights },
+    signals,
+    missingSignals,
+    score: {
+      observedWeight: rounded(row.availableWeight, 6),
+      missingWeight: rounded(missingWeight, 6),
+      renormalizationFactor: row.availableWeight > 0 ? rounded(1 / row.availableWeight, 6) : null,
+      weightedSumBeforeRenormalization: rounded(row.weightedScore, 6),
+      finalScore: rounded(row.score, 4),
+      missingnessEffect: 'Missing metrics are omitted, not scored as zero; remaining weights are renormalized. Their unknown effect cannot be estimated from the available data.',
+    },
+    gates: providerGates(row.model, useCase, constraints, gate, row.quantFallback, row.metrics.price),
+  };
+}
+
 /**
  * Rank provider offerings for one canonical model after hard capability,
  * context, privacy, uptime, issue, and quantization gates.
  */
 export function rankProviders(useCaseId, canonicalModelId, offerings, perf = {}, constraints = {}) {
-  const useCase = getUseCase(useCaseId);
+  const useCase = effectiveUseCase(useCaseId, {
+    priority: constraints.priority ?? 'balanced',
+    scenario: constraints.scenario,
+  });
   const canonical = canonicalId(String(canonicalModelId));
   const allowBatch = includeBatchVariants(useCase, constraints);
   const groups = [];
@@ -671,6 +949,8 @@ export function rankProviders(useCaseId, canonicalModelId, offerings, perf = {},
       availableWeight += weight;
       weightedScore += normalized * weight;
     }
+    row.availableWeight = availableWeight;
+    row.weightedScore = weightedScore;
     row.score = availableWeight ? weightedScore / availableWeight * 100 : null;
   }
 
@@ -755,11 +1035,21 @@ export function rankProviders(useCaseId, canonicalModelId, offerings, perf = {},
     };
   }
 
-  const ranked = rows
-    .map((row) => row.result)
-    .sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity)
-      || (a.blendedRate ?? Infinity) - (b.blendedRate ?? Infinity)
-      || String(a.provider).localeCompare(String(b.provider)));
+  const rankedRows = [...rows].sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity)
+    || (a.metrics.price ?? Infinity) - (b.metrics.price ?? Infinity)
+    || String(a.model.provider).localeCompare(String(b.model.provider)));
+  const ranked = rankedRows.map((row, index) => {
+    const runnerUp = rankedRows[index + 1];
+    const confidence = confidenceFromRanking([
+      { id: row.model.provider, score: row.score },
+      ...(runnerUp ? [{ id: runnerUp.model.provider, score: runnerUp.score }] : []),
+    ], row.model.provider, 'provider_score_margin');
+    return {
+      ...row.result,
+      confidence,
+      explanation: providerExplanation(row, useCase, constraints, row.gate),
+    };
+  });
 
   const unverified = unverifiedGroups.map((group) => {
     const model = group.offerings[0];

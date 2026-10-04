@@ -9,6 +9,21 @@ import { AGENTIC_MIX } from './cost.mjs';
 
 const LOW_BIT_QUANTS = ['fp4', 'nvfp4', 'mxfp4', 'int4', 'int4-mixed-ar'];
 
+/** Provider-ranking presets exposed as the single user-facing priority knob. */
+export const PRIORITY_PROVIDER_WEIGHTS = Object.freeze({
+  balanced: null,
+  cheapest: Object.freeze({ price: 0.7, ttft: 0.1, throughput: 0.1, uptime: 0.1 }),
+  fastest: Object.freeze({ price: 0.15, ttft: 0.35, throughput: 0.4, uptime: 0.1 }),
+  'most-reliable': Object.freeze({ price: 0.1, ttft: 0.1, throughput: 0.15, uptime: 0.65 }),
+});
+
+export function resolveProviderWeights(useCase, priority = 'balanced') {
+  if (!Object.hasOwn(PRIORITY_PROVIDER_WEIGHTS, priority)) {
+    throw new RangeError(`Unknown provider priority: ${priority}`);
+  }
+  return { ...(PRIORITY_PROVIDER_WEIGHTS[priority] || useCase.providerWeights) };
+}
+
 export const USE_CASES = Object.freeze({
   'agentic-coding': {
     id: 'agentic-coding',

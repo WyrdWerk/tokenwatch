@@ -500,3 +500,76 @@ test('reasoning flag is informational and never a reasoning-math gate', () => {
   assert.ok(result.ranked[0].reasons.some((reason) => /reasoning.*informational only/i.test(reason)));
   assert.ok(result.ranked[1].unknowns.some((reason) => /reasoning.*informational only/i.test(reason)));
 });
+
+test('each model pick and ranked provider carries a source-attributed explanation and confidence', () => {
+  const result = shortlistModels('agentic-coding', FRONTIER_CATALOG, {
+    benchmarks: {
+      sources: { livebench: { release: '2026-06-25' } },
+      models: [{ id: 'model-a', scores: { livebench_agentic_coding: 72 } }],
+    },
+    performance: {
+      'model-a|alpha': { latency: { p50: 120 }, throughput: { p50: 90 } },
+    },
+  });
+
+  for (const pick of [result.bestQuality, result.bestValue, result.cheapestAboveFloor]) {
+    assert.ok(pick?.explanation, `${pick?.id} has an explanation payload`);
+    assert.deepEqual(pick.explanation.mix, USE_CASES['agentic-coding'].mix);
+    assert.equal(pick.explanation.priority, 'balanced');
+    assert.ok(pick.explanation.weights.benchmark.agentic_index > 0);
+    assert.ok(pick.explanation.gates.some((gate) => gate.key === 'tool_calling' && gate.passed));
+    assert.equal(typeof pick.confidence.level, 'string');
+    assert.ok(pick.explanation.benchmark.signals.some((signal) =>
+      signal.field === 'agentic_index'
+      && signal.rawValue === pick.offering.benchmarks.agentic_index
+      && signal.source.name === 'Artificial Analysis via OpenRouter'));
+    assert.ok(Number.isFinite(pick.explanation.benchmark.shrinkage.missingWeight));
+  }
+  const bestValueLiveBench = result.bestValue.explanation.benchmark.signals.find((signal) => signal.field === 'livebench_agentic_coding');
+  assert.equal(bestValueLiveBench.rawValue, 72);
+  assert.equal(bestValueLiveBench.source.release, '2026-06-25');
+  assert.ok(result.bestQuality.explanation.benchmark.missingSignals.some((signal) => signal.field === 'livebench_agentic_coding'));
+
+  const providers = rankProviders('agentic-coding', 'model-a', [
+    mixOffering('open/model-a', 'alpha', 90, 1, { uptime_30m: 99.8 }),
+    mixOffering('open/model-a', 'beta', 90, 2, { uptime_30m: 99.6 }),
+  ], {
+    'model-a|alpha': { latency: { p50: 120 }, throughput: { p50: 90 } },
+  });
+  assert.ok(providers.ranked.every((provider) => provider.explanation));
+  assert.ok(providers.ranked.every((provider) => provider.confidence));
+  const alpha = providers.ranked.find((provider) => provider.provider === 'alpha');
+  assert.ok(alpha.explanation.signals.some((signal) =>
+    signal.field === 'ttft' && signal.source.name === 'OpenRouter' && signal.source.window === '30m'));
+  assert.ok(alpha.explanation.signals.some((signal) =>
+    signal.field === 'uptime' && signal.source.name === 'OpenRouter' && signal.source.window === '30m'));
+  const beta = providers.ranked.find((provider) => provider.provider === 'beta');
+  assert.ok(beta.explanation.missingSignals.some((signal) => signal.field === 'throughput'));
+  assert.ok(alpha.explanation.gates.some((gate) => gate.key === 'minimum_context' && gate.passed));
+});
+
+test('provider priority presets override use-case weights and reject unknown priorities', () => {
+  const offerings = [
+    mixOffering('open/model-a', 'cheap', 90, 1, { uptime_30m: 99 }),
+    mixOffering('open/model-a', 'fast', 90, 10, { uptime_30m: 99.5 }),
+    mixOffering('open/model-a', 'reliable', 90, 5, { uptime_30m: 99.99 }),
+  ];
+  const performance = {
+    'model-a|cheap': { latency: { p50: 10000 }, throughput: { p50: 1 } },
+    'model-a|fast': { latency: { p50: 100 }, throughput: { p50: 100 } },
+    'model-a|reliable': { latency: { p50: 1000 }, throughput: { p50: 20 } },
+  };
+
+  assert.equal(rankProviders('agentic-coding', 'model-a', offerings, performance, { priority: 'cheapest' }).ranked[0].provider, 'cheap');
+  assert.equal(rankProviders('agentic-coding', 'model-a', offerings, performance, { priority: 'fastest' }).ranked[0].provider, 'fast');
+  assert.equal(rankProviders('agentic-coding', 'model-a', offerings, performance, { priority: 'most-reliable' }).ranked[0].provider, 'reliable');
+  const shortlist = shortlistModels('agentic-coding', offerings, { performance, priority: 'fastest' });
+  assert.equal(shortlist.bestQuality.recommendedProvider.provider, 'fast');
+  assert.equal(shortlist.bestQuality.explanation.priority, 'fastest');
+  assert.equal(shortlist.bestQuality.explanation.weights.provider.throughput, 0.4);
+  assert.throws(() => rankProviders('agentic-coding', 'model-a', offerings, performance, { priority: 'fastest-ish' }), /Unknown provider priority/);
+  assert.throws(() => shortlistModels('agentic-coding', offerings, {
+    priority: 'fastest-ish',
+    scenario: { providerWeights: { price: 1 } },
+  }), /Unknown provider priority/);
+});
