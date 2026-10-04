@@ -2367,6 +2367,10 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
 .choose-action-primary:disabled, .choose-action-secondary:disabled { opacity: 0.55; cursor: not-allowed; }
 .choose-action-status { min-height: 1.2em; margin-top: 0.5rem; color: var(--green); font-size: 0.78rem; }
 .choose-cost-note { margin-top: 0.3rem; color: var(--text-dim); font-size: 0.73rem; }
+.choose-about { margin-top: 2rem; color: var(--text-dim); font-size: 0.88rem; }
+.choose-about h2 { font-size: 1.05rem; }
+.choose-about-links { display: flex; flex-wrap: wrap; gap: 0.35rem 1rem; padding: 0; list-style: none; }
+.seo-choose-link { font-weight: 600; }
 .choose-main + .site-footer { margin-top: 1rem; }
 
 @media (max-width: 900px) {

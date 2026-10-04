@@ -1,8 +1,74 @@
 # 💰 TokenWatch
 
-Compare pay-as-you-go LLM inference pricing across inference providers. Enter your token volumes and find the cheapest option.
+Compare pay-as-you-go LLM inference pricing across inference providers. Enter your token volumes and find the cheapest option — or start from your use case and let TokenWatch recommend an open-weight model and the provider to run it.
 
-**Live site:** https://tokenwatch.wyrdwerk.com
+**Live site:** https://tokenwatch.wyrdwerk.com · **Model finder:** https://tokenwatch.wyrdwerk.com/choose/
+
+## Choose a model for your use case
+
+The [`/choose/`](https://tokenwatch.wyrdwerk.com/choose/) page answers *"which open-weight model should I use for this workload, and which provider should run it?"*. The homepage finder strip hands a use case straight to it (`/choose/?useCase=<id>`).
+
+**Nine use cases:** agentic coding, tool-using agents, long-context RAG, structured extraction, high-volume/low-cost, chat assistant, creative writing, reasoning and math, and frontend/UI development.
+
+**What you get:**
+
+- **Three picks** — *best quality* (highest benchmark composite), *best value* (the balanced point on the quality-versus-price Pareto frontier, never a raw score-per-dollar ratio) and *cheapest good-enough* (the cheapest model whose primary benchmark clears an absolute floor).
+- **A provider ranking** for the selected model, with reasons, caveats, unknowns and a confidence label (*stable*, *moderately stable*, *close call*). Providers missing required capability or context metadata are listed as unverified, not ranked.
+- **A priority control** — balanced, cheapest, fastest or most reliable — that re-weights the provider ranking.
+- **Optional constraints** — zero data retention, excluded provider headquarters, and an opt-in for proprietary models (open weights only by default).
+- **People's preference** — creative writing is led by LMArena Creative Writing ratings; chat keeps capability-ranked picks and shows the Arena Text favourite separately as the *people's favourite*.
+- Shareable URL state, "Copy setup", "Copy agent prompt" and links into the calculator at the use case's mix.
+
+### How it works
+
+1. Each use case (`shared/use-cases.mjs`) defines an **assumed token mix**, **hard requirements** (tool calling, structured output, minimum context), **benchmark weights**, **provider weights**, a **quantization policy** and an **absolute quality floor** on its primary benchmark.
+2. Offerings are grouped by canonical model. Only resolved open-weight models are kept by default (`shared/open-weights.mjs`: reviewed overrides → strict models.dev majority → known-closed org priors; unknown is excluded). Subscription offerings and `:batch` variants (except high-volume work) are excluded.
+3. Each provider must pass the capability/context gates, any ZDR/headquarters constraint, known-issue checks, and have a price at the assumed mix. Low-bit quants (fp4/nvfp4/mxfp4/int4) are rejected for demanding workloads when a better-precision provider qualifies.
+4. Each benchmark becomes a percentile among eligible models; weighted percentiles form a 0–100 composite that is shrunk toward the cohort median by the share of benchmark weight that is missing. At least 50% coverage is required for best quality / best value.
+5. Providers are scored on blended price (`shared/cost.mjs`), TTFT p50, throughput p50 and uptime (30-minute window preferred); missing metrics are omitted and weights renormalized.
+6. Confidence is the margin over the runner-up: ≥10 points stable, 3–10 moderately stable, <3 close call.
+
+The engine (`shared/recommend.mjs`) is pure and Worker-safe: the `/choose/` page runs it in the browser, and the API and WebMCP tools run it at the edge. Design: [ADR 0012](docs/adr/0012-recommender-scoring.md); field contract: [docs/recommender-data-contract.md](docs/recommender-data-contract.md); dated comparison with outside leaderboards and sensitivity results: [docs/research/recommender-validation.md](docs/research/recommender-validation.md). `node scripts/recommender-sensitivity.mjs` re-runs the one-input-at-a-time robustness screen locally.
+
+### Recommendation data sources
+
+| Signal | Source |
+|---|---|
+| Prices, capabilities, context, uptime | `public/pricing.json` (the 3-tier text catalog below) |
+| Open-weight status and licence | `data/open-weights-overrides.json` + [models.dev](https://models.dev) |
+| Quality indices | [Artificial Analysis](https://artificialanalysis.ai/) intelligence / coding / agentic indices |
+| Category scores | [LiveBench](https://livebench.ai/) (2026-06-25 release) |
+| UI quality | [Design Arena](https://www.designarena.ai/) Elo |
+| Human preference | [LMArena leaderboard dataset](https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset) — Text Arena `overall` and `creative_writing`, licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Fetched weekly by `scripts/fetch-arena.mjs` into `data/arena-benchmarks.json`; ratings are unchanged and matched conservatively to TokenWatch IDs. |
+| TTFT / throughput | `public/performance.json` (OpenRouter endpoint telemetry plus direct providers) |
+
+Arena ratings are attributed wherever they appear (page, API `preference.source`, methodology page and WebMCP guidance). If you republish ratings from the API, keep that attribution.
+
+### Recommendation API
+
+```bash
+# The nine presets: assumed mixes, weights, requirements, quality floors
+curl 'https://tokenwatch.wyrdwerk.com/api/v1/use-cases'
+
+# Model picks for a use case (compact by default; pretty=1 indents)
+curl 'https://tokenwatch.wyrdwerk.com/api/v1/recommend?use_case=agentic-coding&priority=balanced&zdr=true&exclude_hq=CN&limit=5&pretty=1'
+
+# Creative writing, including the Arena preference favourite and its attribution
+curl 'https://tokenwatch.wyrdwerk.com/api/v1/recommend?use_case=creative-writing&pretty=1'
+
+# Provider ranking for one canonical model, with full explanations for every row
+curl 'https://tokenwatch.wyrdwerk.com/api/v1/recommend/providers?use_case=agentic-coding&model=glm-5.3&priority=fastest&detail=full&pretty=1'
+```
+
+Parameters: `use_case` (required), `model` (required for `/recommend/providers`), `priority` (`balanced`|`cheapest`|`fastest`|`most-reliable`), `zdr`, `exclude_hq`, `include_proprietary`, `detail` (`compact`|`full`), `limit` (1–100, default 10), `pretty`. Invalid values return 400 with the offending `parameter`. Full reference: [/docs/api/](https://tokenwatch.wyrdwerk.com/docs/api/) and [`openapi.json`](https://tokenwatch.wyrdwerk.com/openapi.json). In-page agents can call the same engine through the WebMCP tools `recommend_model` and `recommend_provider` (see [docs/WEBMCP.md](docs/WEBMCP.md)).
+
+### Limitations
+
+- **Assumed mixes.** Each use case prices providers at a fixed, assumed input/cached/output mix; it is not measured from your traffic. Check your own mix in the calculator.
+- **Judgment-based weights and floors.** Benchmark weights, provider weights and floors are documented product judgments, calibrated against the 2026-10-04 catalog snapshot. Scores are relative within a workload; only the floor is absolute.
+- **Thin or missing benchmarks.** Some LiveBench categories cover only a handful of open models, and Arena ratings match roughly half of open-weight canonical IDs. Models without enough evidence are listed separately, not ranked.
+- **Incomplete provider data.** Headquarters, TTFT, throughput, uptime and capability metadata are missing for some providers. Excluding a country only removes providers whose headquarters is known; missing telemetry is unknown, not zero.
+- **Snapshot, not a guarantee.** Prices, promotions and policies change between refreshes; verify a shortlisted provider's current terms before committing spend.
 
 ## How it works
 
@@ -11,8 +77,8 @@ Compare pay-as-you-go LLM inference pricing across inference providers. Enter yo
 1. **`scripts/fetch-pricing.mjs`** fetches text-generation pricing from 3 tiers: direct `/v1/models` providers (DeepInfra, EmberCloud, Wafer, Synthetic, Lilac, SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs, CoralBricks, SingularityAPI, RunInfra), OpenRouter de-aggregated `/endpoints` (Fireworks, Together, Novita, SiliconFlow, etc.), plus CSV/hardcoded (Makora, Xiaomimimo), docs-page-scraped OpenCode Go pricing (`parseOpenCodeGoDocs` scrapes the opencode.ai/docs/go table; catalog endpoint has no prices), and manually maintained Umans pricing (`UMANS_MODELS` in the fetcher). Also fetches provider metadata, ZDR data, models.dev enrichment, and quality benchmarks. Normalizes all pricing to $/M tokens and writes `public/pricing.json`; recommender-facing open-weight, license, and endpoint capability semantics are documented in [docs/recommender-data-contract.md](docs/recommender-data-contract.md).
 2. **`scripts/fetch-images.mjs`** fetches image generation models from OpenRouter plus fal.ai (Tier-1 precedence). Handles flat per-image, per-megapixel, and per-token pricing. Writes `public/image-pricing.json` (~160 models).
 3. **`scripts/fetch-videos.mjs`** fetches video generation models from OpenRouter plus fal.ai (Tier-1 precedence). Normalizes per-second pricing with resolution and audio variants. Writes `public/video-pricing.json` (~100 models).
-4. **`public/`** is a zero-dependency static site (HTML/CSS/JS) with three tabs (Text/Image/Video), each loading its own pricing JSON and computing costs in-browser.
-5. **`functions/api/v1/`** provides a queryable API via Cloudflare Pages Functions for all three catalogs (text, image, video).
+4. **`public/`** is a zero-dependency static site (HTML/CSS/JS) with Text/Image/Video calculators, a Benchmarks explorer and the Choose model finder, each loading its own JSON and computing in-browser. The Choose page (`public/choose/` + `choose-app.js`) runs the shared recommender engine (`shared/use-cases.mjs`, `shared/recommend.mjs`, `shared/choose-page.mjs`) client-side.
+5. **`functions/api/v1/`** provides a queryable API via Cloudflare Pages Functions for all three catalogs (text, image, video), plus the workload recommender (`/api/v1/use-cases`, `/api/v1/recommend`, `/api/v1/recommend/providers`).
 6. **`functions/api/advisor.js`** powers the on-site conversational AI Advisor (using Nemotron / InferX via OpenAI-compatible API) with dynamic knowledge base ingestion and edge rate-limiting (4 queries / 24h per IP).
 7. **`scripts/build-advisor-knowledge.mjs`** builds `public/advisor-knowledge.json` joining live model pricing, benchmarks, and provider policy URLs for the advisor bot.
 8. **GitHub Actions** refreshes pricing + performance on a 2-hourly cron, commits updated JSON, and deploys to Cloudflare Pages.
@@ -24,7 +90,8 @@ TokenWatch ships SEO infrastructure for a client-side-rendered SPA:
 - **`scripts/generate-seo.mjs`** (`npm run seo`) writes crawlable pricing tables for text, image, video, and benchmarks, plus provider/model directories, eligible comparison pages, methodology, API docs, and FAQ. Static text comparisons use the agentic mix (2.5% input, 97% cached input, 0.5% output); image billing units stay separate.
 - Generated pages have titles, descriptions, canonical URLs, social metadata, and page-appropriate JSON-LD. `npm run verify:seo` checks local page structure, FAQ/schema agreement, optional history wiring, unique titles, matching sitemap canonicals, valid model/provider links, and whether every sitemap URL is reachable from the homepage through ordinary HTML links. It does not establish live HTTP behavior or search-engine indexation.
 - `sitemap.xml`, `robots.txt`, and `llms.txt` regenerate during deployment. Committed generated copies can lag catalog data; inspect deployed output before diagnosing staleness. Update the `buildLlmsTxt()` template in `scripts/seo-pages.mjs`, not only the generated text file.
-- `llms.txt` provides model/provider discovery, API/OpenAPI links, units, workload assumptions, freshness limits, and interpretation notes for agents. WebMCP supports browser-agent interaction. Neither is a guarantee of search indexing or AI citations. [Google explicitly says it does not use llms.txt for visibility or rankings](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide).
+- `/choose/` is in the sitemap (priority 0.8) and linked from the nav, the homepage finder strip, explore links, every generated model page ("Is this the right model for your workload?"), the methodology page (`#recommendations`), and the FAQ ("Choosing a model and provider" group, mirrored in FAQPage JSON-LD). Its static HTML carries WebApplication + use-case ItemList JSON-LD and crawlable `?useCase=` deep links. The sitemap is now provider pages + model pages + 10 fixed pages.
+- `llms.txt` opens with a "Choose a model and provider for a use case" section (deep links, recommend API URLs, WebMCP tools, limitations) and provides model/provider discovery, API/OpenAPI links, units, workload assumptions, freshness limits, and interpretation notes for agents. WebMCP supports browser-agent interaction. Neither is a guarantee of search indexing or AI citations. [Google explicitly says it does not use llms.txt for visibility or rankings](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide).
 - `_headers` adds `noindex` to raw catalog/reference JSON files. Its `/api/*` rule **does not apply to Pages Functions**, so both API Functions now set `X-Robots-Tag: noindex` on their responses ([Cloudflare documentation](https://developers.cloudflare.com/pages/configuration/headers/)). Generated `robots.txt` allows public API crawling so search engines can read those headers. This also allows AI crawlers to read public API data; it does not override Cloudflare's account-side crawler controls. No crawler-specific training-policy rule has been added or changed.
 - The [2026-08-03 setup record](docs/conversations/20260803-seo-gsc-setup-public.md) is historical. Provider/model pages have since shipped. Its FAQ rich-result monitoring advice is obsolete: [Google stopped showing FAQ rich results on May 7, 2026](https://developers.google.com/search/updates). Visible FAQs remain useful documentation.
 
@@ -80,7 +147,7 @@ Run `npm test`, `npm run seo`, and `npm run verify:seo` before publishing. Regen
 - **Speed**: Throughput p50 or explicitly labelled provider-reported decode speed (tokens/sec), shown in the table and comparison modal. Missing measurements stay blank; CSV exports include the speed statistic and measurement windows.
 - **Column customization**: Drag the ⠿ handle on any of the 9 middle column headers (Org … Blended $/M) to reorder them; the # and Total Cost columns stay locked first/last. Use the **Hide Columns** button to show/hide any middle column via per-column checkboxes + a Reset button. Order + visibility persist in the URL hash.
 
-- **WebMCP (text, image, and video tabs)**: In ChatGPT's in-app browser or Chrome with WebMCP enabled, the calculators register **site tools** so an agent can inspect and operate the table **the human is looking at**. The first tool alphabetically is `about_tokenwatch` (operating brief). The text tab exposes the full workload/filter/compare tool set; image and video expose page-specific catalog, view, and sorting tools. Tools live at the same origin; without WebMCP the site is unchanged. See [docs/WEBMCP.md](docs/WEBMCP.md).
+- **WebMCP (text, image, and video tabs)**: In ChatGPT's in-app browser or Chrome with WebMCP enabled, the calculators register **site tools** so an agent can inspect and operate the table **the human is looking at**. The first tool alphabetically is `about_tokenwatch` (operating brief). The text tab exposes the full workload/filter/compare tool set (21 tools, including the read-only `recommend_model` and `recommend_provider`); image and video expose page-specific catalog, view, and sorting tools. Tools live at the same origin; without WebMCP the site is unchanged. See [docs/WEBMCP.md](docs/WEBMCP.md).
 
 - **Image tab**: Enter number of images, optionally filter by resolution variant. Search by provider or model using the typeahead inputs. Flat per-image models show total cost; token-priced and megapixel-priced models show per-unit rates (cost varies by generation complexity).
 - **Video tab**: Enter video duration in seconds, filter by resolution and audio. Search by provider or model using the typeahead inputs. All models show per-second pricing with computed total cost.
@@ -127,7 +194,7 @@ OpenRouter has dedicated APIs for image and video generation — separate from t
 
 ## API
 
-Cloudflare Pages Functions at `functions/api/v1/` serve queryable endpoints for all three catalogs (text, image, video). See [AGENTS.md](AGENTS.md#api-endpoints) for the full endpoint list.
+Cloudflare Pages Functions at `functions/api/v1/` serve queryable endpoints for all three catalogs (text, image, video) and the workload recommender (see [Recommendation API](#recommendation-api)). See [AGENTS.md](AGENTS.md#api-endpoints) for the full endpoint list.
 
 ## Embeddable widget
 
@@ -168,13 +235,22 @@ docs/
 scripts/
   fetch-pricing.mjs          # 3-tier fetch + OR de-aggregation + provider metadata + org extraction + dedup
   generate-seo.mjs           # Server-renders 25 cheapest models into index.html + generates sitemap.xml/robots.txt (npm run seo)
+  fetch-arena.mjs            # Weekly LMArena (CC BY 4.0) preference fetch → data/arena-benchmarks.json
+  recommender-sensitivity.mjs # One-input-at-a-time robustness screen for recommender defaults
+shared/
+  use-cases.mjs              # Nine workload presets + priority presets
+  recommend.mjs              # Pure recommender engine: shortlistModels(), rankProviders()
+  choose-page.mjs            # /choose/ labels, URL state, featured-provider helpers
 data/
   manual-pricing.csv          # Static pricing for CSV-sourced providers
+  arena-benchmarks.json       # Committed last-good LMArena cache (attribution, license, publish dates)
 public/
   index.html                 # UI: dual search, usage inputs, 11-column results table (incl. Speed + Blended $/M), group-by, comparison modal, Export CSV, mobile sort. Also SEO head metadata + JSON-LD + FAQ + server-rendered table
   app.js                     # State, URL hash, search, cost computation, blendedCostFor, exportCsv, group-by, comparison (Speed + Blended rows), monthly mode, rendering
   benchmarks.html            # /benchmarks: use-case tabs (agentic/reasoning/knowledge/UI), value-benchmark dropdown incl. "no filter", mix-aware From $/M (Text-page localStorage), org filter, FAQ → /faq/
   benchmarks-app.js          # Benchmarks page app (mirrors blendedRate; value = score ÷ blended price normalized best-in-view = 100)
+  choose/index.html          # /choose/: open model finder (nine use cases, three picks, provider ranking, priority + constraints)
+  choose-app.js              # Finder app; imports the shared engine from /shared/*.mjs (copied by generate-seo.mjs)
   styles.css                 # Dark/light theme, all badges, group headers, comparison modal, mode toggle, responsive (card layout, mobile sort). Includes .seo-faq/.seo-models/.noscript-note
   image.html                 # Image tab: search, count input, variant filter, sortable table, mobile sort
   image-app.js               # Image pricing calculator, typeahead search, unit-adaptive columns, mobile card layout

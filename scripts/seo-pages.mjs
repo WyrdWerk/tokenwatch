@@ -2,6 +2,7 @@ import { blendedRate, AGENTIC_MIX } from '../shared/cost.mjs';
 import { canonicalId } from '../shared/normalize.mjs';
 import { API_ENDPOINTS } from '../shared/api-meta.mjs';
 import { PRIORITY_PROVIDER_WEIGHTS, USE_CASES } from '../shared/use-cases.mjs';
+import { MIN_BENCHMARK_COVERAGE } from '../shared/recommend.mjs';
 
 export const SITE = 'https://tokenwatch.wyrdwerk.com';
 export const TOP_N = 25;
@@ -191,7 +192,7 @@ export function videoFaqItems() {
 // Pointer section used on calculator pages — full FAQ lists live on /faq/.
 // Unlike renderFaqSection, answers are NOT escaped (contains a real anchor).
 export function renderFaqPointerSection() {
-  return `    <section class="seo-faq" id="faq" aria-label="Frequently asked questions"><h2>Frequently asked questions</h2><details open><summary>Where are the full FAQ lists?</summary><p>All questions — text/token pricing, image and video generation pricing, and plain-language benchmark explainers — live on the consolidated <a href="/faq/">FAQ page</a>.</p></details></section>`;
+  return `    <section class="seo-faq" id="faq" aria-label="Frequently asked questions"><h2>Frequently asked questions</h2><details open><summary>Where are the full FAQ lists?</summary><p>All questions — choosing a model and provider, text/token pricing, image and video generation pricing, and plain-language benchmark explainers — live on the consolidated <a href="/faq/">FAQ page</a>.</p></details></section>`;
 }
 
 export function renderFaqSection(title, items) {
@@ -261,7 +262,7 @@ export function calculatorStructuredData({ page, title, description, faq, rows }
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Web',
       url: SITE + '/',
-      description: 'Interactive LLM API pricing calculator for text, image, and video models.',
+      description: 'Interactive LLM API pricing calculator for text, image, and video models, with a use-case finder that recommends open-weight models and inference providers.',
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
     });
   }
@@ -332,8 +333,8 @@ export function renderModalityMeta(markup, modality, modelCount) {
 }
 
 export function renderHomepageMeta(markup, modelCount, providerCount) {
-  const title = `LLM API Pricing Comparison — ${providerCount} Providers | TokenWatch`;
-  const description = `Compare pay-as-you-go LLM API pricing across ${providerCount} providers and ${modelCount} text-model offerings. Calculate token or budget costs for your workload; compare image and video pricing separately.`;
+  const title = 'LLM API Pricing Comparison & Open Model Finder | TokenWatch';
+  const description = `Compare pay-as-you-go LLM API pricing across ${providerCount} providers and ${modelCount} text-model offerings. Find the right open-weight model and provider for your use case, then calculate token or budget costs for your workload.`;
   const subtitle = `Compare pay-as-you-go LLM API pricing across ${providerCount} providers and ${modelCount} text-model offerings. Enter your token mix or set a budget to estimate your agents' costs.`;
   let out = markup.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`);
   out = replaceMetaContent(out, 'name', 'description', description);
@@ -735,7 +736,7 @@ export function renderModelPage(page, { lastmod, historyEnabled = true, linkedPr
     : `Current provider pricing for ${page.name} is unavailable in this TokenWatch catalog snapshot. Browse other models or check the calculator for updated coverage.`;
   const history = historyEnabled ? `\n${renderPriceHistorySection(page)}` : '';
 
-  const body = `    <section class="seo-prose"><h2>${esc(page.name)} pricing across providers</h2>${page.offerings.length ? '' : '<p data-catalog-unavailable>No current priced offerings are available in this catalog snapshot. Missing coverage is not a zero price or proof that this model has been retired. This established URL is retained for existing links. <a href="/models/">Browse other models</a>.</p>'}<p>${esc(rangeText)} ${esc(cheapestText)}</p><p>Prices are USD per million tokens and reflect each provider offering — they are not a single intrinsic model price. ${page.cacheCoverage} of ${page.offerings.length} offerings publish a cache-read rate; ${page.uptimeCoverage} of ${page.offerings.length} publish a 30-minute endpoint uptime figure.</p><p><a href="/#model=${encodeURIComponent(page.canonical)}">Open the calculator filtered to ${esc(page.name)}</a></p></section>${history}
+  const body = `    <section class="seo-prose"><h2>${esc(page.name)} pricing across providers</h2>${page.offerings.length ? '' : '<p data-catalog-unavailable>No current priced offerings are available in this catalog snapshot. Missing coverage is not a zero price or proof that this model has been retired. This established URL is retained for existing links. <a href="/models/">Browse other models</a>.</p>'}<p>${esc(rangeText)} ${esc(cheapestText)}</p><p>Prices are USD per million tokens and reflect each provider offering — they are not a single intrinsic model price. ${page.cacheCoverage} of ${page.offerings.length} offerings publish a cache-read rate; ${page.uptimeCoverage} of ${page.offerings.length} publish a 30-minute endpoint uptime figure.</p><p><a href="/#model=${encodeURIComponent(page.canonical)}">Open the calculator filtered to ${esc(page.name)}</a></p><p class="seo-choose-link">Is this the right model for your workload? <a href="/choose/">Compare open-weight picks and providers for your use case →</a></p></section>${history}
     <section class="seo-models" id="model-providers" aria-label="${esc(page.name)} provider pricing">
       <h2>Provider offerings for ${esc(page.name)}</h2>
       <p>Ranked by effective cost at a typical agentic mix. Quantized and tier variants stay separate rows.</p>
@@ -824,23 +825,37 @@ export function benchFaqItems() {
   ];
 }
 
+export function chooseFaqItems() {
+  return [
+    ['How does TokenWatch recommend a model for my use case?', 'Pick one of nine workloads on the Choose page, such as agentic coding, long-context RAG, structured extraction, chat, creative writing, or UI work. Each workload preset sets an assumed token mix, hard requirements (tool calling, structured output, minimum context), benchmark weights, and an absolute quality floor. Models that pass those gates and have at least one confirmed, priced provider receive a benchmark composite score. TokenWatch then shows three picks: best quality (highest composite), best value (a balanced point on the quality-versus-price Pareto frontier, not a score-per-dollar ratio), and cheapest good-enough (the cheapest model whose primary benchmark clears the floor).'],
+    ['Why does the model finder recommend open-weight models by default?', 'Open-weight models can be hosted by several competing inference providers, so the same model can be compared on price, speed, uptime, and data policy across hosts. Open-weight status comes from reviewed overrides, then a strict majority of models.dev provider records, then known-closed creator priors; a model with unknown status is excluded rather than guessed. Turn on “Include proprietary models”, or pass include_proprietary=true to the API, to widen the list.'],
+    ['How does TokenWatch choose the provider for a recommended model?', 'Providers must first pass the workload gates: required capabilities, minimum context, any ZDR or headquarters constraint you set, known-issue checks, and a computable price at the assumed mix. Eligible providers are then scored on blended price, time to first token (p50), throughput (p50), and uptime, preferring the 30-minute uptime window. Missing measurements are left out and the remaining weights renormalized. Providers whose capability or context metadata is missing are listed as unverified, never ranked. The priority control (balanced, cheapest, fastest, most reliable) changes those provider weights.'],
+    ['What does “close call” mean on a recommendation?', 'Every pick and provider rank carries a confidence label from its margin over the runner-up on a 0–100 scale: 10 points or more is stable, 3 to 10 points is moderately stable, and under 3 points is a close call. Treat a close call as a tie and decide on price, speed, policy, or your own evaluation.'],
+    ['Why is a model listed under “Not enough benchmark data”?', 'A model must have at least half of its workload’s benchmark weight observed to compete for best quality or best value. Scores from partial evidence are shrunk toward the cohort median, and models below that coverage, or with no scores at all, are listed separately. Missing benchmarks are unknown, not a sign the model is poor.'],
+    ['Where does the people’s preference data come from?', 'Creative-writing and chat preference ratings come from the official LMArena leaderboard dataset on Hugging Face (Text Arena overall and creative-writing categories), licensed CC BY 4.0 and refreshed weekly. Creative writing is preference-led: 75% Arena Creative Writing rating plus 25% Artificial Analysis intelligence. Chat picks stay capability-ranked, and the Arena Text favourite is shown separately as the people’s favourite. Ratings are unchanged and matched conservatively to TokenWatch model IDs.'],
+    ['Are the workload token mixes based on my traffic?', 'No. Each workload uses an assumed input, cached-input, and output mix so that providers can be priced consistently; the mixes are listed on the methodology page and at /api/v1/use-cases. Weights and floors are documented judgments, not measured truths. Open the calculator with your own mix before committing spend, and verify provider prices and policies.'],
+  ];
+}
+
 export function renderFaqPage({ modelCount, providerCount }) {
   const path = '/faq/';
-  const description = 'Answers about LLM API pricing, cost calculation, image and video generation pricing, and what each benchmark actually measures — in plain language.';
+  const description = 'Answers about LLM API pricing, cost calculation, choosing an open-weight model and provider for a use case, image and video generation pricing, and what each benchmark actually measures — in plain language.';
   const groups = [
+    { id: 'choosing-a-model', title: 'Choosing a model and provider', items: chooseFaqItems() },
     { id: 'text-pricing', title: 'Text & token pricing questions', items: homeFaqItems(modelCount, providerCount) },
     { id: 'image-pricing', title: 'Image generation pricing questions', items: imageFaqItems() },
     { id: 'video-pricing', title: 'Video generation pricing questions', items: videoFaqItems() },
     { id: 'benchmarks', title: 'Benchmarks — what the numbers mean', items: benchFaqItems() },
   ];
-  const body = groups.map((g) => renderFaqSection(g.title, g.items).replace('id="faq"', `id="${g.id}"`)).join('\n');
+  const intro = '    <section class="seo-prose"><p>Looking for a model rather than a price? The <a href="/choose/">open model finder</a> recommends an open-weight model and inference provider for nine workloads; the <a href="/docs/methodology/#recommendations">methodology</a> explains the scoring.</p></section>';
+  const body = [intro, ...groups.map((g) => renderFaqSection(g.title, g.items).replace('id="faq"', `id="${g.id}"`))].join('\n');
   const allItems = groups.flatMap((g) => g.items);
   return renderStaticPage({
     title: `LLM API Pricing & Benchmark FAQs | TokenWatch`,
     description,
     canonicalPath: path,
     heading: 'Frequently asked questions',
-    subtitle: 'Pricing, cost calculation, image and video generation, and what the benchmarks measure',
+    subtitle: 'Choosing a model, pricing and cost calculation, image and video generation, and what the benchmarks measure',
     breadcrumbs: [{ name: 'Text pricing', path: '/' }, { name: 'FAQ', path }],
     body,
     structuredData: { '@context': 'https://schema.org', '@graph': [
@@ -854,12 +869,25 @@ export function renderFaqPage({ modelCount, providerCount }) {
 export function buildLlmsTxt({ modelCount, providerCount, imageCount, videoCount, generatedAt }) {
   return `# TokenWatch
 
-> Pay-as-you-go LLM API pricing and practical benchmarks: ${modelCount} provider-specific text offerings across ${providerCount} inference providers, ${imageCount} image models, ${videoCount} video models. Text catalog generated ${generatedAt}.
+> Pay-as-you-go LLM API pricing, practical benchmarks, and a use-case model finder that recommends an open-weight model and inference provider for nine workloads: ${modelCount} provider-specific text offerings across ${providerCount} inference providers, ${imageCount} image models, ${videoCount} video models. Text catalog generated ${generatedAt}.
 
 TokenWatch compares published provider prices, not a single intrinsic price for each model. One model can have multiple provider, quantization, and endpoint offerings. Each catalog has its own generated_at timestamp; the text timestamp above does not establish image, video, or benchmark freshness.
 
+## Choose a model and provider for a use case
+
+Use this when the question is "which open model should I use for X, and which provider should run it?" rather than "what does model Y cost?".
+
+- [Open model finder](https://tokenwatch.wyrdwerk.com/choose/): pick a workload; get three open-weight picks (best quality, best value on the quality/price Pareto frontier, cheapest model above an absolute quality floor) plus a provider ranking with reasons, caveats, and confidence (stable / moderately stable / close call). A priority control re-weights providers for balanced, cheapest, fastest, or most-reliable.
+- Deep links preselect a workload with \`?useCase=<id>\`:
+${Object.values(USE_CASES).map((useCase) => `  - ${useCase.label}: https://tokenwatch.wyrdwerk.com/choose/?useCase=${useCase.id}`).join('\n')}
+- Creative writing is led by LMArena Creative Writing preference ratings; chat keeps capability-ranked picks and shows a separate people's favourite from Arena Text. Arena data: LMArena leaderboard dataset (https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset), CC BY 4.0 — attribute ratings when you repeat them.
+- API: [use-case presets](https://tokenwatch.wyrdwerk.com/api/v1/use-cases) (assumed mixes, weights, requirements, floors); [model recommendations](https://tokenwatch.wyrdwerk.com/api/v1/recommend?use_case=agentic-coding&pretty=1) (\`use_case\` required; optional \`priority\`, \`zdr\`, \`exclude_hq\`, \`include_proprietary\`, \`detail\`, \`limit\`, \`pretty\`); [provider ranking for one model](https://tokenwatch.wyrdwerk.com/api/v1/recommend/providers?use_case=agentic-coding&model=glm-5.3&pretty=1) (adds required \`model\`, a canonical ID).
+- WebMCP: on the text calculator page, \`recommend_model\` and \`recommend_provider\` call the same engine without changing the table. See the [operating skill](https://tokenwatch.wyrdwerk.com/skill.md).
+- Limits: token mixes are assumed per workload, not measured from your traffic; benchmark and provider weights are documented judgments; provider headquarters, telemetry, and capability metadata are incomplete, so unknowns stay unknown and unverified providers are never ranked. See the [methodology](https://tokenwatch.wyrdwerk.com/docs/methodology/#recommendations).
+
 ## Pages
 
+- [Open model finder](https://tokenwatch.wyrdwerk.com/choose/): open-weight model and provider recommendations for nine workloads
 - [Text pricing calculator](https://tokenwatch.wyrdwerk.com/): compare per-token prices across providers; enter a token mix or budget to compute costs
 - [Image generation pricing](https://tokenwatch.wyrdwerk.com/image): per-image, per-megapixel, and image-token units kept separate
 - [Video generation pricing](https://tokenwatch.wyrdwerk.com/video): per-second rates by resolution and audio mode
@@ -868,12 +896,12 @@ TokenWatch compares published provider prices, not a single intrinsic price for 
 - [Provider directory](https://tokenwatch.wyrdwerk.com/providers/): reviewed policy links and per-provider text, image, and video catalogs
 - [Methodology](https://tokenwatch.wyrdwerk.com/docs/methodology/): sourcing, normalization, dedup, and cost-calculation rules
 - [API docs](https://tokenwatch.wyrdwerk.com/docs/api/): queryable JSON endpoints for all catalogs
-- [FAQ](https://tokenwatch.wyrdwerk.com/faq/): pricing, image/video billing, and plain-language benchmark explainers
+- [FAQ](https://tokenwatch.wyrdwerk.com/faq/): choosing a model, pricing, image/video billing, and plain-language benchmark explainers
 - [WebMCP operating skill](https://tokenwatch.wyrdwerk.com/skill.md): how agents should operate the in-page catalog tools
 
 ## API
 
-- [API endpoint directory](https://tokenwatch.wyrdwerk.com/api/v1/): models, providers, orgs, stats, images, and videos (no auth, CORS enabled)
+- [API endpoint directory](https://tokenwatch.wyrdwerk.com/api/v1/): models, providers, orgs, stats, images, videos, use cases, and recommendations (no auth, CORS enabled)
 - [OpenAPI specification](https://tokenwatch.wyrdwerk.com/openapi.json): endpoint paths, query parameters, response schemas, and error responses
 - For a model's provider comparison, use /api/v1/models/:canonicalId/providers. Use canonical IDs from the catalog, not display names. Send a mix explicitly when comparing a non-default workload; the API docs describe tokens and mix units.
 - Price history is optional. A history endpoint can return 503 when storage is not enabled; missing history is not a zero price.
@@ -914,9 +942,44 @@ export function renderRulesStrip() {
     </section>`;
 }
 
+const BENCHMARK_LABELS = {
+  intelligence_index: 'AA intelligence', coding_index: 'AA coding', agentic_index: 'AA agentic',
+  design_arena_best: 'Design Arena', arena_text: 'Arena Text', arena_creative_writing: 'Arena Creative Writing',
+  livebench_math: 'LiveBench math', livebench_coding: 'LiveBench coding', livebench_language: 'LiveBench language',
+  livebench_data_analysis: 'LiveBench data analysis', livebench_agentic_coding: 'LiveBench agentic coding',
+  livebench_reasoning: 'LiveBench reasoning', livebench_instruction_following: 'LiveBench instruction following',
+};
+
+function percentLabel(weight) {
+  return `${Math.round(weight * 100)}%`;
+}
+
+function recommendationPresetRows() {
+  return Object.values(USE_CASES).map((useCase) => {
+    const { mix, hardRequirements: req, benchmarkWeights, qualityFloor } = useCase;
+    const requirements = [
+      req.needsToolCalling ? 'tool calling' : null,
+      req.needsStructuredOutput ? 'structured output' : null,
+      req.minContext ? `≥${Math.round(req.minContext / 1024)}K context` : null,
+    ].filter(Boolean).join(', ');
+    const weights = Object.entries(benchmarkWeights)
+      .map(([field, weight]) => `${BENCHMARK_LABELS[field] || field} ${percentLabel(weight)}`).join(', ');
+    const floor = `${BENCHMARK_LABELS[qualityFloor.field] || qualityFloor.field} ≥ ${qualityFloor.min}`;
+    const pw = useCase.providerWeights;
+    const providerWeights = [pw.price, pw.ttft, pw.throughput, pw.uptime].map(percentLabel).join(' / ');
+    return `<tr><td><a href="/choose/?useCase=${esc(useCase.id)}">${esc(useCase.label)}</a></td><td>${mix.inputPct}% / ${mix.cacheReadPct}% / ${mix.outputPct}%</td><td>${esc(requirements)}</td><td>${esc(weights)}</td><td>${esc(providerWeights)}</td><td>${esc(floor)}</td></tr>`;
+  }).join('');
+}
+
+function priorityPresetRows() {
+  return Object.entries(PRIORITY_PROVIDER_WEIGHTS).map(([priority, weights]) => weights
+    ? `<tr><td>${esc(priority)}</td><td class="num">${percentLabel(weights.price)}</td><td class="num">${percentLabel(weights.ttft)}</td><td class="num">${percentLabel(weights.throughput)}</td><td class="num">${percentLabel(weights.uptime)}</td></tr>`
+    : `<tr><td>${esc(priority)}</td><td colspan="4">Workload’s own provider weights</td></tr>`).join('');
+}
+
 export function renderMethodologyPage({ modelCount, providerCount, generatedAt, models = [], linkedModelPages = new Map(), arenaSource = {} }) {
   const path = '/docs/methodology/';
-  const description = 'How TokenWatch sources, normalizes, deduplicates, enriches, and compares pay-as-you-go AI inference pricing.';
+  const description = 'How TokenWatch sources, normalizes, deduplicates, enriches, and compares pay-as-you-go AI inference pricing, and how it recommends open-weight models and providers for a workload.';
   const workloadRows = [
     ['Cache-heavy agents', AGENTIC_MIX],
     ['Uncached retrieval/RAG', { inputPct: 80, cacheReadPct: 0, outputPct: 20 }],
@@ -959,8 +1022,30 @@ export function renderMethodologyPage({ modelCount, providerCount, generatedAt, 
       <p>These illustrative token mixes are not measured averages or quality recommendations. Retrieval-augmented generation (RAG) supplies retrieved context as input; caching that context can change the ranking. Each row below selects the lowest positive computable blended rate in this text snapshot, not necessarily a model capable of your task. Free/unpriced offerings are excluded. Promotions can affect the result.</p>
       ${workloadRows ? `<div class="table-wrap"><table><caption>Illustrative workload costs — USD per million total tokens, snapshot ${esc(generatedAt)}</caption><thead><tr><th scope="col">Example workload</th><th scope="col">Input / cached / output</th><th scope="col">Lowest-cost offering</th><th scope="col">Provider</th><th scope="col">Blended $/M</th></tr></thead><tbody>${workloadRows}</tbody></table></div>` : ''}
       <p>For one million total tokens, cost is input rate × input share + cache-read rate × cached share + output rate × output share, using the fresh-input rule above. Monthly Volume multiplies an entered daily volume by 30. Retries, tool calls, storage, tax, and other charges need separate consideration. Use the <a href="/">calculator</a> to compare suitable models at your own mix; a 97% cached mix is inappropriate when you cannot reuse most input.</p>
-      <h2>Arena preference ratings</h2>
+      <h2 id="recommendations">How recommendations work</h2>
+      <p>The <a href="/choose/">open model finder</a>, the <a href="/docs/api/">recommendation API</a>, and the WebMCP <code>recommend_model</code>/<code>recommend_provider</code> tools share one engine. It answers “which open-weight model suits this workload, and which provider should run it?” for nine workload presets. It ranks candidates from this catalog snapshot; it is not a universal best-model score.</p>
+      <h3>Workload presets</h3>
+      <p>Each preset defines an assumed token mix, hard requirements, benchmark weights, provider weights, a quantization policy, and an absolute quality floor on its primary benchmark. The mixes price providers consistently; they are not measurements of your traffic. Weights and floors are documented judgments, calibrated against the 2026-10-04 catalog snapshot.</p>
+      <div class="table-wrap"><table><caption>Recommendation workload presets</caption><thead><tr><th scope="col">Workload</th><th scope="col">Assumed input / cached / output</th><th scope="col">Requirements</th><th scope="col">Benchmark weights</th><th scope="col">Provider weights (price / TTFT / throughput / uptime)</th><th scope="col">Quality floor</th></tr></thead><tbody>${recommendationPresetRows()}</tbody></table></div>
+      <h3>Eligibility gates</h3>
+      <p>By default only offerings with resolved open weights are considered. Open-weight status comes from reviewed overrides, then a strict majority of models.dev provider records, then known-closed creator priors; unknown status is excluded, not guessed. Subscription offerings are excluded, and <code>:batch</code> variants are excluded except for high-volume work. A provider must pass the workload’s tool-calling, structured-output, and minimum-context requirements, any ZDR or headquarters constraint the visitor sets, and known-issue checks (<em>broken</em> or <em>unavailable</em> blocks; <em>degraded</em> warns), and it must have a computable price at the assumed mix. An endpoint’s published parameter list is authoritative for capabilities; models.dev flags are used only when it is absent. Providers missing required capability or context metadata are listed as unverified and never enter the ranking. Low-bit quantizations (fp4, nvfp4, mxfp4, int4) are rejected for demanding workloads when a higher-precision provider qualifies, and the fallback is stated when none does.</p>
+      <h3>Quality score and coverage rule</h3>
+      <p>Each benchmark is converted to a percentile among eligible canonical models, and the available weighted percentiles are averaged on a 0–100 scale. The composite is then shrunk toward the cohort median in proportion to the benchmark weight that is missing. A model needs at least ${Math.round(MIN_BENCHMARK_COVERAGE * 100)}% of its workload’s benchmark weight observed to compete for best quality or best value; models below that coverage, or with no scores, are shown separately as not having enough benchmark data. Benchmark scores are relative within a workload; only the floor is absolute.</p>
+      <h3>The three picks</h3>
+      <ul>
+        <li><strong>Best quality</strong> — the highest composite score among coverage-eligible models.</li>
+        <li><strong>Best value</strong> — chosen from the non-dominated frontier of quality versus cheapest blended price, as the point closest to the ideal after normalizing both axes. It is never a raw score-per-dollar ratio, which would let cheap weak models win.</li>
+        <li><strong>Cheapest good-enough</strong> — the cheapest priced model whose primary benchmark reaches the workload’s absolute floor. It is flagged when it costs more than the best-value pick.</li>
+      </ul>
+      <h3>Provider ranking and priority presets</h3>
+      <p>Eligible providers for a model are scored on blended price at the assumed mix, time to first token (p50), throughput (p50), and uptime (the 30-minute window is preferred to the one-day window). Each metric is scaled against the other eligible providers; missing measurements are omitted and the remaining weights renormalized, so a missing metric is never treated as zero. <em>Balanced</em> uses the workload’s own provider weights; the other priority presets replace them:</p>
+      <div class="table-wrap"><table><caption>Provider priority presets</caption><thead><tr><th scope="col">Priority</th><th scope="col" class="num">Price</th><th scope="col" class="num">TTFT</th><th scope="col" class="num">Throughput</th><th scope="col" class="num">Uptime</th></tr></thead><tbody>${priorityPresetRows()}</tbody></table></div>
+      <h3>Confidence</h3>
+      <p>Every pick and provider rank reports its margin over the runner-up on a 0–100 scale: at least 10 points is <em>stable</em>, 3 to 10 points is <em>moderately stable</em>, and under 3 points is a <em>close call</em>. Best quality compares quality scores; best value compares distance to the Pareto ideal; cheapest good-enough compares relative blended cost. A close call should be read as a tie. A local sensitivity script perturbs one weight, floor, or mix at a time to check how often each default pick changes; it is a robustness screen, not a probability.</p>
+      <h3>Arena preference ratings</h3>
       <p>Creative-writing recommendations use Arena Creative Writing ratings as their primary preference signal (75%), with Artificial Analysis intelligence as a secondary capability signal (25%). Chat recommendations keep benchmark capability as the pick ranking and expose Arena Text overall as a separate people’s preference ranking. Ratings come from the <a href="${esc(arenaUrl)}">LMArena leaderboard dataset</a>; ${esc(arenaAttribution)} Licensed under <a href="${esc(arenaLicenseUrl)}">${esc(arenaLicense.replaceAll('-', ' '))}</a>. Text overall ratings are dated ${esc(arenaTextDate)}; Creative Writing ratings are dated ${esc(arenaCreativeDate)}. Ratings are a snapshot of pairwise preference, not a universal measure of model quality.</p>
+      <h3>Known limitations</h3>
+      <p>Token mixes are assumed per workload. Benchmark and provider weights are judgment-based, and percentiles shift as the catalog changes. Some benchmark sets are thin (several LiveBench categories cover only a handful of open models), and Arena ratings match only part of the open-weight catalog. Provider headquarters, latency, throughput, uptime, and capability metadata are incomplete: excluding a country removes only providers whose headquarters is known, and unverified providers are not ranked. Recommendations exclude subscription plans, cache-storage charges, and taxes. The design is recorded in <a href="https://github.com/WyrdWerk/tokenwatch/blob/main/docs/adr/0012-recommender-scoring.md">ADR 0012</a>, with a dated comparison against outside leaderboards in the <a href="https://github.com/WyrdWerk/tokenwatch/blob/main/docs/research/recommender-validation.md">validation notes</a>.</p>
       <h2>Privacy and policy data</h2>
       <p>ZDR tags come from endpoint-level OpenRouter data or reviewed provider metadata. Missing metadata does not become a positive or negative privacy claim. Provider pages link to reviewed policies when TokenWatch has them.</p>
       <h2>Benchmarks and performance</h2>
@@ -992,6 +1077,17 @@ export function renderApiDocsPage() {
       <p>Recommendation mixes are assumed workload defaults, not claims about your traffic. Model picks include best quality, best value, and the cheapest model above an absolute quality floor; explanations label benchmark coverage, provider ranking, missing signals, and confidence. Provider ranking requires confirmed capability and context metadata and keeps unverified options separate.</p>
       <p>For <code>chat-assistant</code> and <code>creative-writing</code>, <code>/api/v1/recommend</code> also returns <code>preference</code> separately from model picks: the Arena favorite, board, rating, eligible providers, and <code>source</code> metadata with linked dataset, rating date, attribution, and CC BY 4.0 license. Creative writing is preference-led; chat picks remain capability-ranked. The source metadata lets API consumers display the required attribution alongside Arena ratings.</p>
       <p>Recommendation responses default to compact candidate groups (up to 10 rows each, with total counts) and full explanations on the three model picks. Provider results keep full explanations on the top three. Add <code>detail=full</code> to expand explanations for returned rows, or set <code>limit=1..100</code> to change each group cap. Recommendation JSON is compact (no indentation); add <code>pretty=1</code> for indented output.</p>
+      <h2 id="recommendation-parameters">Recommendation parameters</h2>
+      <p>The recommendation endpoints power the <a href="/choose/">open model finder</a>. Unknown values return HTTP 400 naming the rejected <code>parameter</code>; an unknown <code>model</code> returns 404.</p>
+      <ul>
+        <li><code>use_case</code> (required): ${Object.keys(USE_CASES).map((id) => `<code>${esc(id)}</code>`).join(', ')}.</li>
+        <li><code>model</code> (required for <code>/api/v1/recommend/providers</code>): a canonical model ID from the catalog.</li>
+        <li><code>priority</code>: ${Object.keys(PRIORITY_PROVIDER_WEIGHTS).map((id) => `<code>${esc(id)}</code>`).join(', ')} (default <code>balanced</code>); re-weights provider ranking.</li>
+        <li><code>zdr=true</code>: only providers marked zero data retention.</li>
+        <li><code>exclude_hq</code>: comma-separated two-letter headquarters country codes to exclude; providers with unknown headquarters are not excluded.</li>
+        <li><code>include_proprietary=true</code>: also consider models not confirmed open-weight.</li>
+        <li><code>detail</code>: <code>compact</code> (default) or <code>full</code>; <code>limit</code>: rows per group, 1–100 (default 10); <code>pretty=1</code>: indented JSON.</li>
+      </ul>
       <div class="table-wrap"><table><caption>TokenWatch API endpoints</caption><thead><tr><th scope="col">Endpoint</th><th scope="col">Response</th><th scope="col">Query parameters</th><th scope="col">Sort values</th></tr></thead><tbody>${rows}</tbody></table></div>
       <h2>Examples</h2>
       <pre><code>curl '${SITE}/api/v1/models?provider=aster&amp;sort=input&amp;limit=20'
@@ -1056,6 +1152,8 @@ function openApiParameter(name, required = false, parameterLimits = {}) {
                 ? 'Include models not confirmed open-weight; defaults to false for model recommendations.'
                 : name === 'model'
                   ? 'Required canonical model id. An unknown model returns 404.'
+                  : name === 'zdr'
+                    ? 'Set to true to keep only offerings or providers marked zero data retention.'
                   : name === 'pretty'
                     ? 'Set to 1 for indented JSON; responses are compact (unindented) by default.'
                   : name === 'detail'
@@ -1084,6 +1182,7 @@ export function buildOpenApiDocument() {
     paths[path] = {
       get: {
         summary: endpoint.summary,
+        ...(endpoint.description ? { description: endpoint.description } : {}),
         operationId: `get${endpoint.path.split('/').filter(Boolean).map((segment) => segment.replace(/^:/, '').split(/[^A-Za-z0-9]+/).filter(Boolean).map((part) => part[0].toUpperCase() + part.slice(1)).join('')).join('') || 'ApiDirectory'}`,
         parameters: [...pathParams, ...endpoint.params.map((name) => openApiParameter(name, endpoint.requiredParams?.includes(name) === true, endpoint.parameterLimits))],
         responses: {
@@ -1113,7 +1212,7 @@ export function buildOpenApiDocument() {
 }
 
 export function renderExploreLinks() {
-  return `    <section class="seo-links" aria-label="Explore TokenWatch"><h2>Explore TokenWatch data</h2><p><a href="/benchmarks">Compare benchmarks by use case</a> · <a href="/models/">Compare models across providers</a> · <a href="/providers/">Browse inference providers</a> · <a href="/docs/methodology/">Read the pricing methodology</a> · <a href="/docs/api/">Use the pricing API</a> · <a href="/faq/">Read the FAQ</a></p></section>`;
+  return `    <section class="seo-links" aria-label="Explore TokenWatch"><h2>Explore TokenWatch data</h2><p><a href="/choose/">Find an open model for your use case</a> · <a href="/benchmarks">Compare benchmarks by use case</a> · <a href="/models/">Compare models across providers</a> · <a href="/providers/">Browse inference providers</a> · <a href="/docs/methodology/">Read the pricing methodology</a> · <a href="/docs/api/">Use the pricing API</a> · <a href="/faq/">Read the FAQ</a></p></section>`;
 }
 
 // Crawlable top-models table for /benchmarks — the page's interactive table is

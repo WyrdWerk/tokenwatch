@@ -41,7 +41,8 @@ models here; catalogs and prices are dynamic.
 11. `recommend_model` and `recommend_provider` query the shared workload
     recommender, not the live table. Always name the selected `useCase`: its
     preset mix is assumed and is not inferred from `get_view` or user traffic.
-    These read-only tools do not change the calculator.
+    These read-only tools do not change the calculator. Treat `close_call`
+    confidence as a tie; point humans to `/choose/?useCase=<id>`.
 
 ## Page capability map
 
@@ -124,6 +125,8 @@ tradeoff comparison without naming specific rows.
 Use `recommend_model({ useCase, priority?, zdr?, excludeHq?, includeProprietary?, limit? })` to shortlist canonical models, or `recommend_provider({ useCase, model, ... })` to rank providers for one canonical id. Use cases: `agentic-coding`, `tool-agents`, `long-context-rag`, `structured-extraction`, `high-volume-cheap`, `chat-assistant`, `creative-writing`, `reasoning-math`, `frontend-ui`; priority: `balanced`, `cheapest`, `fastest`, or `most-reliable` (default `balanced`). `limit` caps each result group to 1–100 rows (default 10).
 
 `zdr` requires confirmed zero data retention. `excludeHq` accepts two-letter country codes; unknown headquarters are not excluded. `includeProprietary` opts into models not confirmed open-weight (default false). Both tools use the shared API engine and committed catalogs, not current `get_view` rows, and do not change the calculator; their preset mix is assumed, not inferred from the table or user traffic.
+
+Confidence levels come from the margin over the runner-up on a 0–100 scale: `stable` (≥10 points), `moderately_stable` (3–10), `close_call` (<3). Present a close call as a tie and let price, speed, or policy decide. The same engine powers the human-facing finder at `/choose/` (deep link `/choose/?useCase=<id>`) and the HTTP API at `/api/v1/recommend` and `/api/v1/recommend/providers` (`use_case`, `model`, `priority`, `zdr`, `exclude_hq`, `include_proprietary`, `detail`, `limit`, `pretty`); share the deep link when the user wants to explore picks themselves. The methodology page section `#recommendations` documents weights, floors, gates, and limitations.
 
 WebMCP uses the compact API default and does not expose `detail=full`: only the three model picks and top three providers include full explanations. Remaining model/provider rows are compact; groups expose `{ totalCount, items }`, with `score`, `coverage`, `blendedRate`, and a short `reason` for model candidates. Report timestamps, use case, priority, and confidence; relative scores are not guarantees. Distinguish `bestQuality`, `bestValue`, and `cheapestAboveFloor`; mention partial/unbenchmarked models when relevant. Keep confirmed provider `ranked` separate from `unverified`; missing required metadata is not proof of eligibility.
 

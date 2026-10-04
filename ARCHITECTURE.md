@@ -81,7 +81,7 @@ flowchart TD
     DEDUPT --> ENRICH
     subgraph ENRICH["Text sidecar enrichments (non-fatal, text-only)"]
         E1["models.dev ~40%<br/>exact + bounded fuzzy"]
-        E2["Benchmarks ~75%<br/>AA indices + design_arena Elo"]
+        E2["Benchmarks ~75%<br/>AA indices + design_arena Elo<br/>+ Arena Text / Creative Writing"]
         E3["ZDR tagging<br/>endpoint-level + provider fallback"]
     end
 
@@ -104,6 +104,24 @@ flowchart TD
     OUT --> API["Cloudflare Pages Functions<br/>functions/api/v1/[[route]].js<br/>14+ filters, sort, pagination, CORS"]
     OUT --> FE["Static frontend public/<br/>3 tabs, client-side cost calc,<br/>search, comparison, CSV export<br/>canonicalModelId() parity-guarded"]
     API --> FE
+
+    %% ── RECOMMENDER (pure shared engine, three surfaces) ──
+    ARENA["Arena fetcher (scripts/fetch-arena.mjs, weekly)<br/>LMArena Text overall + creative_writing, CC BY 4.0<br/>→ data/arena-benchmarks.json"]
+    BENCH["Benchmarks catalog (scripts/fetch-benchmarks.mjs)<br/>AA + LiveBench + Design Arena + Arena<br/>→ public/benchmarks.json"]
+    ARENA -->|"committed cache, read by fetch-pricing"| ENRICH
+    O1 --> BENCH
+    subgraph REC["Recommender engine (pure, Worker-safe)"]
+        direction TB
+        UC["shared/use-cases.mjs<br/>9 presets: assumed mix, hard requirements,<br/>benchmark + provider weights, quality floor,<br/>quant policy; priority presets"]
+        ENG["shared/recommend.mjs<br/>open-weight + capability/context/ZDR/HQ gates<br/>percentile composite + coverage shrinkage (≥50%)<br/>picks: bestQuality / bestValue (Pareto) / cheapestAboveFloor<br/>rankProviders: price · TTFT · throughput · uptime<br/>confidence: stable / moderately_stable / close_call"]
+        UC --> ENG
+    end
+    O1 --> ENG
+    O4 --> ENG
+    BENCH --> ENG
+    ENG --> CHOOSE["/choose/ page (choose-app.js, in-browser)<br/>+ homepage finder strip (?useCase=)"]
+    ENG --> RAPI["API: /api/v1/use-cases<br/>/api/v1/recommend<br/>/api/v1/recommend/providers"]
+    RAPI --> WEBMCP["WebMCP tools (text page)<br/>recommend_model · recommend_provider"]
 ```
 
 ## Invariants
@@ -154,3 +172,19 @@ Three behavioral contracts the diagram can't show, but an agent must respect:
   `[]` on failure; image/video continue without it).
 - **Performance** (`fetch-performance.mjs`) is a separate fetcher writing its own
   `public/performance.json`; not part of any of the three content pipelines.
+
+## Recommender
+
+The use-case recommender is a fourth consumer of the pipeline outputs, not a
+fetch pipeline. `shared/use-cases.mjs` (presets) and `shared/recommend.mjs`
+(engine) are pure ESM with no `node:` imports, so one implementation runs in
+three places: the `/choose/` page in the browser (`generate-seo.mjs` copies the
+modules to `public/shared/`), the Pages Function behind `/api/v1/recommend*`,
+and — through that API — the WebMCP `recommend_model` / `recommend_provider`
+tools. Inputs are `pricing.json` (prices, capabilities, resolved
+`open_weights`), `benchmarks.json` (AA, LiveBench, Design Arena, LMArena) and
+`performance.json` (TTFT/throughput). Arena ratings arrive through a separate
+weekly fetcher (`refresh-aa.yml`) with a committed last-good cache that
+`fetch-pricing.mjs` reads as a non-fatal enrichment (`applyArenaEnrichment`). Scoring rules are recorded in
+[ADR 0012](docs/adr/0012-recommender-scoring.md); field names are fixed by
+[docs/recommender-data-contract.md](docs/recommender-data-contract.md).

@@ -63,6 +63,7 @@
     "/api/v1/use-cases": {
       "get": {
         "summary": "List workload recommendation presets and their assumed mixes, weights, requirements, and quality floors",
+        "description": "Returns the nine use-case presets used by /choose/ and the recommend endpoints. Every mix is flagged assumed: true; weights and floors are documented judgments, not measurements.",
         "operationId": "getApiV1UseCases",
         "parameters": [],
         "responses": {
@@ -112,6 +113,7 @@
     "/api/v1/recommend": {
       "get": {
         "summary": "Recommend models for a workload; chat and creative-writing also return an Arena preference favorite with source metadata",
+        "description": "Open-weight model shortlist for one use case: picks.bestQuality, picks.bestValue (quality/price Pareto frontier) and picks.cheapestAboveFloor, each with a recommended provider, explanation, and confidence (stable, moderately_stable, close_call). Also returns alsoConsidered, partiallyBenchmarked, unbenchmarked, and unverified groups. Arena ratings in preference are from the LMArena leaderboard dataset (CC BY 4.0); display the attribution in preference.source.",
         "operationId": "getApiV1Recommend",
         "parameters": [
           {
@@ -153,7 +155,7 @@
             "name": "zdr",
             "in": "query",
             "required": false,
-            "description": "Filter or control parameter: zdr.",
+            "description": "Set to true to keep only offerings or providers marked zero data retention.",
             "schema": {
               "type": "boolean"
             }
@@ -267,6 +269,7 @@
     "/api/v1/recommend/providers": {
       "get": {
         "summary": "Rank providers for one model with full explanations for the top three and compact remaining rows",
+        "description": "Ranks eligible providers for one canonical model at the use case assumed mix on blended price, TTFT p50, throughput p50, and uptime, weighted by priority. Providers missing required capability or context metadata are returned in unverified, never ranked.",
         "operationId": "getApiV1RecommendProviders",
         "parameters": [
           {
@@ -317,7 +320,7 @@
             "name": "zdr",
             "in": "query",
             "required": false,
-            "description": "Filter or control parameter: zdr.",
+            "description": "Set to true to keep only offerings or providers marked zero data retention.",
             "schema": {
               "type": "boolean"
             }
@@ -530,7 +533,7 @@
             "name": "zdr",
             "in": "query",
             "required": false,
-            "description": "Filter or control parameter: zdr.",
+            "description": "Set to true to keep only offerings or providers marked zero data retention.",
             "schema": {
               "type": "boolean"
             }
@@ -908,7 +911,7 @@
             "name": "zdr",
             "in": "query",
             "required": false,
-            "description": "Filter or control parameter: zdr.",
+            "description": "Set to true to keep only offerings or providers marked zero data retention.",
             "schema": {
               "type": "boolean"
             }

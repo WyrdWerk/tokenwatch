@@ -29,7 +29,10 @@ import {
   buildSitemap,
   buildRobots,
   buildLlmsTxt,
+  renderFaqPage,
+  chooseFaqItems,
 } from '../scripts/seo-pages.mjs';
+import { USE_CASES } from '../shared/use-cases.mjs';
 import { AGENTIC_MIX, blendedRate } from '../shared/cost.mjs';
 import { API_ENDPOINTS, endpointDirectory } from '../shared/api-meta.mjs';
 
@@ -195,12 +198,12 @@ test('homepage metadata uses current offering counts in search, social, and visi
 </body>
 </html>`;
   const refreshed = renderHomepageMeta(stale, 1181, 83);
-  assert.match(refreshed, /<title>LLM API Pricing Comparison — 83 Providers \| TokenWatch<\/title>/);
+  assert.match(refreshed, /<title>LLM API Pricing Comparison &amp; Open Model Finder \| TokenWatch<\/title>/);
   for (const field of ['name="description"', 'property="og:description"', 'name="twitter:description"']) {
-    assert.ok(refreshed.includes(`<meta ${field} content="Compare pay-as-you-go LLM API pricing across 83 providers and 1181 text-model offerings.`));
+    assert.ok(refreshed.includes(`<meta ${field} content="Compare pay-as-you-go LLM API pricing across 83 providers and 1181 text-model offerings. Find the right open-weight model and provider for your use case`));
   }
   for (const field of ['property="og:title"', 'name="twitter:title"']) {
-    assert.ok(refreshed.includes(`<meta ${field} content="LLM API Pricing Comparison — 83 Providers | TokenWatch"`));
+    assert.ok(refreshed.includes(`<meta ${field} content="LLM API Pricing Comparison &amp; Open Model Finder | TokenWatch"`));
   }
   assert.match(refreshed, /<p class="subtitle">Compare pay-as-you-go LLM API pricing across 83 providers and 1181 text-model offerings\./);
   assert.doesNotMatch(refreshed, /1180|82 providers|1181 models|Stale title/);
@@ -214,7 +217,7 @@ test('renderHomepageMeta overwrites placeholder homepage fields after token subs
 <meta name="description" content="Compare across {{providerCount}} providers and {{modelCount}} models." />
 <p class="subtitle">Compare across {{providerCount}} providers and {{modelCount}} models.</p>`;
   const refreshed = renderHomepageMeta(renderCounts(templated, 1181, 82), 1181, 82);
-  assert.match(refreshed, /LLM API Pricing Comparison — 82 Providers/);
+  assert.match(refreshed, /LLM API Pricing Comparison &amp; Open Model Finder \| TokenWatch/);
   assert.match(refreshed, /<meta name="description" content="Compare [^"]*across 82 providers and 1181 text-model offerings[^"]*" \/>/);
   assert.match(refreshed, /<p class="subtitle">Compare pay-as-you-go LLM API pricing across 82 providers and 1181 text-model offerings\./);
   assert.doesNotMatch(refreshed, /{{/);
@@ -512,4 +515,43 @@ test('providerPageSlugs derives link eligibility from the generated provider set
   const slugs = providerPageSlugs(providerPages);
   assert.equal(slugs.has('alpha'), true);
   assert.equal(slugs.has('thin'), false);
+});
+
+test('recommender discovery: llms.txt, FAQ, methodology, explore links, and model pages point to /choose/', () => {
+  const manifest = buildLlmsTxt({ modelCount: 1, providerCount: 1, imageCount: 1, videoCount: 1, generatedAt: '2026-10-04T00:00:00Z' });
+  assert.match(manifest.split('\n')[2], /use-case model finder/, 'summary line mentions the finder');
+  assert.ok(manifest.indexOf('## Choose a model and provider for a use case') < manifest.indexOf('## Pages'), 'choose section is prominent');
+  for (const id of Object.keys(USE_CASES)) {
+    assert.ok(manifest.includes(`https://tokenwatch.wyrdwerk.com/choose/?useCase=${id}`), `deep link for ${id}`);
+  }
+  for (const needle of ['/api/v1/use-cases', '/api/v1/recommend?use_case=', '/api/v1/recommend/providers?use_case=', 'recommend_model', 'recommend_provider', 'CC BY 4.0']) {
+    assert.ok(manifest.includes(needle), `llms.txt mentions ${needle}`);
+  }
+
+  const faqHtml = renderFaqPage({ modelCount: 1, providerCount: 1 });
+  assert.match(faqHtml, /id="choosing-a-model"/);
+  assert.match(faqHtml, /href="\/choose\/"/);
+  const data = JSON.parse(faqHtml.match(/application\/ld\+json">(.*?)<\/script>/)[1]);
+  const faq = data['@graph'].find((node) => node['@type'] === 'FAQPage');
+  for (const [question] of chooseFaqItems()) {
+    assert.ok(faq.mainEntity.some((item) => item.name === question), `JSON-LD carries: ${question}`);
+  }
+  assert.equal(faq.mainEntity.length, (faqHtml.match(/<details>/g) || []).length);
+
+  const methodology = renderMethodologyPage({ modelCount: 1, providerCount: 1, generatedAt: '2026-10-04T00:00:00Z' });
+  assert.match(methodology, /<h2 id="recommendations">How recommendations work<\/h2>/);
+  for (const useCase of Object.values(USE_CASES)) {
+    assert.ok(methodology.includes(`href="/choose/?useCase=${useCase.id}"`), `preset row for ${useCase.id}`);
+    assert.ok(methodology.includes(`≥ ${useCase.qualityFloor.min}<`), `floor for ${useCase.id}`);
+  }
+  assert.match(methodology, /close call/);
+  assert.match(methodology, /Pareto/);
+
+  assert.match(renderExploreLinks(), /href="\/choose\/"/);
+  const page = collectModelPages({ pricing: { models: [
+    { id: 'm', name: 'M', provider: 'a', pricing: { input: 1, output: 2 } },
+    { id: 'm', name: 'M', provider: 'b', pricing: { input: 1, output: 2 } },
+    { id: 'm', name: 'M', provider: 'c', pricing: { input: 1, output: 2 } },
+  ] } })[0];
+  assert.match(renderModelPage(page, { historyEnabled: false }), /Is this the right model for your workload\? <a href="\/choose\/">/);
 });

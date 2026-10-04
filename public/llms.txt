@@ -1,11 +1,32 @@
 # TokenWatch
 
-> Pay-as-you-go LLM API pricing and practical benchmarks: 1598 provider-specific text offerings across 101 inference providers, 199 image models, 124 video models. Text catalog generated 2026-10-04T13:32:53.098Z.
+> Pay-as-you-go LLM API pricing, practical benchmarks, and a use-case model finder that recommends an open-weight model and inference provider for nine workloads: 1598 provider-specific text offerings across 101 inference providers, 199 image models, 124 video models. Text catalog generated 2026-10-04T13:32:53.098Z.
 
 TokenWatch compares published provider prices, not a single intrinsic price for each model. One model can have multiple provider, quantization, and endpoint offerings. Each catalog has its own generated_at timestamp; the text timestamp above does not establish image, video, or benchmark freshness.
 
+## Choose a model and provider for a use case
+
+Use this when the question is "which open model should I use for X, and which provider should run it?" rather than "what does model Y cost?".
+
+- [Open model finder](https://tokenwatch.wyrdwerk.com/choose/): pick a workload; get three open-weight picks (best quality, best value on the quality/price Pareto frontier, cheapest model above an absolute quality floor) plus a provider ranking with reasons, caveats, and confidence (stable / moderately stable / close call). A priority control re-weights providers for balanced, cheapest, fastest, or most-reliable.
+- Deep links preselect a workload with `?useCase=<id>`:
+  - Agentic coding: https://tokenwatch.wyrdwerk.com/choose/?useCase=agentic-coding
+  - Tool-using agents: https://tokenwatch.wyrdwerk.com/choose/?useCase=tool-agents
+  - Long-context RAG: https://tokenwatch.wyrdwerk.com/choose/?useCase=long-context-rag
+  - Structured extraction: https://tokenwatch.wyrdwerk.com/choose/?useCase=structured-extraction
+  - High-volume, low-cost: https://tokenwatch.wyrdwerk.com/choose/?useCase=high-volume-cheap
+  - Chat assistant: https://tokenwatch.wyrdwerk.com/choose/?useCase=chat-assistant
+  - Creative writing: https://tokenwatch.wyrdwerk.com/choose/?useCase=creative-writing
+  - Reasoning and math: https://tokenwatch.wyrdwerk.com/choose/?useCase=reasoning-math
+  - Frontend and UI development: https://tokenwatch.wyrdwerk.com/choose/?useCase=frontend-ui
+- Creative writing is led by LMArena Creative Writing preference ratings; chat keeps capability-ranked picks and shows a separate people's favourite from Arena Text. Arena data: LMArena leaderboard dataset (https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset), CC BY 4.0 — attribute ratings when you repeat them.
+- API: [use-case presets](https://tokenwatch.wyrdwerk.com/api/v1/use-cases) (assumed mixes, weights, requirements, floors); [model recommendations](https://tokenwatch.wyrdwerk.com/api/v1/recommend?use_case=agentic-coding&pretty=1) (`use_case` required; optional `priority`, `zdr`, `exclude_hq`, `include_proprietary`, `detail`, `limit`, `pretty`); [provider ranking for one model](https://tokenwatch.wyrdwerk.com/api/v1/recommend/providers?use_case=agentic-coding&model=glm-5.3&pretty=1) (adds required `model`, a canonical ID).
+- WebMCP: on the text calculator page, `recommend_model` and `recommend_provider` call the same engine without changing the table. See the [operating skill](https://tokenwatch.wyrdwerk.com/skill.md).
+- Limits: token mixes are assumed per workload, not measured from your traffic; benchmark and provider weights are documented judgments; provider headquarters, telemetry, and capability metadata are incomplete, so unknowns stay unknown and unverified providers are never ranked. See the [methodology](https://tokenwatch.wyrdwerk.com/docs/methodology/#recommendations).
+
 ## Pages
 
+- [Open model finder](https://tokenwatch.wyrdwerk.com/choose/): open-weight model and provider recommendations for nine workloads
 - [Text pricing calculator](https://tokenwatch.wyrdwerk.com/): compare per-token prices across providers; enter a token mix or budget to compute costs
 - [Image generation pricing](https://tokenwatch.wyrdwerk.com/image): per-image, per-megapixel, and image-token units kept separate
 - [Video generation pricing](https://tokenwatch.wyrdwerk.com/video): per-second rates by resolution and audio mode
@@ -14,12 +35,12 @@ TokenWatch compares published provider prices, not a single intrinsic price for 
 - [Provider directory](https://tokenwatch.wyrdwerk.com/providers/): reviewed policy links and per-provider text, image, and video catalogs
 - [Methodology](https://tokenwatch.wyrdwerk.com/docs/methodology/): sourcing, normalization, dedup, and cost-calculation rules
 - [API docs](https://tokenwatch.wyrdwerk.com/docs/api/): queryable JSON endpoints for all catalogs
-- [FAQ](https://tokenwatch.wyrdwerk.com/faq/): pricing, image/video billing, and plain-language benchmark explainers
+- [FAQ](https://tokenwatch.wyrdwerk.com/faq/): choosing a model, pricing, image/video billing, and plain-language benchmark explainers
 - [WebMCP operating skill](https://tokenwatch.wyrdwerk.com/skill.md): how agents should operate the in-page catalog tools
 
 ## API
 
-- [API endpoint directory](https://tokenwatch.wyrdwerk.com/api/v1/): models, providers, orgs, stats, images, and videos (no auth, CORS enabled)
+- [API endpoint directory](https://tokenwatch.wyrdwerk.com/api/v1/): models, providers, orgs, stats, images, videos, use cases, and recommendations (no auth, CORS enabled)
 - [OpenAPI specification](https://tokenwatch.wyrdwerk.com/openapi.json): endpoint paths, query parameters, response schemas, and error responses
 - For a model's provider comparison, use /api/v1/models/:canonicalId/providers. Use canonical IDs from the catalog, not display names. Send a mix explicitly when comparing a non-default workload; the API docs describe tokens and mix units.
 - Price history is optional. A history endpoint can return 503 when storage is not enabled; missing history is not a zero price.
