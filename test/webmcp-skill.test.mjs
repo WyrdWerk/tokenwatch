@@ -12,7 +12,7 @@ const TEXT_TOOLS = [
   'get_share_url', 'get_catalog_info', 'set_workload', 'apply_preset',
   'set_filters', 'clear_filters', 'compare_models',
   'open_detail', 'highlight_tradeoff', 'export_csv', 'snapshot_compare',
-  'download_cost_card', 'switch_catalog',
+  'download_cost_card', 'switch_catalog', 'recommend_model', 'recommend_provider',
 ];
 
 test('TokenWatch WebMCP skill documents tool contracts and human-readable reporting', async () => {

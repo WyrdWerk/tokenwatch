@@ -211,6 +211,335 @@ test('/api/v1/ returns API info + endpoint directory', async () => {
   assert.ok(Array.isArray(body.endpoints));
   assert.ok(body.endpoints.length >= 8);
   assert.ok(body.endpoints.some(e => e.includes('/models')));
+  assert.ok(body.endpoints.some(e => e.includes('open_weights')));
+});
+
+test('/api/v1/use-cases lists the shared recommendation presets and marks mixes as assumed', async () => {
+  const { status, body, headers } = await getJson(makeContext('/api/v1/use-cases'));
+  assert.equal(status, 200);
+  assert.equal(headers.get('Access-Control-Allow-Origin'), '*');
+  assert.equal(body.use_cases.length, 9);
+  const agentic = body.use_cases.find((useCase) => useCase.id === 'agentic-coding');
+  assert.deepEqual(agentic.mix, { inputPct: 2.5, cacheReadPct: 97, outputPct: 0.5, assumed: true });
+  assert.ok(agentic.weights.benchmark.coding_index > 0);
+  assert.ok(agentic.weights.provider.throughput > 0);
+  assert.deepEqual(agentic.requirements, { needsToolCalling: true, needsStructuredOutput: false, minContext: 32768 });
+  assert.deepEqual(agentic.floors, { field: 'coding_index', min: 25 });
+});
+
+function recommendationAssets(catalog, arenaSource = null) {
+  const benchmarkRows = catalog.models.map((model, index) => ({
+    id: model.id,
+    scores: model.benchmarks || (index === 3 ? {} : {
+      aa_agentic: 50 + index,
+      aa_coding: 45 + index,
+      aa_intelligence: 55 + index,
+      livebench_agentic_coding: 60 + index,
+    }),
+  }));
+  const performance = Object.fromEntries(catalog.models.map((model, index) => [
+    `${model.id.split('/').at(-1)}|${model.provider}`,
+    { source: 'openrouter', latency: { p50: 1000 - index * 100 }, throughput: { p50: 50 + index * 10 } },
+  ]));
+  return {
+    async fetch(url) {
+      const pathname = new URL(url).pathname;
+      if (pathname === '/pricing.json') return Response.json(catalog);
+      if (pathname === '/benchmarks.json') return Response.json({
+        generated_at: '2026-10-04T00:00:00Z',
+        ...(arenaSource ? { sources: { arena: arenaSource } } : {}),
+        models: benchmarkRows,
+      });
+      if (pathname === '/performance.json') return Response.json({ ...performance, _meta: { generated_at: '2026-10-04T00:00:00Z' } });
+      return new Response('Not found', { status: 404 });
+    },
+  };
+}
+
+function recommendationCatalog() {
+  const model = (id, provider, extra = {}) => ({
+    id: `open/${id}`,
+    name: id,
+    org: 'open',
+    provider,
+    provider_display: provider === 'beta-provider' ? 'Beta Provider' : provider,
+    open_weights: true,
+    open_weights_source: 'fixture',
+    supported_parameters: ['tools'],
+    context_length: 65536,
+    quantization: 'fp8',
+    zdr: true,
+    headquarters: provider === 'cn-provider' ? 'CN' : 'US',
+    pricing: { input: 1, output: 2, cache_read: 0.1, cache_write: null },
+    benchmarks: {
+      agentic_index: 50,
+      coding_index: 45,
+      intelligence_index: 55,
+      livebench_agentic_coding: 60,
+    },
+    ...extra,
+  });
+  return {
+    generated_at: '2026-10-04T00:00:00Z',
+    providers_meta: { 'cn-provider': { headquarters: 'CN' }, 'us-provider': { headquarters: 'US' } },
+    models: [
+      model('agent-alpha', 'us-provider'),
+      model('agent-beta', 'cn-provider'),
+      model('partly-scored', 'us-provider', { benchmarks: { intelligence_index: 30 } }),
+      model('not-scored', 'us-provider', { benchmarks: null }),
+    ],
+  };
+}
+
+test('/api/v1/recommend uses shared shortlist groups with explanations, confidence, and supported constraints', async () => {
+  const context = makeContext('/api/v1/recommend', '?use_case=agentic-coding&priority=fastest&zdr=true&exclude_hq=CN');
+  context.env.ASSETS = recommendationAssets(recommendationCatalog());
+  const { status, body, headers } = await getJson(context);
+  assert.equal(status, 200);
+  assert.equal(headers.get('Access-Control-Allow-Origin'), '*');
+  assert.equal(body.useCase, 'agentic-coding');
+  assert.equal(body.priority, 'fastest');
+  assert.deepEqual(body.mix, { inputPct: 2.5, cacheReadPct: 97, outputPct: 0.5, assumed: true });
+  assert.ok(body.picks.bestQuality.explanation);
+  assert.ok(body.picks.bestQuality.confidence);
+  for (const group of [body.alsoConsidered, body.partiallyBenchmarked, body.unbenchmarked, body.unverified]) {
+    assert.ok(Number.isInteger(group.totalCount));
+    assert.ok(Array.isArray(group.items));
+    assert.ok(group.items.length <= 10);
+    assert.ok(group.items.every((candidate) => {
+      assert.deepEqual(Object.keys(candidate).sort(), ['blendedRate', 'coverage', 'id', 'name', 'reason', 'score']);
+      return true;
+    }));
+  }
+  assert.ok(body.partiallyBenchmarked.items.some((candidate) => candidate.id === 'partly-scored'));
+  assert.ok(body.unbenchmarked.items.some((candidate) => candidate.id === 'not-scored'));
+  assert.ok(!JSON.stringify(body).includes('cn-provider'), 'exclude_hq filters known CN provider offerings');
+});
+
+test('/api/v1/recommend exposes the Arena favorite separately from chat capability picks with attribution metadata', async () => {
+  const catalog = recommendationCatalog();
+  const base = catalog.models[0];
+  const model = (id, provider, intelligence, language, instruction, text, creative) => ({
+    ...base,
+    id: `open/${id}`,
+    name: id,
+    provider,
+    provider_display: provider === 'beta-provider' ? 'Beta Provider' : provider,
+    benchmarks: {
+      intelligence_index: intelligence,
+      livebench_language: language,
+      livebench_instruction_following: instruction,
+      arena_text: text,
+      arena_creative_writing: creative,
+    },
+  });
+  catalog.models = [
+    model('capability-winner', 'alpha-provider', 80, 90, 80, 1400, 1400),
+    model('arena-favorite', 'beta-provider', 20, 80, 70, 1600, 1600),
+  ];
+  catalog.providers = [
+    { key: 'alpha-provider', name: 'Alpha Provider' },
+    { key: 'beta-provider', name: 'Beta Provider' },
+  ];
+  const arenaSource = {
+    name: 'Arena (LMArena)',
+    url: 'https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset',
+    license: 'CC-BY-4.0',
+    license_url: 'https://creativecommons.org/licenses/by/4.0/',
+    attribution: 'Arena (LMArena), Leaderboard Dataset; licensed under CC BY 4.0.',
+    rating_dates: { arena_text: '2026-10-02', arena_creative_writing: '2026-10-02' },
+  };
+  const context = makeContext('/api/v1/recommend', '?use_case=chat-assistant');
+  context.env.ASSETS = recommendationAssets(catalog, arenaSource);
+
+  const chat = await getJson(context);
+  assert.equal(chat.status, 200);
+  assert.equal(chat.body.picks.bestQuality.id, 'capability-winner');
+  assert.equal(chat.body.preference.favorite.id, 'arena-favorite');
+  assert.equal(chat.body.preference.favorite.rating, 1600);
+  assert.equal(chat.body.preference.board, 'Text overall');
+  assert.equal(chat.body.preference.source.license, 'CC-BY-4.0');
+  assert.equal(chat.body.preference.source.rating_date, '2026-10-02');
+  assert.equal(chat.body.preference.source.attribution, arenaSource.attribution);
+  assert.equal(chat.body.preference.favorite.providers[0].name, 'Beta Provider');
+
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend?use_case=creative-writing');
+  const writing = await getJson(context);
+  assert.equal(writing.body.preference.favorite.id, 'arena-favorite');
+  assert.equal(writing.body.preference.board, 'Creative writing');
+  assert.equal(writing.body.preference.source.rating_date, '2026-10-02');
+});
+
+test('/api/v1/recommend supports full detail and a validated limit for candidate groups', async () => {
+  const context = makeContext('/api/v1/recommend', '?use_case=agentic-coding&detail=full&limit=1');
+  context.env.ASSETS = recommendationAssets(recommendationCatalog());
+  const { status, body } = await getJson(context);
+  assert.equal(status, 200);
+  assert.ok(body.picks.bestQuality.recommendedProvider.explanation);
+  for (const group of [body.alsoConsidered, body.partiallyBenchmarked, body.unbenchmarked, body.unverified]) {
+    assert.equal(group.items.length, Math.min(group.totalCount, 1));
+    assert.ok(group.items.every((candidate) => candidate.explanation));
+  }
+});
+
+test('/api/v1/recommend returns compact JSON unless pretty=1, with short unverified provider rows', async () => {
+  const catalog = recommendationCatalog();
+  catalog.models.push({ ...catalog.models[0], provider: 'mystery-provider', supported_parameters: null, context_length: null });
+  const context = makeContext('/api/v1/recommend', '?use_case=agentic-coding');
+  context.env.ASSETS = recommendationAssets(catalog);
+  const compact = await onRequestGet(context);
+  const compactText = await compact.text();
+  assert.equal(compact.status, 200);
+  assert.ok(!compactText.includes('\n'), 'default recommendation JSON has no indentation');
+  const body = JSON.parse(compactText);
+  const unverified = body.picks.bestQuality.unverifiedProviders;
+  assert.ok(unverified.length >= 1, 'fixture produces an unverified provider');
+  for (const row of unverified) {
+    assert.deepEqual(Object.keys(row).sort(), ['blendedRate', 'offeringId', 'provider', 'reason']);
+  }
+
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend?use_case=agentic-coding&pretty=1');
+  const prettyText = await (await onRequestGet(context)).text();
+  assert.match(prettyText, /^\{\n  "/);
+  assert.deepEqual(JSON.parse(prettyText), body);
+
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend?use_case=agentic-coding&detail=full');
+  const full = JSON.parse(await (await onRequestGet(context)).text());
+  assert.ok(Array.isArray(full.picks.bestQuality.unverifiedProviders[0].unknowns));
+
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend/providers?use_case=agentic-coding&model=agent-alpha');
+  const providersText = await (await onRequestGet(context)).text();
+  assert.ok(!providersText.includes('\n'));
+  const providers = JSON.parse(providersText);
+  assert.ok(providers.unverified.totalCount >= 1);
+  assert.deepEqual(Object.keys(providers.unverified.items[0]).sort(), ['blendedRate', 'offeringId', 'provider', 'reason']);
+
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend?use_case=agentic-coding&pretty=yes');
+  const invalid = await onRequestGet(context);
+  assert.equal(invalid.status, 400);
+  assert.equal((await invalid.json()).parameter, 'pretty');
+});
+
+test('/api/v1/recommend default response stays under 50 KB with the committed catalogs', async () => {
+  const publicDir = join(__dirname, '..', 'public');
+  const catalogFiles = Object.fromEntries(await Promise.all(
+    ['pricing.json', 'benchmarks.json', 'performance.json'].map(async (filename) => [
+      filename,
+      JSON.parse(await readFile(join(publicDir, filename), 'utf8')),
+    ]),
+  ));
+  const assets = {
+    async fetch(url) {
+      const filename = new URL(url).pathname.slice(1);
+      return catalogFiles[filename]
+        ? Response.json(catalogFiles[filename])
+        : new Response('Not found', { status: 404 });
+    },
+  };
+  const response = await onRequestGet({
+    request: new Request('https://tokenwatch.test/api/v1/recommend?use_case=agentic-coding'),
+    env: { ASSETS: assets },
+  });
+  const serialized = await response.text();
+  const body = JSON.parse(serialized);
+  assert.equal(response.status, 200);
+  assert.ok(Buffer.byteLength(serialized) < 50 * 1024, `default response was ${Buffer.byteLength(serialized)} bytes`);
+  assert.ok(body.picks.bestQuality.explanation);
+  for (const pick of Object.values(body.picks)) {
+    if (!pick) continue;
+    assert.ok(!pick.recommendedProvider?.explanation);
+    assert.ok(!pick.cheapestProvider?.explanation);
+  }
+  for (const group of [body.alsoConsidered, body.partiallyBenchmarked, body.unbenchmarked, body.unverified]) {
+    assert.ok(group.items.length <= 10);
+    assert.ok(group.totalCount >= group.items.length);
+    assert.ok(group.items.every((candidate) => !candidate.explanation));
+  }
+});
+
+test('/api/v1/recommend validates use case, priority, booleans, and HQ codes', async () => {
+  for (const query of [
+    '',
+    '?use_case=unknown',
+    '?use_case=agentic-coding&priority=quickest',
+    '?use_case=agentic-coding&zdr=yes',
+    '?use_case=agentic-coding&include_proprietary=1',
+    '?use_case=agentic-coding&exclude_hq=CN,',
+    '?use_case=agentic-coding&detail=verbose',
+    '?use_case=agentic-coding&limit=0',
+    '?use_case=agentic-coding&limit=101',
+  ]) {
+    const context = makeContext('/api/v1/recommend', query);
+    context.env.ASSETS = recommendationAssets(recommendationCatalog());
+    const { status } = await getJson(context);
+    assert.equal(status, 400, query || 'missing use_case');
+  }
+});
+
+test('/api/v1/recommend/providers ranks a canonical model and returns 400/404 for invalid requests', async () => {
+  const catalog = recommendationCatalog();
+  const context = makeContext('/api/v1/recommend/providers', '?use_case=agentic-coding&model=agent-alpha&exclude_hq=CN');
+  context.env.ASSETS = recommendationAssets(catalog);
+  const { status, body } = await getJson(context);
+  assert.equal(status, 200);
+  assert.deepEqual(body.mix, { inputPct: 2.5, cacheReadPct: 97, outputPct: 0.5, assumed: true });
+  assert.deepEqual(body.ranked.items.map((provider) => provider.provider), ['us-provider']);
+  assert.equal(body.ranked.totalCount, 1);
+  assert.ok(body.ranked.items[0].explanation);
+  assert.ok(body.ranked.items[0].confidence);
+
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend/providers?use_case=agentic-coding');
+  assert.equal((await getJson(context)).status, 400);
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend/providers?use_case=agentic-coding&model=missing');
+  assert.equal((await getJson(context)).status, 404);
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend/providers?use_case=agentic-coding&model=agent-alpha&priority=balancedish');
+  assert.equal((await getJson(context)).status, 400);
+});
+
+test('/api/v1/recommend/providers explains the top three, compacts the rest, and limits provider groups', async () => {
+  const catalog = recommendationCatalog();
+  const original = catalog.models[0];
+  const providers = ['alpha', 'bravo', 'charlie', 'delta', 'echo', 'foxtrot'];
+  catalog.models = providers.map((provider, index) => ({
+    ...original,
+    provider,
+    pricing: { ...original.pricing, input: 1 + index, output: 2 + index },
+  }));
+  const context = makeContext('/api/v1/recommend/providers', '?use_case=agentic-coding&model=agent-alpha&limit=4');
+  context.env.ASSETS = recommendationAssets(catalog);
+  const { status, body } = await getJson(context);
+  assert.equal(status, 200);
+  assert.equal(body.ranked.totalCount, 6);
+  assert.equal(body.ranked.items.length, 4);
+  assert.ok(body.ranked.items.slice(0, 3).every((provider) => provider.explanation));
+  assert.ok(!body.ranked.items[3].explanation);
+  assert.equal(body.unverified.totalCount, 0);
+  assert.deepEqual(Object.keys(body.ranked.items[3]).sort(), ['blendedRate', 'confidence', 'name', 'provider', 'reason', 'score']);
+
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend/providers?use_case=agentic-coding&model=agent-alpha&detail=full&limit=4');
+  const full = await getJson(context);
+  assert.ok(full.body.ranked.items.every((provider) => provider.explanation));
+});
+
+test('recommendation assets are required and unknown canonical models return 404 before asset loading', async () => {
+  const requestedAssets = [];
+  const context = makeContext('/api/v1/recommend?use_case=agentic-coding');
+  context.env.ASSETS = {
+    async fetch(url) {
+      const path = new URL(url).pathname;
+      requestedAssets.push(path);
+      if (path === '/pricing.json') return Response.json(recommendationCatalog());
+      return new Response('Not found', { status: 404 });
+    },
+  };
+  assert.equal((await getJson(context)).status, 503, 'missing benchmarks/performance must not silently degrade recommendations');
+  assert.ok(requestedAssets.includes('/benchmarks.json'));
+  assert.ok(requestedAssets.includes('/performance.json'));
+
+  requestedAssets.length = 0;
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend/providers?use_case=agentic-coding&model=missing-model');
+  assert.equal((await getJson(context)).status, 404);
+  assert.deepEqual(requestedAssets, ['/pricing.json'], 'unknown model is known before required recommender assets load');
 });
 
 // ── /api/v1/stats ─────────────────────────────────────────────────────────────
@@ -233,6 +562,64 @@ test('/api/v1/models returns all models by default', async () => {
   assert.equal(status, 200);
   assert.equal(body.total, 5);
   assert.equal(body.models.length, 5);
+});
+
+test('/api/v1/models filters on resolved open-weight status and providers exposes the contract', async () => {
+  const catalog = { models: [
+    {
+      id: 'open-model', org: 'deepseek', provider: 'alpha', open_weights: true,
+      open_weights_source: 'override', license: 'mit', pricing: { input: 1, output: 2 },
+      supported_parameters: ['tools'], supports_tool_choice: true,
+      supports_implicit_caching: false, max_prompt_tokens: 12000, uptime_1d: 99.5,
+    },
+    {
+      id: 'closed-model', org: 'anthropic', provider: 'beta', open_weights: false,
+      open_weights_source: 'org_prior', license: null, pricing: { input: 1, output: 2 },
+    },
+    { id: 'unknown-model', org: 'google', provider: 'gamma', open_weights: null, pricing: { input: 1, output: 2 } },
+  ] };
+  const context = makeContext('/api/v1/models', '?open_weights=true');
+  context.env.ASSETS = { fetch: async () => Response.json(catalog) };
+
+  const open = await getJson(context);
+  assert.equal(open.body.total, 1);
+  assert.equal(open.body.models[0].open_weights, true);
+  context.request = new Request('https://tokenwatch.test/api/v1/models?open_weights=false');
+  const closed = await getJson(context);
+  assert.equal(closed.body.total, 1);
+  assert.equal(closed.body.models[0].open_weights, false);
+
+  context.request = new Request('https://tokenwatch.test/api/v1/models/open-model/providers');
+  const providers = await getJson(context);
+  assert.deepEqual({
+    open_weights: providers.body.providers[0].open_weights,
+    open_weights_source: providers.body.providers[0].open_weights_source,
+    license: providers.body.providers[0].license,
+    supported_parameters: providers.body.providers[0].supported_parameters,
+    supports_tool_choice: providers.body.providers[0].supports_tool_choice,
+    supports_implicit_caching: providers.body.providers[0].supports_implicit_caching,
+    max_prompt_tokens: providers.body.providers[0].max_prompt_tokens,
+    uptime_1d: providers.body.providers[0].uptime_1d,
+  }, {
+    open_weights: true,
+    open_weights_source: 'override',
+    license: 'mit',
+    supported_parameters: ['tools'],
+    supports_tool_choice: true,
+    supports_implicit_caching: false,
+    max_prompt_tokens: 12000,
+    uptime_1d: 99.5,
+  });
+
+  context.request = new Request('https://tokenwatch.test/api/v1/models/unknown-model/providers');
+  const unknown = await getJson(context);
+  const unknownProvider = unknown.body.providers[0];
+  for (const field of [
+    'open_weights', 'open_weights_source', 'license', 'supported_parameters',
+    'supports_tool_choice', 'supports_implicit_caching', 'max_prompt_tokens', 'uptime_1d',
+  ]) {
+    assert.equal(unknownProvider[field], null, `${field} should be explicit null when unavailable`);
+  }
 });
 
 test('?org=google filters to google models', async () => {

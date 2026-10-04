@@ -253,7 +253,19 @@ test('methodology gives attributed, workload-specific examples without conflatin
     { id: 'output', name: 'Output', provider: 'b', pricing: { input: 3, cache_read: 1, output: 1 } },
     { id: 'rag', name: 'RAG', provider: 'c', pricing: { input: 0.5, cache_read: 2, output: 5 } },
   ];
-  const html = renderMethodologyPage({ modelCount: 3, providerCount: 3, generatedAt: '2026-10-01T01:02:03Z', models });
+  const html = renderMethodologyPage({
+    modelCount: 3,
+    providerCount: 3,
+    generatedAt: '2026-10-01T01:02:03Z',
+    models,
+    arenaSource: {
+      url: 'https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset',
+      license: 'CC-BY-4.0',
+      license_url: 'https://creativecommons.org/licenses/by/4.0/',
+      attribution: 'Arena (LMArena), Leaderboard Dataset; ratings are unchanged.',
+      rating_dates: { arena_text: '2026-10-02', arena_creative_writing: '2026-10-02' },
+    },
+  });
   assert.match(html, /Cache-heavy agents[\s\S]*?<td>Cache[\s\S]*?\$0\.095/);
   assert.match(html, /Uncached retrieval\/RAG[\s\S]*?<td>RAG[\s\S]*?\$1\.40/);
   assert.match(html, /Balanced uncached[\s\S]*?<td>Output[\s\S]*?\$2\.00/);
@@ -262,6 +274,9 @@ test('methodology gives attributed, workload-specific examples without conflatin
   assert.match(html, /https:\/\/github\.com\/WyrdWerk\/tokenwatch\/issues/);
   assert.match(html, /href="\/pricing\.json"/);
   assert.match(html, /provider-specific offerings/);
+  assert.match(html, /Creative Writing ratings are dated 2026-10-02/);
+  assert.match(html, /CC BY 4\.0/);
+  assert.match(html, /Arena \(LMArena\), Leaderboard Dataset/);
   const article = JSON.parse(html.match(/id="seo-structured-data" type="application\/ld\+json">(.*?)<\/script>/)[1])['@graph'][0];
   assert.equal(article.author.name, 'Yash Jain');
   assert.equal(article.publisher.name, 'WyrdWerk');
@@ -338,7 +353,12 @@ test('API documentation renders from the same endpoint metadata as API discovery
     assert.ok(directory.some((line) => line.startsWith(endpoint.path + ' —')));
   }
   assert.match(docs, /min_intelligence/);
+  assert.match(docs, /open_weights=true/);
   assert.match(docs, /benchmarked/);
+  assert.match(docs, /assumed workload defaults/);
+  assert.match(docs, /recommend\?use_case=agentic-coding/);
+  assert.match(docs, /<code>source<\/code> metadata/);
+  assert.match(docs, /CC BY 4\.0/);
   assert.match(docs, /href="\/openapi\.json"/);
   assert.equal(openApi.openapi, '3.1.0');
   assert.equal(openApi.servers[0].url, 'https://tokenwatch.wyrdwerk.com');
@@ -347,6 +367,31 @@ test('API documentation renders from the same endpoint metadata as API discovery
     assert.ok(openApi.paths[path]?.get, `missing OpenAPI operation for ${endpoint.path}`);
     assert.match(openApi.paths[path].get.operationId, /^[A-Za-z][A-Za-z0-9]*$/, `operationId must be identifier-safe for ${endpoint.path}`);
   }
+  const openWeights = openApi.paths['/api/v1/models'].get.parameters.find((parameter) => parameter.name === 'open_weights');
+  assert.deepEqual(openWeights.schema, { type: 'boolean' });
+  assert.match(openWeights.description, /unknown statuses are excluded/);
+  const recommend = openApi.paths['/api/v1/recommend'].get.parameters;
+  assert.match(openApi.paths['/api/v1/recommend'].get.responses[200].description, /Arena preference\.favorite/);
+  assert.equal(recommend.find((parameter) => parameter.name === 'use_case').required, true);
+  assert.deepEqual(recommend.find((parameter) => parameter.name === 'priority').schema.enum,
+    ['balanced', 'cheapest', 'fastest', 'most-reliable']);
+  assert.deepEqual(recommend.find((parameter) => parameter.name === 'zdr').schema, { type: 'boolean' });
+  assert.equal(recommend.find((parameter) => parameter.name === 'exclude_hq').schema.pattern,
+    '^[A-Za-z]{2}(,[A-Za-z]{2})*$');
+  assert.deepEqual(recommend.find((parameter) => parameter.name === 'include_proprietary').schema,
+    { type: 'boolean' });
+  assert.deepEqual(recommend.find((parameter) => parameter.name === 'detail').schema,
+    { type: 'string', enum: ['compact', 'full'], default: 'compact' });
+  assert.deepEqual(recommend.find((parameter) => parameter.name === 'limit').schema,
+    { type: 'integer', minimum: 1, maximum: 100, default: 10 });
+  assert.match(recommend.find((parameter) => parameter.name === 'detail').description, /compact/);
+  const providers = openApi.paths['/api/v1/recommend/providers'].get.parameters;
+  assert.equal(providers.find((parameter) => parameter.name === 'model').required, true);
+  assert.equal(providers.find((parameter) => parameter.name === 'include_proprietary').schema.type, 'boolean');
+  assert.equal(providers.find((parameter) => parameter.name === 'limit').schema.maximum, 100);
+  assert.match(docs, /full explanations on the three model picks/);
+  assert.match(docs, /limit=1\.\.100/);
+  assert.equal(openApi.paths['/api/v1/use-cases'].get.summary.includes('assumed mixes'), true);
 });
 
 test('dynamic sitemap rejects duplicates and includes generated routes', () => {

@@ -60,6 +60,16 @@ function assertCalculatorPage(html, label, minFaqs) {
   requireMatch(html, /<section class="seo-faq"[\s\S]*?href="\/faq\//, `${label} FAQ section must link to /faq/`);
 }
 
+function assertChoosePage(html) {
+  requireMatch(html, /<link rel="canonical" href="https:\/\/tokenwatch\.wyrdwerk\.com\/choose\/" \/>/, 'choose page canonical URL');
+  requireMatch(html, /<h1 class="tagline">Which open model should you use, and where\?<\/h1>/, 'choose page heading');
+  requireMatch(html, /href="\/choose\/" aria-current="page">Choose<\/a>/, 'choose page active navigation link');
+  requireMatch(html, /id="seo-structured-data" type="application\/ld\+json"/, 'choose page structured data');
+  requireMatch(html, /src="\/choose-app\.js\?v=dev"/, 'choose page cache-busted source script');
+  if (count(html, /name="useCase"/g) !== 9) throw new Error('verify-seo: choose page must expose all nine use cases');
+  requireMatch(html, /id="modelCards"[\s\S]*?id="providerRows"/, 'choose page recommendation and provider result containers');
+}
+
 // The consolidated FAQ page owns the FAQPage JSON-LD — visible details and
 // schema entries must match 1:1 there.
 function assertFaqPage(html) {
@@ -84,10 +94,11 @@ function localFileForUrl(url) {
 }
 
 export async function main() {
-  const [index, image, video, faqPage, sitemap, providerEntries, modelEntries] = await Promise.all([
+  const [index, image, video, choosePage, faqPage, sitemap, providerEntries, modelEntries] = await Promise.all([
     readFile(join(PUBLIC, 'index.html'), 'utf8'),
     readFile(join(PUBLIC, 'image.html'), 'utf8'),
     readFile(join(PUBLIC, 'video.html'), 'utf8'),
+    readFile(join(PUBLIC, 'choose', 'index.html'), 'utf8'),
     readFile(join(PUBLIC, 'faq', 'index.html'), 'utf8'),
     readFile(join(PUBLIC, 'sitemap.xml'), 'utf8'),
     readdir(join(PUBLIC, 'providers'), { withFileTypes: true }),
@@ -104,6 +115,7 @@ export async function main() {
   assertCalculatorPage(index, 'index.html', 10);
   assertCalculatorPage(image, 'image.html', 6);
   assertCalculatorPage(video, 'video.html', 6);
+  assertChoosePage(choosePage);
   requireMatch(image, /flat per-image[\s\S]*per-megapixel[\s\S]*image-token/i, 'image.html does not keep image units in separate groups');
   requireMatch(video, /Price per second[\s\S]*30-second cost/, 'video.html lacks per-second and example-duration columns');
 
@@ -153,7 +165,7 @@ export async function main() {
 
   const urls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
   if (urls.length !== new Set(urls).size) throw new Error('verify-seo: sitemap contains duplicate URLs');
-  const expectedUrls = providerDirs.length + modelDirs.length + 9;
+  const expectedUrls = providerDirs.length + modelDirs.length + 10;
   if (urls.length !== expectedUrls) throw new Error(`verify-seo: sitemap has ${urls.length} URLs; expected ${expectedUrls}`);
   await Promise.all(urls.map((url) => assertFile(localFileForUrl(url), `sitemap target ${url}`)));
 

@@ -432,9 +432,23 @@ function initHero() {
   document.addEventListener('visibilitychange', sync);
 }
 
+/** Homepage use-case finder: a GET form to /choose/?useCase=… that, with JS,
+ *  goes straight to the choose page's hash state instead. */
+function initUseCaseFinder() {
+  const form = document.getElementById('twFinder');
+  if (!form) return;
+  form.addEventListener('submit', (e) => {
+    const useCase = form.elements.useCase?.value;
+    if (!useCase) return;
+    e.preventDefault();
+    location.href = `/choose/#useCase=${encodeURIComponent(useCase)}`;
+  });
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────────
 async function init() {
   initHero();
+  initUseCaseFinder();
   // Kick off pricing + performance concurrently. Pricing is required; performance
   // is an optional enrichment, so we render usable pricing without waiting for it
   // and re-render when (or if) performance arrives.
@@ -3538,6 +3552,38 @@ function getCatalogInfo() {
   };
 }
 
+function recommendationUrl(path, input) {
+  const params = new URLSearchParams();
+  if (typeof input?.useCase === 'string') params.set('use_case', input.useCase);
+  if (typeof input?.model === 'string') params.set('model', input.model);
+  if (typeof input?.priority === 'string') params.set('priority', input.priority);
+  if (typeof input?.zdr === 'boolean') params.set('zdr', String(input.zdr));
+  if (Array.isArray(input?.excludeHq)) params.set('exclude_hq', input.excludeHq.join(','));
+  if (typeof input?.includeProprietary === 'boolean') {
+    params.set('include_proprietary', String(input.includeProprietary));
+  }
+  if (Number.isSafeInteger(input?.limit)) params.set('limit', String(input.limit));
+  return `/api/v1/recommend${path}?${params.toString()}`;
+}
+
+async function requestRecommendation(path, input) {
+  try {
+    const response = await fetch(recommendationUrl(path, input));
+    const result = await response.json();
+    return response.ok ? result : { ...result, status: response.status };
+  } catch (error) {
+    return { error: `Recommendation request failed: ${error?.message || String(error)}` };
+  }
+}
+
+async function recommendModel(input) {
+  return requestRecommendation('', input);
+}
+
+async function recommendProvider(input) {
+  return requestRecommendation('/providers', input);
+}
+
 function setWorkload(input) {
   input = input || {};
   if (input.mix) {
@@ -3887,6 +3933,8 @@ function publishTwCatalog() {
     getModel,
     explainRanking,
     listPresets,
+    recommendModel,
+    recommendProvider,
     getShareUrl,
     getCatalogInfo,
     setWorkload,

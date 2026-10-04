@@ -55,13 +55,17 @@ import {
   applyEnrichment,
   applyBenchmarkEnrichment,
   applyAAEnrichment,
+  applyArenaEnrichment,
   buildBenchmarkIndex,
   maybeWriteJson,
 } from './lib.mjs';
-import { fetchModelsDevEnrichment } from './fetch-modelsdev.mjs';
+import { fetchModelsDevIndexes } from './fetch-modelsdev.mjs';
 import { fetchAABenchmarks } from './fetch-aa.mjs';
+import { fetchArenaBenchmarks } from './fetch-arena.mjs';
 import { fetchNeuralwattEnergy } from './fetch-neuralwatt-energy.mjs';
 import { getZroCatalogRows } from './fetch-zro.mjs';
+import { resolveOpenWeightsForOfferings } from '../shared/open-weights.mjs';
+import { normalizeOpenRouterEndpointCapabilities } from '../shared/openrouter-endpoint.mjs';
 
 // ── direct providers config ───────────────────────────────────────────────────
 
@@ -560,6 +564,7 @@ async function fetchModelEndpoints(model) {
     context_length: ep.context_length ?? model.context_length ?? null,
     max_completion_tokens: ep.max_completion_tokens ?? null,
     uptime_30m: ep.uptime_last_30m ?? null,
+    ...normalizeOpenRouterEndpointCapabilities(ep),
     pricing: {
       input: perTokToPerM(ep.pricing?.prompt),
       output: perTokToPerM(ep.pricing?.completion),
@@ -1099,7 +1104,11 @@ async function main() {
   // ── models.dev enrichment (sidecar) ──
   // Attaches base_url, native model_id, capability metadata, and fills
   // cache/context nulls. Never overwrites existing values. Non-fatal.
-  const mdIndex = await fetchModelsDevEnrichment();
+  const {
+    enrichmentIndex: mdIndex,
+    openWeightIndex: mdOpenWeightIndex,
+    modelLicenseIndex: mdLicenseIndex,
+  } = await fetchModelsDevIndexes();
   if (mdIndex.size > 0) {
     const disagreements = [];
     const { modelFallbackCount } = applyEnrichment(out.models, mdIndex, disagreements);
@@ -1124,6 +1133,19 @@ async function main() {
     }
   }
 
+  // Resolve canonical model weight status from reviewed overrides, a strict
+  // models.dev majority across all providers, or a known-closed creator-org
+  // prior. License tags come from models.dev models.json when available.
+  const openWeightOverrides = JSON.parse(await readFile('data/open-weights-overrides.json', 'utf8'));
+  out.models = resolveOpenWeightsForOfferings(out.models, mdOpenWeightIndex, openWeightOverrides, mdLicenseIndex);
+  for (const m of out.models) {
+    m.supported_parameters ??= null;
+    m.supports_tool_choice ??= null;
+    m.supports_implicit_caching ??= null;
+    m.max_prompt_tokens ??= null;
+    m.uptime_1d ??= null;
+  }
+
   // ── Benchmark enrichment (sidecar) ──
   // Attaches Artificial Analysis indices (intelligence/coding/agentic) and
   // design_arena Elo from OpenRouter's /models benchmarks field. Conservative
@@ -1144,6 +1166,14 @@ async function main() {
   if (aaIndex && aaIndex.size > 0) {
     const { filledCount, totalAttempts } = applyAAEnrichment(out.models, aaIndex);
     console.log(`  Artificial Analysis: filled ${filledCount}/${totalAttempts} null indices`);
+  }
+  // ── Arena preference enrichment (sidecar, non-fatal) ──
+  // Text overall and creative-writing ratings come from the committed
+  // official-dataset cache; matching is size/version-conservative.
+  const arenaIndex = await fetchArenaBenchmarks(console);
+  if (arenaIndex && arenaIndex.exact.size > 0) {
+    const { matchedCount, textCount, creativeWritingCount } = applyArenaEnrichment(out.models, arenaIndex);
+    console.log(`  Arena preference: ${matchedCount} matched (${textCount} Text overall, ${creativeWritingCount} creative writing)`);
   }
   // ── Neuralwatt energy enrichment (sidecar, non-fatal) ──
   // Attaches m.energy (Wh/request by prompt-size band, cache-hit %, trend) from

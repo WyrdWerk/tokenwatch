@@ -1,4 +1,4 @@
-name: Refresh Artificial Analysis Benchmarks
+name: Refresh AA and Arena benchmark catalogs
 
 concurrency:
   group: repo-refresh
@@ -54,7 +54,10 @@ jobs:
           ARTIFICIAL_ANALYSIS_API_KEY: ${{ secrets.ARTIFICIAL_ANALYSIS_API_KEY }}
         run: node scripts/fetch-aa.mjs
 
-      - name: Re-fetch pricing with updated AA cache
+      - name: Fetch Arena preference benchmarks (writes data/arena-benchmarks.json)
+        run: node scripts/fetch-arena.mjs
+
+      - name: Re-fetch pricing with updated benchmark caches
         env:
           SINGULARITY_API_KEY: ${{ secrets.SINGULARITY_API_KEY }}
           RUNINFRA_API_KEY: ${{ secrets.RUNINFRA_API_KEY }}
@@ -62,22 +65,25 @@ jobs:
           CORAL_API_KEY: ${{ secrets.CORAL_API_KEY }}
         run: node scripts/fetch-pricing.mjs
 
+      - name: Rebuild benchmark catalog
+        run: node scripts/fetch-benchmarks.mjs
+
       - name: Catalog mix floors (telemetry)
         continue-on-error: true
         env:
           TW_PARITY_LIVE: '1'
         run: node --test test/parity.test.mjs
 
-      - name: Commit AA cache + refreshed pricing
+      - name: Commit benchmark caches + refreshed catalogs
         id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/aa-benchmarks.json public/pricing.json
+          git add data/aa-benchmarks.json data/arena-benchmarks.json public/pricing.json public/benchmarks.json
           if git diff --cached --quiet; then
-            echo "No AA changes — skipping commit; recovery may still deploy."
+            echo "No benchmark/catalog changes — skipping commit; recovery may still deploy."
           else
-            git commit -m "chore: refresh AA benchmarks ($(date -u +%Y-%m-%dT%H:%M) UTC)"
+            git commit -m "chore: refresh preference benchmarks ($(date -u +%Y-%m-%dT%H:%M) UTC)"
             git push
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi

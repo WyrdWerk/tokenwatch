@@ -61,6 +61,8 @@ Starred tools are the contest-demo minimum.
 | Sort | `set_sort` | re-renders the table |
 | See | `explain_ranking` ★ | none (read) |
 | See | `list_presets` | none (read) |
+| Recommend | `recommend_model` | none (read; shared workload recommender) |
+| Recommend | `recommend_provider` | none (read; shared provider ranker) |
 | See | `get_share_url` ★ | none (read; returns current hash URL) |
 | See | `get_catalog_info` | none (read) |
 | Workload | `set_workload` ★ | re-renders the table |
@@ -76,6 +78,8 @@ Starred tools are the contest-demo minimum.
 | Move | `switch_catalog` | navigates to `/`, `/image`, `/video`, or `/benchmarks` |
 
 Downloads may be blocked inside ChatGPT's in-app browser. Tool results still report `triggeredDownload` + filename; `get_share_url` is the portable artifact.
+
+`recommend_model` accepts a use-case id plus optional priority, ZDR, headquarters exclusions, proprietary-model opt-in, and a group `limit` (1–100, default 10). It returns full explanations for the three picks; considered, partially benchmarked, unbenchmarked, and unverified groups contain compact `{ totalCount, items }` results by default. `recommend_provider` takes the same constraints and one canonical model id; its ranked group fully explains the top three and compacts the rest. Both call the shared API engine; the selected preset mix is returned with `assumed: true`. They are read-only, use the compact default, and do not follow or alter the table's current workload or filters. The HTTP API also accepts `detail=full` to expand explanations for all returned rows. See `/api/v1/use-cases` for the nine preset mixes, weights, requirements, and quality floors.
 
 ## Demo walkthrough ("Priya")
 
@@ -95,7 +99,7 @@ npm test                 # includes webmcp-schema + twcatalog-contract (no brows
 npm run serve            # public/ on :3000
 ```
 
-Chrome: enable the WebMCP testing flag, open a catalog page, and run `await document.modelContext.getTools()` in DevTools. The text page exposes 19 tools (including `about_tokenwatch`); image and video expose `about_tokenwatch`, `get_view`, `get_catalog_info`, and `set_sort`; benchmarks expose `about_tokenwatch`, `get_view`, `get_catalog_info`, `get_model`, `set_sort`, `set_use_case`, and `set_filters`. Use `set_sort` to change any visible sortable column programmatically; `get_view` reports the resulting sort.
+Chrome: enable the WebMCP testing flag, open a catalog page, and run `await document.modelContext.getTools()` in DevTools. The text page exposes 21 tools total (including `about_tokenwatch`); image and video expose `about_tokenwatch`, `get_view`, `get_catalog_info`, and `set_sort`; benchmarks expose `about_tokenwatch`, `get_view`, `get_catalog_info`, `get_model`, `set_sort`, `set_use_case`, and `set_filters`. Use `set_sort` to change any visible sortable column programmatically; `get_view` reports the resulting sort. The recommendation tools use the shared API engine and do not change the calculator view.
 
 ChatGPT: desktop app, Settings → Browser → Permissions, open the live URL, Site tools in the address bar. Luna has WebMCP disabled; Enterprise/Edu are excluded.
 

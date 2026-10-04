@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#F8F5F0" />
+  <script>(function(){try{var t=localStorage.getItem('tw-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',t==='dark'?'#1a1612':'#F8F5F0')}catch(e){}})();</script>
+  <title>Choose an Open Model and Provider for Your Workload | TokenWatch</title>
+  <meta name="description" content="Choose an open-weight model and inference provider for coding, agents, documents, extraction, chat, writing, reasoning, or UI work." />
+  <link rel="canonical" href="https://tokenwatch.wyrdwerk.com/choose/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="TokenWatch" />
+  <meta property="og:title" content="Choose an Open Model and Provider for Your Workload | TokenWatch" />
+  <meta property="og:description" content="Choose an open-weight model and inference provider for coding, agents, documents, extraction, chat, writing, reasoning, or UI work." />
+  <meta property="og:url" content="https://tokenwatch.wyrdwerk.com/choose/" />
+  <meta property="og:image" content="https://tokenwatch.wyrdwerk.com/og/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="TokenWatch — compare text, image, and video API pricing for your workload" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Choose an Open Model and Provider for Your Workload | TokenWatch" />
+  <meta name="twitter:description" content="Choose an open-weight model and inference provider for coding, agents, documents, extraction, chat, writing, reasoning, or UI work." />
+  <meta name="twitter:image" content="https://tokenwatch.wyrdwerk.com/og/og-image.png" />
+  <meta name="twitter:image:alt" content="TokenWatch — compare text, image, and video API pricing for your workload" />
+  <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/space-grotesk-600.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="/styles.css?v=dev" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script id="seo-structured-data" type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"CollectionPage","@id":"https://tokenwatch.wyrdwerk.com/choose/#page","url":"https://tokenwatch.wyrdwerk.com/choose/","name":"Choose an open model and provider","description":"Choose an open-weight model and inference provider for a specific workload."},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Text pricing","item":"https://tokenwatch.wyrdwerk.com/"},{"@type":"ListItem","position":2,"name":"Choose","item":"https://tokenwatch.wyrdwerk.com/choose/"}]}]}</script>
+</head>
+<body>
+  <header>
+    <div class="header-row">
+      <a class="brand-link site-brand" href="/" aria-label="TokenWatch home">💰 TokenWatch</a>
+      <div class="header-links">
+        <a class="repo-link" href="https://wyrdwerk.com" target="_blank" rel="noopener">WyrdWerk</a>
+        <a class="repo-link" href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">GitHub</a>
+        <a class="repo-link" href="https://www.linkedin.com/in/yash-jain-65295511b/" target="_blank" rel="noopener">LinkedIn</a>
+        <a class="repo-link" href="https://x.com/thelaggingway" target="_blank" rel="noopener">X</a>
+        <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle dark/light mode"></button>
+      </div>
+    </div>
+    <h1 class="tagline">Which open model should you use, and where?</h1>
+    <p class="subtitle">Start with the task. We’ll show the model evidence and the providers that can run it.</p>
+    <nav class="tab-nav" aria-label="TokenWatch sections">
+      <a class="tab-link" href="/">Text</a>
+      <a class="tab-link" href="/image">Image</a>
+      <a class="tab-link" href="/video">Video</a>
+      <a class="tab-link" href="/benchmarks">Benchmarks</a>
+      <a class="tab-link active" href="/choose/" aria-current="page">Choose</a>
+      <a class="tab-link" href="/models/">Models</a>
+      <a class="tab-link" href="/providers/">Providers</a>
+      <a class="tab-link" href="/docs/methodology/">Methodology</a>
+      <a class="tab-link" href="/docs/api/">API</a>
+      <a class="tab-link" href="/faq/">FAQ</a>
+    </nav>
+  </header>
+
+  <noscript><div class="noscript-note"><p>The model chooser needs JavaScript to run its recommendation engine in your browser. The source catalogs and scoring method are documented on the <a href="/docs/methodology/">methodology page</a>.</p></div></noscript>
+
+  <main class="choose-main" id="mainContent">
+    <section class="choose-intro" aria-labelledby="choose-lead">
+      <p class="choose-eyebrow">Open model finder <span aria-hidden="true">/</span> 01</p>
+      <h2 id="choose-lead">What are you building?</h2>
+      <p>Pick the closest task. Recommendations use TokenWatch’s published benchmarks, provider capabilities, pricing, and performance snapshots—not a universal “best model” score.</p>
+    </section>
+
+    <section class="choose-workloads" aria-labelledby="workload-heading">
+      <h2 class="sr-only" id="workload-heading">Choose a use case</h2>
+      <fieldset class="choose-use-cases">
+        <legend class="sr-only">Choose a use case</legend>
+        <label class="choose-use-case">
+          <input type="radio" name="useCase" value="agentic-coding" checked />
+          <span class="choose-radio-mark" aria-hidden="true"></span>
+          <span class="choose-use-case-copy"><strong>Coding agent</strong><small>Write, edit, and debug code with tools.</small></span>
+        </label>
+        <label class="choose-use-case">
+          <input type="radio" name="useCase" value="tool-agents" />
+          <span class="choose-radio-mark" aria-hidden="true"></span>
+          <span class="choose-use-case-copy"><strong>Tool-using agent</strong><small>Call tools and complete multi-step tasks.</small></span>
+        </label>
+        <label class="choose-use-case">
+          <input type="radio" name="useCase" value="long-context-rag" />
+          <span class="choose-radio-mark" aria-hidden="true"></span>
+          <span class="choose-use-case-copy"><strong>Chat over my documents</strong><small>Find and synthesize long-context information.</small></span>
+        </label>
+        <label class="choose-use-case">
+          <input type="radio" name="useCase" value="structured-extraction" />
+          <span class="choose-radio-mark" aria-hidden="true"></span>
+          <span class="choose-use-case-copy"><strong>Extract data to JSON</strong><small>Turn unstructured text into structured output.</small></span>
+        </label>
+        <label class="choose-use-case">
+          <input type="radio" name="useCase" value="high-volume-cheap" />
+          <span class="choose-radio-mark" aria-hidden="true"></span>
+          <span class="choose-use-case-copy"><strong>Cheap bulk processing</strong><small>Run lots of requests at a controlled cost.</small></span>
+        </label>
+        <label class="choose-use-case">
+          <input type="radio" name="useCase" value="chat-assistant" />
+          <span class="choose-radio-mark" aria-hidden="true"></span>
+          <span class="choose-use-case-copy"><strong>Chatbot</strong><small>Answer questions in an interactive conversation.</small></span>
+        </label>
+        <label class="choose-use-case">
+          <input type="radio" name="useCase" value="creative-writing" />
+          <span class="choose-radio-mark" aria-hidden="true"></span>
+          <span class="choose-use-case-copy"><strong>Creative writing</strong><small>Draft and revise expressive long-form text.</small></span>
+        </label>
+        <label class="choose-use-case">
+          <input type="radio" name="useCase" value="reasoning-math" />
+          <span class="choose-radio-mark" aria-hidden="true"></span>
+          <span class="choose-use-case-copy"><strong>Reasoning / math</strong><small>Work through multi-step questions and calculations.</small></span>
+        </label>
+        <label class="choose-use-case">
+          <input type="radio" name="useCase" value="frontend-ui" />
+          <span class="choose-radio-mark" aria-hidden="true"></span>
+          <span class="choose-use-case-copy"><strong>Websites / UI</strong><small>Build and refine front-end experiences.</small></span>
+        </label>
+      </fieldset>
+    </section>
+
+    <details class="choose-constraints" id="constraints">
+      <summary>Optional constraints <span>Privacy, provider location, priorities, and model type</span></summary>
+      <div class="choose-constraint-grid">
+        <label class="choose-check"><input type="checkbox" id="requireZdr" /> <span><strong>My data must not be retained (ZDR)</strong><small>Only providers marked zero-data-retention are included. Check their current policy before sending sensitive data.</small></span></label>
+        <fieldset class="choose-hq-fieldset">
+          <legend>Exclude provider headquarters</legend>
+          <p class="choose-field-note">Unknown headquarters can’t be screened out by this filter.</p>
+          <div id="hqOptions" class="choose-hq-options"><span class="choose-muted">Loading locations…</span></div>
+        </fieldset>
+        <fieldset class="choose-priority-fieldset">
+          <legend>What matters most?</legend>
+          <div class="choose-priority-options">
+            <label><input type="radio" name="priority" value="balanced" checked /> Balanced</label>
+            <label><input type="radio" name="priority" value="cheapest" /> Cheapest</label>
+            <label><input type="radio" name="priority" value="fastest" /> Fastest</label>
+            <label><input type="radio" name="priority" value="most-reliable" /> Most reliable</label>
+          </div>
+        </fieldset>
+        <label class="choose-check"><input type="checkbox" id="includeProprietary" /> <span><strong>Include proprietary models</strong><small>By default, recommendations require open weights. Proprietary status is based on the available model metadata.</small></span></label>
+      </div>
+    </details>
+    <p class="choose-data-note" id="constraintsNote" role="note"><strong>Provider data is incomplete.</strong> We don’t know every provider’s headquarters, so excluding a country only removes providers whose headquarters we know. Speed and uptime aren’t reported for every provider, so “Fastest” and “Most reliable” rank only on the data we have.</p>
+
+    <p id="useCaseNotice" class="choose-evidence-note" role="note" hidden></p>
+    <p id="chooseStatus" class="choose-status" role="status" aria-live="polite">Loading model, benchmark, and provider data…</p>
+
+    <section class="choose-results" aria-labelledby="recommendations-heading">
+      <div class="choose-section-heading">
+        <div>
+          <p class="choose-eyebrow">Recommendations <span aria-hidden="true">/</span> 02</p>
+          <h2 id="recommendations-heading">Three ways to choose</h2>
+        </div>
+        <p class="choose-mix-disclaimer">Quality scores are relative within each workload; the “good enough” pick uses an absolute benchmark floor.</p>
+      </div>
+      <div id="preferenceFeature" class="choose-preference-feature" hidden>
+        <div id="preferenceSummary" class="choose-preference-summary" role="status" aria-live="polite"></div>
+        <p id="preferenceAttribution" class="choose-preference-attribution"></p>
+      </div>
+      <div id="modelCards" class="choose-model-grid" aria-live="polite" aria-busy="true"></div>
+    </section>
+
+    <div class="choose-lists-grid">
+      <section class="choose-list-section" aria-labelledby="also-heading">
+        <p class="choose-eyebrow">More options <span aria-hidden="true">/</span> 03</p>
+        <h2 id="also-heading">Also considered</h2>
+        <p>Other benchmarked models that pass the use-case gates.</p>
+        <div id="alsoConsidered" class="choose-model-list" aria-live="polite"></div>
+      </section>
+      <section class="choose-list-section" aria-labelledby="not-enough-heading">
+        <p class="choose-eyebrow">Evidence gaps <span aria-hidden="true">/</span> 04</p>
+        <h2 id="not-enough-heading">Not enough benchmark data</h2>
+        <p>These options lack the evidence needed for a benchmark-based rank. They are not necessarily poor models.</p>
+        <div id="notEnoughData" class="choose-model-list" aria-live="polite"></div>
+      </section>
+    </div>
+
+    <section class="choose-providers-section" aria-labelledby="providerHeading">
+      <div class="choose-section-heading">
+        <div>
+          <p class="choose-eyebrow">Where to run it <span aria-hidden="true">/</span> 05</p>
+          <h2 id="providerHeading">Providers for this model</h2>
+        </div>
+        <p class="choose-mix-disclaimer">Provider scores compare only eligible offerings for this model and workload. Missing telemetry is unknown, not zero.</p>
+      </div>
+      <p id="providerCloseNote" class="choose-close-note" hidden></p>
+      <div id="providerRows" class="choose-provider-list" aria-live="polite" aria-busy="true"></div>
+      <section id="unverifiedSection" class="choose-unverified" aria-labelledby="unverifiedHeading" hidden>
+        <h3 id="unverifiedHeading">Unverified — missing required metadata</h3>
+        <p>These providers may offer the model, but we can’t confirm a required capability or context limit. They’re not in the ranked picks.</p>
+        <div id="unverifiedRows" class="choose-model-list"></div>
+      </section>
+    </section>
+
+    <section class="choose-actions" aria-labelledby="actionsHeading">
+      <div>
+        <p class="choose-eyebrow">Next steps <span aria-hidden="true">/</span> 06</p>
+        <h2 id="actionsHeading">Take this recommendation with you</h2>
+      </div>
+      <div class="choose-action-buttons">
+        <button class="choose-action-primary" type="button" id="copySetup">Copy setup</button>
+        <a class="choose-action-secondary" id="estimateBill" href="/">Estimate my bill</a>
+        <a class="choose-action-secondary" id="compareModel" href="/">Compare providers</a>
+        <button class="choose-action-secondary" type="button" id="shareLink">Copy share link</button>
+        <button class="choose-action-secondary" type="button" id="copyPrompt">Copy agent prompt</button>
+      </div>
+      <p id="actionStatus" class="choose-action-status" role="status" aria-live="polite"></p>
+      <p class="choose-cost-note">Blended prices are USD per million tokens from the published rate snapshot, not an invoice. Model and provider availability, policy, and prices can change.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Recommendation methodology, benchmark sources, and scoring limits are on the <a href="/docs/methodology/">methodology page</a>. Check current provider prices and policies before committing spend.</p>
+    <p class="footer-links"><a href="/models/">Models</a> · <a href="/providers/">Providers</a> · <a href="/docs/methodology/">Methodology</a> · <a href="/docs/api/">API docs</a> · <a href="https://github.com/WyrdWerk/tokenwatch">Source</a></p>
+  </footer>
+
+  <script src="/shared-ui.js?v=dev" defer></script>
+  <script type="module" src="/choose-app.js?v=dev"></script>
+</body>
+</html>

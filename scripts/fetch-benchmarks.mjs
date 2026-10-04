@@ -24,9 +24,12 @@ import { fileURLToPath } from 'node:url';
 import { canonicalId } from '../shared/normalize.mjs';
 import { blendedRate, AGENTIC_MIX } from '../shared/cost.mjs';
 import { buildOrgIndex } from '../shared/benchmark-org.mjs';
+import { normalizeProvider } from './lib.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PRICING_JSON = join(__dirname, '..', 'public', 'pricing.json');
+const PERFORMANCE_JSON = join(__dirname, '..', 'public', 'performance.json');
+const ARENA_JSON = join(__dirname, '..', 'data', 'arena-benchmarks.json');
 const OUT_JSON = join(__dirname, '..', 'public', 'benchmarks.json');
 
 const LIVEBENCH_RELEASE = '2026_06_25';
@@ -114,10 +117,48 @@ async function fetchLiveBench(log) {
   }
 }
 
+/** Build one benchmark offering with model capabilities and provider metrics. */
+export function buildBenchmarkOffering(model, performance) {
+  const performanceKey = `${canonicalId(model.id)}|${normalizeProvider(model.provider)}`;
+  const metrics = performance[performanceKey];
+  return {
+    provider: model.provider_display || model.provider,
+    input: model.pricing.input,
+    cache_write: model.pricing.cache_write ?? null,
+    input_billing: model.pricing.input_billing ?? null,
+    output: model.pricing.output,
+    cache_read: model.pricing.cache_read ?? null,
+    quantization: model.quantization ?? null,
+    zdr: model.zdr === true,
+    context_length: model.context_length ?? null,
+    uptime_30m: model.uptime_30m ?? null,
+    open_weights: typeof model.open_weights === 'boolean' ? model.open_weights : null,
+    tool_call: Array.isArray(model.supported_parameters)
+      ? model.supported_parameters.includes('tools')
+      : model.modelsdev?.capabilities?.tool_call
+        ?? model.modelsdev_model?.capabilities?.tool_call
+        ?? null,
+    throughput_p50: metrics?.throughput?.p50 ?? null,
+    latency_p50: metrics?.latency?.p50 ?? null,
+  };
+}
+
 // ── Main build ────────────────────────────────────────────────────────────────
 
 async function main() {
   const pricing = JSON.parse(await readFile(PRICING_JSON, 'utf8'));
+  let arenaSnapshot = null;
+  try {
+    arenaSnapshot = JSON.parse(await readFile(ARENA_JSON, 'utf8'));
+  } catch (err) {
+    console.warn(`⚠ Arena cache unavailable: ${err.message} — ratings dates will be unknown`);
+  }
+  let performance = {};
+  try {
+    performance = JSON.parse(await readFile(PERFORMANCE_JSON, 'utf8'));
+  } catch (err) {
+    console.warn(`⚠ performance.json unavailable: ${err.message} — offering metrics will be null`);
+  }
   const livebench = await fetchLiveBench(console);
 
   // 1. Group provider offerings by canonical model id
@@ -160,6 +201,10 @@ async function main() {
       if (scores.aa_intelligence == null && b.intelligence_index != null) scores.aa_intelligence = b.intelligence_index;
       if (scores.aa_coding == null && b.coding_index != null) scores.aa_coding = b.coding_index;
       if (scores.aa_agentic == null && b.agentic_index != null) scores.aa_agentic = b.agentic_index;
+      if (scores.arena_text == null && b.arena_text != null) scores.arena_text = b.arena_text;
+      if (scores.arena_creative_writing == null && b.arena_creative_writing != null) {
+        scores.arena_creative_writing = b.arena_creative_writing;
+      }
       if (scores.design_arena_elo == null && b.design_arena_best?.elo != null) {
         scores.design_arena_elo = b.design_arena_best.elo;
         scores.design_arena_category = b.design_arena_best.category;
@@ -188,24 +233,22 @@ async function main() {
       const rate = blendedRate(o.pricing, AGENTIC_MIX);
       if (rate == null) continue;
       const name = o.provider_display || o.provider;
-      offerings.push({
-        provider: name,
-        input: o.pricing.input,
-        cache_write: o.pricing.cache_write,
-        input_billing: o.pricing.input_billing,
-        output: o.pricing.output,
-        cache_read: o.pricing.cache_read,
-      });
+      offerings.push(buildBenchmarkOffering(o, performance));
       if (!best || rate < best.blended_per_m) {
         best = { provider: name, blended_per_m: Math.round(rate * 1000) / 1000 };
       }
     }
     if (!best) continue; // benchmarked but not priceable here — skip
 
+    const openWeights = info.offerings.find((o) => typeof o.open_weights === 'boolean')?.open_weights ?? null;
+    const license = info.offerings.find((o) => typeof o.license === 'string' && o.license.trim())?.license ?? null;
+
     models.push({
       id: cid,
       name: info.name,
       org,
+      open_weights: openWeights,
+      license,
       providers: offerings.length,
       from: best,
       offerings,
@@ -227,6 +270,22 @@ async function main() {
       artificial_analysis: { name: 'Artificial Analysis', url: 'https://artificialanalysis.ai/', fields: ['aa_intelligence', 'aa_coding', 'aa_agentic'], scale: '0–100 index' },
       livebench: { name: 'LiveBench', url: 'https://livebench.ai/', release: LIVEBENCH_RELEASE.replace(/_/g, '-'), prefix: 'livebench_', scale: '0–100, contamination-free' },
       design_arena: { name: 'Design Arena', url: 'https://www.designarena.ai/', fields: ['design_arena_elo'], scale: 'Elo' },
+      arena: {
+        name: 'Arena (LMArena)',
+        url: 'https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset',
+        fields: ['arena_text', 'arena_creative_writing'],
+        categories: { arena_text: 'text_style_control / overall', arena_creative_writing: 'text_style_control / creative_writing' },
+        rating_dates: {
+          arena_text: arenaSnapshot?._meta?.categories?.overall?.leaderboard_publish_date ?? null,
+          arena_creative_writing: arenaSnapshot?._meta?.categories?.creative_writing?.leaderboard_publish_date ?? null,
+        },
+        scale: 'Bradley–Terry rating (Elo-like)',
+        license: 'CC-BY-4.0',
+        license_url: 'https://creativecommons.org/licenses/by/4.0/',
+        attribution: 'Arena (LMArena), Leaderboard Dataset; filtered to the listed categories and matched to TokenWatch canonical IDs; source ratings are unchanged.',
+        data_url: 'https://datasets-server.huggingface.co/rows?dataset=lmarena-ai%2Fleaderboard-dataset&config=text_style_control&split=latest',
+        update_cadence: 'Upstream latest split; TokenWatch refreshes the committed cache weekly.',
+      },
     },
     models,
   };

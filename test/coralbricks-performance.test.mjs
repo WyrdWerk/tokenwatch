@@ -69,7 +69,7 @@ test('all pricing and performance refresh steps receive CORAL_API_KEY', async ()
   for (const [file, step] of [
     ['refresh-pricing.yml', 'Fetch & normalize text pricing'],
     ['refresh-pricing.yml', 'Fetch performance data (latency/tput every 2h)'],
-    ['refresh-aa.yml', 'Re-fetch pricing with updated AA cache'],
+    ['refresh-aa.yml', 'Re-fetch pricing with updated benchmark caches'],
     ['refresh-performance.yml', 'Fetch performance data'],
   ]) {
     const src = await readFile(new URL(`../.github/workflows/${file}`, import.meta.url), 'utf8');

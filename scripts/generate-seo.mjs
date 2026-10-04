@@ -7,8 +7,8 @@
  * documentation pages; then writes sitemap.xml and robots.txt.
  */
 
-import { renderHero } from './hero.mjs';
-import { readFile, writeFile, rename, mkdir, rm } from 'node:fs/promises';
+import { renderHero, renderUseCaseFinder } from './hero.mjs';
+import { readFile, writeFile, rename, mkdir, rm, copyFile } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
@@ -51,6 +51,7 @@ import {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC = join(__dirname, '..', 'public');
+const BROWSER_SHARED_MODULES = ['recommend.mjs', 'use-cases.mjs', 'cost.mjs', 'normalize.mjs', 'choose-page.mjs'];
 
 async function readJson(path, label) {
   let parsed;
@@ -70,6 +71,13 @@ async function writeAtomic(path, content) {
   const temp = `${path}.${process.pid}.tmp`;
   await writeFile(temp, content);
   await rename(temp, path);
+}
+
+async function copyBrowserSharedModules() {
+  const target = join(PUBLIC, 'shared');
+  await mkdir(target, { recursive: true });
+  await Promise.all(BROWSER_SHARED_MODULES.map((file) =>
+    copyFile(join(__dirname, '..', 'shared', file), join(target, file))));
 }
 
 function dateOnly(value, label) {
@@ -147,6 +155,7 @@ function renderHomepage(markup, pricing, rows, dates, links) {
   const faq = homeFaqItems(modelCount, providerCount);
   let out = renderCounts(markup, modelCount, providerCount);
   out = renderHomepageMeta(out, modelCount, providerCount);
+  out = replaceSection(out, 'tw-finder', renderUseCaseFinder());
   out = replaceSection(out, 'tw-hero', renderHero(pricing));
   out = replaceSection(out, 'tw-rules', renderRulesStrip());
   out = replaceSection(out, 'seo-models', renderSeoTable(rows, dates.text, links));
@@ -194,10 +203,11 @@ function renderVideoPage(markup, videoPricing, rows, dates) {
 }
 
 export async function main() {
-  const [pricing, imagePricing, videoPricing, indexMarkup, imageMarkup, videoMarkup] = await Promise.all([
+  const [pricing, imagePricing, videoPricing, benchmarkData, indexMarkup, imageMarkup, videoMarkup] = await Promise.all([
     readJson(join(PUBLIC, 'pricing.json'), 'pricing.json'),
     readJson(join(PUBLIC, 'image-pricing.json'), 'image-pricing.json'),
     readJson(join(PUBLIC, 'video-pricing.json'), 'video-pricing.json'),
+    readJson(join(PUBLIC, 'benchmarks.json'), 'benchmarks.json'),
     readFile(join(PUBLIC, 'index.html'), 'utf8'),
     readFile(join(PUBLIC, 'image.html'), 'utf8'),
     readFile(join(PUBLIC, 'video.html'), 'utf8'),
@@ -233,14 +243,21 @@ export async function main() {
 
   const modelCount = pricing.models.length;
   const providerCount = new Set(pricing.models.map((model) => model.provider)).size;
-  const methodology = renderMethodologyPage({ modelCount, providerCount, generatedAt: pricing.generated_at, models: pricing.models, linkedModelPages: links.linkedModelPages });
+  const methodology = renderMethodologyPage({
+    modelCount,
+    providerCount,
+    generatedAt: pricing.generated_at,
+    models: pricing.models,
+    linkedModelPages: links.linkedModelPages,
+    arenaSource: benchmarkData.sources?.arena,
+  });
   const apiDocs = renderApiDocsPage();
   const openApi = `${JSON.stringify(buildOpenApiDocument(), null, 2)}\n`;
   const faqPage = renderFaqPage({ modelCount, providerCount });
 
   // /benchmarks crawlable snapshot — page is committed with marker sections;
   // regenerate from benchmarks.json like the calculator pages.
-  const benchData = JSON.parse(await readFile(join(PUBLIC, 'benchmarks.json'), 'utf8'));
+  const benchData = benchmarkData;
   const benchmarksMarkup = await readFile(join(PUBLIC, 'benchmarks.html'), 'utf8');
   let benchmarksOut = replaceSection(benchmarksMarkup, 'seo-models', renderBenchmarksSeoSection(benchData, links.linkedModelPages));
   benchmarksOut = replaceSection(benchmarksOut, 'seo-faq', renderFaqPointerSection());
@@ -263,6 +280,7 @@ export async function main() {
     { path: '/models/', changefreq: 'daily', priority: '0.7' },
     ...modelPages.map((page) => ({ path: `/models/${page.slug}/`, changefreq: 'daily', priority: '0.6' })),
     { path: '/benchmarks', changefreq: 'daily', priority: '0.8' },
+    { path: '/choose/', changefreq: 'daily', priority: '0.8' },
     { path: '/docs/methodology/', changefreq: 'monthly', priority: '0.6' },
     { path: '/docs/api/', changefreq: 'monthly', priority: '0.6' },
     { path: '/faq/', changefreq: 'weekly', priority: '0.6' },
@@ -273,6 +291,7 @@ export async function main() {
   await stageProviderPages(providerPages, dates, links);
   await stageModelPages(modelPages, dates, links.linkedProviderSlugs);
   await Promise.all([
+    copyBrowserSharedModules(),
     writeAtomic(join(PUBLIC, 'index.html'), rendered.index),
     writeAtomic(join(PUBLIC, 'image.html'), rendered.image),
     writeAtomic(join(PUBLIC, 'video.html'), rendered.video),

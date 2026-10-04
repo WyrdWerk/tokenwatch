@@ -937,7 +937,14 @@ export { PROVIDER_MAP, REVERSE_PROVIDER_MAP, normalizeForMatch, findEnrichment, 
 // Benchmark matching helpers live in shared/benchmarks.mjs (pure, no node:
 // imports) — same purity contract as normalize.mjs and modelsdev.mjs so they
 // could be bundled into the Worker. Re-exported here for fetch-pricing.mjs.
-export { conservativeBase, buildBenchmarkIndex, applyBenchmarkEnrichment, applyAAEnrichment } from '../shared/benchmarks.mjs';
+export {
+  conservativeBase,
+  buildBenchmarkIndex,
+  applyBenchmarkEnrichment,
+  applyAAEnrichment,
+  buildArenaIndex,
+  applyArenaEnrichment,
+} from '../shared/benchmarks.mjs';
 
 // ── provider-name normalization ───────────────────────────────────────────────
 

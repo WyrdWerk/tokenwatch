@@ -4,7 +4,9 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { pickHeroModel, heroLanes, renderHero } from '../scripts/hero.mjs';
+import { pickHeroModel, heroLanes, renderHero, renderUseCaseFinder } from '../scripts/hero.mjs';
+import { USE_CASE_CHOICES } from '../shared/choose-page.mjs';
+import { USE_CASES } from '../shared/use-cases.mjs';
 import { RULES, renderRulesStrip, replaceSection } from '../scripts/seo-pages.mjs';
 import { blendedRate, AGENTIC_MIX } from '../shared/cost.mjs';
 
@@ -87,6 +89,7 @@ test('renderHero renders real numbers, escapes names and falls back without a sc
   assert.doesNotMatch(html, /<script>/);
   assert.match(html, /role="img"/);
   assert.match(html, /data-hero-action="estimate"/);
+  assert.doesNotMatch(html, /Find the right model for your use case/, 'the use-case CTA moved to the finder strip');
   assert.doesNotMatch(html, /\{\{/, 'renderCounts rejects unresolved placeholders');
   const fallback = renderHero({ models: [offering('a/x', 'p1', 1, 1)], providers: [] });
   assert.doesNotMatch(fallback, /<svg/);
@@ -96,12 +99,29 @@ test('renderHero renders real numbers, escapes names and falls back without a sc
 
 test('hero and rules markers are committed and replaced idempotently', async () => {
   const html = await readFile(join(ROOT, 'public', 'index.html'), 'utf8');
-  for (const name of ['tw-hero', 'tw-rules']) {
+  for (const name of ['tw-finder', 'tw-hero', 'tw-rules']) {
     assert.equal(html.split(`<!-- TW:SEO:${name}:START -->`).length, 2, `${name} start marker appears once`);
     assert.equal(html.split(`<!-- TW:SEO:${name}:END -->`).length, 2, `${name} end marker appears once`);
   }
   const once = replaceSection(html, 'tw-rules', renderRulesStrip());
   assert.equal(replaceSection(once, 'tw-rules', renderRulesStrip()), once);
+  const finderOnce = replaceSection(html, 'tw-finder', renderUseCaseFinder());
+  assert.equal(replaceSection(finderOnce, 'tw-finder', renderUseCaseFinder()), finderOnce);
+  assert.ok(html.indexOf('</header>') < html.indexOf('<!-- TW:SEO:tw-finder:START -->'), 'finder sits directly below the nav');
+  assert.ok(html.indexOf('<!-- TW:SEO:tw-finder:END -->') < html.indexOf('<!-- TW:SEO:tw-hero:START -->'), 'finder sits above the hero');
+});
+
+test('use-case finder is a no-JS GET form to /choose/ listing every use case with the choose-page labels', async () => {
+  const html = renderUseCaseFinder();
+  assert.match(html, /<form[^>]*action="\/choose\/"[^>]*method="get"/);
+  assert.match(html, /<label[^>]*for="twFinderUseCase"[^>]*>Which model suits my workload\?<\/label>/);
+  assert.match(html, /<select id="twFinderUseCase" name="useCase">/);
+  assert.match(html, /<button type="submit"[^>]*>Go →<\/button>/);
+  const options = [...html.matchAll(/<option value="([^"]+)">([^<]+)<\/option>/g)].map((m) => [m[1], m[2]]);
+  assert.deepEqual(options, USE_CASE_CHOICES.map((choice) => [choice.id, choice.label]));
+  assert.deepEqual(options.map(([id]) => id).sort(), Object.keys(USE_CASES).sort());
+  const app = await readFile(join(ROOT, 'public', 'app.js'), 'utf8');
+  assert.match(app, /location\.href = `\/choose\/#useCase=\$\{encodeURIComponent\(useCase\)\}`/);
 });
 
 test('rules strip lists every rule', () => {

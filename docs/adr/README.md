@@ -17,3 +17,4 @@ Settled design choices for TokenWatch. Each ADR is ≤150 words: Context → Dec
 | [0009](0009-two-hour-cron-cadence.md) | Two-hour cron cadence | Proposed | Fetch → commit → deploy every 2h; rationale inferred, not stated in source. |
 | [0010](0010-frontend-canonicalization-parity-guard.md) | Frontend canonicalization parity guard | Accepted | `public/app.js` `canonicalModelId` mirrors `canonicalId`; guarded by `test/parity.test.mjs` with documented limits. |
 | [0011](0011-price-history-snapshots.md) | Price-history snapshots in D1, blended at read time | Accepted | Raw USD/M rows per offering per UTC day; unique `(offering_key, utc_day)`; 90-day retention; mix applied at read time. |
+| [0012](0012-recommender-scoring.md) | Workload-aware model and provider recommendations | Accepted | Percentile-weighted quality, explicit unbenchmarked group, Pareto value pick, and gated provider scoring. |
