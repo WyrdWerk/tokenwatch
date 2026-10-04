@@ -214,6 +214,151 @@ test('/api/v1/ returns API info + endpoint directory', async () => {
   assert.ok(body.endpoints.some(e => e.includes('open_weights')));
 });
 
+test('/api/v1/use-cases lists the shared recommendation presets and marks mixes as assumed', async () => {
+  const { status, body, headers } = await getJson(makeContext('/api/v1/use-cases'));
+  assert.equal(status, 200);
+  assert.equal(headers.get('Access-Control-Allow-Origin'), '*');
+  assert.equal(body.use_cases.length, 9);
+  const agentic = body.use_cases.find((useCase) => useCase.id === 'agentic-coding');
+  assert.deepEqual(agentic.mix, { inputPct: 2.5, cacheReadPct: 97, outputPct: 0.5, assumed: true });
+  assert.ok(agentic.weights.benchmark.coding_index > 0);
+  assert.ok(agentic.weights.provider.throughput > 0);
+  assert.deepEqual(agentic.requirements, { needsToolCalling: true, needsStructuredOutput: false, minContext: 32768 });
+  assert.deepEqual(agentic.floors, { field: 'coding_index', min: 25 });
+});
+
+function recommendationAssets(catalog) {
+  const benchmarkRows = catalog.models.map((model, index) => ({
+    id: model.id,
+    scores: model.benchmarks || (index === 3 ? {} : {
+      aa_agentic: 50 + index,
+      aa_coding: 45 + index,
+      aa_intelligence: 55 + index,
+      livebench_agentic_coding: 60 + index,
+    }),
+  }));
+  const performance = Object.fromEntries(catalog.models.map((model, index) => [
+    `${model.id.split('/').at(-1)}|${model.provider}`,
+    { source: 'openrouter', latency: { p50: 1000 - index * 100 }, throughput: { p50: 50 + index * 10 } },
+  ]));
+  return {
+    async fetch(url) {
+      const pathname = new URL(url).pathname;
+      if (pathname === '/pricing.json') return Response.json(catalog);
+      if (pathname === '/benchmarks.json') return Response.json({ generated_at: '2026-10-04T00:00:00Z', models: benchmarkRows });
+      if (pathname === '/performance.json') return Response.json({ ...performance, _meta: { generated_at: '2026-10-04T00:00:00Z' } });
+      return new Response('Not found', { status: 404 });
+    },
+  };
+}
+
+function recommendationCatalog() {
+  const model = (id, provider, extra = {}) => ({
+    id: `open/${id}`,
+    name: id,
+    org: 'open',
+    provider,
+    open_weights: true,
+    open_weights_source: 'fixture',
+    supported_parameters: ['tools'],
+    context_length: 65536,
+    quantization: 'fp8',
+    zdr: true,
+    headquarters: provider === 'cn-provider' ? 'CN' : 'US',
+    pricing: { input: 1, output: 2, cache_read: 0.1, cache_write: null },
+    benchmarks: {
+      agentic_index: 50,
+      coding_index: 45,
+      intelligence_index: 55,
+      livebench_agentic_coding: 60,
+    },
+    ...extra,
+  });
+  return {
+    generated_at: '2026-10-04T00:00:00Z',
+    providers_meta: { 'cn-provider': { headquarters: 'CN' }, 'us-provider': { headquarters: 'US' } },
+    models: [
+      model('agent-alpha', 'us-provider'),
+      model('agent-beta', 'cn-provider'),
+      model('partly-scored', 'us-provider', { benchmarks: { intelligence_index: 30 } }),
+      model('not-scored', 'us-provider', { benchmarks: null }),
+    ],
+  };
+}
+
+test('/api/v1/recommend uses shared shortlist groups with explanations, confidence, and supported constraints', async () => {
+  const context = makeContext('/api/v1/recommend', '?use_case=agentic-coding&priority=fastest&zdr=true&exclude_hq=CN');
+  context.env.ASSETS = recommendationAssets(recommendationCatalog());
+  const { status, body, headers } = await getJson(context);
+  assert.equal(status, 200);
+  assert.equal(headers.get('Access-Control-Allow-Origin'), '*');
+  assert.equal(body.useCase, 'agentic-coding');
+  assert.equal(body.priority, 'fastest');
+  assert.deepEqual(body.mix, { inputPct: 2.5, cacheReadPct: 97, outputPct: 0.5, assumed: true });
+  assert.ok(body.picks.bestQuality.explanation);
+  assert.ok(body.picks.bestQuality.confidence);
+  assert.ok(body.alsoConsidered.every((candidate) => candidate.explanation && candidate.confidence));
+  assert.ok(body.partiallyBenchmarked.some((candidate) => candidate.id === 'partly-scored'));
+  assert.ok(body.unbenchmarked.some((candidate) => candidate.id === 'not-scored'));
+  assert.ok(!JSON.stringify(body).includes('cn-provider'), 'exclude_hq filters known CN provider offerings');
+});
+
+test('/api/v1/recommend validates use case, priority, booleans, and HQ codes', async () => {
+  for (const query of [
+    '',
+    '?use_case=unknown',
+    '?use_case=agentic-coding&priority=quickest',
+    '?use_case=agentic-coding&zdr=yes',
+    '?use_case=agentic-coding&include_proprietary=1',
+    '?use_case=agentic-coding&exclude_hq=CN,',
+  ]) {
+    const context = makeContext('/api/v1/recommend', query);
+    context.env.ASSETS = recommendationAssets(recommendationCatalog());
+    const { status } = await getJson(context);
+    assert.equal(status, 400, query || 'missing use_case');
+  }
+});
+
+test('/api/v1/recommend/providers ranks a canonical model and returns 400/404 for invalid requests', async () => {
+  const catalog = recommendationCatalog();
+  const context = makeContext('/api/v1/recommend/providers', '?use_case=agentic-coding&model=agent-alpha&exclude_hq=CN');
+  context.env.ASSETS = recommendationAssets(catalog);
+  const { status, body } = await getJson(context);
+  assert.equal(status, 200);
+  assert.deepEqual(body.mix, { inputPct: 2.5, cacheReadPct: 97, outputPct: 0.5, assumed: true });
+  assert.deepEqual(body.ranked.map((provider) => provider.provider), ['us-provider']);
+  assert.ok(body.ranked[0].explanation);
+  assert.ok(body.ranked[0].confidence);
+
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend/providers?use_case=agentic-coding');
+  assert.equal((await getJson(context)).status, 400);
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend/providers?use_case=agentic-coding&model=missing');
+  assert.equal((await getJson(context)).status, 404);
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend/providers?use_case=agentic-coding&model=agent-alpha&priority=balancedish');
+  assert.equal((await getJson(context)).status, 400);
+});
+
+test('recommendation assets are required and unknown canonical models return 404 before asset loading', async () => {
+  const requestedAssets = [];
+  const context = makeContext('/api/v1/recommend?use_case=agentic-coding');
+  context.env.ASSETS = {
+    async fetch(url) {
+      const path = new URL(url).pathname;
+      requestedAssets.push(path);
+      if (path === '/pricing.json') return Response.json(recommendationCatalog());
+      return new Response('Not found', { status: 404 });
+    },
+  };
+  assert.equal((await getJson(context)).status, 503, 'missing benchmarks/performance must not silently degrade recommendations');
+  assert.ok(requestedAssets.includes('/benchmarks.json'));
+  assert.ok(requestedAssets.includes('/performance.json'));
+
+  requestedAssets.length = 0;
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend/providers?use_case=agentic-coding&model=missing-model');
+  assert.equal((await getJson(context)).status, 404);
+  assert.deepEqual(requestedAssets, ['/pricing.json'], 'unknown model is known before required recommender assets load');
+});
+
 // ── /api/v1/stats ─────────────────────────────────────────────────────────────
 
 test('/api/v1/stats returns correct counts', async () => {

@@ -292,6 +292,19 @@ test('rankProviders gates required capability, context, ZDR, HQ, and uptime befo
   assert.ok(rows.ranked[0].reasons.some((reason) => /ZDR/i.test(reason)));
 });
 
+test('rankProviders excludes known provider headquarters without treating unknown HQ as excluded', () => {
+  const offerings = [
+    mixOffering('open/model-a', 'us-provider', 90, 1),
+    mixOffering('open/model-a', 'cn-provider', 90, 0.5),
+    mixOffering('open/model-a', 'unknown-provider', 90, 2),
+  ];
+  const result = rankProviders('agentic-coding', 'model-a', offerings, {}, {
+    providersMeta: { 'us-provider': { headquarters: 'US' }, 'cn-provider': { headquarters: 'CN' } },
+    excludeHQ: ['CN'],
+  });
+  assert.deepEqual(result.ranked.map((provider) => provider.provider), ['us-provider', 'unknown-provider']);
+});
+
 test('shortlist provider and price picks use rankProviders gates and expose the top-ranked provider', () => {
   const offerings = [
     mixOffering('open/model-a', 'fast-approved', 90, 5, { zdr: true, uptime_30m: 99.7 }),

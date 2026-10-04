@@ -80,6 +80,11 @@ function openWeightInfo(model) {
   return { value: null, source: null };
 }
 
+/** Return true only when the catalog has a confirmed open-weight status. */
+export function isOpenWeightModel(model) {
+  return openWeightInfo(model).value === true;
+}
+
 function capabilityValue(model, capability) {
   const parameters = model?.supported_parameters;
   if (Array.isArray(parameters)) {
@@ -822,6 +827,8 @@ function gateProvider(model, useCase, constraints, canonical) {
   const requireHQ = constraints.requireHQ ?? constraints.requireHq;
   const headquarters = headquartersOf(model, model.provider, constraints);
   if (requireHQ && !matchesHeadquarters(headquarters, requireHQ)) return null;
+  const excludeHQ = constraints.excludeHQ ?? constraints.excludeHq;
+  if (headquarters && matchesHeadquarters(headquarters, excludeHQ || [])) return null;
 
   const uptime = normalizedUptime(model);
   const minUptime = minUptimePercent(constraints.minUptime);
@@ -842,6 +849,7 @@ function gateProvider(model, useCase, constraints, canonical) {
 function providerGates(model, useCase, constraints, gate, quantFallback, price) {
   const requirements = useCase.hardRequirements || {};
   const requireHQ = constraints.requireHQ ?? constraints.requireHq;
+  const excludeHQ = constraints.excludeHQ ?? constraints.excludeHq ?? [];
   const minUptime = minUptimePercent(constraints.minUptime);
   return [
     { key: 'tool_calling', applied: requirements.needsToolCalling === true, passed: capabilityValue(model, 'tool_call') !== false, required: requirements.needsToolCalling === true, observed: capabilityValue(model, 'tool_call'), source: capabilitySource(model) },
@@ -849,6 +857,7 @@ function providerGates(model, useCase, constraints, gate, quantFallback, price) 
     { key: 'minimum_context', applied: finiteNonNegative(requirements.minContext) && requirements.minContext > 0, passed: gate.capacity === null ? null : gate.capacity >= (requirements.minContext || 0), minimum: requirements.minContext || 0, observed: gate.capacity },
     { key: 'zdr', applied: Boolean(constraints.requireZdr), passed: !constraints.requireZdr || model.zdr === true, observed: model.zdr === true },
     { key: 'headquarters', applied: Boolean(requireHQ), passed: !requireHQ || matchesHeadquarters(gate.headquarters, requireHQ), requested: requireHQ ?? null, observed: gate.headquarters },
+    { key: 'excluded_headquarters', applied: excludeHQ.length > 0, passed: !gate.headquarters || !matchesHeadquarters(gate.headquarters, excludeHQ), excluded: excludeHQ, observed: gate.headquarters },
     { key: 'minimum_uptime', applied: minUptime !== null, passed: minUptime === null || Boolean(gate.uptime && gate.uptime.value >= minUptime), minimum: minUptime, observed: gate.uptime?.value ?? null, window: gate.uptime?.window ?? null },
     { key: 'known_issue', applied: true, passed: !gate.issues.some((issue) => BLOCKING_ISSUES.has(String(issue.verdict || '').toLowerCase())), blockingVerdicts: ['broken', 'unavailable'], observed: gate.issues.map((issue) => ({ verdict: issue.verdict || 'unspecified', source: issue.source || null })) },
     { key: 'priceable_mix', applied: true, passed: finiteNonNegative(price), mix: useCase.mix, observedBlendedRate: price },

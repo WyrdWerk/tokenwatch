@@ -26,6 +26,8 @@ const REQUIRED_METHODS = [
   'snapshotCompare',
   'downloadCostCard',
   'switchCatalog',
+  'recommendModel',
+  'recommendProvider',
 ];
 
 test('app.js assigns window.TWCatalog with required methods after a successful init', async () => {
@@ -71,6 +73,21 @@ test('TWCatalog does not duplicate mix math: setWorkload / explainRanking call e
   assert.match(facade, /costBreakdown\(/, 'explainRanking must use costBreakdown, not a forked formula');
   assert.match(facade, /computeAndRender\(\)/, 'writes must re-render the live table');
   assert.match(src, /function costFor\(pricing, tokens\) \{\s*return costBreakdown\(pricing, tokens\)\.total;/);
+});
+
+test('recommendation façade calls the recommender API instead of reimplementing ranking or cost math', async () => {
+  const src = await readFile(APP_JS, 'utf8');
+  const facadeStart = src.indexOf('// ── WebMCP façade');
+  const facade = src.slice(facadeStart);
+  assert.match(facade, /async function recommendModel\(input\)/);
+  assert.match(facade, /async function recommendProvider\(input\)/);
+  assert.match(facade, /fetch\(recommendationUrl\(path, input\)\)/);
+  assert.match(facade, /return `\/api\/v1\/recommend\$\{path\}/);
+  assert.match(facade, /params\.set\('use_case', input\.useCase\)/);
+  assert.match(facade, /params\.set\('exclude_hq', input\.excludeHq\.join\(','\)\)/);
+  assert.match(facade, /params\.set\('include_proprietary', String\(input\.includeProprietary\)\)/);
+  assert.match(facade, /recommendModel,/);
+  assert.match(facade, /recommendProvider,/);
 });
 
 test('getCatalogInfo counts distinct offering providers, matching the visible catalog claim', async () => {

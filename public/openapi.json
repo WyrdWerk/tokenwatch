@@ -3,7 +3,7 @@
   "info": {
     "title": "TokenWatch Pricing API",
     "version": "v1",
-    "description": "Read-only, public JSON API for TokenWatch text, image, video, provider, organization, and pricing catalog data."
+    "description": "Read-only, public JSON API for TokenWatch text, image, video, provider, organization, pricing catalog data, and workload-aware recommendations."
   },
   "servers": [
     {
@@ -16,6 +16,290 @@
         "summary": "API metadata and endpoint directory",
         "operationId": "getApiV1",
         "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful JSON response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameter or malformed model ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown API route or resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A required catalog asset is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/use-cases": {
+      "get": {
+        "summary": "List workload recommendation presets and their assumed mixes, weights, requirements, and quality floors",
+        "operationId": "getApiV1UseCases",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful JSON response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameter or malformed model ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown API route or resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A required catalog asset is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommend": {
+      "get": {
+        "summary": "Recommend models for a workload with quality, value, and quality-floor picks",
+        "operationId": "getApiV1Recommend",
+        "parameters": [
+          {
+            "name": "use_case",
+            "in": "query",
+            "required": true,
+            "description": "Required workload preset id. See /api/v1/use-cases for assumed mixes, weights, requirements, and quality floors.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "agentic-coding",
+                "tool-agents",
+                "long-context-rag",
+                "structured-extraction",
+                "high-volume-cheap",
+                "chat-assistant",
+                "creative-writing",
+                "reasoning-math",
+                "frontend-ui"
+              ]
+            }
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "required": false,
+            "description": "Provider-rank weighting preset; defaults to balanced.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "balanced",
+                "cheapest",
+                "fastest",
+                "most-reliable"
+              ]
+            }
+          },
+          {
+            "name": "zdr",
+            "in": "query",
+            "required": false,
+            "description": "Filter or control parameter: zdr.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "exclude_hq",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated two-letter headquarters country codes to exclude; providers with unknown headquarters are not excluded.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{2}(,[A-Za-z]{2})*$"
+            }
+          },
+          {
+            "name": "include_proprietary",
+            "in": "query",
+            "required": false,
+            "description": "Include models not confirmed open-weight; defaults to false for model recommendations.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful JSON response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameter or malformed model ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown API route or resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A required catalog asset is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommend/providers": {
+      "get": {
+        "summary": "Rank providers for one canonical model and workload",
+        "operationId": "getApiV1RecommendProviders",
+        "parameters": [
+          {
+            "name": "use_case",
+            "in": "query",
+            "required": true,
+            "description": "Required workload preset id. See /api/v1/use-cases for assumed mixes, weights, requirements, and quality floors.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "agentic-coding",
+                "tool-agents",
+                "long-context-rag",
+                "structured-extraction",
+                "high-volume-cheap",
+                "chat-assistant",
+                "creative-writing",
+                "reasoning-math",
+                "frontend-ui"
+              ]
+            }
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "required": true,
+            "description": "Required canonical model id. An unknown model returns 404.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "required": false,
+            "description": "Provider-rank weighting preset; defaults to balanced.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "balanced",
+                "cheapest",
+                "fastest",
+                "most-reliable"
+              ]
+            }
+          },
+          {
+            "name": "zdr",
+            "in": "query",
+            "required": false,
+            "description": "Filter or control parameter: zdr.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "exclude_hq",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated two-letter headquarters country codes to exclude; providers with unknown headquarters are not excluded.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{2}(,[A-Za-z]{2})*$"
+            }
+          },
+          {
+            "name": "include_proprietary",
+            "in": "query",
+            "required": false,
+            "description": "Include models not confirmed open-weight; defaults to false for model recommendations.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful JSON response.",
