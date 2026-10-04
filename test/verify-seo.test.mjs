@@ -76,6 +76,7 @@ test('all calculator entry points expose model discovery and PNG social metadata
   for (const page of ['index', 'image', 'video', 'benchmarks']) {
     const html = await readFile(join(ROOT, 'public', `${page}.html`), 'utf8');
     assert.match(html, /<nav class="tab-nav"[\s\S]*?href="\/models\/">Models<\/a>/, `${page} model discovery`);
+    assert.match(html, /href="\/choose\/">Choose<\/a>[\s\S]*?href="\/models\/">Models<\/a>/, `${page} Choose nav order`);
     for (const field of ['property="og:image"', 'name="twitter:image"']) {
       assert.ok(html.includes(`${field} content="https://tokenwatch.wyrdwerk.com/og/og-image.png"`), `${page} ${field}`);
     }
@@ -88,6 +89,20 @@ test('all calculator entry points expose model discovery and PNG social metadata
     const data = JSON.parse(schema[1])['@graph'][0];
     assert.equal(data.url, html.match(/rel="canonical" href="([^"]+)"/)[1], `${page} schema URL`);
   }
+  const choose = await readFile(join(ROOT, 'public', 'choose', 'index.html'), 'utf8');
+  assert.match(choose, /href="\/choose\/" aria-current="page">Choose<\/a>/);
+  assert.match(choose, /Which open model should you use, and where\?/);
+  assert.match(choose, /name="useCase"/);
+  assert.equal((choose.match(/name="useCase"/g) || []).length, 9);
+  assert.match(choose, /src="\/choose-app\.js\?v=dev"/);
+  const pageScript = await readFile(join(ROOT, 'public', 'choose-app.js'), 'utf8');
+  assert.match(pageScript, /from '\/shared\/recommend\.mjs'/);
+  assert.match(pageScript, /window\.TW\.initTheme\(\)/, 'choose page must initialize the shared theme toggle');
+  for (const module of ['choose-page.mjs', 'recommend.mjs', 'use-cases.mjs', 'cost.mjs', 'normalize.mjs']) {
+    await readFile(join(ROOT, 'public', 'shared', module), 'utf8');
+  }
+  const sitemap = await readFile(join(ROOT, 'public', 'sitemap.xml'), 'utf8');
+  assert.ok(sitemap.includes('<loc>https://tokenwatch.wyrdwerk.com/choose/</loc>'));
   const png = await readFile(join(ROOT, 'public', 'og', 'og-image.png'));
   assert.equal(png.subarray(1, 4).toString(), 'PNG');
   assert.equal(png.readUInt32BE(16), 1200);

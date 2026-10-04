@@ -169,6 +169,9 @@ function compactRecommendationCandidate(candidate, includeProviderExplanations =
     offering: compactRecommendationOffering(candidate.offering),
     cheapestOffering: compactRecommendationOffering(candidate.cheapestOffering),
     unverifiedProviders: (candidate.unverifiedProviders || []).map((provider) => compactRecommendationProvider(provider, includeProviderExplanations)),
+    ...(Array.isArray(candidate.providers)
+      ? { providers: includeProviderExplanations ? candidate.providers : candidate.providers.map(compactProviderRow) }
+      : {}),
   };
 }
 

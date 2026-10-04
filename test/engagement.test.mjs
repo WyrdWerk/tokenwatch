@@ -87,6 +87,7 @@ test('renderHero renders real numbers, escapes names and falls back without a sc
   assert.doesNotMatch(html, /<script>/);
   assert.match(html, /role="img"/);
   assert.match(html, /data-hero-action="estimate"/);
+  assert.match(html, /href="\/choose\/"[^>]*>Find the right model for your use case →/);
   assert.doesNotMatch(html, /\{\{/, 'renderCounts rejects unresolved placeholders');
   const fallback = renderHero({ models: [offering('a/x', 'p1', 1, 1)], providers: [] });
   assert.doesNotMatch(fallback, /<svg/);
