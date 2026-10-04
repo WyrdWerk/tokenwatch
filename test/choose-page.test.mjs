@@ -99,3 +99,12 @@ test('telemetry becomes stale only after six hours from its generated_at timesta
   assert.equal(isStale(generatedAt, sixHours + 1), true);
   assert.equal(isStale('not-a-date', sixHours + 1), false);
 });
+
+test('coverage badge only flags coverage below the engine eligibility threshold; exact coverage is in the explanation', async () => {
+  const { MIN_BENCHMARK_COVERAGE } = await import('../shared/recommend.mjs');
+  assert.equal(MIN_BENCHMARK_COVERAGE, 0.5);
+  const app = await readFile(new URL('../public/choose-app.js', import.meta.url), 'utf8');
+  assert.match(app, /candidate\.qualityCoverage < MIN_BENCHMARK_COVERAGE\) \{\n\s*return '<span class="choose-badge choose-badge-partial">Low benchmark coverage<\/span>'/);
+  assert.doesNotMatch(app, /qualityCoverage < 1\b/);
+  assert.match(app, /class="choose-coverage-line"><strong>Benchmark coverage: \$\{formatNumber\(explanation\.benchmark\.coverage \* 100, 0\)\}%/);
+});

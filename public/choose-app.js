@@ -1,4 +1,4 @@
-import { shortlistModels, rankProviders } from '/shared/recommend.mjs';
+import { MIN_BENCHMARK_COVERAGE, shortlistModels, rankProviders } from '/shared/recommend.mjs';
 import { USE_CASES } from '/shared/use-cases.mjs';
 import {
   DEFAULT_CHOOSE_STATE,
@@ -152,9 +152,11 @@ function confidenceBadge(confidence) {
   return isCloseCall(confidence) ? '<span class="choose-badge choose-badge-close">Close call</span>' : '';
 }
 
+// Only flag coverage that is genuinely low: below the engine's quality-eligibility
+// threshold. The exact share is always listed under "Why this model?".
 function coverageBadge(candidate) {
-  if (Number.isFinite(candidate.qualityCoverage) && candidate.qualityCoverage < 1) {
-    return '<span class="choose-badge choose-badge-partial">Partial benchmark coverage</span>';
+  if (Number.isFinite(candidate.qualityCoverage) && candidate.qualityCoverage < MIN_BENCHMARK_COVERAGE) {
+    return '<span class="choose-badge choose-badge-partial">Low benchmark coverage</span>';
   }
   return '';
 }
@@ -212,6 +214,7 @@ function explanationMarkup(candidate) {
   return `<details class="choose-why">
     <summary>Why this model?</summary>
     <div class="choose-explanation">
+      <p class="choose-coverage-line"><strong>Benchmark coverage: ${formatNumber(explanation.benchmark.coverage * 100, 0)}%</strong> of this use case’s benchmark weight has a published score (quality picks need at least ${formatNumber(MIN_BENCHMARK_COVERAGE * 100, 0)}%).</p>
       <h4>Benchmark weights</h4><ul>${weights}</ul>
       <h4>Raw benchmark scores and sources</h4>
       <div class="choose-table-wrap"><table><thead><tr><th scope="col">Signal</th><th scope="col">Raw score</th><th scope="col">Source</th><th scope="col">Weight</th></tr></thead><tbody>${signals}</tbody></table></div>
