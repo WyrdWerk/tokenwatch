@@ -132,6 +132,7 @@ export function renderHero(pricing) {
     <div class="tw-hero-ctas">
       <button type="button" class="tw-hero-cta" data-hero-action="estimate">Estimate my workload ↓</button>
       ${compare}
+      <a class="tw-hero-cta tw-hero-cta-ghost" href="/choose/">Find the right model for your use case →</a>
     </div>
   </div>
   ${scene}

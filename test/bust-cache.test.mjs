@@ -40,4 +40,13 @@ test('bustHtml writes root-relative assets and rehashes nested-page references i
   assert.equal(await bustHtml(file, second), 2);
   assert.equal(await readFile(file, 'utf8'), '<link rel="stylesheet" href="/h/styles.cccccccc.css"><script src="/h/app.dddddddd.js"></script>');
   assert.equal(baseAssetName('/h/styles.cccccccc.css'), 'styles.css');
+  assert.equal(baseAssetName('/choose-app.js?v=dev'), 'choose-app.js');
+});
+
+test('chooser source script and shared ESM modules revalidate when served without a hashed path', async () => {
+  const headers = await readFile(new URL('../public/_headers', import.meta.url), 'utf8');
+  for (const path of ['/choose-app.js', '/shared/*']) {
+    const escaped = path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    assert.match(headers, new RegExp(`${escaped}\\n  Cache-Control: public, max-age=0, must-revalidate`));
+  }
 });
