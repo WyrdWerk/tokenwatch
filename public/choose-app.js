@@ -6,6 +6,7 @@ import {
   isCloseCall,
   isStale,
   parseChooseHash,
+  shellQuote,
   serializeChooseState,
 } from '/shared/choose-page.mjs';
 
@@ -395,8 +396,32 @@ function setupText(provider) {
   const baseURL = offering.modelsdev?.base_url || offering.base_url || null;
   const modelId = offering.modelsdev?.model_id || offering.id;
   const baseURLForCopy = baseURL || 'https://YOUR_PROVIDER_BASE_URL/v1';
+  const comment = [providerName(provider.provider), offering.id]
+    .map((value) => String(value).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim())
+    .join(' · ');
   const curlPayload = JSON.stringify({ model: modelId, messages: [{ role: 'user', content: 'Hello' }] }, null, 2);
-  return `# ${providerName(provider.provider)} · ${offering.id}\n# ${baseURL ? 'Base URL from models.dev/catalog' : 'Base URL is not published in this catalog; replace this placeholder with the provider endpoint'}\nexport BASE_URL="${baseURLForCopy}"\nexport MODEL_ID="${modelId}"\n\n# curl\ncurl "$BASE_URL/chat/completions" \\\n  -H "Authorization: Bearer $API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '${curlPayload.replaceAll("'", "'\\''")}'\n\n# Python OpenAI SDK\nimport os\nfrom openai import OpenAI\nclient = OpenAI(api_key=os.environ["API_KEY"], base_url=os.environ["BASE_URL"])\nresponse = client.chat.completions.create(\n    model=os.environ["MODEL_ID"],\n    messages=[{"role": "user", "content": "Hello"}],\n)\nprint(response.choices[0].message.content)`;
+  return [
+    `# ${comment}`,
+    `# ${baseURL ? 'Base URL from models.dev/catalog' : 'Base URL is not published in this catalog; replace this placeholder with the provider endpoint'}`,
+    `export BASE_URL=${shellQuote(baseURLForCopy)}`,
+    `export MODEL_ID=${shellQuote(modelId)}`,
+    '',
+    '# curl',
+    'curl "$BASE_URL/chat/completions" \\',
+    '  -H "Authorization: Bearer $API_KEY" \\',
+    '  -H "Content-Type: application/json" \\',
+    `  -d '${curlPayload.replaceAll("'", "'\\''")}'`,
+    '',
+    '# Python OpenAI SDK',
+    'import os',
+    'from openai import OpenAI',
+    'client = OpenAI(api_key=os.environ["API_KEY"], base_url=os.environ["BASE_URL"])',
+    'response = client.chat.completions.create(',
+    '    model=os.environ["MODEL_ID"],',
+    '    messages=[{"role": "user", "content": "Hello"}],',
+    ')',
+    'print(response.choices[0].message.content)',
+  ].join('\n');
 }
 
 function agentPrompt(candidate, provider) {
