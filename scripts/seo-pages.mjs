@@ -3,6 +3,7 @@ import { canonicalId } from '../shared/normalize.mjs';
 import { API_ENDPOINTS } from '../shared/api-meta.mjs';
 import { PRIORITY_PROVIDER_WEIGHTS, USE_CASES } from '../shared/use-cases.mjs';
 import { MIN_BENCHMARK_COVERAGE } from '../shared/recommend.mjs';
+import { modelDisplayName } from '../shared/choose-page.mjs';
 
 export const SITE = 'https://tokenwatch.wyrdwerk.com';
 export const TOP_N = 25;
@@ -18,6 +19,41 @@ export function esc(value) {
 
 function escXml(value) {
   return esc(value).replace(/'/g, '&apos;');
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** Search-snippet title budget: Google shows roughly 60–65 characters. */
+export const SNIPPET_TITLE_MAX = 65;
+
+/** "Oct 2026" from a catalog generated_at timestamp or YYYY-MM-DD date (UTC); null when unparseable. */
+export function catalogMonth(value) {
+  const match = /^(\d{4})-(\d{2})/.exec(String(value ?? ''));
+  if (!match) return null;
+  const month = MONTHS[Number(match[2]) - 1];
+  return month ? `${month} ${match[1]}` : null;
+}
+
+/** Compact USD price for titles and snippets: $0.05, $1.50, $0.0044. */
+export function snippetPrice(value) {
+  if (!Number.isFinite(value) || value <= 0) return null;
+  if (value < 0.01) return `$${Number(value.toPrecision(2))}`;
+  return `$${value.toFixed(2)}`;
+}
+
+/** First candidate that fits the snippet title budget; the last candidate is the fallback. */
+export function fitTitle(candidates, max = SNIPPET_TITLE_MAX) {
+  const list = candidates.filter(Boolean);
+  return list.find((title) => title.length <= max) || list[list.length - 1];
+}
+
+function plural(count, word) {
+  return `${count.toLocaleString('en-US')} ${word}${count === 1 ? '' : 's'}`;
+}
+
+/** Catalog model name without an "Org: " prefix (`Z.ai: GLM 5.3` → `GLM 5.3`). */
+function shortModelName(model) {
+  const name = String(model?.name || model?.id || '');
+  return /^[^/:]+: \S/.test(name) ? name.slice(name.indexOf(': ') + 2).trim() : name;
 }
 
 export function fmtPrice(value) {
@@ -334,7 +370,7 @@ export function renderModalityMeta(markup, modality, modelCount) {
 
 export function renderHomepageMeta(markup, modelCount, providerCount) {
   const title = 'LLM API Pricing Comparison & Open Model Finder | TokenWatch';
-  const description = `Compare pay-as-you-go LLM API pricing across ${providerCount} providers and ${modelCount} text-model offerings. Find the right open-weight model and provider for your use case, then calculate token or budget costs for your workload.`;
+  const description = `Compare ${modelCount.toLocaleString('en-US')} LLM API prices across ${providerCount} providers, updated every 2 hours. Find the cheapest provider for your workload with cache pricing, ZDR filters, and a cost calculator.`;
   const subtitle = `Compare pay-as-you-go LLM API pricing across ${providerCount} providers and ${modelCount} text-model offerings. Enter your token mix or set a budget to estimate your agents' costs.`;
   let out = markup.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`);
   out = replaceMetaContent(out, 'name', 'description', description);
@@ -528,13 +564,75 @@ function providerVideoSection(provider, lastmod) {
   return renderVideoSeoSection(cheapestVideoModels(provider.video, 15), lastmod).replace('id="video-pricing-guide"', 'id="video-pricing"');
 }
 
+/**
+ * Concrete, page-consistent facts for a provider's search snippet. Every
+ * number comes from `provider.text` — the same records the page's overview
+ * and pricing table render.
+ */
+export function providerSnippetFacts(provider) {
+  const priced = (provider.text || []).filter((model) => isPositive(model.pricing?.input));
+  const cheapest = [...priced].sort((a, b) => a.pricing.input - b.pricing.input
+    || (a.pricing.output ?? Infinity) - (b.pricing.output ?? Infinity)
+    || String(a.id).localeCompare(String(b.id)))[0] || null;
+  const textCount = (provider.text || []).length;
+  return {
+    cheapest,
+    cheapestName: cheapest ? shortModelName(cheapest) : null,
+    cheapestInput: cheapest?.pricing.input ?? null,
+    cheapestOutput: isPositive(cheapest?.pricing.output) ? cheapest.pricing.output : null,
+    textCount,
+    cacheCount: (provider.text || []).filter((model) => isPositive(model.pricing?.cache_read)).length,
+    zdrCount: (provider.text || []).filter((model) => model.zdr === true).length,
+    reviewedZdr: provider.meta?.retains_prompts === false,
+  };
+}
+
+export function providerPageTitle(provider, month) {
+  const facts = providerSnippetFacts(provider);
+  const name = provider.name;
+  const models = provider.modelCount ? plural(provider.modelCount, 'Model') : null;
+  const from = snippetPrice(facts.cheapestInput);
+  const when = month ? ` (${month})` : '';
+  if (!models) return fitTitle([`${name} API Pricing${when} | TokenWatch`, `${name} API Pricing`]);
+  return fitTitle([
+    from && `${name} API Pricing${when}: ${models} from ${from}/M | TokenWatch`,
+    from && `${name} API Pricing${when}: ${models} from ${from}/M`,
+    from && `${name} API Pricing: ${models} from ${from}/M`,
+    `${name} API Pricing${when}: ${models} | TokenWatch`,
+    `${name} API Pricing${when}: ${models}`,
+    `${name} API Pricing`,
+  ]);
+}
+
+export function providerPageDescription(provider, month) {
+  if (!provider.modelCount) {
+    return `Current pricing for ${provider.name} is unavailable in this TokenWatch catalog snapshot. Review available provider policy links and other providers.`;
+  }
+  const facts = providerSnippetFacts(provider);
+  const parts = [`${provider.name} API pricing${month ? ` (${month})` : ''}: ${plural(provider.modelCount, 'model')} tracked.`];
+  if (facts.cheapest) {
+    parts.push(`Cheapest: ${facts.cheapestName} at ${snippetPrice(facts.cheapestInput)}/M input${facts.cheapestOutput ? `, ${snippetPrice(facts.cheapestOutput)}/M output` : ''}.`);
+  }
+  if (facts.textCount) parts.push(`Cache-read pricing on ${facts.cacheCount} of ${facts.textCount} text models.`);
+  if (facts.reviewedZdr) parts.push('Zero data retention.');
+  else if (facts.zdrCount) parts.push(`${facts.zdrCount} ZDR endpoint${facts.zdrCount === 1 ? '' : 's'}.`);
+  parts.push('Compare every rate and estimate your workload cost.');
+  return parts.join(' ');
+}
+
+function providerFactsProse(provider) {
+  const facts = providerSnippetFacts(provider);
+  if (!facts.cheapest) return '';
+  const output = facts.cheapestOutput ? ` and ${fmtPrice(facts.cheapestOutput)} per million output tokens` : '';
+  return `<p data-snippet-facts>Cheapest input price: ${esc(facts.cheapestName)} at ${fmtPrice(facts.cheapestInput)} per million input tokens${output}. ${facts.cacheCount} of ${facts.textCount} text models publish a cache-read price; ${facts.zdrCount} carry a zero-data-retention tag.</p>`;
+}
+
 export function renderProviderPage(provider, dates, links = {}) {
   const path = `/providers/${provider.slug}/`;
-  const description = provider.modelCount
-    ? `Compare ${provider.name} API pricing across ${provider.modelCount} tracked text, image, and video model identities. Review current rates, variants, and available policy links.`
-    : `Current pricing for ${provider.name} is unavailable in this TokenWatch catalog snapshot. Review available provider policy links and other providers.`;
+  const month = catalogMonth(dates?.text);
+  const description = providerPageDescription(provider, month);
   const zdr = provider.meta.retains_prompts === false ? 'Reviewed metadata says prompts are not retained.' : 'TokenWatch does not have a provider-wide zero-retention verdict for this page.';
-  const body = `    <section class="seo-prose"><h2>${esc(provider.name)} pricing overview</h2>${provider.modelCount ? '' : `<p data-catalog-unavailable>No current priced offerings are available in the catalog snapshot ${esc(dates.text)}. Missing catalog coverage is not a zero price or proof that this provider has closed. This established URL is retained for existing links. <a href="/providers/">Browse other providers</a>.</p>`}<p>TokenWatch tracks ${provider.text.length} text, ${provider.image.length} image, and ${provider.video.length} video model records for this provider. ${esc(zdr)}</p><p>${policyLinks(provider.meta)}</p><p><a href="/#provider=${encodeURIComponent(provider.key)}">Open the text calculator filtered to ${esc(provider.name)}</a></p></section>
+  const body = `    <section class="seo-prose"><h2>${esc(provider.name)} pricing overview</h2>${provider.modelCount ? '' : `<p data-catalog-unavailable>No current priced offerings are available in the catalog snapshot ${esc(dates.text)}. Missing catalog coverage is not a zero price or proof that this provider has closed. This established URL is retained for existing links. <a href="/providers/">Browse other providers</a>.</p>`}<p>TokenWatch tracks ${provider.text.length} text, ${provider.image.length} image, and ${provider.video.length} video model records for this provider. ${esc(zdr)}</p>${providerFactsProse(provider)}<p>${policyLinks(provider.meta)}</p><p><a href="/#provider=${encodeURIComponent(provider.key)}">Open the text calculator filtered to ${esc(provider.name)}</a></p></section>
 ${providerTextSection(provider, dates.text, links)}
 ${providerImageSection(provider, dates.image)}
 ${providerVideoSection(provider, dates.video)}`;
@@ -547,7 +645,7 @@ ${providerVideoSection(provider, dates.video)}`;
     ],
   };
   return renderStaticPage({
-    title: `${provider.name} API Pricing — Text, Image & Video | TokenWatch`,
+    title: providerPageTitle(provider, month),
     description,
     canonicalPath: path,
     heading: `${provider.name} API pricing`,
@@ -558,14 +656,21 @@ ${providerVideoSection(provider, dates.video)}`;
   });
 }
 
-export function renderProviderDirectoryPage(providers) {
+export function renderProviderDirectoryPage(providers, dates = {}) {
   const path = '/providers/';
   const rows = providers.map((provider) => `<tr><td><a href="/providers/${esc(provider.slug)}/">${esc(provider.name)}</a></td><td class="num">${provider.text.length}</td><td class="num">${provider.image.length}</td><td class="num">${provider.video.length}</td><td class="num">${provider.modelCount}</td><td>${provider.meta.retains_prompts === false ? 'Reviewed ZDR' : 'Not confirmed provider-wide'}</td></tr>`).join('\n');
   const body = `    <section class="seo-prose"><h2>Browse inference providers</h2><p>This directory lists established provider pages. Pages remain available when coverage drops. Counts combine the text, image, and video catalogs without merging unlike pricing variants; zero records means unavailable catalog coverage, not free pricing.</p></section>
     <section class="seo-models" id="provider-directory"><div class="table-wrap"><table><caption>TokenWatch provider directory</caption><thead><tr><th scope="col">Provider</th><th scope="col" class="num">Text records</th><th scope="col" class="num">Image records</th><th scope="col" class="num">Video records</th><th scope="col" class="num">Distinct models</th><th scope="col">Retention metadata</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
-  const description = `Browse ${providers.length} established inference-provider pages with current catalog coverage and available policy links across TokenWatch's text, image, and video catalogs.`;
+  const month = catalogMonth(dates.text);
+  const reviewedZdr = providers.filter((provider) => provider.meta?.retains_prompts === false).length;
+  const pricedCount = providers.filter((provider) => provider.modelCount > 0).length;
+  const description = `Compare API pricing from ${plural(providers.length, 'inference provider')}${month ? ` (${month})` : ''}: ${pricedCount} with current text, image, or video prices, ${reviewedZdr} with reviewed zero data retention. Model counts, policies, and links per provider.`;
   return renderStaticPage({
-    title: `LLM, Image & Video API Provider Directory | TokenWatch`,
+    title: fitTitle([
+      `LLM API Pricing by Provider${month ? ` (${month})` : ''}: ${providers.length} Providers | TokenWatch`,
+      `LLM API Pricing by Provider: ${providers.length} Providers | TokenWatch`,
+      `LLM API Pricing by Provider | TokenWatch`,
+    ]),
     description,
     canonicalPath: path,
     heading: 'Inference provider directory',
@@ -675,7 +780,7 @@ export function collectModelPages({ pricing }, { minProviders = MODEL_MIN_PROVID
     pages.push({
       canonical,
       slug,
-      name: offerings.find((m) => m.name)?.name || canonical,
+      name: offerings.length ? modelDisplayName({ id: canonical, providers: offerings.map((offering) => ({ offering })) }) : canonical,
       org: offerings.find((m) => m.org)?.org || offerings[0]?.provider || '—',
       offerings,
       ranked,
@@ -689,6 +794,11 @@ export function collectModelPages({ pricing }, { minProviders = MODEL_MIN_PROVID
       cheapestEff: ranked[0]?.eff ?? null,
     });
   }
+  // Readable names can collide (a quantized canonical often shares its base
+  // model's catalog name); fall back to the canonical id so titles stay unique.
+  const nameCounts = new Map();
+  for (const page of pages) nameCounts.set(page.name.toLowerCase(), (nameCounts.get(page.name.toLowerCase()) || 0) + 1);
+  for (const page of pages) if (nameCounts.get(page.name.toLowerCase()) > 1) page.name = page.canonical;
   return pages.sort((a, b) => a.slug.localeCompare(b.slug));
 }
 
@@ -721,19 +831,50 @@ function renderModelProviderRows(page, linkedProviderSlugs = new Set()) {
  * price range is a provider-offering range, and uptime is the 30-minute
  * endpoint metric (never a one-day claim).
  */
+function providerLabel(model) {
+  const display = model?.provider_display;
+  return typeof display === 'string' && display.trim() ? display.trim() : prettyProvider(model?.provider || '');
+}
+
+export function modelPageTitle(page, month) {
+  const providers = plural(page.providerCount, 'Provider');
+  const from = snippetPrice(page.inputRange?.min);
+  const when = month ? ` (${month})` : '';
+  return fitTitle([
+    from && `${page.name} API Pricing: ${providers} from ${from}/M${when} | TokenWatch`,
+    from && `${page.name} API Pricing: ${providers} from ${from}/M${when}`,
+    from && `${page.name} API Pricing: ${providers} from ${from}/M`,
+    `${page.name} API Pricing Across ${providers}${when} | TokenWatch`,
+    `${page.name} API Pricing Across ${providers}`,
+    `${page.name} API Pricing`,
+  ]);
+}
+
+export function modelPageDescription(page, month, historyEnabled = true) {
+  if (!page.offerings.length) {
+    return `Current provider pricing for ${page.name} is unavailable in this TokenWatch catalog snapshot. Browse other models or check the calculator for updated coverage.`;
+  }
+  const parts = [`${page.name} API pricing${month ? ` (${month})` : ''} across ${plural(page.providerCount, 'provider')}.`];
+  if (page.inputRange && page.outputRange) {
+    parts.push(`Input ${snippetPrice(page.inputRange.min)}–${snippetPrice(page.inputRange.max)}/M, output ${snippetPrice(page.outputRange.min)}–${snippetPrice(page.outputRange.max)}/M.`);
+  }
+  if (page.cheapest) parts.push(`Cheapest for cached agent workloads: ${providerLabel(page.cheapest)} at ${snippetPrice(page.cheapestEff)}/M blended.`);
+  parts.push(`Cache-read pricing on ${page.cacheCoverage} of ${page.offerings.length} offerings.`);
+  parts.push(historyEnabled ? 'Compare providers and daily price history.' : 'Compare every provider side by side.');
+  return parts.join(' ');
+}
+
 export function renderModelPage(page, { lastmod, historyEnabled = true, linkedProviderSlugs = new Set() } = {}) {
   const path = `/models/${page.slug}/`;
+  const month = catalogMonth(lastmod);
   const providerSuffix = page.providerCount === 1 ? '' : 's';
   const rangeText = page.inputRange && page.outputRange
     ? `Across tracked provider offerings, input runs ${fmtPrice(page.inputRange.min)}–${fmtPrice(page.inputRange.max)} per million tokens and output ${fmtPrice(page.outputRange.min)}–${fmtPrice(page.outputRange.max)} per million tokens.`
     : "Tracked provider offerings do not currently publish a complete input/output range.";
   const cheapestText = page.cheapest
-    ? `The cheapest tracked provider offering for a typical agentic mix (2.5% input, 97% cached input, 0.5% output) is ${esc(page.cheapest.provider)} at ${fmtPrice(page.cheapestEff)} per million tokens.`
+    ? `The cheapest tracked provider offering for a typical agentic mix (2.5% input, 97% cached input, 0.5% output) is ${providerLabel(page.cheapest)} at ${fmtPrice(page.cheapestEff)} per million tokens.`
     : "No provider offering can be priced at the default agentic mix yet.";
-  const historyText = historyEnabled ? ' Daily price history is retained for up to 90 days.' : '';
-  const description = page.offerings.length
-    ? `Compare ${esc(page.name)} API pricing across ${page.providerCount} tracked provider${providerSuffix}. See current input, output, and cache-read rates, the cheapest offering for a cached agent workload, and quantized variants.${historyText}`
-    : `Current provider pricing for ${page.name} is unavailable in this TokenWatch catalog snapshot. Browse other models or check the calculator for updated coverage.`;
+  const description = modelPageDescription(page, month, historyEnabled);
   const history = historyEnabled ? `\n${renderPriceHistorySection(page)}` : '';
 
   const body = `    <section class="seo-prose"><h2>${esc(page.name)} pricing across providers</h2>${page.offerings.length ? '' : '<p data-catalog-unavailable>No current priced offerings are available in this catalog snapshot. Missing coverage is not a zero price or proof that this model has been retired. This established URL is retained for existing links. <a href="/models/">Browse other models</a>.</p>'}<p>${esc(rangeText)} ${esc(cheapestText)}</p><p>Prices are USD per million tokens and reflect each provider offering — they are not a single intrinsic model price. ${page.cacheCoverage} of ${page.offerings.length} offerings publish a cache-read rate; ${page.uptimeCoverage} of ${page.offerings.length} publish a 30-minute endpoint uptime figure.</p><p><a href="/#model=${encodeURIComponent(page.canonical)}">Open the calculator filtered to ${esc(page.name)}</a></p><p class="seo-choose-link">Is this the right model for your workload? <a href="/choose/">Compare open-weight picks and providers for your use case →</a></p></section>${history}
@@ -762,7 +903,7 @@ export function renderModelPage(page, { lastmod, historyEnabled = true, linkedPr
     ],
   };
   return renderStaticPage({
-    title: `${page.name} API Pricing Across ${page.providerCount} Provider${providerSuffix} | TokenWatch`,
+    title: modelPageTitle(page, month),
     description,
     canonicalPath: path,
     heading: `${page.name} API pricing`,
@@ -778,14 +919,21 @@ export function renderModelPage(page, { lastmod, historyEnabled = true, linkedPr
   });
 }
 
-export function renderModelDirectoryPage(pages) {
+export function renderModelDirectoryPage(pages, dates = {}) {
   const path = "/models/";
   const rows = pages.map((page) => `      <tr><td><a href="/models/${esc(page.slug)}/">${esc(page.name)}</a></td><td>${esc(page.org)}</td><td class="num">${page.providerCount}</td><td class="num">${fmtPrice(page.cheapestEff)}</td></tr>`).join('\n');
-  const description = `Browse ${pages.length} established canonical-model pages with current provider pricing coverage across TokenWatch-tracked providers.`;
+  const month = catalogMonth(dates.text);
+  const priced = pages.filter((page) => Number.isFinite(page.cheapestEff) && page.cheapestEff > 0);
+  const cheapest = [...priced].sort((a, b) => a.cheapestEff - b.cheapestEff)[0] || null;
+  const description = `Compare API prices for ${plural(pages.length, 'LLM')} across providers${month ? ` (${month})` : ''}: input, output, and cache-read rates per provider${cheapest ? `, from ${snippetPrice(cheapest.cheapestEff)}/M blended (${cheapest.name})` : ''}. Find the cheapest host for each model.`;
   const body = `    <section class="seo-prose"><h2>Browse models by provider coverage</h2><p>This directory lists established model comparisons. Pages remain available when coverage drops; missing pricing is unknown, not zero. Quantized variants are kept as separate canonical models; <code>:batch</code> variants are excluded.</p></section>
     <section class="seo-models" id="model-directory"><div class="table-wrap"><table><caption>TokenWatch model directory</caption><thead><tr><th scope="col">Model</th><th scope="col">Org</th><th scope="col" class="num">Providers</th><th scope="col" class="num">Cheapest $/M</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
   return renderStaticPage({
-    title: "LLM Model Pricing by Provider Coverage | TokenWatch",
+    title: fitTitle([
+      `LLM API Pricing by Model${month ? ` (${month})` : ''}: ${pages.length} Models Compared | TokenWatch`,
+      `LLM API Pricing by Model: ${pages.length} Models Compared | TokenWatch`,
+      'LLM API Pricing by Model | TokenWatch',
+    ]),
     description,
     canonicalPath: path,
     heading: "Model pricing directory",
