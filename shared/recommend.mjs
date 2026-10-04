@@ -1,0 +1,549 @@
+/**
+ * Pure, Worker-safe recommendation logic for model and provider selection.
+ * Benchmark and provider scores are catalog-relative; prices always come from
+ * shared/cost.mjs so recommendations use the same billing estimate as TokenWatch.
+ */
+
+import { blendedRate } from './cost.mjs';
+import { canonicalId, quantFromId } from './normalize.mjs';
+import { getUseCase } from './use-cases.mjs';
+
+const BENCHMARK_FIELDS = new Set([
+  'intelligence_index', 'coding_index', 'agentic_index', 'design_arena_best',
+  'livebench_math', 'livebench_coding', 'livebench_language',
+  'livebench_data_analysis', 'livebench_agentic_coding',
+  'livebench_reasoning', 'livebench_instruction_following',
+]);
+
+const LOW_BIT_TOKENS = ['fp4', 'nvfp4', 'mxfp4', 'int4'];
+const BLOCKING_ISSUES = new Set(['avoid', 'blocked', 'unavailable']);
+const PROVIDER_METRICS = ['price', 'ttft', 'throughput', 'uptime'];
+
+function modelsFrom(catalog) {
+  if (Array.isArray(catalog)) return catalog;
+  if (Array.isArray(catalog?.models)) return catalog.models;
+  return [];
+}
+
+function finite(value) {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function finiteNonNegative(value) {
+  return finite(value) && value >= 0;
+}
+
+function openWeightInfo(model) {
+  if (Object.hasOwn(model || {}, 'open_weights')) {
+    const value = model.open_weights === true || model.open_weights === false ? model.open_weights : null;
+    return {
+      value,
+      source: model.open_weights_source || (value === null ? null : 'catalog'),
+    };
+  }
+  if (model?.modelsdev?.open_weights === true || model?.modelsdev?.open_weights === false) {
+    return {
+      value: model.modelsdev.open_weights,
+      source: model.modelsdev.open_weights_source || model.modelsdev.source || 'models.dev',
+    };
+  }
+  return { value: null, source: null };
+}
+
+function capabilityValue(model, capability) {
+  const parameters = model?.supported_parameters;
+  if (capability === 'tool_call' && Array.isArray(parameters) && parameters.includes('tools')) return true;
+  if (capability === 'structured_output' && Array.isArray(parameters)
+      && (parameters.includes('response_format') || parameters.includes('structured_outputs'))) return true;
+
+  const modelDevValue = capability === 'tool_call'
+    ? (model?.modelsdev?.capabilities?.tool_call ?? model?.modelsdev?.tool_call)
+    : (model?.modelsdev?.capabilities?.structured_output ?? model?.modelsdev?.structured_output);
+  const modelDevModelValue = capability === 'tool_call'
+    ? (model?.modelsdev_model?.tool_call ?? model?.modelsdev_model?.capabilities?.tool_call)
+    : (model?.modelsdev_model?.structured_output ?? model?.modelsdev_model?.capabilities?.structured_output);
+  const value = modelDevValue ?? modelDevModelValue;
+  return value === true || value === false ? value : null;
+}
+
+function contextCapacity(model) {
+  const prompt = finiteNonNegative(model?.max_prompt_tokens) ? model.max_prompt_tokens : null;
+  const context = finiteNonNegative(model?.context_length) ? model.context_length : null;
+  if (prompt !== null && context !== null) return Math.min(prompt, context);
+  return prompt ?? context;
+}
+
+function meetsHardRequirements(model, useCase) {
+  const requirements = useCase.hardRequirements || {};
+  if (requirements.needsToolCalling && capabilityValue(model, 'tool_call') !== true) return false;
+  if (requirements.needsStructuredOutput && capabilityValue(model, 'structured_output') !== true) return false;
+  const minContext = requirements.minContext || 0;
+  if (minContext > 0) {
+    const capacity = contextCapacity(model);
+    if (capacity === null || capacity < minContext) return false;
+  }
+  return true;
+}
+
+function quantizationOf(model) {
+  const direct = typeof model?.quantization === 'string' ? model.quantization.trim().toLowerCase() : '';
+  if (direct && direct !== 'unknown' && direct !== 'n/a' && direct !== 'none') return direct;
+  const fromId = quantFromId(String(model?.id || ''));
+  return fromId ? fromId.toLowerCase() : null;
+}
+
+function isRejectedQuantization(model, useCase) {
+  const quantization = quantizationOf(model);
+  const rejected = useCase.quantizationPolicy?.reject || [];
+  if (!quantization || !rejected.length) return false;
+  return rejected.some((tag) => {
+    const normalized = String(tag).toLowerCase();
+    return quantization === normalized || (LOW_BIT_TOKENS.includes(normalized) && quantization.includes(normalized));
+  });
+}
+
+function applyQuantizationPolicy(groups, useCase) {
+  const hasAcceptedAlternative = groups.some((group) => group.offerings.some((model) => !isRejectedQuantization(model, useCase)));
+  const fallback = Boolean(useCase.quantizationPolicy?.reject?.length)
+    && !hasAcceptedAlternative && useCase.quantizationPolicy?.fallbackWhenNoAlternative !== false;
+  return {
+    fallback,
+    groups: groups
+      .map((group) => {
+        const rejectedRows = group.offerings.filter((model) => isRejectedQuantization(model, useCase));
+        const offerings = fallback
+          ? group.offerings
+          : group.offerings.filter((model) => !isRejectedQuantization(model, useCase));
+        return { ...group, offerings, quantFallback: fallback && rejectedRows.length > 0 };
+      })
+      .filter((group) => group.offerings.length),
+  };
+}
+
+function buildBenchmarkIndex(benchmarks) {
+  const index = new Map();
+  const rows = Array.isArray(benchmarks) ? benchmarks : benchmarks?.models;
+  for (const row of rows || []) {
+    if (!row?.id) continue;
+    const id = canonicalId(String(row.id));
+    const entry = index.get(id) || {};
+    const scores = { ...(row.benchmarks || {}), ...(row.scores || {}) };
+    for (const [key, value] of Object.entries(scores)) {
+      if (finite(value) && entry[key] == null) entry[key] = value;
+    }
+    index.set(id, entry);
+  }
+  return index;
+}
+
+function metricValue(record, field) {
+  const benchmark = record?.benchmarks || {};
+  const scores = record?.scores || {};
+  let value;
+  if (field === 'design_arena_best') {
+    const design = benchmark.design_arena_best ?? record?.design_arena_best;
+    value = finite(design) ? design : finite(design?.elo) ? design.elo : scores.design_arena_elo;
+  } else {
+    const aaField = {
+      intelligence_index: 'aa_intelligence',
+      coding_index: 'aa_coding',
+      agentic_index: 'aa_agentic',
+    }[field];
+    value = benchmark[field] ?? record?.[field] ?? scores[field]
+      ?? (aaField ? record?.[aaField] ?? scores[aaField] : null);
+  }
+  return finite(value) ? value : null;
+}
+
+function modelMetrics(group, benchmarkEntry, weights) {
+  const metrics = {};
+  for (const field of Object.keys(weights)) {
+    if (!BENCHMARK_FIELDS.has(field)) continue;
+    for (const model of group.offerings) {
+      const value = metricValue(model, field) ?? metricValue(benchmarkEntry, field);
+      if (value !== null) {
+        metrics[field] = value;
+        break;
+      }
+    }
+  }
+  return metrics;
+}
+
+function percentile(value, values) {
+  if (values.length <= 1) return 0.5;
+  let lower = 0;
+  let equal = 0;
+  for (const other of values) {
+    if (other < value) lower++;
+    else if (other === value) equal++;
+  }
+  return (lower + equal / 2) / values.length;
+}
+
+function scoreModelCandidates(groups, benchmarks, useCase) {
+  const benchmarkIndex = buildBenchmarkIndex(benchmarks);
+  for (const group of groups) {
+    group.metrics = modelMetrics(group, benchmarkIndex.get(group.id), useCase.benchmarkWeights);
+  }
+  const valuesByField = {};
+  for (const field of Object.keys(useCase.benchmarkWeights)) {
+    valuesByField[field] = groups.map((group) => group.metrics[field]).filter(finite).sort((a, b) => a - b);
+  }
+
+  for (const group of groups) {
+    const weightedScores = [];
+    let coveredWeight = 0;
+    for (const [field, weight] of Object.entries(useCase.benchmarkWeights)) {
+      const value = group.metrics[field];
+      if (!finite(value)) continue;
+      const values = valuesByField[field];
+      if (!values.length) continue;
+      weightedScores.push({ score: percentile(value, values), weight });
+      coveredWeight += weight;
+    }
+    group.qualityCoverage = coveredWeight;
+    group.qualityScore = coveredWeight
+      ? weightedScores.reduce((sum, item) => sum + item.score * item.weight, 0) / coveredWeight * 100
+      : null;
+  }
+}
+
+function blendedPrice(model, mix) {
+  const rate = blendedRate(model?.pricing || {}, mix);
+  return finiteNonNegative(rate) ? rate : null;
+}
+
+function cheapestOffer(offerings, mix) {
+  return offerings
+    .map((model) => ({ model, rate: blendedPrice(model, mix) }))
+    .filter((row) => row.rate !== null)
+    .sort((a, b) => a.rate - b.rate || String(a.model.provider || '').localeCompare(String(b.model.provider || '')))[0] || null;
+}
+
+function candidateResult(group, useCase, { unbenchmarked = false } = {}) {
+  const priced = cheapestOffer(group.offerings, useCase.mix);
+  const model = priced?.model || group.offerings[0];
+  const quantization = quantizationOf(model);
+  const reasons = [];
+  const unknowns = [];
+  if (group.qualityScore === null) {
+    reasons.push('No use-case-weighted benchmark score is available; this model is listed as unbenchmarked and was not ranked.');
+  } else {
+    reasons.push(`Benchmark quality ${group.qualityScore.toFixed(1)}/100, percentile-normalized against eligible catalog models (${Object.keys(group.metrics).length} weighted signal(s)).`);
+  }
+  if (priced) reasons.push(`Lowest qualifying blended price: $${priced.rate.toPrecision(4)} per million tokens at the ${useCase.id} mix.`);
+  else unknowns.push('blended price unavailable for this workload');
+  if (group.quantFallback) reasons.push('Low-bit quantization is the only qualifying option for this workload.');
+  if (!quantization) unknowns.push('quantization not disclosed');
+  const openWeights = openWeightInfo(model);
+  if (openWeights.source) reasons.push(`Open-weight status source: ${openWeights.source}.`);
+  const license = model.license ?? model.modelsdev?.license ?? null;
+  if (license) reasons.push(`License: ${license}.`);
+  else unknowns.push('license not disclosed');
+
+  return {
+    id: group.id,
+    name: group.name,
+    org: group.org,
+    provider: priced?.model.provider ?? null,
+    blendedRate: priced?.rate ?? null,
+    qualityScore: group.qualityScore,
+    qualityCoverage: group.qualityCoverage,
+    quantization,
+    openWeights: openWeights.value,
+    openWeightsSource: openWeights.source,
+    license,
+    reasons,
+    unknowns,
+    ...(unbenchmarked ? { group: 'unbenchmarked' } : {}),
+    offering: priced?.model ?? null,
+  };
+}
+
+function dominates(a, b) {
+  const atLeastAsGood = a.qualityScore >= b.qualityScore && a.blendedRate <= b.blendedRate;
+  const strictlyBetter = a.qualityScore > b.qualityScore || a.blendedRate < b.blendedRate;
+  return atLeastAsGood && strictlyBetter;
+}
+
+function paretoFrontier(candidates, useCase) {
+  const priced = candidates.filter((candidate) => candidate.blendedRate !== null);
+  return priced
+    .filter((candidate) => !priced.some((other) => other !== candidate && dominates(other, candidate)))
+    .map((candidate) => candidateResult(candidate, useCase))
+    .sort((a, b) => a.blendedRate - b.blendedRate || b.qualityScore - a.qualityScore || a.id.localeCompare(b.id));
+}
+
+function chooseParetoKnee(frontier) {
+  if (!frontier.length) return null;
+  const qualityMin = Math.min(...frontier.map((candidate) => candidate.qualityScore));
+  const qualityMax = Math.max(...frontier.map((candidate) => candidate.qualityScore));
+  const priceMin = Math.min(...frontier.map((candidate) => candidate.blendedRate));
+  const priceMax = Math.max(...frontier.map((candidate) => candidate.blendedRate));
+  const normalizedQuality = (candidate) => qualityMax === qualityMin ? 1 : (candidate.qualityScore - qualityMin) / (qualityMax - qualityMin);
+  const normalizedPrice = (candidate) => priceMax === priceMin ? 1 : (priceMax - candidate.blendedRate) / (priceMax - priceMin);
+  return [...frontier].sort((a, b) => {
+    const distanceA = (1 - normalizedQuality(a)) ** 2 + (1 - normalizedPrice(a)) ** 2;
+    const distanceB = (1 - normalizedQuality(b)) ** 2 + (1 - normalizedPrice(b)) ** 2;
+    return distanceA - distanceB || b.qualityScore - a.qualityScore || a.blendedRate - b.blendedRate;
+  })[0];
+}
+
+/**
+ * Return quality, balanced Pareto, and quality-floor picks for open-weight models.
+ * `opts.benchmarks` accepts public/benchmarks.json (or its `models` array).
+ */
+export function shortlistModels(useCaseId, catalog, opts = {}) {
+  const useCase = getUseCase(useCaseId);
+  const groupsById = new Map();
+  for (const model of modelsFrom(catalog)) {
+    if (!model?.id) continue;
+    const openWeights = openWeightInfo(model);
+    if (opts.includeProprietary !== true && openWeights.value !== true) continue;
+    if (!meetsHardRequirements(model, useCase)) continue;
+    const id = canonicalId(String(model.id));
+    if (!groupsById.has(id)) {
+      groupsById.set(id, {
+        id,
+        name: model.name || String(model.id),
+        org: model.org || null,
+        offerings: [],
+      });
+    }
+    const group = groupsById.get(id);
+    group.offerings.push(model);
+    if (!group.name && model.name) group.name = model.name;
+    if (!group.org && model.org) group.org = model.org;
+  }
+
+  const filteredGroups = [...groupsById.values()];
+  const quantized = applyQuantizationPolicy(filteredGroups, useCase);
+  scoreModelCandidates(quantized.groups, opts.benchmarks, useCase);
+  for (const group of quantized.groups) {
+    const priced = cheapestOffer(group.offerings, useCase.mix);
+    group.blendedRate = priced?.rate ?? null;
+  }
+
+  const scored = quantized.groups.filter((candidate) => candidate.qualityScore !== null);
+  const unbenchmarked = quantized.groups
+    .filter((candidate) => candidate.qualityScore === null)
+    .map((candidate) => candidateResult(candidate, useCase, { unbenchmarked: true }))
+    .sort((a, b) => (a.blendedRate ?? Infinity) - (b.blendedRate ?? Infinity) || a.id.localeCompare(b.id));
+
+  const frontier = paretoFrontier(scored, useCase);
+  const qualityFloor = finite(opts.qualityFloor) ? opts.qualityFloor : useCase.qualityFloor;
+  const bestQualityGroup = [...scored].sort((a, b) =>
+    b.qualityScore - a.qualityScore || (a.blendedRate ?? Infinity) - (b.blendedRate ?? Infinity) || a.id.localeCompare(b.id)
+  )[0];
+  const cheapestAboveFloorGroup = scored
+    .filter((candidate) => candidate.qualityScore >= qualityFloor && candidate.blendedRate !== null)
+    .sort((a, b) => a.blendedRate - b.blendedRate || b.qualityScore - a.qualityScore || a.id.localeCompare(b.id))[0];
+
+  return {
+    useCase: useCase.id,
+    qualityFloor,
+    bestQuality: bestQualityGroup ? candidateResult(bestQualityGroup, useCase) : null,
+    bestValue: chooseParetoKnee(frontier),
+    cheapestAboveFloor: cheapestAboveFloorGroup ? candidateResult(cheapestAboveFloorGroup, useCase) : null,
+    paretoFrontier: frontier,
+    unbenchmarked,
+  };
+}
+
+function normalizedUptime(model) {
+  if (finiteNonNegative(model?.uptime_1d)) return { value: model.uptime_1d <= 1 ? model.uptime_1d * 100 : model.uptime_1d, window: '1d' };
+  if (finiteNonNegative(model?.uptime_30m)) return { value: model.uptime_30m <= 1 ? model.uptime_30m * 100 : model.uptime_30m, window: '30m' };
+  return null;
+}
+
+function minUptimePercent(value) {
+  if (!finite(value)) return null;
+  return value <= 1 ? value * 100 : value;
+}
+
+function headquartersOf(model, provider, constraints) {
+  const metadata = constraints.providersMeta?.[provider]
+    ?? constraints.providers_meta?.[provider]
+    ?? model.provider_meta
+    ?? {};
+  return model.headquarters ?? model.hq ?? metadata.headquarters ?? null;
+}
+
+function matchesHeadquarters(value, requested) {
+  if (requested === true) return Boolean(value);
+  const allowed = Array.isArray(requested) ? requested : [requested];
+  return Boolean(value) && allowed.some((country) => String(country).toLowerCase() === String(value).toLowerCase());
+}
+
+function matchingIssue(model, canonical, issues) {
+  return (issues || []).filter((issue) => issue
+    && canonicalId(String(issue.canonicalId || '')) === canonical
+    && String(issue.provider || '').toLowerCase() === String(model.provider || '').toLowerCase());
+}
+
+function perfFor(model, canonical, perf) {
+  if (!perf || typeof perf !== 'object') return null;
+  return perf[`${canonical}|${model.provider}`] || null;
+}
+
+function metricsForProvider(model, canonical, perf, useCase) {
+  const record = perfFor(model, canonical, perf);
+  const rate = blendedPrice(model, useCase.mix);
+  const ttft = finite(record?.latency?.p50) ? record.latency.p50
+    : finite(record?.ttft?.p50) ? record.ttft.p50 : null;
+  const throughput = finite(record?.throughput?.p50) ? record.throughput.p50 : null;
+  const uptime = normalizedUptime(model);
+  return {
+    price: rate,
+    ttft,
+    throughput,
+    uptime: uptime?.value ?? null,
+    uptimeWindow: uptime?.window ?? null,
+  };
+}
+
+function scaleMetric(value, values, lowerIsBetter) {
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  if (min === max) return 1;
+  return lowerIsBetter ? (max - value) / (max - min) : (value - min) / (max - min);
+}
+
+function gateProvider(model, useCase, constraints, canonical) {
+  if (!meetsHardRequirements(model, useCase)) return null;
+  if (constraints.requireZdr && model.zdr !== true) return null;
+
+  const requireHQ = constraints.requireHQ ?? constraints.requireHq;
+  const headquarters = headquartersOf(model, model.provider, constraints);
+  if (requireHQ && !matchesHeadquarters(headquarters, requireHQ)) return null;
+
+  const uptime = normalizedUptime(model);
+  const minUptime = minUptimePercent(constraints.minUptime);
+  if (minUptime !== null && (!uptime || uptime.value < minUptime)) return null;
+
+  const issues = matchingIssue(model, canonical, constraints.knownIssues);
+  if (issues.some((issue) => BLOCKING_ISSUES.has(String(issue.verdict || '').toLowerCase()))) return null;
+
+  return { headquarters, uptime, issues };
+}
+
+/**
+ * Rank provider offerings for one canonical model after hard capability,
+ * context, privacy, uptime, issue, and quantization gates.
+ */
+export function rankProviders(useCaseId, canonicalModelId, offerings, perf = {}, constraints = {}) {
+  const useCase = getUseCase(useCaseId);
+  const canonical = canonicalId(String(canonicalModelId));
+  const groups = [];
+  for (const model of offerings || []) {
+    if (!model?.id || !model.provider || canonicalId(String(model.id)) !== canonical) continue;
+    const gate = gateProvider(model, useCase, constraints, canonical);
+    if (!gate) continue;
+    groups.push({ id: canonical, name: model.name || String(model.id), org: model.org || null, offerings: [model], gate });
+  }
+
+  const quantized = applyQuantizationPolicy(groups, useCase);
+  const rows = quantized.groups.map((group) => {
+    const model = group.offerings[0];
+    const metrics = metricsForProvider(model, canonical, perf, useCase);
+    return { model, metrics, gate: group.gate, quantFallback: group.quantFallback, normalized: {} };
+  });
+
+  const values = Object.fromEntries(PROVIDER_METRICS.map((metric) => [
+    metric,
+    rows.map((row) => row.metrics[metric]).filter(finite),
+  ]));
+  for (const row of rows) {
+    let availableWeight = 0;
+    let weightedScore = 0;
+    for (const [metric, weight] of Object.entries(useCase.providerWeights)) {
+      const value = row.metrics[metric];
+      if (!finite(value) || !values[metric].length) continue;
+      const normalized = scaleMetric(value, values[metric], metric !== 'throughput' && metric !== 'uptime');
+      row.normalized[metric] = normalized;
+      availableWeight += weight;
+      weightedScore += normalized * weight;
+    }
+    row.score = availableWeight ? weightedScore / availableWeight * 100 : null;
+  }
+
+  const cheapest = rows.filter((row) => finite(row.metrics.price)).sort((a, b) => a.metrics.price - b.metrics.price)[0];
+  const fastestFirstToken = rows.filter((row) => finite(row.metrics.ttft)).sort((a, b) => a.metrics.ttft - b.metrics.ttft)[0];
+  const highestThroughput = rows.filter((row) => finite(row.metrics.throughput)).sort((a, b) => b.metrics.throughput - a.metrics.throughput)[0];
+
+  for (const row of rows) {
+    const { model, metrics, gate } = row;
+    const reasons = [];
+    const unknowns = [];
+    if (useCase.hardRequirements.needsToolCalling) reasons.push('Meets required tool-calling capability.');
+    if (useCase.hardRequirements.needsStructuredOutput) reasons.push('Meets required structured-output capability.');
+    const capacity = contextCapacity(model);
+    if (capacity !== null) reasons.push(`Prompt capacity ${capacity.toLocaleString()} tokens meets the ${useCase.hardRequirements.minContext.toLocaleString()}-token minimum.`);
+    if (constraints.requireZdr) reasons.push('Meets the requested ZDR requirement.');
+    if (constraints.requireHQ ?? constraints.requireHq) reasons.push(`Headquarters requirement met: ${gate.headquarters}.`);
+    if (finite(constraints.minUptime)) reasons.push(`Meets the requested ${minUptimePercent(constraints.minUptime)}% uptime threshold.`);
+    if (gate.uptime) reasons.push(`Reported uptime ${gate.uptime.value.toFixed(2)}% (${gate.uptime.window}).`);
+
+    const toolChoice = model.supports_tool_choice;
+    if (useCase.hardRequirements.needsToolCalling && toolChoice === true) reasons.push('Provider reports tool-choice support.');
+    else if (useCase.hardRequirements.needsToolCalling && toolChoice === false) reasons.push('Basic tool calling is available; tool-choice control is not reported as supported.');
+    else if (useCase.hardRequirements.needsToolCalling) unknowns.push('tool-choice support not disclosed');
+
+    const implicitCaching = model.supports_implicit_caching;
+    if (useCase.mix.cacheReadPct > 0 && implicitCaching === true) reasons.push('Provider reports implicit prompt-caching support.');
+    else if (useCase.mix.cacheReadPct > 0 && implicitCaching === false) reasons.push('Provider reports no implicit prompt-caching support.');
+    else if (useCase.mix.cacheReadPct > 0) unknowns.push('implicit prompt-caching support not disclosed');
+
+    if (finite(metrics.price)) {
+      reasons.push(`Blended workload price: $${metrics.price.toPrecision(4)} per million tokens.`);
+      if (cheapest === row) reasons.push('Lowest blended price among eligible provider offerings.');
+    } else unknowns.push('blended price unavailable for this workload');
+    if (finite(metrics.ttft)) {
+      reasons.push(`TTFT p50: ${metrics.ttft.toLocaleString()} ms.`);
+      if (fastestFirstToken === row) reasons.push('Lowest TTFT p50 among eligible providers.');
+    } else unknowns.push('TTFT p50 not available');
+    if (finite(metrics.throughput)) {
+      reasons.push(`Throughput p50: ${metrics.throughput.toLocaleString()} tokens/s.`);
+      if (highestThroughput === row) reasons.push('Highest throughput p50 among eligible providers.');
+    } else unknowns.push('throughput p50 not available');
+    if (!gate.uptime) unknowns.push('uptime not disclosed');
+
+    const quantization = quantizationOf(model);
+    if (quantization) reasons.push(`Quantization: ${quantization}.`);
+    else unknowns.push('quantization not disclosed');
+    const license = model.license ?? model.modelsdev?.license ?? null;
+    if (license) reasons.push(`License: ${license}.`);
+    else unknowns.push('license not disclosed');
+    if (row.quantFallback) reasons.push('Low-bit quantization is the only qualifying option for this workload.');
+    if (gate.issues.length) {
+      for (const issue of gate.issues) {
+        reasons.push(`Known issue (${issue.verdict || 'unspecified'}): ${issue.source || 'source not provided'}.`);
+      }
+    }
+    if (row.score === null) unknowns.push('provider score unavailable because no weighted signals were reported');
+    else reasons.push(`Provider score ${row.score.toFixed(1)}/100 from disclosed metrics, normalized against eligible providers.`);
+
+    row.result = {
+      canonicalId: canonical,
+      provider: model.provider,
+      score: row.score,
+      blendedRate: metrics.price,
+      ttftP50: metrics.ttft,
+      throughputP50: metrics.throughput,
+      uptime: gate.uptime?.value ?? null,
+      uptimeWindow: gate.uptime?.window ?? null,
+      quantization,
+      license,
+      reasons,
+      unknowns,
+      offering: model,
+    };
+  }
+
+  return rows
+    .map((row) => row.result)
+    .sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity)
+      || (a.blendedRate ?? Infinity) - (b.blendedRate ?? Infinity)
+      || String(a.provider).localeCompare(String(b.provider)));
+}
