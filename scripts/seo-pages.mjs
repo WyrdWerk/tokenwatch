@@ -432,8 +432,20 @@ export function collectProviderPages({ pricing, imagePricing, videoPricing, publ
   return pages.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function pageNav() {
-  return '<nav class="tab-nav" aria-label="TokenWatch sections"><a class="tab-link" href="/">Text</a><a class="tab-link" href="/image">Image</a><a class="tab-link" href="/video">Video</a><a class="tab-link" href="/benchmarks">Benchmarks</a><a class="tab-link" href="/choose/">Choose</a><a class="tab-link" href="/models/">Models</a><a class="tab-link" href="/providers/">Providers</a><a class="tab-link" href="/docs/methodology/">Methodology</a><a class="tab-link" href="/docs/api/">API</a><a class="tab-link" href="/faq/">FAQ</a></nav>';
+const NAV_LINKS = [
+  ['/', 'Text'], ['/image', 'Image'], ['/video', 'Video'], ['/benchmarks', 'Benchmarks'], ['/choose/', 'Choose'],
+  ['/models/', 'Models'], ['/providers/', 'Providers'], ['/docs/methodology/', 'Methodology'], ['/docs/api/', 'API'], ['/faq/', 'FAQ'],
+];
+
+// Generated pages mark their section tab; the section index itself is the current page.
+export function pageNav(currentPath = '') {
+  const links = NAV_LINKS.map(([href, label]) => {
+    const inSection = href.endsWith('/') && href !== '/' && currentPath.startsWith(href);
+    if (!inSection) return `<a class="tab-link" href="${href}">${label}</a>`;
+    const current = currentPath === href ? ' aria-current="page"' : '';
+    return `<a class="tab-link active"${current} href="${href}">${label}</a>`;
+  }).join('');
+  return `<nav class="tab-nav" aria-label="TokenWatch sections">${links}</nav>`;
 }
 
 function visibleBreadcrumbs(items) {
@@ -473,7 +485,7 @@ export function renderStaticPage({ title, description, canonicalPath, heading, s
   ${renderJsonLd(structuredData)}
 </head>
 <body>
-  <header><div class="header-row"><a class="brand-link site-brand" href="/" aria-label="TokenWatch home">💰 TokenWatch</a><a class="repo-link" href="https://wyrdwerk.com" target="_blank" rel="noopener">WyrdWerk</a><a class="repo-link" href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">GitHub</a><a class="repo-link" href="https://www.linkedin.com/in/yash-jain-65295511b/" target="_blank" rel="noopener">LinkedIn</a><a class="repo-link" href="https://x.com/thelaggingway" target="_blank" rel="noopener">X</a><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle dark/light mode"></button></div><h1 class="tagline">${esc(heading)}</h1><p class="subtitle">${esc(subtitle)}</p>${pageNav()}</header>
+  <header><div class="header-row"><a class="brand-link site-brand" href="/" aria-label="TokenWatch home">💰 TokenWatch</a><a class="repo-link" href="https://wyrdwerk.com" target="_blank" rel="noopener">WyrdWerk</a><a class="repo-link" href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">GitHub</a><a class="repo-link" href="https://www.linkedin.com/in/yash-jain-65295511b/" target="_blank" rel="noopener">LinkedIn</a><a class="repo-link" href="https://x.com/thelaggingway" target="_blank" rel="noopener">X</a><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle dark/light mode"></button></div><h1 class="tagline">${esc(heading)}</h1><p class="subtitle">${esc(subtitle)}</p>${pageNav(canonicalPath)}</header>
   <main class="seo-page-main">
     ${visibleBreadcrumbs(breadcrumbs)}
 ${body}

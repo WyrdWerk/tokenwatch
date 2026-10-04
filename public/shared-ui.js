@@ -543,9 +543,40 @@
     window.addEventListener('scroll', () => { if (owner && !bubble.hidden) place(owner); }, { passive: true });
   }
 
+  // Header tabs scroll horizontally on narrow screens: keep the current tab in
+  // view and fade only the edge that still hides tabs.
+  function initTabNav() {
+    const nav = document.querySelector('nav.tab-nav');
+    if (!nav) return;
+    const update = () => {
+      const max = nav.scrollWidth - nav.clientWidth;
+      if (max <= 1) { nav.removeAttribute('data-fade'); return; }
+      const start = nav.scrollLeft > 1;
+      const end = nav.scrollLeft < max - 1;
+      if (start && end) nav.setAttribute('data-fade', 'both');
+      else if (start) nav.setAttribute('data-fade', 'start');
+      else if (end) nav.setAttribute('data-fade', 'end');
+      else nav.removeAttribute('data-fade');
+    };
+    const reveal = () => {
+      const active = nav.querySelector('.tab-link.active, .tab-link[aria-current="page"]');
+      if (active && nav.scrollWidth > nav.clientWidth) {
+        const navBox = nav.getBoundingClientRect();
+        const box = active.getBoundingClientRect();
+        nav.scrollLeft += (box.left - navBox.left) - (navBox.width - box.width) / 2;
+      }
+      update();
+    };
+    reveal();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(reveal).catch(() => {});
+    nav.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', debounce(update, 100));
+  }
+
   // Auto-wire capture (defer scripts run after DOM parse)
   initCompareCapture();
   initTooltips();
+  initTabNav();
 
   window.TW = {
     $, esc, median, fmtIST, debounce, round3, makeFormatters, initTheme, applyTheme, modal,

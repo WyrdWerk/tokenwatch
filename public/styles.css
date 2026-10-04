@@ -152,13 +152,39 @@ header h1 { font-size: 1.8rem; font-weight: 700; }
 
 /* ── Tab navigation ─────────────────────────────────────────────────── */
 .tab-nav {
+  /* One row that scrolls horizontally when it can't fit; the auto margins on
+     the first/last tab centre it when it does fit without trapping overflow. */
   display: flex;
-  justify-content: center;
   gap: 0.25rem;
   margin-top: 1rem;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-padding-inline: 2rem;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-block: 2px;
+}
+.tab-nav::-webkit-scrollbar { display: none; }
+.tab-nav > .tab-link:first-child { margin-left: auto; }
+.tab-nav > .tab-link:last-child { margin-right: auto; }
+/* Fade edges, set by shared-ui.js only when more tabs are hidden that way. */
+.tab-nav[data-fade="end"] {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+}
+.tab-nav[data-fade="start"] {
+  -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 2.5rem), transparent);
+  mask-image: linear-gradient(to left, #000 calc(100% - 2.5rem), transparent);
+}
+.tab-nav[data-fade="both"] {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 2.5rem, #000 calc(100% - 2.5rem), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 2.5rem, #000 calc(100% - 2.5rem), transparent);
 }
 .tab-link {
   display: inline-block;
+  flex: 0 0 auto;
+  white-space: nowrap;
   padding: 0.4rem 1.2rem;
   font-family: 'Space Grotesk', system-ui, sans-serif;
   font-size: 0.85rem;
@@ -1338,9 +1364,12 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
   .org-badge, .provider-badge { font-size: 0.72rem; padding: 0.1rem 0.35rem; }
 }
 
+@media (max-width: 1100px) {
+  .tab-link { padding: 0.4rem 0.8rem; }
+}
 @media (max-width: 640px) {
-  .tab-nav { flex-wrap: wrap; }
-  .tab-link { padding: 0.35rem 0.65rem; }
+  .tab-nav { margin-inline: -1rem; padding-inline: 0.75rem; max-width: none; }
+  .tab-link { padding: 0.45rem 0.7rem; }
   .seo-models table { min-width: 700px; }
   .seo-models th, .seo-models td { white-space: nowrap; word-break: normal; }
   .group-control { flex-wrap: wrap; }
