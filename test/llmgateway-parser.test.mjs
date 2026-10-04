@@ -89,3 +89,36 @@ test('refresh workflows inject LLMGATEWAY_API_KEY from GitHub secrets', async ()
   assert.match(pricing, /LLMGATEWAY_API_KEY: \$\{\{ secrets\.LLMGATEWAY_API_KEY \}\}/);
   assert.match(aa, /LLMGATEWAY_API_KEY: \$\{\{ secrets\.LLMGATEWAY_API_KEY \}\}/);
 });
+
+test('parseLlmgateway skips Inference.net (an OpenRouter backend) and names differential hosts', async () => {
+  const rows = parseLlmgateway({
+    data: [{
+      id: 'glm-5.3',
+      architecture: { output_modalities: ['text'] },
+      providers: [
+        { providerId: 'inference.net', pricing: { prompt: '0.9e-6', completion: '3e-6' } },
+        { providerId: 'inference-net', pricing: { prompt: '0.9e-6', completion: '3e-6' } },
+        { providerId: 'runware', pricing: { prompt: '1.2e-6', completion: '4e-6' } },
+        { providerId: 'scx-ai-gp', pricing: { prompt: '1.4e-6', completion: '4.4e-6' } },
+        { providerId: 'brand-new-host', pricing: { prompt: '1e-6', completion: '2e-6' } },
+      ],
+    }],
+  });
+  assert.deepEqual(rows.map((r) => r.provider), ['runware', 'scx-ai-gp', 'brand-new-host']);
+  assert.deepEqual(rows.map((r) => r.provider_display), ['Runware', 'SCX.ai GP', 'Brand New Host']);
+});
+
+test('dropCoveredLlmgatewayRows removes LLM Gateway hosts another tier fetched under a different spelling', async () => {
+  const { dropCoveredLlmgatewayRows, dedupModels } = await import('../scripts/lib.mjs');
+  const gateway = [
+    { id: 'glm-5.3', provider: 'inference-net', pricing: { input: 0.9, output: 3 } },
+    { id: 'glm-5.3', provider: 'runware', pricing: { input: 1.2, output: 4 } },
+  ];
+  const openrouter = [
+    { id: 'z-ai/glm-5.3', provider: 'inferencenet', provider_display: 'InferenceNet', pricing: { input: 0.08, output: 5 } },
+  ];
+  const rows = dropCoveredLlmgatewayRows([...gateway, ...openrouter], new Set(gateway));
+  assert.deepEqual(rows.map((r) => r.provider), ['runware', 'inferencenet']);
+  // Without the guard the two spellings survive dedup as separate providers.
+  assert.equal(dedupModels([...gateway, ...openrouter]).filter((r) => /inference/.test(r.provider)).length, 2);
+});
