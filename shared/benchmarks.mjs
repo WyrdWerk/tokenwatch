@@ -1,6 +1,6 @@
 /**
- * shared/benchmarks.mjs — pure matching helpers for OpenRouter benchmark
- * enrichment (Artificial Analysis indices + design_arena Elo).
+ * shared/benchmarks.mjs — pure matching helpers for benchmark enrichment
+ * (Artificial Analysis, Design Arena, and Arena preference scores).
  *
  * This module MUST NOT import any node: builtins (same constraint as
  * shared/normalize.mjs and shared/modelsdev.mjs). It is pure string-transform
@@ -12,7 +12,7 @@
  *   - test/benchmarks.test.mjs (unit tests)
  */
 
-import { canonicalId } from './normalize.mjs';
+import { canonicalId, modelSpellingKey } from './normalize.mjs';
 
 // Trailing quantization suffixes (MUST be last token to strip).
 // Sourced from AGENTS.md canonical-model-ID convention.
@@ -267,4 +267,168 @@ export function applyBenchmarkEnrichment(models, index) {
     else if (bench.design_arena_best) arenaCount++;
   }
   return { matchedCount, aaCount, arenaCount };
+}
+
+const ARENA_FIELDS = Object.freeze({
+  overall: 'arena_text',
+  creative_writing: 'arena_creative_writing',
+});
+
+const ARENA_MODE_SUFFIXES = /-(?:max|xhigh|high|medium|low)$/;
+
+function arenaModelKeys(modelName) {
+  const key = modelSpellingKey(String(modelName || '').trim());
+  if (!key) return [];
+  const keys = [key];
+  const withoutMode = key.replace(ARENA_MODE_SUFFIXES, '');
+  if (withoutMode && withoutMode !== key) keys.push(withoutMode);
+  return keys;
+}
+
+function setArenaScore(target, row, field) {
+  if (!target[field] || (target[field].rating ?? -Infinity) < row.rating) {
+    target[field] = row;
+  }
+}
+
+/**
+ * Build an index of official Arena latest-leaderboard rows. Names are first
+ * normalized with modelSpellingKey(), then use conservativeBase() for the same
+ * trailing quant/SKU fallback as the existing benchmark matcher. Size and
+ * version tokens remain part of every key.
+ *
+ * Display-only effort labels (Max/High/etc.) are fallback aliases only; an
+ * exact source model name always wins, and ambiguous aliases are not emitted.
+ */
+export function buildArenaIndex(rows) {
+  const exact = new Map();
+  const aliasesByKey = new Map();
+
+  for (const row of rows || []) {
+    const field = ARENA_FIELDS[row?.category];
+    if (!field || typeof row.model_name !== 'string' || !Number.isFinite(row.rating)) continue;
+    const entry = {
+      rating: row.rating,
+      rank: Number.isFinite(row.rank) ? row.rank : null,
+      rating_lower: Number.isFinite(row.rating_lower) ? row.rating_lower : null,
+      rating_upper: Number.isFinite(row.rating_upper) ? row.rating_upper : null,
+      vote_count: Number.isFinite(row.vote_count) ? row.vote_count : null,
+      model_name: row.model_name,
+      leaderboard_publish_date: row.leaderboard_publish_date ?? null,
+    };
+    const keys = arenaModelKeys(row.model_name);
+    const exactKey = keys[0];
+    const scores = exact.get(exactKey) || {};
+    setArenaScore(scores, entry, field);
+    exact.set(exactKey, scores);
+
+    if (keys.length > 1) {
+      const aliases = aliasesByKey.get(keys[1]) || [];
+      aliases.push({ exactKey, field, entry });
+      aliasesByKey.set(keys[1], aliases);
+    }
+  }
+
+  const aliases = new Map();
+  for (const [key, entries] of aliasesByKey) {
+    const distinct = new Map(entries.map((item) => [`${item.exactKey}|${item.field}`, item]));
+    const byField = {};
+    for (const field of Object.values(ARENA_FIELDS)) {
+      const matches = [...distinct.values()].filter((item) => item.field === field);
+      if (matches.length === 1 && exact.get(key)?.[field] == null) {
+        byField[field] = matches[0].entry;
+      }
+    }
+    if (Object.keys(byField).length) aliases.set(key, byField);
+  }
+
+  const familyCandidates = new Map();
+  for (const [key, scores] of exact) {
+    const family = conservativeBase(key);
+    const candidates = familyCandidates.get(family) || [];
+    candidates.push({ key, scores });
+    familyCandidates.set(family, candidates);
+  }
+  for (const [key, scores] of aliases) {
+    const family = conservativeBase(key);
+    const candidates = familyCandidates.get(family) || [];
+    candidates.push({ key, scores });
+    familyCandidates.set(family, candidates);
+  }
+
+  const families = new Map();
+  for (const [key, candidates] of familyCandidates) {
+    const exactBase = candidates.find((candidate) => candidate.key === key);
+    const distinct = new Map(candidates.map((candidate) => [candidate.key, candidate.scores]));
+    if (exactBase) families.set(key, exactBase.scores);
+    else if (distinct.size === 1) families.set(key, candidates[0].scores);
+  }
+
+  return { exact, aliases, families };
+}
+
+function resolveArenaEntry(modelId, index) {
+  const keys = arenaModelKeys(modelId);
+  for (const key of keys) {
+    const exact = index.exact.get(key);
+    if (exact) return exact;
+  }
+  for (const key of keys) {
+    const alias = index.aliases.get(key);
+    if (alias) return alias;
+  }
+  for (const key of keys) {
+    const family = index.families.get(conservativeBase(key));
+    if (family) return family;
+  }
+
+  // Match the existing benchmark resolver's one-token organization fallback,
+  // but only if that exact reduced key exists in the source index.
+  for (const key of keys) {
+    const stripped = key.slice(key.indexOf('-') + 1);
+    if (stripped !== key) {
+      const exact = index.exact.get(stripped) || index.aliases.get(stripped);
+      if (exact) return exact;
+      const family = index.families.get(conservativeBase(stripped));
+      if (family) return family;
+    }
+  }
+  return null;
+}
+
+/** Apply Arena text ratings to model benchmark blocks without changing other scores. */
+export function applyArenaEnrichment(models, index) {
+  let matchedCount = 0;
+  let textCount = 0;
+  let creativeWritingCount = 0;
+  for (const model of models || []) {
+    if (!model?.id) continue;
+    const match = resolveArenaEntry(model.id, index);
+    if (!match) continue;
+    const text = match.arena_text;
+    const creative = match.arena_creative_writing;
+    if (text === undefined && creative === undefined) continue;
+
+    model.benchmarks ||= {};
+    if (text) {
+      model.benchmarks.arena_text = text.rating;
+      model.benchmarks.arena_text_rank = text.rank;
+      model.benchmarks.arena_text_rating_lower = text.rating_lower;
+      model.benchmarks.arena_text_rating_upper = text.rating_upper;
+      model.benchmarks.arena_text_vote_count = text.vote_count;
+      model.benchmarks.arena_text_date = text.leaderboard_publish_date;
+      textCount++;
+    }
+    if (creative) {
+      model.benchmarks.arena_creative_writing = creative.rating;
+      model.benchmarks.arena_creative_writing_rank = creative.rank;
+      model.benchmarks.arena_creative_writing_rating_lower = creative.rating_lower;
+      model.benchmarks.arena_creative_writing_rating_upper = creative.rating_upper;
+      model.benchmarks.arena_creative_writing_vote_count = creative.vote_count;
+      model.benchmarks.arena_creative_writing_date = creative.leaderboard_publish_date;
+      creativeWritingCount++;
+    }
+    matchedCount++;
+  }
+  return { matchedCount, textCount, creativeWritingCount };
 }

@@ -55,11 +55,13 @@ import {
   applyEnrichment,
   applyBenchmarkEnrichment,
   applyAAEnrichment,
+  applyArenaEnrichment,
   buildBenchmarkIndex,
   maybeWriteJson,
 } from './lib.mjs';
 import { fetchModelsDevIndexes } from './fetch-modelsdev.mjs';
 import { fetchAABenchmarks } from './fetch-aa.mjs';
+import { fetchArenaBenchmarks } from './fetch-arena.mjs';
 import { fetchNeuralwattEnergy } from './fetch-neuralwatt-energy.mjs';
 import { getZroCatalogRows } from './fetch-zro.mjs';
 import { resolveOpenWeightsForOfferings } from '../shared/open-weights.mjs';
@@ -1164,6 +1166,14 @@ async function main() {
   if (aaIndex && aaIndex.size > 0) {
     const { filledCount, totalAttempts } = applyAAEnrichment(out.models, aaIndex);
     console.log(`  Artificial Analysis: filled ${filledCount}/${totalAttempts} null indices`);
+  }
+  // ── Arena preference enrichment (sidecar, non-fatal) ──
+  // Text overall and creative-writing ratings come from the committed
+  // official-dataset cache; matching is size/version-conservative.
+  const arenaIndex = await fetchArenaBenchmarks(console);
+  if (arenaIndex && arenaIndex.exact.size > 0) {
+    const { matchedCount, textCount, creativeWritingCount } = applyArenaEnrichment(out.models, arenaIndex);
+    console.log(`  Arena preference: ${matchedCount} matched (${textCount} Text overall, ${creativeWritingCount} creative writing)`);
   }
   // ── Neuralwatt energy enrichment (sidecar, non-fatal) ──
   // Attaches m.energy (Wh/request by prompt-size band, cache-hit %, trend) from

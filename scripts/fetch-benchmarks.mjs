@@ -194,6 +194,10 @@ async function main() {
       if (scores.aa_intelligence == null && b.intelligence_index != null) scores.aa_intelligence = b.intelligence_index;
       if (scores.aa_coding == null && b.coding_index != null) scores.aa_coding = b.coding_index;
       if (scores.aa_agentic == null && b.agentic_index != null) scores.aa_agentic = b.agentic_index;
+      if (scores.arena_text == null && b.arena_text != null) scores.arena_text = b.arena_text;
+      if (scores.arena_creative_writing == null && b.arena_creative_writing != null) {
+        scores.arena_creative_writing = b.arena_creative_writing;
+      }
       if (scores.design_arena_elo == null && b.design_arena_best?.elo != null) {
         scores.design_arena_elo = b.design_arena_best.elo;
         scores.design_arena_category = b.design_arena_best.category;
@@ -259,6 +263,18 @@ async function main() {
       artificial_analysis: { name: 'Artificial Analysis', url: 'https://artificialanalysis.ai/', fields: ['aa_intelligence', 'aa_coding', 'aa_agentic'], scale: '0–100 index' },
       livebench: { name: 'LiveBench', url: 'https://livebench.ai/', release: LIVEBENCH_RELEASE.replace(/_/g, '-'), prefix: 'livebench_', scale: '0–100, contamination-free' },
       design_arena: { name: 'Design Arena', url: 'https://www.designarena.ai/', fields: ['design_arena_elo'], scale: 'Elo' },
+      arena: {
+        name: 'Arena (LMArena)',
+        url: 'https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset',
+        fields: ['arena_text', 'arena_creative_writing'],
+        categories: { arena_text: 'text_style_control / overall', arena_creative_writing: 'text_style_control / creative_writing' },
+        scale: 'Bradley–Terry rating (Elo-like)',
+        license: 'CC-BY-4.0',
+        license_url: 'https://creativecommons.org/licenses/by/4.0/',
+        attribution: 'Arena (LMArena), Leaderboard Dataset; filtered to the listed categories and matched to TokenWatch canonical IDs; source ratings are unchanged.',
+        data_url: 'https://datasets-server.huggingface.co/rows?dataset=lmarena-ai%2Fleaderboard-dataset&config=text_style_control&split=latest',
+        update_cadence: 'Upstream latest split; TokenWatch refreshes the committed cache weekly.',
+      },
     },
     models,
   };

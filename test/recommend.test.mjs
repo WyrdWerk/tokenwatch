@@ -148,7 +148,7 @@ test('shortlist applies low-bit quantization fallback per model, not across the 
 });
 
 test('LiveBench-thin use cases use AA intelligence for the absolute floor', () => {
-  for (const useCaseId of ['structured-extraction', 'creative-writing', 'reasoning-math']) {
+  for (const useCaseId of ['structured-extraction', 'reasoning-math']) {
     assert.deepEqual(USE_CASES[useCaseId].qualityFloor, { field: 'intelligence_index', min: 15 });
   }
   assert.ok(USE_CASES['structured-extraction'].benchmarkWeights.livebench_instruction_following > 0);

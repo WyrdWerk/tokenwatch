@@ -264,8 +264,15 @@ test('benchmarks field structure is correct when present', async () => {
   assert.ok(withBench.length > 0, 'at least one model should have benchmarks');
   for (const m of withBench.slice(0, 50)) {
     const b = m.benchmarks;
-    assert.ok(['intelligence_index', 'coding_index', 'agentic_index', 'design_arena_best'].every(k => k in b),
-      `${m.id} benchmarks block missing expected keys`);
+    const hasExistingBenchmarks = ['intelligence_index', 'coding_index', 'agentic_index', 'design_arena_best'].every(k => k in b);
+    const arenaFields = ['arena_text', 'arena_creative_writing'].filter((field) => b[field] != null);
+    assert.ok(hasExistingBenchmarks || arenaFields.length > 0,
+      `${m.id} benchmarks block has neither the existing fields nor an Arena score`);
+    for (const field of arenaFields) {
+      assert.ok(Number.isFinite(b[field]), `${m.id} ${field} must be numeric`);
+      assert.ok(Number.isInteger(b[`${field}_rank`]), `${m.id} ${field} rank must be present`);
+      assert.match(b[`${field}_date`] || '', /^\d{4}-\d{2}-\d{2}$/, `${m.id} ${field} date must be present`);
+    }
   }
 });
 

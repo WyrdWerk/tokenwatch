@@ -107,8 +107,10 @@ export const USE_CASES = Object.freeze({
     label: 'Chat assistant',
     mix: { inputPct: 60, cacheReadPct: 20, outputPct: 20 },
     // General intelligence anchors quality, with language and instruction
-    // following as user-facing conversational signals.
+    // following as capability signals. Arena preference remains a separate
+    // ranking so users can compare capability with what people prefer.
     benchmarkWeights: { intelligence_index: 0.55, livebench_language: 0.25, livebench_instruction_following: 0.2 },
+    preferenceSignal: { field: 'arena_text', label: "People's preference (Text Arena)" },
     // Interactive chat values first-token responsiveness and availability;
     // moderate price/throughput weights account for longer sessions.
     providerWeights: { price: 0.25, ttft: 0.3, throughput: 0.2, uptime: 0.25 },
@@ -121,17 +123,18 @@ export const USE_CASES = Object.freeze({
     id: 'creative-writing',
     label: 'Creative writing',
     mix: { inputPct: 35, cacheReadPct: 10, outputPct: 55 },
-    // LiveBench language is the closest available style/fluency proxy; broad
-    // intelligence adds coverage without pretending a dedicated writing test exists.
-    benchmarkWeights: { livebench_language: 0.65, intelligence_index: 0.35 },
+    // Arena creative-writing Elo is the human-preference signal; language and
+    // broad intelligence remain secondary coverage/capability signals.
+    benchmarkWeights: { arena_creative_writing: 0.55, livebench_language: 0.25, intelligence_index: 0.2 },
+    preferenceSignal: { field: 'arena_creative_writing', label: "People's preference (Creative Writing Arena)" },
     // Long generations make throughput important, while low TTFT and price
     // still affect the writing-feedback loop and sustained use.
     providerWeights: { price: 0.25, ttft: 0.25, throughput: 0.3, uptime: 0.2 },
     hardRequirements: { needsToolCalling: false, needsStructuredOutput: false, minContext: 16384 },
     quantizationPolicy: { reject: [], fallbackWhenNoAlternative: true },
-    // AA intelligence covers 65 priced, provider-qualified families (p25 11.1, median 20.9); LiveBench
-    // language remains a supplementary signal for writing style/fluency.
-    qualityFloor: { field: 'intelligence_index', min: 15 },
+    // Interpolated p25 = 1306.7 across 73 open-weight, priceable, context-
+    // qualified Arena-scored families in the 2026-10-04 catalog snapshot.
+    qualityFloor: { field: 'arena_creative_writing', min: 1307 },
   },
   'reasoning-math': {
     id: 'reasoning-math',
