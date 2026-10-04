@@ -121,3 +121,18 @@ test('model display names strip the org prefix or prettify raw ids; the card kee
   assert.match(app, /<h3>\$\{escapeHtml\(modelDisplayName\(candidate\)\)\}<\/h3>\n\s*<p class="choose-model-id">\$\{escapeHtml\(candidate\.id\)\}<\/p>/);
   assert.doesNotMatch(app, /candidate\.name \|\| candidate\.id/);
 });
+
+test('provider list features the top three, or the close-call priority winners, and keeps a selection expanded', async () => {
+  const { pickFeaturedProviders, FEATURED_PROVIDER_COUNT } = await import('../shared/choose-page.mjs');
+  const rows = ['a', 'b', 'c', 'd', 'e', 'f'].map((provider) => ({ provider, offering: { id: `m@${provider}` } }));
+  assert.equal(FEATURED_PROVIDER_COUNT, 3);
+  assert.deepEqual(pickFeaturedProviders(rows).featured.map((row) => row.provider), ['a', 'b', 'c']);
+  const alternatives = { cheapest: { provider: 'e', offering: { id: 'm@e' } }, fastest: { provider: 'e', offering: { id: 'm@e' } }, 'most-reliable': { provider: 'b', offering: { id: 'm@b' } } };
+  const close = pickFeaturedProviders(rows, alternatives);
+  assert.deepEqual(close.featured.map((row) => row.provider), ['e', 'b', 'a']);
+  assert.deepEqual(close.roles.get(rows[4]), ['Cheapest', 'Fastest']);
+  assert.deepEqual(pickFeaturedProviders(rows, null, 'f').featured.map((row) => row.provider), ['a', 'b', 'c', 'f']);
+  const app = await readFile(new URL('../public/choose-app.js', import.meta.url), 'utf8');
+  assert.match(app, /Show all \$\{providers\.length\} providers/);
+  assert.match(app, /cappedList\(unverified, 'unverified providers', [\s\S]*?, FEATURED_PROVIDER_COUNT\)/);
+});

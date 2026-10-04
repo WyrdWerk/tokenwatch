@@ -58,6 +58,38 @@ export function modelDisplayName(candidate = {}) {
   return prettifyModelId(rawId || id) || id;
 }
 
+export const FEATURED_PROVIDER_COUNT = 3;
+export const PRIORITY_ROLE_LABELS = Object.freeze({ cheapest: 'Cheapest', fastest: 'Fastest', 'most-reliable': 'Most reliable' });
+
+function providerKey(provider) {
+  return `${provider.provider}|${provider.offering?.id || ''}`;
+}
+
+/**
+ * Which ranked providers to show expanded. Normally the top three; on a close
+ * call, the cheapest / fastest / most-reliable winners (`alternatives`, keyed by
+ * priority) topped up from the ranking. A selected provider always stays
+ * expanded. Returns the featured rows in display order and their role labels.
+ */
+export function pickFeaturedProviders(providers = [], alternatives = null, selectedProvider = null, count = FEATURED_PROVIDER_COUNT) {
+  const featured = [];
+  const roles = new Map();
+  const add = (provider) => { if (provider && !featured.includes(provider)) featured.push(provider); };
+  for (const [priority, pick] of Object.entries(alternatives || {})) {
+    if (!pick) continue;
+    const match = providers.find((provider) => providerKey(provider) === providerKey(pick));
+    if (!match) continue;
+    add(match);
+    roles.set(match, [...(roles.get(match) || []), PRIORITY_ROLE_LABELS[priority] || priority]);
+  }
+  for (const provider of providers) {
+    if (featured.length >= count) break;
+    add(provider);
+  }
+  if (selectedProvider) add(providers.find((provider) => provider.provider === selectedProvider));
+  return { featured, roles };
+}
+
 export const DEFAULT_CHOOSE_STATE = Object.freeze({
   useCase: 'agentic-coding',
   priority: 'balanced',

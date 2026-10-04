@@ -5,7 +5,10 @@ import {
   buildCalculatorHref,
   isCloseCall,
   isStale,
+  FEATURED_PROVIDER_COUNT,
+  PRIORITY_ROLE_LABELS,
   modelDisplayName,
+  pickFeaturedProviders,
   parseChooseHash,
   parseChooseLocation,
   shellQuote,
@@ -297,7 +300,7 @@ function providerMetric(label, value, source, stale = '') {
   return `<div class="choose-provider-metric"><dt>${escapeHtml(label)}</dt><dd>${value}<small>${escapeHtml(namedSource)}${window ? ` · ${escapeHtml(window)}` : ''}${stale}</small></dd></div>`;
 }
 
-function renderProviderRow(provider, now) {
+function renderProviderRow(provider, now, roles = []) {
   const offering = provider.offering || {};
   const signals = provider.explanation?.signals || [];
   const signal = (field) => signals.find((entry) => entry.field === field);
@@ -325,7 +328,7 @@ function renderProviderRow(provider, now) {
   const hq = offering.headquarters || offering.hq || catalogs.pricing.providers_meta?.[provider.provider]?.headquarters;
   return `<article class="choose-provider-card${isSelected ? ' is-selected' : ''}">
     <div class="choose-provider-title"><div><h3>${escapeHtml(providerName(provider.provider))}</h3><p>${escapeHtml(offering.id || provider.canonicalId)}</p></div>
-      <div class="choose-badges">${subscription}${isCloseCall(provider.confidence) ? '<span class="choose-badge choose-badge-close">Close call</span>' : ''}</div></div>
+      <div class="choose-badges">${roles.map((role) => `<span class="choose-badge choose-badge-role">${escapeHtml(role)}</span>`).join('')}${subscription}${isCloseCall(provider.confidence) ? '<span class="choose-badge choose-badge-close">Close call</span>' : ''}</div></div>
     <dl class="choose-provider-metrics">${metrics}</dl>
     <p class="choose-provider-hq">Headquarters: ${hq ? `${escapeHtml(countryLabel(String(hq).toUpperCase()))} (${escapeHtml(hq)})` : 'Not disclosed'}</p>
     ${lists ? `<div class="choose-provider-notes">${lists}</div>` : ''}
@@ -347,6 +350,30 @@ function alternativeProviders(candidate) {
   }));
 }
 
+const KEY_REASON = /lowest blended price|lowest .*ttft|highest throughput|reported uptime|only qualifying option|subscription plan|low-bit quantization/i;
+
+function providerKeyReason(provider) {
+  const reasons = provider.reasons || [];
+  return reasons.find((reason) => KEY_REASON.test(reason)) || reasons.find(isWarningReason)
+    || (provider.unknowns?.[0] ? `Unknown: ${provider.unknowns[0]}` : '') || reasons[0] || '';
+}
+
+function compactProviderRow(provider, now) {
+  const offering = provider.offering || {};
+  const speed = Number.isFinite(provider.throughputP50) ? `${formatNumber(provider.throughputP50, 0)} tok/s` : '—';
+  const uptime = Number.isFinite(provider.uptime) ? `${formatNumber(provider.uptime, 1)}%` : '—';
+  return `<li class="choose-provider-row${state.provider === provider.provider ? ' is-selected' : ''}"><details>
+    <summary>
+      <span class="choose-provider-row-name"><strong>${escapeHtml(providerName(provider.provider))}</strong><small>${escapeHtml(offering.id || provider.canonicalId)}</small></span>
+      <span class="choose-provider-row-metric" data-label="$/M">${escapeHtml(formatRate(provider.blendedRate))}</span>
+      <span class="choose-provider-row-metric" data-label="Speed">${speed}</span>
+      <span class="choose-provider-row-metric" data-label="Uptime">${uptime}</span>
+      <span class="choose-provider-row-reason">${escapeHtml(providerKeyReason(provider))}</span>
+    </summary>
+    ${renderProviderRow(provider, now)}
+  </details></li>`;
+}
+
 function renderProviders(candidate) {
   elements.providerHeading.textContent = candidate ? `Providers for ${modelDisplayName(candidate)}` : 'Providers for this model';
   if (!candidate) {
@@ -359,27 +386,39 @@ function renderProviders(candidate) {
   const providers = candidate.providers || [];
   const now = Date.now();
   const close = isCloseCall(providers[0]?.confidence);
+  const alternatives = close ? alternativeProviders(candidate) : null;
   if (close) {
-    const alternatives = alternativeProviders(candidate);
-    elements.providerCloseNote.innerHTML = `<strong>Top picks are close.</strong> The current ranking doesn’t establish one clear winner. Best by priority: ${['cheapest', 'fastest', 'most-reliable'].map((priority) => {
+    elements.providerCloseNote.innerHTML = `<strong>Top picks are close.</strong> The current ranking doesn’t establish one clear winner. Best by priority: ${Object.keys(PRIORITY_ROLE_LABELS).map((priority) => {
       const pick = alternatives[priority];
-      return pick ? `<span>${priority === 'most-reliable' ? 'Most reliable' : priority[0].toUpperCase() + priority.slice(1)}: <b>${escapeHtml(providerName(pick.provider))}</b></span>` : '';
+      return pick ? `<span>${PRIORITY_ROLE_LABELS[priority]}: <b>${escapeHtml(providerName(pick.provider))}</b></span>` : '';
     }).filter(Boolean).join(' · ')}`;
     elements.providerCloseNote.hidden = false;
   } else {
     elements.providerCloseNote.hidden = true;
   }
-  elements.providerRows.innerHTML = providers.length
-    ? providers.map((provider) => renderProviderRow(provider, now)).join('')
-    : '<p class="choose-empty-list">No priced provider passes the current constraints. Try relaxing a filter.</p>';
+  if (providers.length) {
+    const { featured, roles } = pickFeaturedProviders(providers, alternatives, state.provider);
+    const rest = providers.filter((provider) => !featured.includes(provider));
+    const cards = featured.map((provider) => renderProviderRow(provider, now, roles.get(provider))).join('');
+    const more = rest.length ? `<details class="choose-provider-more">
+      <summary>Show all ${providers.length} providers <span>${rest.length} more, in ranked order</span></summary>
+      <div class="choose-provider-row-head" aria-hidden="true"><span>Provider</span><span>$/M</span><span>Speed</span><span>Uptime</span><span>Key reason</span></div>
+      <ul class="choose-provider-rows">${rest.map((provider) => compactProviderRow(provider, now)).join('')}</ul>
+    </details>` : '';
+    elements.providerRows.innerHTML = `<div class="choose-provider-featured">${cards}</div>${more}`;
+  } else {
+    elements.providerRows.innerHTML = '<p class="choose-empty-list">No priced provider passes the current constraints. Try relaxing a filter.</p>';
+  }
   elements.providerRows.setAttribute('aria-busy', 'false');
 
   const unverified = candidate.unverifiedProviders || [];
   elements.unverifiedSection.hidden = !unverified.length;
-  elements.unverifiedRows.innerHTML = unverified.length ? cappedList(unverified, 'providers', (provider) => `
-    <li class="choose-list-row"><span><strong>${escapeHtml(providerName(provider.provider))}</strong><small>${escapeHtml(provider.offering?.id || candidate.id)}</small></span>
-      <span class="choose-list-meta">${provider.blendedRate === null ? 'Price unavailable' : `${formatRate(provider.blendedRate)} / M`}${provider.unknowns?.length ? `<small>${escapeHtml(provider.unknowns.join('; '))}</small>` : ''}</span></li>
-  `) : '';
+  elements.unverifiedRows.innerHTML = unverified.length ? cappedList(unverified, 'unverified providers', (provider) => {
+    const notes = [...(provider.unknowns || []).map((item) => `Unknown: ${item}`), ...(provider.reasons || [])];
+    return `<li class="choose-list-row choose-unverified-row"><details><summary><span><strong>${escapeHtml(providerName(provider.provider))}</strong><small>${escapeHtml(provider.offering?.id || candidate.id)}</small></span>
+      <span class="choose-list-meta">${provider.blendedRate === null ? 'Price unavailable' : `${formatRate(provider.blendedRate)} / M`}${provider.unknowns?.length ? `<small>${escapeHtml(provider.unknowns[0])}${provider.unknowns.length > 1 ? ` +${provider.unknowns.length - 1} more` : ''}</small>` : ''}</span></summary>
+      ${notes.length ? `<ul class="choose-unverified-notes">${notes.map((note) => `<li>${escapeHtml(note)}</li>`).join('')}</ul>` : ''}</details></li>`;
+  }, FEATURED_PROVIDER_COUNT) : '';
 }
 
 function selectedProvider(candidate) {
