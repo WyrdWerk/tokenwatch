@@ -1,7 +1,8 @@
 /**
  * Pure, Worker-safe recommendation logic for model and provider selection.
- * Benchmark and provider scores are catalog-relative; prices always come from
- * shared/cost.mjs so recommendations use the same billing estimate as TokenWatch.
+ * Benchmark percentiles and provider scores are catalog-relative, while each
+ * quality floor is absolute. Prices always come from shared/cost.mjs so this
+ * uses the same billing estimate as TokenWatch.
  */
 
 import { blendedRate } from './cost.mjs';
@@ -16,7 +17,7 @@ const BENCHMARK_FIELDS = new Set([
 ]);
 
 const LOW_BIT_TOKENS = ['fp4', 'nvfp4', 'mxfp4', 'int4'];
-const BLOCKING_ISSUES = new Set(['avoid', 'blocked', 'unavailable']);
+const BLOCKING_ISSUES = new Set(['broken', 'unavailable']);
 const PROVIDER_METRICS = ['price', 'ttft', 'throughput', 'uptime'];
 
 function modelsFrom(catalog) {
@@ -57,8 +58,8 @@ function capabilityValue(model, capability) {
       && (parameters.includes('response_format') || parameters.includes('structured_outputs'))) return true;
 
   const modelDevValue = capability === 'tool_call'
-    ? (model?.modelsdev?.capabilities?.tool_call ?? model?.modelsdev?.tool_call)
-    : (model?.modelsdev?.capabilities?.structured_output ?? model?.modelsdev?.structured_output);
+    ? (model?.modelsdev?.tool_call ?? model?.modelsdev?.capabilities?.tool_call)
+    : (model?.modelsdev?.structured_output ?? model?.modelsdev?.capabilities?.structured_output);
   const modelDevModelValue = capability === 'tool_call'
     ? (model?.modelsdev_model?.tool_call ?? model?.modelsdev_model?.capabilities?.tool_call)
     : (model?.modelsdev_model?.structured_output ?? model?.modelsdev_model?.capabilities?.structured_output);
@@ -74,15 +75,30 @@ function contextCapacity(model) {
 }
 
 function meetsHardRequirements(model, useCase) {
+  const assessment = assessHardRequirements(model, useCase);
+  return !assessment.blocked && assessment.unknowns.length === 0;
+}
+
+function assessHardRequirements(model, useCase) {
   const requirements = useCase.hardRequirements || {};
-  if (requirements.needsToolCalling && capabilityValue(model, 'tool_call') !== true) return false;
-  if (requirements.needsStructuredOutput && capabilityValue(model, 'structured_output') !== true) return false;
-  const minContext = requirements.minContext || 0;
-  if (minContext > 0) {
-    const capacity = contextCapacity(model);
-    if (capacity === null || capacity < minContext) return false;
+  const unknowns = [];
+  if (requirements.needsToolCalling) {
+    const toolCalling = capabilityValue(model, 'tool_call');
+    if (toolCalling === false) return { blocked: true, unknowns };
+    if (toolCalling === null) unknowns.push('Required tool-calling capability is unknown (tool-calling capability not disclosed).');
   }
-  return true;
+  if (requirements.needsStructuredOutput) {
+    const structuredOutput = capabilityValue(model, 'structured_output');
+    if (structuredOutput === false) return { blocked: true, unknowns };
+    if (structuredOutput === null) unknowns.push('Required structured-output capability is unknown (structured-output capability not disclosed).');
+  }
+  const minContext = requirements.minContext || 0;
+  const capacity = contextCapacity(model);
+  if (minContext > 0) {
+    if (capacity === null) unknowns.push(`Prompt capacity is unknown; the ${minContext.toLocaleString()}-token minimum cannot be confirmed.`);
+    else if (capacity < minContext) return { blocked: true, unknowns };
+  }
+  return { blocked: false, unknowns, capacity };
 }
 
 function quantizationOf(model) {
@@ -221,7 +237,7 @@ function cheapestOffer(offerings, mix) {
     .sort((a, b) => a.rate - b.rate || String(a.model.provider || '').localeCompare(String(b.model.provider || '')))[0] || null;
 }
 
-function candidateResult(group, useCase, { unbenchmarked = false } = {}) {
+function candidateResult(group, useCase, { unbenchmarked = false, meetsQualityFloor = false } = {}) {
   const priced = cheapestOffer(group.offerings, useCase.mix);
   const model = priced?.model || group.offerings[0];
   const quantization = quantizationOf(model);
@@ -234,8 +250,13 @@ function candidateResult(group, useCase, { unbenchmarked = false } = {}) {
   }
   if (priced) reasons.push(`Lowest qualifying blended price: $${priced.rate.toPrecision(4)} per million tokens at the ${useCase.id} mix.`);
   else unknowns.push('blended price unavailable for this workload');
+  if (meetsQualityFloor) {
+    const { field, min } = useCase.qualityFloor;
+    reasons.push(`Primary benchmark ${field} ${group.metrics[field]} meets the absolute floor of ${min}.`);
+  }
   if (group.quantFallback) reasons.push('Low-bit quantization is the only qualifying option for this workload.');
   if (!quantization) unknowns.push('quantization not disclosed');
+  if (useCase.id === 'reasoning-math') addReasoningInformation(model, reasons, unknowns);
   const openWeights = openWeightInfo(model);
   if (openWeights.source) reasons.push(`Open-weight status source: ${openWeights.source}.`);
   const license = model.license ?? model.modelsdev?.license ?? null;
@@ -259,6 +280,25 @@ function candidateResult(group, useCase, { unbenchmarked = false } = {}) {
     ...(unbenchmarked ? { group: 'unbenchmarked' } : {}),
     offering: priced?.model ?? null,
   };
+}
+
+function addReasoningInformation(model, reasons, unknowns) {
+  const reasoning = model?.modelsdev?.reasoning
+    ?? model?.modelsdev?.capabilities?.reasoning
+    ?? model?.modelsdev_model?.reasoning
+    ?? model?.modelsdev_model?.capabilities?.reasoning;
+  if (reasoning === true) reasons.push('Reasoning capability is reported; informational only and not used as a gate.');
+  else if (reasoning === false) reasons.push('No reasoning capability is reported; informational only and not used as a gate.');
+  else unknowns.push('reasoning capability not disclosed (informational only; not a gate)');
+}
+
+function isBatchVariant(modelOrId) {
+  const id = typeof modelOrId === 'string' ? modelOrId : modelOrId?.id;
+  return typeof id === 'string' && canonicalId(id).endsWith(':batch');
+}
+
+function includeBatchVariants(useCase, options) {
+  return useCase.id === 'high-volume-cheap' || options?.includeBatch === true;
 }
 
 function dominates(a, b) {
@@ -296,9 +336,11 @@ function chooseParetoKnee(frontier) {
  */
 export function shortlistModels(useCaseId, catalog, opts = {}) {
   const useCase = getUseCase(useCaseId);
+  const allowBatch = includeBatchVariants(useCase, opts);
   const groupsById = new Map();
   for (const model of modelsFrom(catalog)) {
     if (!model?.id) continue;
+    if (!allowBatch && isBatchVariant(model)) continue;
     const openWeights = openWeightInfo(model);
     if (opts.includeProprietary !== true && openWeights.value !== true) continue;
     if (!meetsHardRequirements(model, useCase)) continue;
@@ -332,12 +374,14 @@ export function shortlistModels(useCaseId, catalog, opts = {}) {
     .sort((a, b) => (a.blendedRate ?? Infinity) - (b.blendedRate ?? Infinity) || a.id.localeCompare(b.id));
 
   const frontier = paretoFrontier(scored, useCase);
-  const qualityFloor = finite(opts.qualityFloor) ? opts.qualityFloor : useCase.qualityFloor;
+  const qualityFloor = { ...useCase.qualityFloor };
   const bestQualityGroup = [...scored].sort((a, b) =>
     b.qualityScore - a.qualityScore || (a.blendedRate ?? Infinity) - (b.blendedRate ?? Infinity) || a.id.localeCompare(b.id)
   )[0];
   const cheapestAboveFloorGroup = scored
-    .filter((candidate) => candidate.qualityScore >= qualityFloor && candidate.blendedRate !== null)
+    .filter((candidate) => finite(candidate.metrics[qualityFloor.field])
+      && candidate.metrics[qualityFloor.field] >= qualityFloor.min
+      && candidate.blendedRate !== null)
     .sort((a, b) => a.blendedRate - b.blendedRate || b.qualityScore - a.qualityScore || a.id.localeCompare(b.id))[0];
 
   return {
@@ -345,7 +389,7 @@ export function shortlistModels(useCaseId, catalog, opts = {}) {
     qualityFloor,
     bestQuality: bestQualityGroup ? candidateResult(bestQualityGroup, useCase) : null,
     bestValue: chooseParetoKnee(frontier),
-    cheapestAboveFloor: cheapestAboveFloorGroup ? candidateResult(cheapestAboveFloorGroup, useCase) : null,
+    cheapestAboveFloor: cheapestAboveFloorGroup ? candidateResult(cheapestAboveFloorGroup, useCase, { meetsQualityFloor: true }) : null,
     paretoFrontier: frontier,
     unbenchmarked,
   };
@@ -382,6 +426,12 @@ function matchingIssue(model, canonical, issues) {
     && String(issue.provider || '').toLowerCase() === String(model.provider || '').toLowerCase());
 }
 
+function issueReason(issue) {
+  const verdict = String(issue.verdict || '').toLowerCase() || 'unspecified';
+  const label = verdict === 'degraded' ? 'degraded warning' : verdict;
+  return `Known issue (${label}): ${issue.source || 'source not provided'}.`;
+}
+
 function perfFor(model, canonical, perf) {
   if (!perf || typeof perf !== 'object') return null;
   return perf[`${canonical}|${model.provider}`] || null;
@@ -411,7 +461,8 @@ function scaleMetric(value, values, lowerIsBetter) {
 }
 
 function gateProvider(model, useCase, constraints, canonical) {
-  if (!meetsHardRequirements(model, useCase)) return null;
+  const hardRequirements = assessHardRequirements(model, useCase);
+  if (hardRequirements.blocked) return null;
   if (constraints.requireZdr && model.zdr !== true) return null;
 
   const requireHQ = constraints.requireHQ ?? constraints.requireHq;
@@ -425,7 +476,13 @@ function gateProvider(model, useCase, constraints, canonical) {
   const issues = matchingIssue(model, canonical, constraints.knownIssues);
   if (issues.some((issue) => BLOCKING_ISSUES.has(String(issue.verdict || '').toLowerCase()))) return null;
 
-  return { headquarters, uptime, issues };
+  return {
+    headquarters,
+    uptime,
+    issues,
+    requirementUnknowns: hardRequirements.unknowns,
+    capacity: hardRequirements.capacity,
+  };
 }
 
 /**
@@ -435,12 +492,16 @@ function gateProvider(model, useCase, constraints, canonical) {
 export function rankProviders(useCaseId, canonicalModelId, offerings, perf = {}, constraints = {}) {
   const useCase = getUseCase(useCaseId);
   const canonical = canonicalId(String(canonicalModelId));
+  const allowBatch = includeBatchVariants(useCase, constraints);
   const groups = [];
+  const unverifiedGroups = [];
   for (const model of offerings || []) {
     if (!model?.id || !model.provider || canonicalId(String(model.id)) !== canonical) continue;
+    if (!allowBatch && isBatchVariant(model)) continue;
     const gate = gateProvider(model, useCase, constraints, canonical);
     if (!gate) continue;
-    groups.push({ id: canonical, name: model.name || String(model.id), org: model.org || null, offerings: [model], gate });
+    const group = { id: canonical, name: model.name || String(model.id), org: model.org || null, offerings: [model], gate };
+    (gate.requirementUnknowns.length ? unverifiedGroups : groups).push(group);
   }
 
   const quantized = applyQuantizationPolicy(groups, useCase);
@@ -478,6 +539,7 @@ export function rankProviders(useCaseId, canonicalModelId, offerings, perf = {},
     const unknowns = [];
     if (useCase.hardRequirements.needsToolCalling) reasons.push('Meets required tool-calling capability.');
     if (useCase.hardRequirements.needsStructuredOutput) reasons.push('Meets required structured-output capability.');
+    if (useCase.id === 'reasoning-math') addReasoningInformation(model, reasons, unknowns);
     const capacity = contextCapacity(model);
     if (capacity !== null) reasons.push(`Prompt capacity ${capacity.toLocaleString()} tokens meets the ${useCase.hardRequirements.minContext.toLocaleString()}-token minimum.`);
     if (constraints.requireZdr) reasons.push('Meets the requested ZDR requirement.');
@@ -518,7 +580,7 @@ export function rankProviders(useCaseId, canonicalModelId, offerings, perf = {},
     if (row.quantFallback) reasons.push('Low-bit quantization is the only qualifying option for this workload.');
     if (gate.issues.length) {
       for (const issue of gate.issues) {
-        reasons.push(`Known issue (${issue.verdict || 'unspecified'}): ${issue.source || 'source not provided'}.`);
+        reasons.push(issueReason(issue));
       }
     }
     if (row.score === null) unknowns.push('provider score unavailable because no weighted signals were reported');
@@ -541,9 +603,52 @@ export function rankProviders(useCaseId, canonicalModelId, offerings, perf = {},
     };
   }
 
-  return rows
+  const ranked = rows
     .map((row) => row.result)
     .sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity)
       || (a.blendedRate ?? Infinity) - (b.blendedRate ?? Infinity)
       || String(a.provider).localeCompare(String(b.provider)));
+
+  const unverified = unverifiedGroups.map((group) => {
+    const model = group.offerings[0];
+    const metrics = metricsForProvider(model, canonical, perf, useCase);
+    const reasons = group.gate.requirementUnknowns.map((reason) => `${reason} Provider is listed as unverified and omitted from the confirmed ranking.`);
+    const unknowns = [...group.gate.requirementUnknowns];
+    if (group.gate.capacity !== null && group.gate.capacity !== undefined) {
+      reasons.push(`Prompt capacity ${group.gate.capacity.toLocaleString()} tokens meets the ${useCase.hardRequirements.minContext.toLocaleString()}-token minimum.`);
+    }
+    if (constraints.requireZdr) reasons.push('Meets the requested ZDR requirement.');
+    if (constraints.requireHQ ?? constraints.requireHq) reasons.push(`Headquarters requirement met: ${group.gate.headquarters}.`);
+    if (group.gate.uptime) reasons.push(`Reported uptime ${group.gate.uptime.value.toFixed(2)}% (${group.gate.uptime.window}).`);
+    if (finite(metrics.price)) reasons.push(`Blended workload price: $${metrics.price.toPrecision(4)} per million tokens.`);
+    else unknowns.push('blended price unavailable for this workload');
+    const quantization = quantizationOf(model);
+    if (quantization) reasons.push(`Quantization: ${quantization}.`);
+    else unknowns.push('quantization not disclosed');
+    if (isRejectedQuantization(model, useCase)) reasons.push('Low-bit quantization is shown for inspection only; this provider is unverified and is not recommended.');
+    const license = model.license ?? model.modelsdev?.license ?? null;
+    if (license) reasons.push(`License: ${license}.`);
+    else unknowns.push('license not disclosed');
+    for (const issue of group.gate.issues) {
+      reasons.push(issueReason(issue));
+    }
+    return {
+      canonicalId: canonical,
+      provider: model.provider,
+      score: null,
+      blendedRate: metrics.price,
+      quantization,
+      license,
+      reasons,
+      unknowns,
+      offering: model,
+    };
+  });
+
+  const message = ranked.length
+    ? null
+    : unverified.length
+      ? `No confirmed providers meet this use case; ${unverified.length} provider offering(s) remain unverified because required metadata is missing.`
+      : 'No confirmed providers meet this use case and the requested constraints.';
+  return { ranked, unverified, message };
 }

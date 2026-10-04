@@ -1,6 +1,7 @@
 /**
  * Workload presets for recommendation. All cost mixes are percentage shares;
- * benchmark percentiles and provider metric scores are catalog-relative.
+ * benchmark percentiles and provider metric scores are catalog-relative;
+ * qualityFloor is an absolute minimum on the use case's primary benchmark.
  * Worker-safe: no Node built-ins or runtime-only dependencies.
  */
 
@@ -21,7 +22,8 @@ export const USE_CASES = Object.freeze({
     providerWeights: { price: 0.25, ttft: 0.2, throughput: 0.35, uptime: 0.2 },
     hardRequirements: { needsToolCalling: true, needsStructuredOutput: false, minContext: 32768 },
     quantizationPolicy: { reject: LOW_BIT_QUANTS, fallbackWhenNoAlternative: true },
-    qualityFloor: 50,
+    // Current tool-capable open weights have coding-index p25≈20.7 and median≈43.4.
+    qualityFloor: { field: 'coding_index', min: 25 },
   },
   'tool-agents': {
     id: 'tool-agents',
@@ -35,7 +37,8 @@ export const USE_CASES = Object.freeze({
     providerWeights: { price: 0.25, ttft: 0.2, throughput: 0.35, uptime: 0.2 },
     hardRequirements: { needsToolCalling: true, needsStructuredOutput: false, minContext: 16384 },
     quantizationPolicy: { reject: LOW_BIT_QUANTS, fallbackWhenNoAlternative: true },
-    qualityFloor: 50,
+    // Current tool-capable open weights have agentic-index p25≈1 and median≈13.1.
+    qualityFloor: { field: 'agentic_index', min: 10 },
   },
   'long-context-rag': {
     id: 'long-context-rag',
@@ -49,7 +52,8 @@ export const USE_CASES = Object.freeze({
     providerWeights: { price: 0.35, ttft: 0.2, throughput: 0.2, uptime: 0.25 },
     hardRequirements: { needsToolCalling: false, needsStructuredOutput: false, minContext: 131072 },
     quantizationPolicy: { reject: LOW_BIT_QUANTS, fallbackWhenNoAlternative: true },
-    qualityFloor: 50,
+    // Long-context open weights have intelligence-index p25≈11.2 and median≈19.5.
+    qualityFloor: { field: 'intelligence_index', min: 15 },
   },
   'structured-extraction': {
     id: 'structured-extraction',
@@ -63,7 +67,8 @@ export const USE_CASES = Object.freeze({
     providerWeights: { price: 0.35, ttft: 0.2, throughput: 0.25, uptime: 0.2 },
     hardRequirements: { needsToolCalling: false, needsStructuredOutput: true, minContext: 16384 },
     quantizationPolicy: { reject: LOW_BIT_QUANTS, fallbackWhenNoAlternative: true },
-    qualityFloor: 50,
+    // Only seven current structured-output models have this LiveBench score; 60 is near their median.
+    qualityFloor: { field: 'livebench_instruction_following', min: 60 },
   },
   'high-volume-cheap': {
     id: 'high-volume-cheap',
@@ -77,7 +82,8 @@ export const USE_CASES = Object.freeze({
     providerWeights: { price: 0.55, ttft: 0.1, throughput: 0.2, uptime: 0.15 },
     hardRequirements: { needsToolCalling: false, needsStructuredOutput: false, minContext: 8192 },
     quantizationPolicy: { reject: [], fallbackWhenNoAlternative: true },
-    qualityFloor: 50,
+    // Current open weights have intelligence-index p25≈11.1; keep this cost-led floor permissive.
+    qualityFloor: { field: 'intelligence_index', min: 10 },
   },
   'chat-assistant': {
     id: 'chat-assistant',
@@ -91,7 +97,8 @@ export const USE_CASES = Object.freeze({
     providerWeights: { price: 0.25, ttft: 0.3, throughput: 0.2, uptime: 0.25 },
     hardRequirements: { needsToolCalling: false, needsStructuredOutput: false, minContext: 8192 },
     quantizationPolicy: { reject: [], fallbackWhenNoAlternative: true },
-    qualityFloor: 50,
+    // Current open weights have intelligence-index p25≈11.1 and median≈19.5.
+    qualityFloor: { field: 'intelligence_index', min: 15 },
   },
   'creative-writing': {
     id: 'creative-writing',
@@ -105,7 +112,8 @@ export const USE_CASES = Object.freeze({
     providerWeights: { price: 0.25, ttft: 0.25, throughput: 0.3, uptime: 0.2 },
     hardRequirements: { needsToolCalling: false, needsStructuredOutput: false, minContext: 16384 },
     quantizationPolicy: { reject: [], fallbackWhenNoAlternative: true },
-    qualityFloor: 50,
+    // Seven current open weights have LiveBench language scores; p25≈70.1.
+    qualityFloor: { field: 'livebench_language', min: 70 },
   },
   'reasoning-math': {
     id: 'reasoning-math',
@@ -119,7 +127,8 @@ export const USE_CASES = Object.freeze({
     providerWeights: { price: 0.25, ttft: 0.15, throughput: 0.35, uptime: 0.25 },
     hardRequirements: { needsToolCalling: false, needsStructuredOutput: false, minContext: 32768 },
     quantizationPolicy: { reject: LOW_BIT_QUANTS, fallbackWhenNoAlternative: true },
-    qualityFloor: 50,
+    // Seven current open weights have LiveBench math scores; the median is≈79.9.
+    qualityFloor: { field: 'livebench_math', min: 80 },
   },
   'frontend-ui': {
     id: 'frontend-ui',
@@ -133,7 +142,8 @@ export const USE_CASES = Object.freeze({
     providerWeights: { price: 0.25, ttft: 0.2, throughput: 0.35, uptime: 0.2 },
     hardRequirements: { needsToolCalling: true, needsStructuredOutput: false, minContext: 32768 },
     quantizationPolicy: { reject: LOW_BIT_QUANTS, fallbackWhenNoAlternative: true },
-    qualityFloor: 50,
+    // UI Arena Elo p25 is≈1120 among current tool-capable open weights.
+    qualityFloor: { field: 'design_arena_best', min: 1120 },
   },
 });
 
