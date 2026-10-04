@@ -44,6 +44,7 @@ const FINGERPRINT = new Set([
   'webmcp.js',
   'price-sparkline.js',
   'model-history.js',
+  'choose-app.js',
 ]);
 
 // href/src="..." capturing the path (with optional ?query)

@@ -127,6 +127,94 @@ const TEXT_TOOL_DEFS = JSON.parse(`
     }
   },
   {
+    "name": "recommend_model",
+    "title": "Recommend models for a workload",
+    "description": "Read-only workload recommendation using TokenWatch's shared engine. The default response is compact: three fully explained picks plus compact candidate groups with total counts. The preset mix is assumed unless you choose a different use case. For operational details, call about_tokenwatch.",
+    "annotations": { "readOnlyHint": true },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "useCase": {
+          "type": "string",
+          "enum": ["agentic-coding", "tool-agents", "long-context-rag", "structured-extraction", "high-volume-cheap", "chat-assistant", "creative-writing", "reasoning-math", "frontend-ui"],
+          "description": "Required workload preset. Its default mix is assumed, not inferred from your traffic."
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["balanced", "cheapest", "fastest", "most-reliable"],
+          "description": "Provider ranking emphasis; defaults to balanced."
+        },
+        "zdr": {
+          "type": "boolean",
+          "description": "If true, only recommend providers with confirmed zero data retention."
+        },
+        "excludeHq": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[A-Z]{2}$" },
+          "description": "Exclude offerings whose provider headquarters match these country codes. Unknown headquarters remain eligible."
+        },
+        "includeProprietary": {
+          "type": "boolean",
+          "description": "Include models not confirmed open-weight; defaults to false."
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Maximum rows in each compact candidate group (default 10)."
+        }
+      },
+      "required": ["useCase"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "recommend_provider",
+    "title": "Rank providers for one model",
+    "description": "Read-only provider ranking for a canonical model and workload using the shared engine. The default response fully explains the top three providers and returns the rest as compact rows with total counts. Confirmed capabilities and context are hard gates; unknown required metadata is never treated as confirmed. For operational details, call about_tokenwatch.",
+    "annotations": { "readOnlyHint": true },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "useCase": {
+          "type": "string",
+          "enum": ["agentic-coding", "tool-agents", "long-context-rag", "structured-extraction", "high-volume-cheap", "chat-assistant", "creative-writing", "reasoning-math", "frontend-ui"],
+          "description": "Required workload preset."
+        },
+        "model": {
+          "type": "string",
+          "description": "Required canonical model id, such as deepseek-v4-flash."
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["balanced", "cheapest", "fastest", "most-reliable"],
+          "description": "Provider ranking emphasis; defaults to balanced."
+        },
+        "zdr": {
+          "type": "boolean",
+          "description": "If true, only providers with confirmed zero data retention."
+        },
+        "excludeHq": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[A-Z]{2}$" },
+          "description": "Exclude providers headquartered in these countries. Unknown headquarters remain eligible."
+        },
+        "includeProprietary": {
+          "type": "boolean",
+          "description": "Include models not confirmed open-weight; defaults to false."
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Maximum rows in each provider group (default 10)."
+        }
+      },
+      "required": ["useCase", "model"],
+      "additionalProperties": false
+    }
+  },
+  {
     "name": "get_share_url",
     "title": "Get shareable URL",
     "description": "Read-only. Returns the current page URL including the hash of mix/filters so the human can open the same view in any browser without ChatGPT. For operational details, call about_tokenwatch.",
@@ -802,6 +890,8 @@ function catalogExecutors(catalog) {
     set_sort: (input) => catalog.setSort(input),
     explain_ranking: () => catalog.explainRanking(),
     list_presets: () => catalog.listPresets(),
+    recommend_model: (input) => catalog.recommendModel(input),
+    recommend_provider: (input) => catalog.recommendProvider(input),
     get_share_url: () => catalog.getShareUrl(),
     get_catalog_info: () => catalog.getCatalogInfo(),
     set_workload: (input) => catalog.setWorkload(input),

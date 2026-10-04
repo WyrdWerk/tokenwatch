@@ -6,6 +6,9 @@
 //   GET /api/v1/stats                         — summary statistics (text models)
 //   GET /api/v1/orgs                           — all orgs with model counts
 //   GET /api/v1/providers[?zdr=true]          — provider metadata
+//   GET /api/v1/use-cases                     — workload recommendation presets
+//   GET /api/v1/recommend                     — workload-aware model shortlist
+//   GET /api/v1/recommend/providers            — provider ranking for a model
 //   GET /api/v1/models                         — list text models (with filters)
 //   GET /api/v1/models/:canonicalId/providers  — all providers for a model, sorted by cost
 //   GET /api/v1/models/:canonicalId/history    — daily cheapest-provider price history
@@ -18,6 +21,8 @@
 import { canonicalId } from '../../../shared/normalize.mjs';
 import { endpointDirectory } from '../../../shared/api-meta.mjs';
 import { blendedRate } from '../../../shared/cost.mjs';
+import { PRIORITY_PROVIDER_WEIGHTS, USE_CASES } from '../../../shared/use-cases.mjs';
+import { isOpenWeightModel, rankProviders, shortlistModels } from '../../../shared/recommend.mjs';
 import {
   DEFAULT_MIX,
   MAX_HISTORY_DAYS,
@@ -37,11 +42,203 @@ const CORS_HEADERS = {
   'X-Robots-Tag': 'noindex',
 };
 
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data, null, 2), {
+function json(data, status = 200, { pretty = true } = {}) {
+  return new Response(pretty ? JSON.stringify(data, null, 2) : JSON.stringify(data), {
     status,
     headers: CORS_HEADERS,
   });
+}
+
+const PRIORITIES = new Set(Object.keys(PRIORITY_PROVIDER_WEIGHTS));
+
+function parseOptionalBoolean(params, name) {
+  if (!params.has(name)) return { ok: true, value: false };
+  const value = params.get(name);
+  if (value === 'true') return { ok: true, value: true };
+  if (value === 'false') return { ok: true, value: false };
+  return { ok: false, error: `${name} must be true or false` };
+}
+
+function parseRecommendationParams(params, { requireModel = false } = {}) {
+  const useCase = params.get('use_case');
+  if (!useCase || !Object.hasOwn(USE_CASES, useCase)) {
+    return { ok: false, error: useCase ? `Unknown use_case: ${useCase}` : 'use_case is required', parameter: 'use_case' };
+  }
+
+  const priority = params.get('priority') ?? 'balanced';
+  if (!PRIORITIES.has(priority)) {
+    return { ok: false, error: `priority must be one of: ${[...PRIORITIES].join(', ')}`, parameter: 'priority' };
+  }
+
+  const detail = params.get('detail') ?? 'compact';
+  if (detail !== 'compact' && detail !== 'full') {
+    return { ok: false, error: 'detail must be compact or full', parameter: 'detail' };
+  }
+
+  let pretty = false;
+  if (params.has('pretty')) {
+    const value = params.get('pretty');
+    if (value === '1' || value === 'true') pretty = true;
+    else if (value !== '0' && value !== 'false') {
+      return { ok: false, error: 'pretty must be 1, 0, true, or false', parameter: 'pretty' };
+    }
+  }
+
+  let limit = 10;
+  if (params.has('limit')) {
+    const value = params.get('limit');
+    if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)) || Number(value) < 1 || Number(value) > 100) {
+      return { ok: false, error: 'limit must be an integer between 1 and 100', parameter: 'limit' };
+    }
+    limit = Number(value);
+  }
+
+  const zdr = parseOptionalBoolean(params, 'zdr');
+  if (!zdr.ok) return { ...zdr, parameter: 'zdr' };
+  const includeProprietary = parseOptionalBoolean(params, 'include_proprietary');
+  if (!includeProprietary.ok) return { ...includeProprietary, parameter: 'include_proprietary' };
+
+  let excludeHQ = [];
+  if (params.has('exclude_hq')) {
+    const value = params.get('exclude_hq');
+    if (!value || !/^[a-z]{2}(?:,[a-z]{2})*$/i.test(value)) {
+      return { ok: false, error: 'exclude_hq must be a comma-separated list of two-letter country codes', parameter: 'exclude_hq' };
+    }
+    excludeHQ = [...new Set(value.split(',').map((country) => country.toUpperCase()))];
+  }
+
+  let model = null;
+  if (requireModel) {
+    model = params.get('model')?.trim() || null;
+    if (!model) return { ok: false, error: 'model is required', parameter: 'model' };
+  }
+
+  return {
+    ok: true,
+    useCase,
+    priority,
+    detail,
+    pretty,
+    limit,
+    requireZdr: zdr.value,
+    includeProprietary: includeProprietary.value,
+    excludeHQ,
+    model,
+  };
+}
+
+async function loadRecommendationAssets(context) {
+  const { request, env } = context;
+  const load = async (filename) => {
+    const response = await env.ASSETS.fetch(new URL(`/${filename}`, request.url));
+    if (!response.ok) throw new Error(`${filename} not found: ${response.status}`);
+    return response.json();
+  };
+  try {
+    const [benchmarks, performance] = await Promise.all([
+      load('benchmarks.json'),
+      load('performance.json'),
+    ]);
+    return { ok: true, benchmarks, performance };
+  } catch (error) {
+    return { ok: false, response: json({ error: 'Failed to load recommendation data', detail: error.message }, 503) };
+  }
+}
+
+function compactRecommendationOffering(offering) {
+  if (!offering) return null;
+  return {
+    id: offering.id,
+    provider: offering.provider,
+    name: offering.name ?? null,
+    pricing: offering.pricing ?? null,
+    context_length: offering.context_length ?? null,
+    max_prompt_tokens: offering.max_prompt_tokens ?? null,
+    max_completion_tokens: offering.max_completion_tokens ?? null,
+    quantization: offering.quantization ?? null,
+    zdr: offering.zdr === true,
+    subscription: offering.subscription === true,
+  };
+}
+
+function compactRecommendationProvider(provider, includeExplanation = true) {
+  if (!provider) return null;
+  const { explanation, ...summary } = provider;
+  return {
+    ...summary,
+    ...(includeExplanation && explanation ? { explanation } : {}),
+    offering: compactRecommendationOffering(provider.offering),
+  };
+}
+
+function compactRecommendationCandidate(candidate, includeProviderExplanations = true) {
+  return {
+    ...candidate,
+    recommendedProvider: compactRecommendationProvider(candidate.recommendedProvider, includeProviderExplanations),
+    cheapestProvider: compactRecommendationProvider(candidate.cheapestProvider, includeProviderExplanations),
+    offering: compactRecommendationOffering(candidate.offering),
+    cheapestOffering: compactRecommendationOffering(candidate.cheapestOffering),
+    unverifiedProviders: (candidate.unverifiedProviders || []).map((provider) =>
+      includeProviderExplanations ? compactRecommendationProvider(provider, true) : compactUnverifiedProviderRow(provider)),
+    ...(Array.isArray(candidate.providers)
+      ? { providers: includeProviderExplanations ? candidate.providers : candidate.providers.map(compactProviderRow) }
+      : {}),
+  };
+}
+
+function compactRecommendationRow(candidate) {
+  return {
+    id: candidate.id,
+    name: candidate.name,
+    score: candidate.qualityScore ?? null,
+    coverage: candidate.qualityCoverage ?? null,
+    blendedRate: candidate.blendedRate ?? null,
+    reason: candidate.reasons?.[0] ?? candidate.unknowns?.[0] ?? null,
+  };
+}
+
+function compactProviderRow(provider) {
+  const reason = provider.reasons?.find((item) => /lowest blended price|lowest .*ttft|highest throughput|reported uptime|only qualifying option|subscription plan|low-bit quantization/i.test(item));
+  return {
+    provider: provider.provider,
+    score: provider.score ?? null,
+    blendedRate: provider.blendedRate ?? null,
+    confidence: provider.confidence?.level ?? null,
+    reason: reason ?? provider.reasons?.[0] ?? provider.unknowns?.[0] ?? null,
+  };
+}
+
+function compactUnverifiedProviderRow(provider) {
+  return {
+    provider: provider.provider,
+    offeringId: provider.offering?.id ?? null,
+    blendedRate: provider.blendedRate ?? null,
+    reason: provider.unknowns?.[0] ?? provider.reasons?.[0] ?? null,
+  };
+}
+
+function recommendationGroup(items, parsed, compactRow) {
+  return {
+    totalCount: items.length,
+    items: items.slice(0, parsed.limit).map((item) => parsed.detail === 'full' ? item : compactRow(item)),
+  };
+}
+
+function providerGroup(items, parsed, { explainTopThree = false } = {}) {
+  return {
+    totalCount: items.length,
+    items: items.slice(0, parsed.limit).map((item, index) =>
+      parsed.detail === 'full' || (explainTopThree && index < 3) ? item : compactProviderRow(item)),
+  };
+}
+
+function recommendationConstraints(parsed, pricing) {
+  return {
+    priority: parsed.priority,
+    requireZdr: parsed.requireZdr,
+    excludeHQ: parsed.excludeHQ,
+    providersMeta: pricing.providers_meta || {},
+  };
 }
 
 // ── Canonical ID normalization ────────────────────────────────────────────────
@@ -165,6 +362,97 @@ async function historyResponse(context, pricing, rawId) {
 
 // ── Main router ───────────────────────────────────────────────────────────────
 
+function useCasesResponse(pricing) {
+  const use_cases = Object.values(USE_CASES).map((useCase) => ({
+    id: useCase.id,
+    label: useCase.label,
+    mix: { ...useCase.mix, assumed: true },
+    weights: {
+      benchmark: { ...useCase.benchmarkWeights },
+      provider: { ...useCase.providerWeights },
+    },
+    requirements: { ...useCase.hardRequirements },
+    quantizationPolicy: { ...useCase.quantizationPolicy, reject: [...useCase.quantizationPolicy.reject] },
+    floors: { ...useCase.qualityFloor },
+  }));
+  return json({ generated_at: pricing.generated_at, use_cases });
+}
+
+async function recommendationResponse(context, pricing, providersOnly) {
+  const { request } = context;
+  const params = new URL(request.url).searchParams;
+  const parsed = parseRecommendationParams(params, { requireModel: providersOnly });
+  if (!parsed.ok) return json({ error: parsed.error, parameter: parsed.parameter }, 400);
+
+  const target = providersOnly ? canonicalId(parsed.model) : null;
+  if (target && !pricing.models.some((model) => canonicalId(String(model.id)) === target)) {
+    return json({ error: 'Model not found', canonical_id: parsed.model }, 404);
+  }
+
+  const assets = await loadRecommendationAssets(context);
+  if (!assets.ok) return assets.response;
+
+  const constraints = recommendationConstraints(parsed, pricing);
+  const timestamps = {
+    generated_at: pricing.generated_at,
+    benchmarks_generated_at: assets.benchmarks.generated_at ?? null,
+    performance_generated_at: assets.performance._meta?.generated_at ?? null,
+  };
+
+  if (providersOnly) {
+    const offerings = pricing.models.filter((model) =>
+      canonicalId(String(model.id)) === target
+      && (parsed.includeProprietary || isOpenWeightModel(model)));
+    const result = rankProviders(parsed.useCase, target, offerings, assets.performance, constraints);
+    return json({
+      ...timestamps,
+      useCase: parsed.useCase,
+      priority: parsed.priority,
+      mix: { ...USE_CASES[parsed.useCase].mix, assumed: true },
+      canonical_id: target,
+      ranked: providerGroup(result.ranked, parsed, { explainTopThree: true }),
+      unverified: {
+        totalCount: result.unverified.length,
+        items: result.unverified.slice(0, parsed.limit).map((item) => parsed.detail === 'full' ? item : compactUnverifiedProviderRow(item)),
+      },
+      message: result.message,
+    }, 200, { pretty: parsed.pretty });
+  }
+
+  const result = shortlistModels(parsed.useCase, pricing.models, {
+    benchmarks: assets.benchmarks,
+    performance: assets.performance,
+    includeProprietary: parsed.includeProprietary,
+    constraints,
+  });
+  const selectedIds = new Set([
+    result.bestQuality?.id,
+    result.bestValue?.id,
+    result.cheapestAboveFloor?.id,
+  ].filter(Boolean));
+  const alsoConsideredById = new Map();
+  for (const candidate of [...result.paretoFrontier, ...result.qualityRanking]) {
+    if (!selectedIds.has(candidate.id)) alsoConsideredById.set(candidate.id, candidate);
+  }
+
+  return json({
+    ...timestamps,
+    useCase: result.useCase,
+    priority: result.priority,
+    mix: { ...USE_CASES[result.useCase].mix, assumed: true },
+    qualityFloor: result.qualityFloor,
+    picks: {
+      bestQuality: result.bestQuality ? compactRecommendationCandidate(result.bestQuality, parsed.detail === 'full') : null,
+      bestValue: result.bestValue ? compactRecommendationCandidate(result.bestValue, parsed.detail === 'full') : null,
+      cheapestAboveFloor: result.cheapestAboveFloor ? compactRecommendationCandidate(result.cheapestAboveFloor, parsed.detail === 'full') : null,
+    },
+    alsoConsidered: recommendationGroup([...alsoConsideredById.values()], parsed, compactRecommendationRow),
+    partiallyBenchmarked: recommendationGroup(result.partiallyBenchmarked, parsed, compactRecommendationRow),
+    unbenchmarked: recommendationGroup(result.unbenchmarked, parsed, compactRecommendationRow),
+    unverified: recommendationGroup(result.unverified, parsed, compactRecommendationRow),
+  }, 200, { pretty: parsed.pretty });
+}
+
 export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
@@ -258,6 +546,11 @@ export async function onRequestGet(context) {
       providers_meta: meta,
     });
   }
+
+  // ── Workload-aware model and provider recommendations ──
+  if (path === 'use-cases') return useCasesResponse(pricing);
+  if (path === 'recommend') return recommendationResponse(context, pricing, false);
+  if (path === 'recommend/providers') return recommendationResponse(context, pricing, true);
 
   // ── Route: /api/v1/models[/:canonicalId/providers|/:canonicalId/history] ──
   if (path === 'models' || path.startsWith('models/')) {

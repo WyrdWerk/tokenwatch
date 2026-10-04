@@ -20,10 +20,10 @@ function extractJsonParseBlob(src, constName) {
 const STARRED = ['get_view', 'set_workload', 'set_filters', 'compare_models', 'explain_ranking', 'get_share_url'];
 const NAME_RE = /^[A-Za-z0-9_.-]{1,128}$/;
 
-test('text WebMCP tool defs: 19 tools, valid names, additionalProperties false', async () => {
+test('text WebMCP tool defs: 21 tools, valid names, additionalProperties false', async () => {
   const src = await readFile(join(ROOT, 'public/webmcp.js'), 'utf8');
   const defs = extractJsonParseBlob(src, 'TEXT_TOOL_DEFS');
-  assert.equal(defs.length, 19, 'text page registers 19 tools');
+  assert.equal(defs.length, 21, 'text page registers 21 tools');
   assert.ok(!defs.some((def) => def.name === 'set_cache_write'), 'cache-write amortization control is not a tool');
   assert.doesNotMatch(src, /set_cache_write|setCacheWrite/, 'no cache-write control executor is registered');
 
@@ -51,13 +51,41 @@ test('text WebMCP tool defs: 19 tools, valid names, additionalProperties false',
   }
 
   const reads = defs.filter((d) => d.annotations.readOnlyHint === true).map((d) => d.name);
-  for (const name of ['about_tokenwatch', 'get_view', 'explain_ranking', 'get_share_url', 'get_catalog_info', 'list_presets', 'get_model']) {
+  for (const name of ['about_tokenwatch', 'get_view', 'explain_ranking', 'get_share_url', 'get_catalog_info', 'list_presets', 'get_model', 'recommend_model', 'recommend_provider']) {
     assert.ok(reads.includes(name), `${name} should be readOnlyHint: true`);
   }
   for (const name of ['set_workload', 'set_sort', 'set_filters', 'compare_models', 'export_csv']) {
     const def = defs.find((d) => d.name === name);
     assert.equal(def.annotations.readOnlyHint, false, `${name} mutates the page`);
   }
+});
+
+test('recommendation WebMCP tools use the recommender API contract and explicit workload choices', async () => {
+  const src = await readFile(join(ROOT, 'public/webmcp.js'), 'utf8');
+  const defs = extractJsonParseBlob(src, 'TEXT_TOOL_DEFS');
+  const byName = Object.fromEntries(defs.map((def) => [def.name, def]));
+  for (const name of ['recommend_model', 'recommend_provider']) {
+    assert.equal(byName[name].annotations.readOnlyHint, true);
+    assert.deepEqual(byName[name].inputSchema.properties.useCase.enum, [
+      'agentic-coding', 'tool-agents', 'long-context-rag', 'structured-extraction',
+      'high-volume-cheap', 'chat-assistant', 'creative-writing', 'reasoning-math', 'frontend-ui',
+    ]);
+    assert.deepEqual(byName[name].inputSchema.properties.priority.enum, ['balanced', 'cheapest', 'fastest', 'most-reliable']);
+    assert.equal(byName[name].inputSchema.properties.zdr.type, 'boolean');
+    assert.equal(byName[name].inputSchema.properties.includeProprietary.type, 'boolean');
+    assert.equal(byName[name].inputSchema.properties.excludeHq.items.pattern, '^[A-Z]{2}$');
+    assert.deepEqual(byName[name].inputSchema.properties.limit, {
+      type: 'integer', minimum: 1, maximum: 100,
+      description: name === 'recommend_model'
+        ? 'Maximum rows in each compact candidate group (default 10).'
+        : 'Maximum rows in each provider group (default 10).',
+    });
+    assert.ok(!Object.hasOwn(byName[name].inputSchema.properties, 'detail'), 'WebMCP stays on the compact default');
+  }
+  assert.deepEqual(byName.recommend_model.inputSchema.required, ['useCase']);
+  assert.deepEqual(byName.recommend_provider.inputSchema.required, ['useCase', 'model']);
+  assert.match(src, /recommend_model:\s*\(input\)\s*=>\s*catalog\.recommendModel\(input\)/);
+  assert.match(src, /recommend_provider:\s*\(input\)\s*=>\s*catalog\.recommendProvider\(input\)/);
 });
 
 test('set_workload and set_filters schemas use enums; compare uses {provider,id}', async () => {

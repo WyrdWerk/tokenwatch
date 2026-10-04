@@ -1,6 +1,7 @@
 import { blendedRate, AGENTIC_MIX } from '../shared/cost.mjs';
 import { canonicalId } from '../shared/normalize.mjs';
 import { API_ENDPOINTS } from '../shared/api-meta.mjs';
+import { PRIORITY_PROVIDER_WEIGHTS, USE_CASES } from '../shared/use-cases.mjs';
 
 export const SITE = 'https://tokenwatch.wyrdwerk.com';
 export const TOP_N = 25;
@@ -431,8 +432,20 @@ export function collectProviderPages({ pricing, imagePricing, videoPricing, publ
   return pages.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function pageNav() {
-  return '<nav class="tab-nav" aria-label="TokenWatch sections"><a class="tab-link" href="/">Text</a><a class="tab-link" href="/image">Image</a><a class="tab-link" href="/video">Video</a><a class="tab-link" href="/benchmarks">Benchmarks</a><a class="tab-link" href="/models/">Models</a><a class="tab-link" href="/providers/">Providers</a><a class="tab-link" href="/docs/methodology/">Methodology</a><a class="tab-link" href="/docs/api/">API</a><a class="tab-link" href="/faq/">FAQ</a></nav>';
+const NAV_LINKS = [
+  ['/', 'Text'], ['/image', 'Image'], ['/video', 'Video'], ['/benchmarks', 'Benchmarks'], ['/choose/', 'Choose'],
+  ['/models/', 'Models'], ['/providers/', 'Providers'], ['/docs/methodology/', 'Methodology'], ['/docs/api/', 'API'], ['/faq/', 'FAQ'],
+];
+
+// Generated pages mark their section tab; the section index itself is the current page.
+export function pageNav(currentPath = '') {
+  const links = NAV_LINKS.map(([href, label]) => {
+    const inSection = href.endsWith('/') && href !== '/' && currentPath.startsWith(href);
+    if (!inSection) return `<a class="tab-link" href="${href}">${label}</a>`;
+    const current = currentPath === href ? ' aria-current="page"' : '';
+    return `<a class="tab-link active"${current} href="${href}">${label}</a>`;
+  }).join('');
+  return `<nav class="tab-nav" aria-label="TokenWatch sections">${links}</nav>`;
 }
 
 function visibleBreadcrumbs(items) {
@@ -472,7 +485,7 @@ export function renderStaticPage({ title, description, canonicalPath, heading, s
   ${renderJsonLd(structuredData)}
 </head>
 <body>
-  <header><div class="header-row"><a class="brand-link site-brand" href="/" aria-label="TokenWatch home">💰 TokenWatch</a><a class="repo-link" href="https://wyrdwerk.com" target="_blank" rel="noopener">WyrdWerk</a><a class="repo-link" href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">GitHub</a><a class="repo-link" href="https://www.linkedin.com/in/yash-jain-65295511b/" target="_blank" rel="noopener">LinkedIn</a><a class="repo-link" href="https://x.com/thelaggingway" target="_blank" rel="noopener">X</a><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle dark/light mode"></button></div><h1 class="tagline">${esc(heading)}</h1><p class="subtitle">${esc(subtitle)}</p>${pageNav()}</header>
+  <header><div class="header-row"><a class="brand-link site-brand" href="/" aria-label="TokenWatch home">💰 TokenWatch</a><a class="repo-link" href="https://wyrdwerk.com" target="_blank" rel="noopener">WyrdWerk</a><a class="repo-link" href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">GitHub</a><a class="repo-link" href="https://www.linkedin.com/in/yash-jain-65295511b/" target="_blank" rel="noopener">LinkedIn</a><a class="repo-link" href="https://x.com/thelaggingway" target="_blank" rel="noopener">X</a><button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle dark/light mode"></button></div><h1 class="tagline">${esc(heading)}</h1><p class="subtitle">${esc(subtitle)}</p>${pageNav(canonicalPath)}</header>
   <main class="seo-page-main">
     ${visibleBreadcrumbs(breadcrumbs)}
 ${body}
@@ -962,16 +975,21 @@ export function renderMethodologyPage({ modelCount, providerCount, generatedAt, 
 
 export function renderApiDocsPage() {
   const path = '/docs/api/';
-  const description = 'Query TokenWatch text, image, video, provider, organization, and catalog statistics through the public JSON API.';
+  const description = 'Query TokenWatch text, image, video, provider, organization, catalog statistics, and workload-aware model recommendations through the public JSON API.';
   const rows = API_ENDPOINTS.map((endpoint) => `<tr><td><code>${esc(endpoint.path)}</code></td><td>${esc(endpoint.summary)}</td><td>${endpoint.params.length ? endpoint.params.map((param) => `<code>${esc(param)}</code>`).join(', ') : '—'}</td><td>${endpoint.sort.length ? endpoint.sort.map((sort) => `<code>${esc(sort)}</code>`).join(', ') : '—'}</td></tr>`).join('\n');
   const body = `    <article class="seo-prose">
       <h2>Public JSON API</h2>
       <p>All endpoints accept GET requests and return JSON with permissive CORS headers. List endpoints paginate with <code>limit</code> and <code>offset</code>; the limit is clamped to 1–500 and defaults to 100. A machine-readable <a href="/openapi.json">OpenAPI 3.1 description</a> is also available.</p>
+      <p>Recommendation mixes are assumed workload defaults, not claims about your traffic. Model picks include best quality, best value, and the cheapest model above an absolute quality floor; explanations label benchmark coverage, provider ranking, missing signals, and confidence. Provider ranking requires confirmed capability and context metadata and keeps unverified options separate.</p>
+      <p>Recommendation responses default to compact candidate groups (up to 10 rows each, with total counts) and full explanations on the three model picks. Provider results keep full explanations on the top three. Add <code>detail=full</code> to expand explanations for returned rows, or set <code>limit=1..100</code> to change each group cap. Recommendation JSON is compact (no indentation); add <code>pretty=1</code> for indented output.</p>
       <div class="table-wrap"><table><caption>TokenWatch API endpoints</caption><thead><tr><th scope="col">Endpoint</th><th scope="col">Response</th><th scope="col">Query parameters</th><th scope="col">Sort values</th></tr></thead><tbody>${rows}</tbody></table></div>
       <h2>Examples</h2>
       <pre><code>curl '${SITE}/api/v1/models?provider=aster&amp;sort=input&amp;limit=20'
 curl '${SITE}/api/v1/models?open_weights=true&amp;limit=20'
 curl '${SITE}/api/v1/models/glm-5.2/providers?tokens=1000000&amp;mix=30,50,20'
+curl '${SITE}/api/v1/use-cases'
+curl '${SITE}/api/v1/recommend?use_case=agentic-coding&amp;priority=balanced&amp;zdr=true&amp;exclude_hq=CN&amp;limit=5'
+curl '${SITE}/api/v1/recommend/providers?use_case=agentic-coding&amp;model=deepseek-v4-flash&amp;priority=fastest&amp;detail=full'
 curl '${SITE}/api/v1/providers?zdr=true'
 curl '${SITE}/api/v1/videos?provider=fal&amp;limit=25'</code></pre>
       <h2>Errors and freshness</h2>
@@ -984,35 +1002,59 @@ curl '${SITE}/api/v1/videos?provider=fal&amp;limit=25'</code></pre>
     description,
     canonicalPath: path,
     heading: 'TokenWatch API documentation',
-    subtitle: 'Public JSON endpoints for model, provider, image, and video pricing',
+    subtitle: 'Public JSON endpoints for pricing catalogs and workload-aware recommendations',
     breadcrumbs: [{ name: 'Text pricing', path: '/' }, { name: 'API documentation', path }],
     body,
     structuredData: { '@context': 'https://schema.org', '@graph': [{ '@type': 'TechArticle', url: SITE + path, headline: 'TokenWatch API documentation', description }, breadcrumbSchema([{ name: 'Text pricing', path: '/' }, { name: 'API documentation', path }])] },
   });
 }
 
-const BOOLEAN_API_PARAMS = new Set(['cache_read', 'cache_write', 'promo', 'zdr', 'sub', 'benchmarked', 'open_weights']);
+const BOOLEAN_API_PARAMS = new Set(['cache_read', 'cache_write', 'promo', 'zdr', 'sub', 'benchmarked', 'open_weights', 'include_proprietary']);
 const INTEGER_API_PARAMS = new Set(['limit', 'offset']);
 const NUMBER_API_PARAMS = new Set(['min_context', 'min_output', 'min_intelligence', 'tokens']);
 
-function openApiParameter(name) {
-  const schema = BOOLEAN_API_PARAMS.has(name)
+function openApiParameter(name, required = false, parameterLimits = {}) {
+  let schema = BOOLEAN_API_PARAMS.has(name)
     ? { type: 'boolean' }
     : INTEGER_API_PARAMS.has(name)
-      ? { type: 'integer', minimum: name === 'limit' ? 1 : 0, maximum: name === 'limit' ? 500 : undefined }
+      ? { type: 'integer', minimum: name === 'limit' ? 1 : 0, maximum: name === 'limit' ? (parameterLimits.limit ?? 500) : undefined }
       : NUMBER_API_PARAMS.has(name)
         ? { type: 'number', minimum: 0 }
         : { type: 'string' };
+  if (name === 'use_case') schema = { type: 'string', enum: Object.keys(USE_CASES) };
+  if (name === 'priority') schema = { type: 'string', enum: Object.keys(PRIORITY_PROVIDER_WEIGHTS) };
+  if (name === 'exclude_hq') schema = { type: 'string', pattern: '^[A-Za-z]{2}(,[A-Za-z]{2})*$' };
+  if (name === 'detail') schema = { type: 'string', enum: ['compact', 'full'], default: 'compact' };
+  if (name === 'pretty') schema = { type: 'string', enum: ['1', '0', 'true', 'false'], default: '0' };
+  if (name === 'limit' && parameterLimits.limit) schema.default = 10;
   if (schema.maximum === undefined) delete schema.maximum;
   return {
     name,
     in: 'query',
-    required: false,
+    required,
     description: name === 'mix'
       ? 'Comma-separated input, cached-input, and output percentages.'
       : name === 'open_weights'
         ? 'Filter to models with resolved open_weights=true or false; unknown statuses are excluded.'
-        : `Filter or control parameter: ${name}.`,
+        : name === 'use_case'
+          ? 'Required workload preset id. See /api/v1/use-cases for assumed mixes, weights, requirements, and quality floors.'
+          : name === 'priority'
+            ? 'Provider-rank weighting preset; defaults to balanced.'
+            : name === 'exclude_hq'
+              ? 'Comma-separated two-letter headquarters country codes to exclude; providers with unknown headquarters are not excluded.'
+              : name === 'include_proprietary'
+                ? 'Include models not confirmed open-weight; defaults to false for model recommendations.'
+                : name === 'model'
+                  ? 'Required canonical model id. An unknown model returns 404.'
+                  : name === 'pretty'
+                    ? 'Set to 1 for indented JSON; responses are compact (unindented) by default.'
+                  : name === 'detail'
+                    ? 'Defaults to compact; full returns explanations for all returned rows.'
+                    : name === 'limit'
+                      ? parameterLimits.limit
+                        ? `Maximum rows per recommendation group; defaults to 10 (range 1–${parameterLimits.limit}).`
+                        : 'Page size; defaults to 100 and is clamped to 1–500.'
+                  : `Filter or control parameter: ${name}.`,
     schema,
   };
 }
@@ -1032,8 +1074,8 @@ export function buildOpenApiDocument() {
     paths[path] = {
       get: {
         summary: endpoint.summary,
-        operationId: `get${endpoint.path.split('/').filter(Boolean).map((segment) => segment.replace(/^:/, '').replace(/^./, (char) => char.toUpperCase())).join('') || 'ApiDirectory'}`, 
-        parameters: [...pathParams, ...endpoint.params.map(openApiParameter)],
+        operationId: `get${endpoint.path.split('/').filter(Boolean).map((segment) => segment.replace(/^:/, '').split(/[^A-Za-z0-9]+/).filter(Boolean).map((part) => part[0].toUpperCase() + part.slice(1)).join('')).join('') || 'ApiDirectory'}`,
+        parameters: [...pathParams, ...endpoint.params.map((name) => openApiParameter(name, endpoint.requiredParams?.includes(name) === true, endpoint.parameterLimits))],
         responses: {
           200: { description: 'Successful JSON response.', content: { 'application/json': { schema: { type: 'object' } } } },
           400: { description: 'Invalid request parameter or malformed model ID.', content: { 'application/json': { schema: { type: 'object' } } } },
@@ -1048,7 +1090,7 @@ export function buildOpenApiDocument() {
     info: {
       title: 'TokenWatch Pricing API',
       version: 'v1',
-      description: 'Read-only, public JSON API for TokenWatch text, image, video, provider, organization, and pricing catalog data.',
+      description: 'Read-only, public JSON API for TokenWatch text, image, video, provider, organization, pricing catalog data, and workload-aware recommendations.',
     },
     servers: [{ url: SITE }],
     paths,

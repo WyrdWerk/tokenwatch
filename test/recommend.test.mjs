@@ -292,6 +292,40 @@ test('rankProviders gates required capability, context, ZDR, HQ, and uptime befo
   assert.ok(rows.ranked[0].reasons.some((reason) => /ZDR/i.test(reason)));
 });
 
+test('rankProviders excludes known provider headquarters without treating unknown HQ as excluded', () => {
+  const offerings = [
+    mixOffering('open/model-a', 'us-provider', 90, 1),
+    mixOffering('open/model-a', 'cn-provider', 90, 0.5),
+    mixOffering('open/model-a', 'unknown-provider', 90, 2),
+  ];
+  const result = rankProviders('agentic-coding', 'model-a', offerings, {}, {
+    providersMeta: { 'us-provider': { headquarters: 'US' }, 'cn-provider': { headquarters: 'CN' } },
+    excludeHQ: ['CN'],
+  });
+  assert.deepEqual(result.ranked.map((provider) => provider.provider), ['us-provider', 'unknown-provider']);
+});
+
+test('rankProviders excludes requested provider headquarters and explains the exclusion gate', () => {
+  const rows = rankProviders('chat-assistant', 'model-a', [
+    mixOffering('open/model-a', 'us-host', 90, 1, { headquarters: 'US' }),
+    mixOffering('open/model-a', 'cn-host', 90, 0.5, { headquarters: 'CN' }),
+    mixOffering('open/model-a', 'unknown-host', 90, 2),
+  ], {}, { excludeHQ: ['cn'] });
+
+  assert.deepEqual(rows.ranked.map((row) => row.provider), ['us-host', 'unknown-host']);
+  const gate = rows.ranked[0].explanation.gates.find((entry) => entry.key === 'excluded_headquarters');
+  assert.deepEqual(gate, {
+    key: 'excluded_headquarters',
+    applied: true,
+    passed: true,
+    excluded: ['CN'],
+    observed: 'US',
+  });
+  const unknownGate = rows.ranked.find((row) => row.provider === 'unknown-host').explanation.gates
+    .find((entry) => entry.key === 'excluded_headquarters');
+  assert.equal(unknownGate.passed, null, 'unknown headquarters remain eligible but are not called verified');
+});
+
 test('shortlist provider and price picks use rankProviders gates and expose the top-ranked provider', () => {
   const offerings = [
     mixOffering('open/model-a', 'fast-approved', 90, 5, { zdr: true, uptime_30m: 99.7 }),
@@ -313,6 +347,7 @@ test('shortlist provider and price picks use rankProviders gates and expose the 
   assert.equal(result.bestQuality.recommendedProvider.provider, 'fast-approved');
   assert.equal(result.bestQuality.provider, 'fast-approved');
   assert.equal(result.bestQuality.recommendedProvider.blendedRate, 5);
+  assert.deepEqual(result.bestQuality.providers.map((provider) => provider.provider), ['fast-approved', 'cheap-approved']);
   assert.equal(result.bestQuality.cheapestProvider.provider, 'cheap-approved');
   assert.equal(result.bestQuality.blendedRate, 1, 'Pareto price uses the cheapest provider that passes all gates');
   assert.ok(!['blocked-zdr', 'blocked-issue'].includes(result.bestQuality.cheapestProvider?.provider));

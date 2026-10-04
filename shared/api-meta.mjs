@@ -8,6 +8,28 @@ export const API_ENDPOINTS = [
     sort: [],
   },
   {
+    path: '/api/v1/use-cases',
+    summary: 'List workload recommendation presets and their assumed mixes, weights, requirements, and quality floors',
+    params: [],
+    sort: [],
+  },
+  {
+    path: '/api/v1/recommend',
+    summary: 'Recommend models for a workload with compact candidate groups and full explanations for the three picks',
+    params: ['use_case', 'priority', 'zdr', 'exclude_hq', 'include_proprietary', 'detail', 'limit', 'pretty'],
+    requiredParams: ['use_case'],
+    parameterLimits: { limit: 100 },
+    sort: [],
+  },
+  {
+    path: '/api/v1/recommend/providers',
+    summary: 'Rank providers for one model with full explanations for the top three and compact remaining rows',
+    params: ['use_case', 'model', 'priority', 'zdr', 'exclude_hq', 'include_proprietary', 'detail', 'limit', 'pretty'],
+    requiredParams: ['use_case', 'model'],
+    parameterLimits: { limit: 100 },
+    sort: [],
+  },
+  {
     path: '/api/v1/models',
     summary: 'List text-generation model offerings',
     params: ['org', 'provider', 'min_context', 'min_output', 'min_intelligence', 'quantization', 'open_weights', 'cache_read', 'cache_write', 'promo', 'zdr', 'sub', 'benchmarked', 'search', 'sort', 'order', 'limit', 'offset'],

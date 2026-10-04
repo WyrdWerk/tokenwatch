@@ -9,6 +9,9 @@ import { blendedRate } from './cost.mjs';
 import { canonicalId, quantFromId } from './normalize.mjs';
 import { getUseCase, resolveProviderWeights } from './use-cases.mjs';
 
+/** Share of a use case's benchmark weight a model needs observed to be quality-eligible. */
+export const MIN_BENCHMARK_COVERAGE = 0.5;
+
 const BENCHMARK_FIELDS = new Set([
   'intelligence_index', 'coding_index', 'agentic_index', 'design_arena_best',
   'arena_text', 'arena_creative_writing',
@@ -79,6 +82,11 @@ function openWeightInfo(model) {
     };
   }
   return { value: null, source: null };
+}
+
+/** Return true only when the catalog has a confirmed open-weight status. */
+export function isOpenWeightModel(model) {
+  return openWeightInfo(model).value === true;
 }
 
 function capabilityValue(model, capability) {
@@ -344,7 +352,7 @@ function candidateGates(group, model, useCase, pick) {
     { key: 'minimum_context', applied: finiteNonNegative(requirements.minContext) && requirements.minContext > 0, passed: capacity === null ? null : capacity >= (requirements.minContext || 0), minimum: requirements.minContext || 0, observed: capacity },
     { key: 'priceable_mix', applied: true, passed: finiteNonNegative(group.blendedRate), mix: useCase.mix, observedBlendedRate: group.blendedRate },
     { key: 'quantization_policy', applied: Boolean(useCase.quantizationPolicy?.reject?.length), passed: true, rejected: useCase.quantizationPolicy?.reject || [], fallbackUsed: Boolean(group.quantFallback) },
-    { key: 'benchmark_coverage', applied: qualityGateApplied, passed: group.qualityCoverage >= 0.5, minimumCoverage: 0.5, observedCoverage: group.qualityCoverage },
+    { key: 'benchmark_coverage', applied: qualityGateApplied, passed: group.qualityCoverage >= MIN_BENCHMARK_COVERAGE, minimumCoverage: MIN_BENCHMARK_COVERAGE, observedCoverage: group.qualityCoverage },
     { key: 'quality_floor', applied: pick === 'cheapestAboveFloor', passed: pick === 'cheapestAboveFloor' ? finite(primaryScore) && primaryScore >= useCase.qualityFloor.min : null, field: useCase.qualityFloor.field, minimum: useCase.qualityFloor.min, observed: primaryScore },
   ];
 }
@@ -486,9 +494,10 @@ function candidateResult(group, useCase, {
     unknowns,
     confidence: confidence || { level: 'uncompared', method: 'not-ranked', scoreMargin: null, runnerUpId: null, runnerUpScore: null },
     explanation: candidateExplanation(group, model, useCase, pick),
+    providers: providerRanking.ranked,
     unverifiedProviders: providerRanking.unverified,
     ...(unbenchmarked ? { group: 'unbenchmarked' } : {}),
-    ...(group.qualityScore !== null && group.qualityCoverage < 0.5 ? { group: 'partiallyBenchmarked' } : {}),
+    ...(group.qualityScore !== null && group.qualityCoverage < MIN_BENCHMARK_COVERAGE ? { group: 'partiallyBenchmarked' } : {}),
     offering: recommendedProvider?.offering ?? cheapestProvider?.offering ?? null,
     cheapestOffering: cheapestProvider?.offering ?? null,
   };
@@ -656,13 +665,13 @@ export function shortlistModels(useCaseId, catalog, opts = {}) {
 
   scoreModelCandidates(eligibleGroups, opts.benchmarks, useCase);
   const scored = eligibleGroups.filter((candidate) => candidate.qualityScore !== null);
-  const qualityEligible = scored.filter((candidate) => candidate.qualityCoverage >= 0.5);
+  const qualityEligible = scored.filter((candidate) => candidate.qualityCoverage >= MIN_BENCHMARK_COVERAGE);
   const unbenchmarked = eligibleGroups
     .filter((candidate) => candidate.qualityScore === null)
     .map((candidate) => candidateResult(candidate, useCase, { unbenchmarked: true }))
     .sort((a, b) => (a.blendedRate ?? Infinity) - (b.blendedRate ?? Infinity) || a.id.localeCompare(b.id));
   const partiallyBenchmarked = scored
-    .filter((candidate) => candidate.qualityCoverage < 0.5)
+    .filter((candidate) => candidate.qualityCoverage < MIN_BENCHMARK_COVERAGE)
     .map((candidate) => candidateResult(candidate, useCase, {
       candidateCount: scored.length,
     }))
@@ -765,6 +774,14 @@ function matchesHeadquarters(value, requested) {
   return Boolean(value) && allowed.some((country) => String(country).toLowerCase() === String(value).toLowerCase());
 }
 
+function excludedHeadquarters(constraints) {
+  const requested = constraints.excludeHQ ?? constraints.excludeHq ?? [];
+  const countries = Array.isArray(requested) ? requested : [requested];
+  return [...new Set(countries
+    .filter((country) => typeof country === 'string' && country.trim())
+    .map((country) => country.trim().toUpperCase()))].sort();
+}
+
 function matchingIssue(model, canonical, issues) {
   return (issues || []).filter((issue) => issue
     && canonicalId(String(issue.canonicalId || '')) === canonical
@@ -856,6 +873,8 @@ function gateProvider(model, useCase, constraints, canonical) {
   const requireHQ = constraints.requireHQ ?? constraints.requireHq;
   const headquarters = headquartersOf(model, model.provider, constraints);
   if (requireHQ && !matchesHeadquarters(headquarters, requireHQ)) return null;
+  const excludedHQ = excludedHeadquarters(constraints);
+  if (headquarters && excludedHQ.includes(String(headquarters).toUpperCase())) return null;
 
   const uptime = normalizedUptime(model);
   const minUptime = minUptimePercent(constraints.minUptime);
@@ -866,6 +885,7 @@ function gateProvider(model, useCase, constraints, canonical) {
 
   return {
     headquarters,
+    excludedHQ,
     uptime,
     issues,
     requirementUnknowns: hardRequirements.unknowns,
@@ -876,6 +896,7 @@ function gateProvider(model, useCase, constraints, canonical) {
 function providerGates(model, useCase, constraints, gate, quantFallback, price) {
   const requirements = useCase.hardRequirements || {};
   const requireHQ = constraints.requireHQ ?? constraints.requireHq;
+  const excludedHQ = gate.excludedHQ || [];
   const minUptime = minUptimePercent(constraints.minUptime);
   return [
     { key: 'tool_calling', applied: requirements.needsToolCalling === true, passed: capabilityValue(model, 'tool_call') !== false, required: requirements.needsToolCalling === true, observed: capabilityValue(model, 'tool_call'), source: capabilitySource(model) },
@@ -883,6 +904,7 @@ function providerGates(model, useCase, constraints, gate, quantFallback, price) 
     { key: 'minimum_context', applied: finiteNonNegative(requirements.minContext) && requirements.minContext > 0, passed: gate.capacity === null ? null : gate.capacity >= (requirements.minContext || 0), minimum: requirements.minContext || 0, observed: gate.capacity },
     { key: 'zdr', applied: Boolean(constraints.requireZdr), passed: !constraints.requireZdr || model.zdr === true, observed: model.zdr === true },
     { key: 'headquarters', applied: Boolean(requireHQ), passed: !requireHQ || matchesHeadquarters(gate.headquarters, requireHQ), requested: requireHQ ?? null, observed: gate.headquarters },
+    { key: 'excluded_headquarters', applied: excludedHQ.length > 0, passed: !excludedHQ.length ? true : !gate.headquarters ? null : !excludedHQ.includes(String(gate.headquarters).toUpperCase()), excluded: excludedHQ, observed: gate.headquarters },
     { key: 'minimum_uptime', applied: minUptime !== null, passed: minUptime === null || Boolean(gate.uptime && gate.uptime.value >= minUptime), minimum: minUptime, observed: gate.uptime?.value ?? null, window: gate.uptime?.window ?? null },
     { key: 'known_issue', applied: true, passed: !gate.issues.some((issue) => BLOCKING_ISSUES.has(String(issue.verdict || '').toLowerCase())), blockingVerdicts: ['broken', 'unavailable'], observed: gate.issues.map((issue) => ({ verdict: issue.verdict || 'unspecified', source: issue.source || null })) },
     { key: 'priceable_mix', applied: true, passed: finiteNonNegative(price), mix: useCase.mix, observedBlendedRate: price },

@@ -38,12 +38,16 @@ models here; catalogs and prices are dynamic.
 10. Performance loads separately from pricing. A `provisional` view is not a
     final speed ranking or eligible speed-filtered set. Read `performance`,
     `effectiveSort`, and `note`; do not claim its speed minimum was applied.
+11. `recommend_model` and `recommend_provider` query the shared workload
+    recommender, not the live table. Always name the selected `useCase`: its
+    preset mix is assumed and is not inferred from `get_view` or user traffic.
+    These read-only tools do not change the calculator.
 
 ## Page capability map
 
 | Page | Registered tools | Sortable fields |
 |---|---|---|
-| Text `/` | `about_tokenwatch` plus the 19 tools below | `org`, `provider`, `model`, `quantization` (best effort), `input`, `output`, `cache_read`, `context`, `speed`, `ttft`, `intelligence`, `coding`, `agentic`, `blended`, `cost` |
+| Text `/` | 21 tools total, including `about_tokenwatch` | `org`, `provider`, `model`, `quantization` (best effort), `input`, `output`, `cache_read`, `context`, `speed`, `ttft`, `intelligence`, `coding`, `agentic`, `blended`, `cost` |
 | Image `/image` | `about_tokenwatch`, `get_view`, `get_catalog_info`, `set_sort` | `org`, `model`, `cost_per_unit`, `cost` |
 | Video `/video` | `about_tokenwatch`, `get_view`, `get_catalog_info`, `set_sort` | `org`, `model`, `resolution`, `audio`, `cost_per_second`, `cost` |
 | Benchmarks `/benchmarks` | `about_tokenwatch`, `get_view`, `get_catalog_info`, `get_model`, `set_sort`, `set_use_case`, `set_filters` | `score`, `value`, `price`, `name`, `org`, plus the tab’s score keys |
@@ -114,6 +118,14 @@ compare_models({ action: "set", models: [{ provider, id }, ...], open: true })
 
 Use `highlight_tradeoff` when the user asks for a cheapest/fastest/ZDR/smartest
 tradeoff comparison without naming specific rows.
+
+### Workload recommendations (text)
+
+Use `recommend_model({ useCase, priority?, zdr?, excludeHq?, includeProprietary?, limit? })` to shortlist canonical models, or `recommend_provider({ useCase, model, ... })` to rank providers for one canonical id. Use cases: `agentic-coding`, `tool-agents`, `long-context-rag`, `structured-extraction`, `high-volume-cheap`, `chat-assistant`, `creative-writing`, `reasoning-math`, `frontend-ui`; priority: `balanced`, `cheapest`, `fastest`, or `most-reliable` (default `balanced`). `limit` caps each result group to 1–100 rows (default 10).
+
+`zdr` requires confirmed zero data retention. `excludeHq` accepts two-letter country codes; unknown headquarters are not excluded. `includeProprietary` opts into models not confirmed open-weight (default false). Both tools use the shared API engine and committed catalogs, not current `get_view` rows, and do not change the calculator; their preset mix is assumed, not inferred from the table or user traffic.
+
+WebMCP uses the compact API default and does not expose `detail=full`: only the three model picks and top three providers include full explanations. Remaining model/provider rows are compact; groups expose `{ totalCount, items }`, with `score`, `coverage`, `blendedRate`, and a short `reason` for model candidates. Report timestamps, use case, priority, and confidence; relative scores are not guarantees. Distinguish `bestQuality`, `bestValue`, and `cheapestAboveFloor`; mention partial/unbenchmarked models when relevant. Keep confirmed provider `ranked` separate from `unverified`; missing required metadata is not proof of eligibility.
 
 ## Shared result conventions
 
@@ -270,6 +282,8 @@ the tool returns an error.
 ### Text workload, filter, and catalog tools
 
 - `list_presets()` → `{ presets: [{ name, totalTokensM, mix: { input, cache, output } }], note }`.
+- `recommend_model({ useCase, priority?, zdr?, excludeHq?, includeProprietary?, limit? })` → catalog timestamps, selected use case/priority, `mix` (with `assumed: true`), quality floor, full `picks` (`bestQuality`, `bestValue`, `cheapestAboveFloor`), and compact groups (`alsoConsidered`, `partiallyBenchmarked`, `unbenchmarked`, `unverified`) shaped as `{ totalCount, items }`. Compact candidate items contain `id`, `name`, `score`, `coverage`, `blendedRate`, and `reason`. Group `limit` defaults to 10 and accepts 1–100. `/api/v1/use-cases` lists all presets and their assumed mixes.
+- `recommend_provider({ useCase, model, priority?, zdr?, excludeHq?, includeProprietary?, limit? })` → catalog timestamps, canonical id, `ranked` and `unverified` groups shaped as `{ totalCount, items }`, plus an optional message. The top three ranked provider items include explanations; remaining rows are compact. `model` must be a canonical catalog id.
 - `get_share_url()` → `{ shareUrl, note }`. It updates the current hash first.
 - `get_catalog_info()` → `{ page, generated_at, catalogSize, providerCount, note }`.
 - `set_workload({ totalTokensM?, mix?, costMode?, computeBy?, budget? })` → a fresh `get_view`; mix values must sum to 100 ±0.5 and are not silently normalized. It is a partial update to workload volume, mix, and mode.

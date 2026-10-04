@@ -340,6 +340,8 @@ test('API documentation renders from the same endpoint metadata as API discovery
   assert.match(docs, /min_intelligence/);
   assert.match(docs, /open_weights=true/);
   assert.match(docs, /benchmarked/);
+  assert.match(docs, /assumed workload defaults/);
+  assert.match(docs, /recommend\?use_case=agentic-coding/);
   assert.match(docs, /href="\/openapi\.json"/);
   assert.equal(openApi.openapi, '3.1.0');
   assert.equal(openApi.servers[0].url, 'https://tokenwatch.wyrdwerk.com');
@@ -351,6 +353,27 @@ test('API documentation renders from the same endpoint metadata as API discovery
   const openWeights = openApi.paths['/api/v1/models'].get.parameters.find((parameter) => parameter.name === 'open_weights');
   assert.deepEqual(openWeights.schema, { type: 'boolean' });
   assert.match(openWeights.description, /unknown statuses are excluded/);
+  const recommend = openApi.paths['/api/v1/recommend'].get.parameters;
+  assert.equal(recommend.find((parameter) => parameter.name === 'use_case').required, true);
+  assert.deepEqual(recommend.find((parameter) => parameter.name === 'priority').schema.enum,
+    ['balanced', 'cheapest', 'fastest', 'most-reliable']);
+  assert.deepEqual(recommend.find((parameter) => parameter.name === 'zdr').schema, { type: 'boolean' });
+  assert.equal(recommend.find((parameter) => parameter.name === 'exclude_hq').schema.pattern,
+    '^[A-Za-z]{2}(,[A-Za-z]{2})*$');
+  assert.deepEqual(recommend.find((parameter) => parameter.name === 'include_proprietary').schema,
+    { type: 'boolean' });
+  assert.deepEqual(recommend.find((parameter) => parameter.name === 'detail').schema,
+    { type: 'string', enum: ['compact', 'full'], default: 'compact' });
+  assert.deepEqual(recommend.find((parameter) => parameter.name === 'limit').schema,
+    { type: 'integer', minimum: 1, maximum: 100, default: 10 });
+  assert.match(recommend.find((parameter) => parameter.name === 'detail').description, /compact/);
+  const providers = openApi.paths['/api/v1/recommend/providers'].get.parameters;
+  assert.equal(providers.find((parameter) => parameter.name === 'model').required, true);
+  assert.equal(providers.find((parameter) => parameter.name === 'include_proprietary').schema.type, 'boolean');
+  assert.equal(providers.find((parameter) => parameter.name === 'limit').schema.maximum, 100);
+  assert.match(docs, /full explanations on the three model picks/);
+  assert.match(docs, /limit=1\.\.100/);
+  assert.equal(openApi.paths['/api/v1/use-cases'].get.summary.includes('assumed mixes'), true);
 });
 
 test('dynamic sitemap rejects duplicates and includes generated routes', () => {
