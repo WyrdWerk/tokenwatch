@@ -123,18 +123,18 @@ export const USE_CASES = Object.freeze({
     id: 'creative-writing',
     label: 'Creative writing',
     mix: { inputPct: 35, cacheReadPct: 10, outputPct: 55 },
-    // Arena creative-writing Elo is the human-preference signal; language and
-    // broad intelligence remain secondary coverage/capability signals.
-    benchmarkWeights: { arena_creative_writing: 0.55, livebench_language: 0.25, intelligence_index: 0.2 },
+    // Reader preference leads; broad AA intelligence is the only secondary
+    // capability signal. LiveBench language is too sparse and indirect here.
+    benchmarkWeights: { arena_creative_writing: 0.75, intelligence_index: 0.25 },
     preferenceSignal: { field: 'arena_creative_writing', label: "People's preference (Creative Writing Arena)" },
     // Long generations make throughput important, while low TTFT and price
     // still affect the writing-feedback loop and sustained use.
     providerWeights: { price: 0.25, ttft: 0.25, throughput: 0.3, uptime: 0.2 },
     hardRequirements: { needsToolCalling: false, needsStructuredOutput: false, minContext: 16384 },
     quantizationPolicy: { reject: [], fallbackWhenNoAlternative: true },
-    // Interpolated p25 = 1306.7 across 73 open-weight, priceable, context-
-    // qualified Arena-scored families in the 2026-10-04 catalog snapshot.
-    qualityFloor: { field: 'arena_creative_writing', min: 1307 },
+    // Interpolated p25 = 1309.5 across 65 open-weight, non-subscription,
+    // priceable, context-qualified Arena-scored families in the 2026-10-04 snapshot.
+    qualityFloor: { field: 'arena_creative_writing', min: 1310 },
   },
   'reasoning-math': {
     id: 'reasoning-math',

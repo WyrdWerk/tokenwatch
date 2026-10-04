@@ -209,11 +209,18 @@ function metricValue(record, field) {
 function benchmarkSignalSource(field, benchmarks) {
   if (field === 'arena_text' || field === 'arena_creative_writing') {
     const arena = benchmarks?.sources?.arena || {};
+    const leaderboard = field === 'arena_text' ? 'Text overall' : 'Creative writing';
+    const url = arena.url || 'https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset';
     return {
       name: arena.name || 'Arena',
-      leaderboard: field === 'arena_text' ? 'Text overall' : 'Creative writing',
-      url: arena.url || 'https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset',
+      leaderboard,
+      url,
       scale: 'Bradley–Terry rating (Elo-like)',
+      rating_date: arena.rating_dates?.[field] ?? null,
+      license: arena.license || 'CC-BY-4.0',
+      license_url: arena.license_url || 'https://creativecommons.org/licenses/by/4.0/',
+      attribution: arena.attribution || 'Arena (LMArena), Leaderboard Dataset; licensed under CC BY 4.0.',
+      data_url: arena.data_url || url,
     };
   }
   if (field === 'design_arena_best') {
@@ -565,12 +572,15 @@ function paretoConfidenceScores(frontier) {
   }).sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
 }
 
-function buildPreferenceRanking(groups, useCase) {
+function buildPreferenceRanking(groups, useCase, benchmarks) {
   const preference = useCase.preferenceSignal;
   if (!preference?.field) return null;
-  const ranked = groups
+  const preferenceGroups = groups
     .filter((group) => finite(group.metrics?.[preference.field]))
     .sort((a, b) => b.metrics[preference.field] - a.metrics[preference.field] || a.id.localeCompare(b.id))
+  const source = benchmarkSignalSource(preference.field, benchmarks);
+  const favoriteGroup = preferenceGroups[0];
+  const ranked = preferenceGroups
     .slice(0, 10)
     .map((group, index) => ({
       id: group.id,
@@ -581,7 +591,13 @@ function buildPreferenceRanking(groups, useCase) {
   return {
     field: preference.field,
     label: preference.label,
-    source: benchmarkSignalSource(preference.field, null),
+    board: source.leaderboard,
+    source,
+    favorite: favoriteGroup ? {
+      ...candidateResult(favoriteGroup, useCase, { pick: 'preference' }),
+      rank: 1,
+      rating: rounded(favoriteGroup.metrics[preference.field], 2),
+    } : null,
     ranking: ranked,
   };
 }
@@ -736,7 +752,7 @@ export function shortlistModels(useCaseId, catalog, opts = {}) {
     bestValue,
     cheapestAboveFloor,
     qualityRanking,
-    preference: buildPreferenceRanking(eligibleGroups, useCase),
+    preference: buildPreferenceRanking(eligibleGroups, useCase, opts.benchmarks),
     paretoFrontier: frontier,
     unbenchmarked,
     partiallyBenchmarked,

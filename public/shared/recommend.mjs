@@ -14,6 +14,7 @@ export const MIN_BENCHMARK_COVERAGE = 0.5;
 
 const BENCHMARK_FIELDS = new Set([
   'intelligence_index', 'coding_index', 'agentic_index', 'design_arena_best',
+  'arena_text', 'arena_creative_writing',
   'livebench_math', 'livebench_coding', 'livebench_language',
   'livebench_data_analysis', 'livebench_agentic_coding',
   'livebench_reasoning', 'livebench_instruction_following',
@@ -206,6 +207,22 @@ function metricValue(record, field) {
 }
 
 function benchmarkSignalSource(field, benchmarks) {
+  if (field === 'arena_text' || field === 'arena_creative_writing') {
+    const arena = benchmarks?.sources?.arena || {};
+    const leaderboard = field === 'arena_text' ? 'Text overall' : 'Creative writing';
+    const url = arena.url || 'https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset';
+    return {
+      name: arena.name || 'Arena',
+      leaderboard,
+      url,
+      scale: 'Bradley–Terry rating (Elo-like)',
+      rating_date: arena.rating_dates?.[field] ?? null,
+      license: arena.license || 'CC-BY-4.0',
+      license_url: arena.license_url || 'https://creativecommons.org/licenses/by/4.0/',
+      attribution: arena.attribution || 'Arena (LMArena), Leaderboard Dataset; licensed under CC BY 4.0.',
+      data_url: arena.data_url || url,
+    };
+  }
   if (field === 'design_arena_best') {
     return { name: 'Design Arena', transport: 'OpenRouter benchmark metadata' };
   }
@@ -215,10 +232,10 @@ function benchmarkSignalSource(field, benchmarks) {
   return { name: 'Artificial Analysis via OpenRouter', index: field };
 }
 
-function modelMetrics(group, benchmarkEntry, weights, benchmarks) {
+function modelMetrics(group, benchmarkEntry, fields, benchmarks) {
   const metrics = {};
   const sources = {};
-  for (const field of Object.keys(weights)) {
+  for (const field of fields) {
     if (!BENCHMARK_FIELDS.has(field)) continue;
     for (const model of group.offerings) {
       const value = metricValue(model, field) ?? metricValue(benchmarkEntry, field);
@@ -254,8 +271,10 @@ function median(values) {
 
 function scoreModelCandidates(groups, benchmarks, useCase) {
   const benchmarkIndex = buildBenchmarkIndex(benchmarks);
+  const metricFields = new Set(Object.keys(useCase.benchmarkWeights));
+  if (useCase.preferenceSignal?.field) metricFields.add(useCase.preferenceSignal.field);
   for (const group of groups) {
-    const result = modelMetrics(group, benchmarkIndex.get(group.id), useCase.benchmarkWeights, benchmarks);
+    const result = modelMetrics(group, benchmarkIndex.get(group.id), metricFields, benchmarks);
     group.metrics = result.metrics;
     group.metricSources = result.sources;
   }
@@ -553,6 +572,36 @@ function paretoConfidenceScores(frontier) {
   }).sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
 }
 
+function buildPreferenceRanking(groups, useCase, benchmarks) {
+  const preference = useCase.preferenceSignal;
+  if (!preference?.field) return null;
+  const preferenceGroups = groups
+    .filter((group) => finite(group.metrics?.[preference.field]))
+    .sort((a, b) => b.metrics[preference.field] - a.metrics[preference.field] || a.id.localeCompare(b.id))
+  const source = benchmarkSignalSource(preference.field, benchmarks);
+  const favoriteGroup = preferenceGroups[0];
+  const ranked = preferenceGroups
+    .slice(0, 10)
+    .map((group, index) => ({
+      id: group.id,
+      name: group.name,
+      rank: index + 1,
+      score: rounded(group.metrics[preference.field], 2),
+    }));
+  return {
+    field: preference.field,
+    label: preference.label,
+    board: source.leaderboard,
+    source,
+    favorite: favoriteGroup ? {
+      ...candidateResult(favoriteGroup, useCase, { pick: 'preference' }),
+      rank: 1,
+      rating: rounded(favoriteGroup.metrics[preference.field], 2),
+    } : null,
+    ranking: ranked,
+  };
+}
+
 function unverifiedModelResult(group, providerResults) {
   const reasons = ['No provider has confirmed all required capability and context metadata; this model remains unverified.'];
   const unknowns = [];
@@ -703,6 +752,7 @@ export function shortlistModels(useCaseId, catalog, opts = {}) {
     bestValue,
     cheapestAboveFloor,
     qualityRanking,
+    preference: buildPreferenceRanking(eligibleGroups, useCase, opts.benchmarks),
     paretoFrontier: frontier,
     unbenchmarked,
     partiallyBenchmarked,

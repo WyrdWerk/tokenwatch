@@ -82,7 +82,7 @@ test('setup snippets quote catalog URLs and model IDs and sanitize the comment l
   const source = await readFile(new URL('../public/choose-app.js', import.meta.url), 'utf8');
   assert.match(source, /export BASE_URL=\$\{shellQuote\(baseURLForCopy\)\}/);
   assert.match(source, /export MODEL_ID=\$\{shellQuote\(modelId\)\}/);
-  assert.match(source, /const comment = \[providerName\(provider\.provider\), offering\.id\]/);
+  assert.match(source, /const comment = \[providerName\(provider\.provider, offering\), offering\.id\]/);
   assert.match(source, /replace\(\/\[\\u0000-\\u001f\\u007f\]\/g, ' '\)/);
 });
 
@@ -120,6 +120,34 @@ test('model display names strip the org prefix or prettify raw ids; the card kee
   const app = await readFile(new URL('../public/choose-app.js', import.meta.url), 'utf8');
   assert.match(app, /<h3>\$\{escapeHtml\(modelDisplayName\(candidate\)\)\}<\/h3>\n\s*<p class="choose-model-id">\$\{escapeHtml\(candidate\.id\)\}<\/p>/);
   assert.doesNotMatch(app, /candidate\.name \|\| candidate\.id/);
+});
+
+test('provider cards resolve display names from offering, catalog, or metadata before falling back to the slug', async () => {
+  const { providerDisplayName } = await import('../shared/choose-page.mjs');
+  const providers = [{ key: 'relace', name: 'Relace Inference' }];
+  const providersMeta = { inferencenet: { display_name: 'Inference Net' } };
+
+  assert.equal(providerDisplayName('inferencenet', { provider_display: 'Inference Network' }, providers, providersMeta), 'Inference Network');
+  assert.equal(providerDisplayName('relace', null, providers, providersMeta), 'Relace Inference');
+  assert.equal(providerDisplayName('inferencenet', null, [], providersMeta), 'Inference Net');
+  assert.equal(providerDisplayName('unknown-provider', null, [], {}), 'unknown-provider');
+});
+
+test('Arena favorite callout has a provider action and linked date/license attribution without stale caveats', async () => {
+  const html = await readFile(new URL('../public/choose/index.html', import.meta.url), 'utf8');
+  const app = await readFile(new URL('../public/choose-app.js', import.meta.url), 'utf8');
+  const methodology = await readFile(new URL('../public/docs/methodology/index.html', import.meta.url), 'utf8');
+
+  assert.match(html, /id="preferenceSummary"/);
+  assert.match(html, /id="preferenceAttribution"/);
+  assert.match(app, /const favorite = preference\?\.favorite/);
+  assert.match(app, /data-show-preference-providers/);
+  assert.match(app, /Preference ratings: <a href=/);
+  assert.match(app, /CC BY 4\.0/);
+  assert.doesNotMatch(app, /does not yet reflect reader preference|does not yet reflect human preference/i);
+  assert.match(methodology, /Arena preference ratings/);
+  assert.match(methodology, /https:\/\/creativecommons\.org\/licenses\/by\/4\.0\//);
+  assert.match(methodology, /2026-10-02/);
 });
 
 test('provider list features the top three, or the close-call priority winners, and keeps a selection expanded', async () => {

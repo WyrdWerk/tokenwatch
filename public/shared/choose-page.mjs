@@ -58,6 +58,15 @@ export function modelDisplayName(candidate = {}) {
   return prettifyModelId(rawId || id) || id;
 }
 
+/** Resolve an inference provider's display name from the most specific catalog data available. */
+export function providerDisplayName(provider, offering = null, providers = [], providersMeta = {}) {
+  const name = offering?.provider_display
+    || providers.find((entry) => entry.key === provider)?.name
+    || providersMeta?.[provider]?.display_name
+    || providersMeta?.[provider]?.name;
+  return typeof name === 'string' && name.trim() ? name.trim() : String(provider ?? 'Provider not reported');
+}
+
 export const FEATURED_PROVIDER_COUNT = 3;
 export const PRIORITY_ROLE_LABELS = Object.freeze({ cheapest: 'Cheapest', fastest: 'Fastest', 'most-reliable': 'Most reliable' });
 

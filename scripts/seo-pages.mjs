@@ -914,7 +914,7 @@ export function renderRulesStrip() {
     </section>`;
 }
 
-export function renderMethodologyPage({ modelCount, providerCount, generatedAt, models = [], linkedModelPages = new Map() }) {
+export function renderMethodologyPage({ modelCount, providerCount, generatedAt, models = [], linkedModelPages = new Map(), arenaSource = {} }) {
   const path = '/docs/methodology/';
   const description = 'How TokenWatch sources, normalizes, deduplicates, enriches, and compares pay-as-you-go AI inference pricing.';
   const workloadRows = [
@@ -933,6 +933,13 @@ export function renderMethodologyPage({ modelCount, providerCount, generatedAt, 
     const model = slug ? `<a href="/models/${esc(slug)}/">${label}</a>` : label;
     return `<tr><td>${esc(name)}</td><td>${mix.inputPct}% / ${mix.cacheReadPct}% / ${mix.outputPct}%</td><td>${model}</td><td>${esc(cheapest.m.provider)}</td><td class="num">${fmtPrice(cheapest.eff)}</td></tr>`;
   }).join('\n');
+  const arenaUrl = arenaSource.url || 'https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset';
+  const arenaLicenseUrl = arenaSource.license_url || 'https://creativecommons.org/licenses/by/4.0/';
+  const arenaLicense = arenaSource.license || 'CC-BY-4.0';
+  const arenaAttribution = arenaSource.attribution
+    || 'Arena (LMArena), Leaderboard Dataset; ratings are unchanged and matched conservatively to TokenWatch canonical IDs.';
+  const arenaTextDate = arenaSource.rating_dates?.arena_text || 'not reported';
+  const arenaCreativeDate = arenaSource.rating_dates?.arena_creative_writing || 'not reported';
   const body = `    <article class="seo-prose">
       <h2 id="rules">Rules we don’t bend</h2>
       ${renderRulesList()}
@@ -952,6 +959,8 @@ export function renderMethodologyPage({ modelCount, providerCount, generatedAt, 
       <p>These illustrative token mixes are not measured averages or quality recommendations. Retrieval-augmented generation (RAG) supplies retrieved context as input; caching that context can change the ranking. Each row below selects the lowest positive computable blended rate in this text snapshot, not necessarily a model capable of your task. Free/unpriced offerings are excluded. Promotions can affect the result.</p>
       ${workloadRows ? `<div class="table-wrap"><table><caption>Illustrative workload costs — USD per million total tokens, snapshot ${esc(generatedAt)}</caption><thead><tr><th scope="col">Example workload</th><th scope="col">Input / cached / output</th><th scope="col">Lowest-cost offering</th><th scope="col">Provider</th><th scope="col">Blended $/M</th></tr></thead><tbody>${workloadRows}</tbody></table></div>` : ''}
       <p>For one million total tokens, cost is input rate × input share + cache-read rate × cached share + output rate × output share, using the fresh-input rule above. Monthly Volume multiplies an entered daily volume by 30. Retries, tool calls, storage, tax, and other charges need separate consideration. Use the <a href="/">calculator</a> to compare suitable models at your own mix; a 97% cached mix is inappropriate when you cannot reuse most input.</p>
+      <h2>Arena preference ratings</h2>
+      <p>Creative-writing recommendations use Arena Creative Writing ratings as their primary preference signal (75%), with Artificial Analysis intelligence as a secondary capability signal (25%). Chat recommendations keep benchmark capability as the pick ranking and expose Arena Text overall as a separate people’s preference ranking. Ratings come from the <a href="${esc(arenaUrl)}">LMArena leaderboard dataset</a>; ${esc(arenaAttribution)} Licensed under <a href="${esc(arenaLicenseUrl)}">${esc(arenaLicense.replaceAll('-', ' '))}</a>. Text overall ratings are dated ${esc(arenaTextDate)}; Creative Writing ratings are dated ${esc(arenaCreativeDate)}. Ratings are a snapshot of pairwise preference, not a universal measure of model quality.</p>
       <h2>Privacy and policy data</h2>
       <p>ZDR tags come from endpoint-level OpenRouter data or reviewed provider metadata. Missing metadata does not become a positive or negative privacy claim. Provider pages link to reviewed policies when TokenWatch has them.</p>
       <h2>Benchmarks and performance</h2>
@@ -981,6 +990,7 @@ export function renderApiDocsPage() {
       <h2>Public JSON API</h2>
       <p>All endpoints accept GET requests and return JSON with permissive CORS headers. List endpoints paginate with <code>limit</code> and <code>offset</code>; the limit is clamped to 1–500 and defaults to 100. A machine-readable <a href="/openapi.json">OpenAPI 3.1 description</a> is also available.</p>
       <p>Recommendation mixes are assumed workload defaults, not claims about your traffic. Model picks include best quality, best value, and the cheapest model above an absolute quality floor; explanations label benchmark coverage, provider ranking, missing signals, and confidence. Provider ranking requires confirmed capability and context metadata and keeps unverified options separate.</p>
+      <p>For <code>chat-assistant</code> and <code>creative-writing</code>, <code>/api/v1/recommend</code> also returns <code>preference</code> separately from model picks: the Arena favorite, board, rating, eligible providers, and <code>source</code> metadata with linked dataset, rating date, attribution, and CC BY 4.0 license. Creative writing is preference-led; chat picks remain capability-ranked. The source metadata lets API consumers display the required attribution alongside Arena ratings.</p>
       <p>Recommendation responses default to compact candidate groups (up to 10 rows each, with total counts) and full explanations on the three model picks. Provider results keep full explanations on the top three. Add <code>detail=full</code> to expand explanations for returned rows, or set <code>limit=1..100</code> to change each group cap. Recommendation JSON is compact (no indentation); add <code>pretty=1</code> for indented output.</p>
       <div class="table-wrap"><table><caption>TokenWatch API endpoints</caption><thead><tr><th scope="col">Endpoint</th><th scope="col">Response</th><th scope="col">Query parameters</th><th scope="col">Sort values</th></tr></thead><tbody>${rows}</tbody></table></div>
       <h2>Examples</h2>
@@ -1077,7 +1087,12 @@ export function buildOpenApiDocument() {
         operationId: `get${endpoint.path.split('/').filter(Boolean).map((segment) => segment.replace(/^:/, '').split(/[^A-Za-z0-9]+/).filter(Boolean).map((part) => part[0].toUpperCase() + part.slice(1)).join('')).join('') || 'ApiDirectory'}`,
         parameters: [...pathParams, ...endpoint.params.map((name) => openApiParameter(name, endpoint.requiredParams?.includes(name) === true, endpoint.parameterLimits))],
         responses: {
-          200: { description: 'Successful JSON response.', content: { 'application/json': { schema: { type: 'object' } } } },
+          200: {
+            description: endpoint.path === '/api/v1/recommend'
+              ? 'Successful JSON response. Chat and creative-writing include Arena preference.favorite and source attribution/date/license metadata in preference.source.'
+              : 'Successful JSON response.',
+            content: { 'application/json': { schema: { type: 'object' } } },
+          },
           400: { description: 'Invalid request parameter or malformed model ID.', content: { 'application/json': { schema: { type: 'object' } } } },
           404: { description: 'Unknown API route or resource.', content: { 'application/json': { schema: { type: 'object' } } } },
           503: { description: 'A required catalog asset is unavailable.', content: { 'application/json': { schema: { type: 'object' } } } },

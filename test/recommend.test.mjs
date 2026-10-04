@@ -43,6 +43,53 @@ test('use-case registry defines all nine workloads with complete token mixes and
   }
 });
 
+test('creative-writing is preference-led by Arena creative writing with AA intelligence as its only secondary signal', () => {
+  assert.deepEqual(USE_CASES['creative-writing'].benchmarkWeights, {
+    arena_creative_writing: 0.75,
+    intelligence_index: 0.25,
+  });
+  assert.deepEqual(USE_CASES['creative-writing'].qualityFloor, {
+    field: 'arena_creative_writing',
+    min: 1310,
+  });
+});
+
+test('Arena preference ranking exposes the favorite, rating metadata, and its provider-qualified candidate', () => {
+  const catalog = [
+    mixOffering('open/capability-winner', 'capability-provider', 80, 2, {
+      benchmarks: { intelligence_index: 80, livebench_language: 90, livebench_instruction_following: 80 },
+    }),
+    mixOffering('open/preference-winner', 'preference-provider', 20, 1, {
+      benchmarks: { intelligence_index: 20, livebench_language: 80, livebench_instruction_following: 70 },
+    }),
+  ];
+  const arenaSource = {
+    name: 'Arena (LMArena)',
+    url: 'https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset',
+    license: 'CC-BY-4.0',
+    license_url: 'https://creativecommons.org/licenses/by/4.0/',
+    attribution: 'Arena (LMArena), Leaderboard Dataset; licensed under CC BY 4.0.',
+    rating_dates: { arena_text: '2026-10-02' },
+  };
+  const result = shortlistModels('chat-assistant', catalog, {
+    benchmarks: {
+      sources: { arena: arenaSource },
+      models: [
+        { id: 'capability-winner', scores: { arena_text: 1400 } },
+        { id: 'preference-winner', scores: { arena_text: 1600 } },
+      ],
+    },
+  });
+
+  assert.equal(result.bestQuality.id, 'capability-winner');
+  assert.equal(result.preference.field, 'arena_text');
+  assert.equal(result.preference.board, 'Text overall');
+  assert.equal(result.preference.source.rating_date, '2026-10-02');
+  assert.equal(result.preference.favorite.id, 'preference-winner');
+  assert.equal(result.preference.favorite.rating, 1600);
+  assert.deepEqual(result.preference.favorite.providers.map((provider) => provider.provider), ['preference-provider']);
+});
+
 test('shortlist blended price stays in parity with the Text model summary in dollars per million', () => {
   const mimo = mixOffering('XiaomiMiMo/MiMo-V2.6-Pro', 'deepinfra', 46.3, 0.43, {
     context_length: 1048576,
@@ -152,7 +199,7 @@ test('LiveBench-thin use cases use AA intelligence for the absolute floor', () =
     assert.deepEqual(USE_CASES[useCaseId].qualityFloor, { field: 'intelligence_index', min: 15 });
   }
   assert.ok(USE_CASES['structured-extraction'].benchmarkWeights.livebench_instruction_following > 0);
-  assert.ok(USE_CASES['creative-writing'].benchmarkWeights.livebench_language > 0);
+  assert.equal(Object.hasOwn(USE_CASES['creative-writing'].benchmarkWeights, 'livebench_language'), false);
   assert.ok(USE_CASES['reasoning-math'].benchmarkWeights.livebench_math > 0);
 
   const result = shortlistModels('structured-extraction', [

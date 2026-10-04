@@ -84,8 +84,12 @@ test('recommendation WebMCP tools use the recommender API contract and explicit 
   }
   assert.deepEqual(byName.recommend_model.inputSchema.required, ['useCase']);
   assert.deepEqual(byName.recommend_provider.inputSchema.required, ['useCase', 'model']);
+  assert.match(byName.recommend_model.description, /Arena preference favorite and source attribution/i);
   assert.match(src, /recommend_model:\s*\(input\)\s*=>\s*catalog\.recommendModel\(input\)/);
   assert.match(src, /recommend_provider:\s*\(input\)\s*=>\s*catalog\.recommendProvider\(input\)/);
+  const skill = await readFile(join(ROOT, 'public/skill.md'), 'utf8');
+  assert.match(skill, /also read `preference`: it identifies the Arena favorite/);
+  assert.match(skill, /CC BY 4\.0/);
 });
 
 test('set_workload and set_filters schemas use enums; compare uses {provider,id}', async () => {

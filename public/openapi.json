@@ -111,7 +111,7 @@
     },
     "/api/v1/recommend": {
       "get": {
-        "summary": "Recommend models for a workload with compact candidate groups and full explanations for the three picks",
+        "summary": "Recommend models for a workload; chat and creative-writing also return an Arena preference favorite with source metadata",
         "operationId": "getApiV1Recommend",
         "parameters": [
           {
@@ -222,7 +222,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful JSON response.",
+            "description": "Successful JSON response. Chat and creative-writing include Arena preference.favorite and source attribution/date/license metadata in preference.source.",
             "content": {
               "application/json": {
                 "schema": {

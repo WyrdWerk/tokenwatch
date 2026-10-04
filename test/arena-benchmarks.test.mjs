@@ -77,9 +77,9 @@ test('Arena effort labels are fallback aliases and never replace an exact model 
 test('creative-writing ranks primarily on Arena preference and floors on that score', () => {
   const useCase = USE_CASES['creative-writing'];
 
-  assert.deepEqual(useCase.qualityFloor, { field: 'arena_creative_writing', min: 1307 });
-  assert.ok(useCase.benchmarkWeights.arena_creative_writing >= 0.5);
-  assert.ok(useCase.benchmarkWeights.arena_creative_writing <= 0.6);
+  assert.deepEqual(useCase.qualityFloor, { field: 'arena_creative_writing', min: 1310 });
+  assert.deepEqual(useCase.benchmarkWeights, { arena_creative_writing: 0.75, intelligence_index: 0.25 });
+  assert.equal(Object.hasOwn(useCase.benchmarkWeights, 'livebench_language'), false);
 });
 
 test('chat keeps capability ranking and returns an independent human-preference ranking', () => {

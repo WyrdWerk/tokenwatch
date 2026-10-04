@@ -186,6 +186,25 @@ function compactRecommendationCandidate(candidate, includeProviderExplanations =
   };
 }
 
+function compactRecommendationPreference(preference) {
+  if (!preference) return null;
+  const favorite = preference.favorite;
+  return {
+    field: preference.field,
+    label: preference.label,
+    board: preference.board,
+    source: preference.source,
+    favorite: favorite ? {
+      id: favorite.id,
+      name: favorite.name,
+      rank: favorite.rank,
+      rating: favorite.rating,
+      providers: (favorite.providers || []).map(compactProviderRow),
+    } : null,
+    ranking: preference.ranking,
+  };
+}
+
 function compactRecommendationRow(candidate) {
   return {
     id: candidate.id,
@@ -201,6 +220,7 @@ function compactProviderRow(provider) {
   const reason = provider.reasons?.find((item) => /lowest blended price|lowest .*ttft|highest throughput|reported uptime|only qualifying option|subscription plan|low-bit quantization/i.test(item));
   return {
     provider: provider.provider,
+    name: provider.offering?.provider_display || provider.provider,
     score: provider.score ?? null,
     blendedRate: provider.blendedRate ?? null,
     confidence: provider.confidence?.level ?? null,
@@ -441,6 +461,7 @@ async function recommendationResponse(context, pricing, providersOnly) {
     priority: result.priority,
     mix: { ...USE_CASES[result.useCase].mix, assumed: true },
     qualityFloor: result.qualityFloor,
+    preference: compactRecommendationPreference(result.preference),
     picks: {
       bestQuality: result.bestQuality ? compactRecommendationCandidate(result.bestQuality, parsed.detail === 'full') : null,
       bestValue: result.bestValue ? compactRecommendationCandidate(result.bestValue, parsed.detail === 'full') : null,

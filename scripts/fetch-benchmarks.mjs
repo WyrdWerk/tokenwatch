@@ -29,6 +29,7 @@ import { normalizeProvider } from './lib.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PRICING_JSON = join(__dirname, '..', 'public', 'pricing.json');
 const PERFORMANCE_JSON = join(__dirname, '..', 'public', 'performance.json');
+const ARENA_JSON = join(__dirname, '..', 'data', 'arena-benchmarks.json');
 const OUT_JSON = join(__dirname, '..', 'public', 'benchmarks.json');
 
 const LIVEBENCH_RELEASE = '2026_06_25';
@@ -146,6 +147,12 @@ export function buildBenchmarkOffering(model, performance) {
 
 async function main() {
   const pricing = JSON.parse(await readFile(PRICING_JSON, 'utf8'));
+  let arenaSnapshot = null;
+  try {
+    arenaSnapshot = JSON.parse(await readFile(ARENA_JSON, 'utf8'));
+  } catch (err) {
+    console.warn(`⚠ Arena cache unavailable: ${err.message} — ratings dates will be unknown`);
+  }
   let performance = {};
   try {
     performance = JSON.parse(await readFile(PERFORMANCE_JSON, 'utf8'));
@@ -268,6 +275,10 @@ async function main() {
         url: 'https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset',
         fields: ['arena_text', 'arena_creative_writing'],
         categories: { arena_text: 'text_style_control / overall', arena_creative_writing: 'text_style_control / creative_writing' },
+        rating_dates: {
+          arena_text: arenaSnapshot?._meta?.categories?.overall?.leaderboard_publish_date ?? null,
+          arena_creative_writing: arenaSnapshot?._meta?.categories?.creative_writing?.leaderboard_publish_date ?? null,
+        },
         scale: 'Bradley–Terry rating (Elo-like)',
         license: 'CC-BY-4.0',
         license_url: 'https://creativecommons.org/licenses/by/4.0/',

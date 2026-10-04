@@ -227,7 +227,7 @@ test('/api/v1/use-cases lists the shared recommendation presets and marks mixes 
   assert.deepEqual(agentic.floors, { field: 'coding_index', min: 25 });
 });
 
-function recommendationAssets(catalog) {
+function recommendationAssets(catalog, arenaSource = null) {
   const benchmarkRows = catalog.models.map((model, index) => ({
     id: model.id,
     scores: model.benchmarks || (index === 3 ? {} : {
@@ -245,7 +245,11 @@ function recommendationAssets(catalog) {
     async fetch(url) {
       const pathname = new URL(url).pathname;
       if (pathname === '/pricing.json') return Response.json(catalog);
-      if (pathname === '/benchmarks.json') return Response.json({ generated_at: '2026-10-04T00:00:00Z', models: benchmarkRows });
+      if (pathname === '/benchmarks.json') return Response.json({
+        generated_at: '2026-10-04T00:00:00Z',
+        ...(arenaSource ? { sources: { arena: arenaSource } } : {}),
+        models: benchmarkRows,
+      });
       if (pathname === '/performance.json') return Response.json({ ...performance, _meta: { generated_at: '2026-10-04T00:00:00Z' } });
       return new Response('Not found', { status: 404 });
     },
@@ -258,6 +262,7 @@ function recommendationCatalog() {
     name: id,
     org: 'open',
     provider,
+    provider_display: provider === 'beta-provider' ? 'Beta Provider' : provider,
     open_weights: true,
     open_weights_source: 'fixture',
     supported_parameters: ['tools'],
@@ -309,6 +314,60 @@ test('/api/v1/recommend uses shared shortlist groups with explanations, confiden
   assert.ok(body.partiallyBenchmarked.items.some((candidate) => candidate.id === 'partly-scored'));
   assert.ok(body.unbenchmarked.items.some((candidate) => candidate.id === 'not-scored'));
   assert.ok(!JSON.stringify(body).includes('cn-provider'), 'exclude_hq filters known CN provider offerings');
+});
+
+test('/api/v1/recommend exposes the Arena favorite separately from chat capability picks with attribution metadata', async () => {
+  const catalog = recommendationCatalog();
+  const base = catalog.models[0];
+  const model = (id, provider, intelligence, language, instruction, text, creative) => ({
+    ...base,
+    id: `open/${id}`,
+    name: id,
+    provider,
+    provider_display: provider === 'beta-provider' ? 'Beta Provider' : provider,
+    benchmarks: {
+      intelligence_index: intelligence,
+      livebench_language: language,
+      livebench_instruction_following: instruction,
+      arena_text: text,
+      arena_creative_writing: creative,
+    },
+  });
+  catalog.models = [
+    model('capability-winner', 'alpha-provider', 80, 90, 80, 1400, 1400),
+    model('arena-favorite', 'beta-provider', 20, 80, 70, 1600, 1600),
+  ];
+  catalog.providers = [
+    { key: 'alpha-provider', name: 'Alpha Provider' },
+    { key: 'beta-provider', name: 'Beta Provider' },
+  ];
+  const arenaSource = {
+    name: 'Arena (LMArena)',
+    url: 'https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset',
+    license: 'CC-BY-4.0',
+    license_url: 'https://creativecommons.org/licenses/by/4.0/',
+    attribution: 'Arena (LMArena), Leaderboard Dataset; licensed under CC BY 4.0.',
+    rating_dates: { arena_text: '2026-10-02', arena_creative_writing: '2026-10-02' },
+  };
+  const context = makeContext('/api/v1/recommend', '?use_case=chat-assistant');
+  context.env.ASSETS = recommendationAssets(catalog, arenaSource);
+
+  const chat = await getJson(context);
+  assert.equal(chat.status, 200);
+  assert.equal(chat.body.picks.bestQuality.id, 'capability-winner');
+  assert.equal(chat.body.preference.favorite.id, 'arena-favorite');
+  assert.equal(chat.body.preference.favorite.rating, 1600);
+  assert.equal(chat.body.preference.board, 'Text overall');
+  assert.equal(chat.body.preference.source.license, 'CC-BY-4.0');
+  assert.equal(chat.body.preference.source.rating_date, '2026-10-02');
+  assert.equal(chat.body.preference.source.attribution, arenaSource.attribution);
+  assert.equal(chat.body.preference.favorite.providers[0].name, 'Beta Provider');
+
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend?use_case=creative-writing');
+  const writing = await getJson(context);
+  assert.equal(writing.body.preference.favorite.id, 'arena-favorite');
+  assert.equal(writing.body.preference.board, 'Creative writing');
+  assert.equal(writing.body.preference.source.rating_date, '2026-10-02');
 });
 
 test('/api/v1/recommend supports full detail and a validated limit for candidate groups', async () => {
@@ -455,7 +514,7 @@ test('/api/v1/recommend/providers explains the top three, compacts the rest, and
   assert.ok(body.ranked.items.slice(0, 3).every((provider) => provider.explanation));
   assert.ok(!body.ranked.items[3].explanation);
   assert.equal(body.unverified.totalCount, 0);
-  assert.deepEqual(Object.keys(body.ranked.items[3]).sort(), ['blendedRate', 'confidence', 'provider', 'reason', 'score']);
+  assert.deepEqual(Object.keys(body.ranked.items[3]).sort(), ['blendedRate', 'confidence', 'name', 'provider', 'reason', 'score']);
 
   context.request = new Request('https://tokenwatch.test/api/v1/recommend/providers?use_case=agentic-coding&model=agent-alpha&detail=full&limit=4');
   const full = await getJson(context);

@@ -203,10 +203,11 @@ function renderVideoPage(markup, videoPricing, rows, dates) {
 }
 
 export async function main() {
-  const [pricing, imagePricing, videoPricing, indexMarkup, imageMarkup, videoMarkup] = await Promise.all([
+  const [pricing, imagePricing, videoPricing, benchmarkData, indexMarkup, imageMarkup, videoMarkup] = await Promise.all([
     readJson(join(PUBLIC, 'pricing.json'), 'pricing.json'),
     readJson(join(PUBLIC, 'image-pricing.json'), 'image-pricing.json'),
     readJson(join(PUBLIC, 'video-pricing.json'), 'video-pricing.json'),
+    readJson(join(PUBLIC, 'benchmarks.json'), 'benchmarks.json'),
     readFile(join(PUBLIC, 'index.html'), 'utf8'),
     readFile(join(PUBLIC, 'image.html'), 'utf8'),
     readFile(join(PUBLIC, 'video.html'), 'utf8'),
@@ -242,14 +243,21 @@ export async function main() {
 
   const modelCount = pricing.models.length;
   const providerCount = new Set(pricing.models.map((model) => model.provider)).size;
-  const methodology = renderMethodologyPage({ modelCount, providerCount, generatedAt: pricing.generated_at, models: pricing.models, linkedModelPages: links.linkedModelPages });
+  const methodology = renderMethodologyPage({
+    modelCount,
+    providerCount,
+    generatedAt: pricing.generated_at,
+    models: pricing.models,
+    linkedModelPages: links.linkedModelPages,
+    arenaSource: benchmarkData.sources?.arena,
+  });
   const apiDocs = renderApiDocsPage();
   const openApi = `${JSON.stringify(buildOpenApiDocument(), null, 2)}\n`;
   const faqPage = renderFaqPage({ modelCount, providerCount });
 
   // /benchmarks crawlable snapshot — page is committed with marker sections;
   // regenerate from benchmarks.json like the calculator pages.
-  const benchData = JSON.parse(await readFile(join(PUBLIC, 'benchmarks.json'), 'utf8'));
+  const benchData = benchmarkData;
   const benchmarksMarkup = await readFile(join(PUBLIC, 'benchmarks.html'), 'utf8');
   let benchmarksOut = replaceSection(benchmarksMarkup, 'seo-models', renderBenchmarksSeoSection(benchData, links.linkedModelPages));
   benchmarksOut = replaceSection(benchmarksOut, 'seo-faq', renderFaqPointerSection());

@@ -129,7 +129,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
   {
     "name": "recommend_model",
     "title": "Recommend models for a workload",
-    "description": "Read-only workload recommendation using TokenWatch's shared engine. The default response is compact: three fully explained picks plus compact candidate groups with total counts. The preset mix is assumed unless you choose a different use case. For operational details, call about_tokenwatch.",
+    "description": "Read-only workload recommendation using TokenWatch's shared engine. The default response is compact: three fully explained picks plus compact candidate groups with total counts. For chat-assistant and creative-writing, also read the Arena preference favorite and source attribution/date/license, plus its rating and providers; chat picks remain capability-ranked while creative writing is preference-led. The preset mix is assumed unless you choose a different use case. For operational details, call about_tokenwatch.",
     "annotations": { "readOnlyHint": true },
     "inputSchema": {
       "type": "object",

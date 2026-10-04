@@ -15,7 +15,7 @@ export const API_ENDPOINTS = [
   },
   {
     path: '/api/v1/recommend',
-    summary: 'Recommend models for a workload with compact candidate groups and full explanations for the three picks',
+    summary: 'Recommend models for a workload; chat and creative-writing also return an Arena preference favorite with source metadata',
     params: ['use_case', 'priority', 'zdr', 'exclude_hq', 'include_proprietary', 'detail', 'limit', 'pretty'],
     requiredParams: ['use_case'],
     parameterLimits: { limit: 100 },

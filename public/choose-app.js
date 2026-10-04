@@ -8,6 +8,7 @@ import {
   FEATURED_PROVIDER_COUNT,
   PRIORITY_ROLE_LABELS,
   modelDisplayName,
+  providerDisplayName,
   pickFeaturedProviders,
   parseChooseHash,
   parseChooseLocation,
@@ -42,7 +43,8 @@ const GATE_LABELS = {
 
 const WARNING_REASON = /degraded warning|low-bit quantization|asynchronous batch|subscription plan|tool-choice control|no implicit prompt-caching/i;
 const elements = Object.fromEntries([
-  'chooseStatus', 'useCaseNotice', 'modelCards', 'alsoConsidered', 'notEnoughData',
+  'chooseStatus', 'useCaseNotice', 'preferenceFeature', 'preferenceSummary', 'preferenceAttribution',
+  'modelCards', 'alsoConsidered', 'notEnoughData',
   'hqOptions', 'requireZdr', 'includeProprietary', 'providerHeading', 'providerRows',
   'providerCloseNote', 'unverifiedSection', 'unverifiedRows', 'estimateBill',
   'compareModel', 'copySetup', 'shareLink', 'copyPrompt', 'actionStatus',
@@ -52,6 +54,7 @@ window.TW.initTheme();
 
 let catalogs;
 let recommendations;
+let providerCandidateOverride = null;
 let state = parseChooseLocation(location.search, location.hash);
 
 function escapeHtml(value) {
@@ -87,8 +90,8 @@ function sourceWindow(source) {
   return labels[source.window] || source.window;
 }
 
-function providerName(provider) {
-  return catalogs.pricing.providers?.find((entry) => entry.key === provider)?.name || provider;
+function providerName(provider, offering = null) {
+  return providerDisplayName(provider, offering, catalogs.pricing.providers, catalogs.pricing.providers_meta);
 }
 
 function countryLabel(country) {
@@ -104,6 +107,7 @@ function candidatesByPick() {
 }
 
 function selectedCandidate() {
+  if (providerCandidateOverride) return providerCandidateOverride;
   const picks = candidatesByPick();
   return picks[state.pick] || Object.values(picks).find(Boolean) || null;
 }
@@ -125,6 +129,7 @@ function writeControlState() {
     excludeHQ: [...elements.hqOptions.querySelectorAll('input[name="excludeHQ"]:checked')].map((input) => input.value).sort(),
     provider: null,
   };
+  providerCandidateOverride = null;
   syncHash();
   calculate();
 }
@@ -224,7 +229,7 @@ function explanationMarkup(candidate) {
       <div class="choose-table-wrap"><table><thead><tr><th scope="col">Signal</th><th scope="col">Raw score</th><th scope="col">Source</th><th scope="col">Weight</th></tr></thead><tbody>${signals}</tbody></table></div>
       <h4>Missing benchmark signals</h4>${missing}
       <h4>Eligibility gates</h4><ul>${gates}</ul>
-      ${providerExplanation ? `<h4>Provider weights · ${escapeHtml(providerName(recommendedProvider.provider))}</h4><ul>${providerWeights}</ul>
+      ${providerExplanation ? `<h4>Provider weights · ${escapeHtml(providerName(recommendedProvider.provider, recommendedProvider.offering))}</h4><ul>${providerWeights}</ul>
       <h4>Provider signals and sources</h4><div class="choose-table-wrap"><table><thead><tr><th scope="col">Signal</th><th scope="col">Raw value</th><th scope="col">Source / window</th><th scope="col">Weight</th></tr></thead><tbody>${providerSignals}</tbody></table></div>
       <h4>Missing provider signals</h4>${providerMissing}<h4>Provider gates</h4><ul>${providerGates}</ul>` : ''}
       <p><strong>Mix:</strong> ${formatMix(mix)} <span class="choose-assumed">Typical workload (assumed)</span></p>
@@ -241,7 +246,9 @@ function renderModelCard(candidate, option) {
   const mix = USE_CASES[state.useCase].mix;
   const coverage = Number.isFinite(candidate.qualityCoverage) ? formatNumber(candidate.qualityCoverage * 100, 0) : '—';
   const openWeight = openWeightLabel(candidate);
-  const bestProvider = candidate.recommendedProvider ? providerName(candidate.recommendedProvider.provider) : 'Provider not reported';
+  const bestProvider = candidate.recommendedProvider
+    ? providerName(candidate.recommendedProvider.provider, candidate.recommendedProvider.offering)
+    : 'Provider not reported';
   const cheapest = candidate.blendedRate === null ? 'Not priced' : `${formatRate(candidate.blendedRate)} / M`;
   const signal = candidate.explanation.benchmark.signals.find((item) => item.field === USE_CASES[state.useCase].qualityFloor.field);
   return `<article class="choose-model-card${selected ? ' is-selected' : ''}" data-model-id="${escapeHtml(candidate.id)}">
@@ -327,7 +334,7 @@ function renderProviderRow(provider, now, roles = []) {
   const subscription = offering.subscription === true ? '<span class="choose-badge choose-badge-subscription">Subscription plan</span>' : '';
   const hq = offering.headquarters || offering.hq || catalogs.pricing.providers_meta?.[provider.provider]?.headquarters;
   return `<article class="choose-provider-card${isSelected ? ' is-selected' : ''}">
-    <div class="choose-provider-title"><div><h3>${escapeHtml(providerName(provider.provider))}</h3><p>${escapeHtml(offering.id || provider.canonicalId)}</p></div>
+    <div class="choose-provider-title"><div><h3>${escapeHtml(providerName(provider.provider, offering))}</h3><p>${escapeHtml(offering.id || provider.canonicalId)}</p></div>
       <div class="choose-badges">${roles.map((role) => `<span class="choose-badge choose-badge-role">${escapeHtml(role)}</span>`).join('')}${subscription}${isCloseCall(provider.confidence) ? '<span class="choose-badge choose-badge-close">Close call</span>' : ''}</div></div>
     <dl class="choose-provider-metrics">${metrics}</dl>
     <p class="choose-provider-hq">Headquarters: ${hq ? `${escapeHtml(countryLabel(String(hq).toUpperCase()))} (${escapeHtml(hq)})` : 'Not disclosed'}</p>
@@ -364,7 +371,7 @@ function compactProviderRow(provider, now) {
   const uptime = Number.isFinite(provider.uptime) ? `${formatNumber(provider.uptime, 1)}%` : '—';
   return `<li class="choose-provider-row${state.provider === provider.provider ? ' is-selected' : ''}"><details>
     <summary>
-      <span class="choose-provider-row-name"><strong>${escapeHtml(providerName(provider.provider))}</strong><small>${escapeHtml(offering.id || provider.canonicalId)}</small></span>
+      <span class="choose-provider-row-name"><strong>${escapeHtml(providerName(provider.provider, offering))}</strong><small>${escapeHtml(offering.id || provider.canonicalId)}</small></span>
       <span class="choose-provider-row-metric" data-label="$/M">${escapeHtml(formatRate(provider.blendedRate))}</span>
       <span class="choose-provider-row-metric" data-label="Speed">${speed}</span>
       <span class="choose-provider-row-metric" data-label="Uptime">${uptime}</span>
@@ -390,7 +397,7 @@ function renderProviders(candidate) {
   if (close) {
     elements.providerCloseNote.innerHTML = `<strong>Top picks are close.</strong> The current ranking doesn’t establish one clear winner. Best by priority: ${Object.keys(PRIORITY_ROLE_LABELS).map((priority) => {
       const pick = alternatives[priority];
-      return pick ? `<span>${PRIORITY_ROLE_LABELS[priority]}: <b>${escapeHtml(providerName(pick.provider))}</b></span>` : '';
+      return pick ? `<span>${PRIORITY_ROLE_LABELS[priority]}: <b>${escapeHtml(providerName(pick.provider, pick.offering))}</b></span>` : '';
     }).filter(Boolean).join(' · ')}`;
     elements.providerCloseNote.hidden = false;
   } else {
@@ -415,7 +422,7 @@ function renderProviders(candidate) {
   elements.unverifiedSection.hidden = !unverified.length;
   elements.unverifiedRows.innerHTML = unverified.length ? cappedList(unverified, 'unverified providers', (provider) => {
     const notes = [...(provider.unknowns || []).map((item) => `Unknown: ${item}`), ...(provider.reasons || [])];
-    return `<li class="choose-list-row choose-unverified-row"><details><summary><span><strong>${escapeHtml(providerName(provider.provider))}</strong><small>${escapeHtml(provider.offering?.id || candidate.id)}</small></span>
+    return `<li class="choose-list-row choose-unverified-row"><details><summary><span><strong>${escapeHtml(providerName(provider.provider, provider.offering))}</strong><small>${escapeHtml(provider.offering?.id || candidate.id)}</small></span>
       <span class="choose-list-meta">${provider.blendedRate === null ? 'Price unavailable' : `${formatRate(provider.blendedRate)} / M`}${provider.unknowns?.length ? `<small>${escapeHtml(provider.unknowns[0])}${provider.unknowns.length > 1 ? ` +${provider.unknowns.length - 1} more` : ''}</small>` : ''}</span></summary>
       ${notes.length ? `<ul class="choose-unverified-notes">${notes.map((note) => `<li>${escapeHtml(note)}</li>`).join('')}</ul>` : ''}</details></li>`;
   }, FEATURED_PROVIDER_COUNT) : '';
@@ -431,7 +438,7 @@ function setupText(provider) {
   const baseURL = offering.modelsdev?.base_url || offering.base_url || null;
   const modelId = offering.modelsdev?.model_id || offering.id;
   const baseURLForCopy = baseURL || 'https://YOUR_PROVIDER_BASE_URL/v1';
-  const comment = [providerName(provider.provider), offering.id]
+  const comment = [providerName(provider.provider, offering), offering.id]
     .map((value) => String(value).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim())
     .join(' · ');
   const curlPayload = JSON.stringify({ model: modelId, messages: [{ role: 'user', content: 'Hello' }] }, null, 2);
@@ -464,7 +471,7 @@ function agentPrompt(candidate, provider) {
   const modelId = provider.offering.modelsdev?.model_id || provider.offering.id;
   const scores = candidate.explanation.benchmark.signals.filter((signal) => signal.rawValue !== null)
     .map((signal) => `${signal.field} ${formatNumber(signal.rawValue, 2)} (${sourceName(signal.source)})`).join('; ');
-  return `I’m considering ${modelDisplayName(candidate)} (provider model id ${modelId}) on ${providerName(provider.provider)} for ${useCaseLabel(state.useCase)}. TokenWatch’s benchmark-based score is ${formatNumber(candidate.qualityScore)}/100 with ${formatNumber(candidate.qualityCoverage * 100, 0)}% coverage. Available raw signals: ${scores || 'none disclosed'}. The assumed token mix is ${formatMix(useCase.mix)} and the current blended rate is ${formatRate(provider.blendedRate)} per million tokens. Please assess fit for my actual task, identify capability or privacy questions to verify, and compare alternatives rather than treating this snapshot as a guarantee. Check the provider’s current price and retention policy before use.`;
+  return `I’m considering ${modelDisplayName(candidate)} (provider model id ${modelId}) on ${providerName(provider.provider, provider.offering)} for ${useCaseLabel(state.useCase)}. TokenWatch’s benchmark-based score is ${formatNumber(candidate.qualityScore)}/100 with ${formatNumber(candidate.qualityCoverage * 100, 0)}% coverage. Available raw signals: ${scores || 'none disclosed'}. The assumed token mix is ${formatMix(useCase.mix)} and the current blended rate is ${formatRate(provider.blendedRate)} per million tokens. Please assess fit for my actual task, identify capability or privacy questions to verify, and compare alternatives rather than treating this snapshot as a guarantee. Check the provider’s current price and retention policy before use.`;
 }
 
 function renderActions(candidate) {
@@ -482,10 +489,31 @@ function renderActions(candidate) {
   elements.compareModel.href = buildCalculatorHref(candidate.id, USE_CASES[state.useCase].mix);
 }
 
+function renderPreference() {
+  const preference = recommendations?.preference;
+  const favorite = preference?.favorite;
+  if (!preference || !favorite) {
+    elements.preferenceFeature.hidden = true;
+    elements.preferenceSummary.replaceChildren();
+    elements.preferenceAttribution.replaceChildren();
+    return;
+  }
+
+  const ratingDate = preference.source?.rating_date;
+  const isShowingProviders = providerCandidateOverride?.id === favorite.id;
+  elements.preferenceSummary.innerHTML = `<p><strong>People’s favourite:</strong> ${escapeHtml(modelDisplayName(favorite))} <span>(Arena ${escapeHtml(preference.board)}, rating ${formatNumber(favorite.rating, 2)})</span></p>
+    <button type="button" class="choose-preference-provider" data-show-preference-providers aria-pressed="${isShowingProviders}">${isShowingProviders ? 'Showing this model’s providers' : 'Show this model’s providers'}</button>`;
+  const sourceUrl = preference.source?.url || 'https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset';
+  const licenseUrl = preference.source?.license_url || 'https://creativecommons.org/licenses/by/4.0/';
+  const dateText = ratingDate ? `<time datetime="${escapeHtml(ratingDate)}">${escapeHtml(ratingDate)}</time>` : 'date not reported';
+  elements.preferenceAttribution.innerHTML = `Preference ratings: <a href="${escapeHtml(sourceUrl)}" rel="noreferrer">LMArena leaderboard (Hugging Face dataset)</a>, <a href="${escapeHtml(licenseUrl)}" rel="license noreferrer">CC BY 4.0</a>, ratings dated ${dateText}.`;
+  elements.preferenceFeature.hidden = false;
+}
+
 function renderUseCaseNotice() {
   const notes = {
-    'chat-assistant': 'Benchmark-based: this chat recommendation measures benchmark capability and does not yet reflect reader preference.',
-    'creative-writing': 'Benchmark-based: this writing recommendation uses available benchmarks and does not yet reflect reader preference. Validation found a mismatch with human-preference rankings.',
+    'chat-assistant': 'Chat picks rank benchmark capability; the Arena Text people’s preference is shown separately above.',
+    'creative-writing': 'Creative writing is preference-led: the Arena Creative Writing rating leads, with AA intelligence as a smaller capability signal.',
   };
   const note = notes[state.useCase];
   elements.useCaseNotice.textContent = note || '';
@@ -497,6 +525,7 @@ function render() {
   elements.modelCards.innerHTML = PICK_OPTIONS.map((option) => renderModelCard(candidateByKey[option.key], option)).join('');
   elements.modelCards.setAttribute('aria-busy', 'false');
   renderOtherModels();
+  renderPreference();
   const candidate = selectedCandidate();
   renderProviders(candidate);
   renderActions(candidate);
@@ -593,9 +622,22 @@ elements.modelCards.addEventListener('click', (event) => {
   if (!button) return;
   state.pick = button.dataset.pick;
   state.provider = null;
+  providerCandidateOverride = null;
   syncHash();
   render();
   elements.modelCards.querySelector(`[data-pick="${state.pick}"]`)?.focus();
+});
+
+elements.preferenceSummary.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-show-preference-providers]');
+  if (!button || !recommendations?.preference?.favorite) return;
+  providerCandidateOverride = recommendations.preference.favorite;
+  state.provider = null;
+  render();
+  elements.providerHeading.scrollIntoView({
+    behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    block: 'start',
+  });
 });
 
 elements.providerRows.addEventListener('click', (event) => {
@@ -622,6 +664,7 @@ elements.shareLink.addEventListener('click', async () => {
 
 window.addEventListener('hashchange', () => {
   state = parseChooseHash(location.hash);
+  providerCandidateOverride = null;
   if (!catalogs) return;
   applyStateToControls();
   calculate();
