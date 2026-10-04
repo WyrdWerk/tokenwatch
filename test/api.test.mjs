@@ -211,6 +211,7 @@ test('/api/v1/ returns API info + endpoint directory', async () => {
   assert.ok(Array.isArray(body.endpoints));
   assert.ok(body.endpoints.length >= 8);
   assert.ok(body.endpoints.some(e => e.includes('/models')));
+  assert.ok(body.endpoints.some(e => e.includes('open_weights')));
 });
 
 // ── /api/v1/stats ─────────────────────────────────────────────────────────────
@@ -233,6 +234,64 @@ test('/api/v1/models returns all models by default', async () => {
   assert.equal(status, 200);
   assert.equal(body.total, 5);
   assert.equal(body.models.length, 5);
+});
+
+test('/api/v1/models filters on resolved open-weight status and providers exposes the contract', async () => {
+  const catalog = { models: [
+    {
+      id: 'open-model', org: 'deepseek', provider: 'alpha', open_weights: true,
+      open_weights_source: 'override', license: 'mit', pricing: { input: 1, output: 2 },
+      supported_parameters: ['tools'], supports_tool_choice: true,
+      supports_implicit_caching: false, max_prompt_tokens: 12000, uptime_1d: 99.5,
+    },
+    {
+      id: 'closed-model', org: 'anthropic', provider: 'beta', open_weights: false,
+      open_weights_source: 'org_prior', license: null, pricing: { input: 1, output: 2 },
+    },
+    { id: 'unknown-model', org: 'google', provider: 'gamma', open_weights: null, pricing: { input: 1, output: 2 } },
+  ] };
+  const context = makeContext('/api/v1/models', '?open_weights=true');
+  context.env.ASSETS = { fetch: async () => Response.json(catalog) };
+
+  const open = await getJson(context);
+  assert.equal(open.body.total, 1);
+  assert.equal(open.body.models[0].open_weights, true);
+  context.request = new Request('https://tokenwatch.test/api/v1/models?open_weights=false');
+  const closed = await getJson(context);
+  assert.equal(closed.body.total, 1);
+  assert.equal(closed.body.models[0].open_weights, false);
+
+  context.request = new Request('https://tokenwatch.test/api/v1/models/open-model/providers');
+  const providers = await getJson(context);
+  assert.deepEqual({
+    open_weights: providers.body.providers[0].open_weights,
+    open_weights_source: providers.body.providers[0].open_weights_source,
+    license: providers.body.providers[0].license,
+    supported_parameters: providers.body.providers[0].supported_parameters,
+    supports_tool_choice: providers.body.providers[0].supports_tool_choice,
+    supports_implicit_caching: providers.body.providers[0].supports_implicit_caching,
+    max_prompt_tokens: providers.body.providers[0].max_prompt_tokens,
+    uptime_1d: providers.body.providers[0].uptime_1d,
+  }, {
+    open_weights: true,
+    open_weights_source: 'override',
+    license: 'mit',
+    supported_parameters: ['tools'],
+    supports_tool_choice: true,
+    supports_implicit_caching: false,
+    max_prompt_tokens: 12000,
+    uptime_1d: 99.5,
+  });
+
+  context.request = new Request('https://tokenwatch.test/api/v1/models/unknown-model/providers');
+  const unknown = await getJson(context);
+  const unknownProvider = unknown.body.providers[0];
+  for (const field of [
+    'open_weights', 'open_weights_source', 'license', 'supported_parameters',
+    'supports_tool_choice', 'supports_implicit_caching', 'max_prompt_tokens', 'uptime_1d',
+  ]) {
+    assert.equal(unknownProvider[field], null, `${field} should be explicit null when unavailable`);
+  }
 });
 
 test('?org=google filters to google models', async () => {

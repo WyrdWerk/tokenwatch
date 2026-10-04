@@ -123,6 +123,15 @@
             }
           },
           {
+            "name": "open_weights",
+            "in": "query",
+            "required": false,
+            "description": "Filter to models with resolved open_weights=true or false; unknown statuses are excluded.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "cache_read",
             "in": "query",
             "required": false,

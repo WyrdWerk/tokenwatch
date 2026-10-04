@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { blendedRate, freshInputRate } from '../shared/cost.mjs';
+import { buildBenchmarkOffering } from '../scripts/fetch-benchmarks.mjs';
 
 test('higher finite cache-write tariff prices fresh input while reads use cache_read', () => {
   const pricing = { input: 2, cache_write: 5, cache_read: 0.2, output: 7 };
@@ -100,12 +101,13 @@ test('benchmark client computes the same write-adjusted mix without changing cac
 });
 
 test('benchmark feed preserves the billing rule when projecting raw offering prices', async () => {
-  const src = await readFile(new URL('../scripts/fetch-benchmarks.mjs', import.meta.url), 'utf8');
-  const projection = src.match(/offerings\.push\((\{[\s\S]*?\n      \})\);/)?.[1];
-  assert.ok(projection);
-  const project = new Function('o', 'name', `return (${projection});`);
   const pricing = { input: 0.3, cache_write: 0.09, cache_read: 0, output: 1.2, input_billing: 'cache_write' };
-  const offering = project({ pricing }, 'CoralBricks');
+  const offering = buildBenchmarkOffering({
+    id: 'org/coralbricks-model',
+    provider: 'coralbricks',
+    provider_display: 'CoralBricks',
+    pricing,
+  }, {});
   assert.equal(offering.input_billing, 'cache_write');
   assert.equal(blendedRate(offering, { inputPct: 2.5, cacheReadPct: 97, outputPct: 0.5 }), 0.00825);
 });

@@ -970,6 +970,7 @@ export function renderApiDocsPage() {
       <div class="table-wrap"><table><caption>TokenWatch API endpoints</caption><thead><tr><th scope="col">Endpoint</th><th scope="col">Response</th><th scope="col">Query parameters</th><th scope="col">Sort values</th></tr></thead><tbody>${rows}</tbody></table></div>
       <h2>Examples</h2>
       <pre><code>curl '${SITE}/api/v1/models?provider=aster&amp;sort=input&amp;limit=20'
+curl '${SITE}/api/v1/models?open_weights=true&amp;limit=20'
 curl '${SITE}/api/v1/models/glm-5.2/providers?tokens=1000000&amp;mix=30,50,20'
 curl '${SITE}/api/v1/providers?zdr=true'
 curl '${SITE}/api/v1/videos?provider=fal&amp;limit=25'</code></pre>
@@ -990,7 +991,7 @@ curl '${SITE}/api/v1/videos?provider=fal&amp;limit=25'</code></pre>
   });
 }
 
-const BOOLEAN_API_PARAMS = new Set(['cache_read', 'cache_write', 'promo', 'zdr', 'sub', 'benchmarked']);
+const BOOLEAN_API_PARAMS = new Set(['cache_read', 'cache_write', 'promo', 'zdr', 'sub', 'benchmarked', 'open_weights']);
 const INTEGER_API_PARAMS = new Set(['limit', 'offset']);
 const NUMBER_API_PARAMS = new Set(['min_context', 'min_output', 'min_intelligence', 'tokens']);
 
@@ -1007,7 +1008,11 @@ function openApiParameter(name) {
     name,
     in: 'query',
     required: false,
-    description: name === 'mix' ? 'Comma-separated input, cached-input, and output percentages.' : `Filter or control parameter: ${name}.`,
+    description: name === 'mix'
+      ? 'Comma-separated input, cached-input, and output percentages.'
+      : name === 'open_weights'
+        ? 'Filter to models with resolved open_weights=true or false; unknown statuses are excluded.'
+        : `Filter or control parameter: ${name}.`,
     schema,
   };
 }

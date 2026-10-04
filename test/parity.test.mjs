@@ -139,6 +139,80 @@ test('models.dev confidence values are always "high" or "medium"', async () => {
   }
 });
 
+test('resolved open-weight status coverage floor (≥55% of canonical models)', { skip: skipLiveFloors }, async (t) => {
+  const data = JSON.parse(await readFile(PRICING_JSON, 'utf-8'));
+  if (!data.models.some((m) => Object.hasOwn(m, 'open_weights'))) {
+    t.skip('committed pricing snapshot predates the resolved open-weight schema');
+    return;
+  }
+
+  const byCanonical = new Map();
+  for (const model of data.models) {
+    const key = canonicalId(model.id);
+    if (!byCanonical.has(key)) byCanonical.set(key, false);
+    if (typeof model.open_weights === 'boolean') byCanonical.set(key, true);
+  }
+  const resolvedCount = [...byCanonical.values()].filter(Boolean).length;
+  const coverage = resolvedCount / byCanonical.size;
+  assert.ok(coverage >= 0.55,
+    `resolved open-weight coverage ${(coverage * 100).toFixed(1)}% below 55% floor`);
+});
+
+test('OpenRouter supported_parameters coverage floor (≥80% of endpoint rows)', { skip: skipLiveFloors }, async (t) => {
+  const data = JSON.parse(await readFile(PRICING_JSON, 'utf-8'));
+  const endpointRows = data.models.filter((m) => m.provider_display != null);
+  if (!endpointRows.some((m) => Object.hasOwn(m, 'supported_parameters'))) {
+    t.skip('committed pricing snapshot predates the OpenRouter endpoint capability schema');
+    return;
+  }
+
+  const populatedCount = endpointRows.filter((m) => Array.isArray(m.supported_parameters)).length;
+  const coverage = endpointRows.length ? populatedCount / endpointRows.length : 0;
+  assert.ok(coverage >= 0.8,
+    `OpenRouter supported_parameters coverage ${(coverage * 100).toFixed(1)}% below 80% floor`);
+});
+
+test('pricing offerings expose the recommender data contract consistently per canonical model', async (t) => {
+  const data = JSON.parse(await readFile(PRICING_JSON, 'utf-8'));
+  if (!data.models.some((model) => Object.hasOwn(model, 'open_weights_source'))) {
+    t.skip('committed pricing snapshot predates the recommender data contract');
+    return;
+  }
+
+  const allowedSources = new Set(['override', 'modelsdev', 'org_prior', null]);
+  const resolvedByCanonical = new Map();
+
+  for (const model of data.models) {
+    assert.ok(model.open_weights === null || typeof model.open_weights === 'boolean',
+      `${model.id} has invalid open_weights`);
+    assert.ok(allowedSources.has(model.open_weights_source),
+      `${model.id} has invalid open_weights_source: ${model.open_weights_source}`);
+    assert.equal(model.open_weights === null, model.open_weights_source === null,
+      `${model.id} open_weights and source disagree on known/unknown status`);
+    assert.ok(model.license === null || typeof model.license === 'string',
+      `${model.id} has invalid license`);
+    assert.ok(model.supported_parameters === null || Array.isArray(model.supported_parameters),
+      `${model.id} has invalid supported_parameters`);
+    for (const field of ['supports_tool_choice', 'supports_implicit_caching']) {
+      assert.ok(model[field] === null || typeof model[field] === 'boolean',
+        `${model.id} has invalid ${field}`);
+    }
+    assert.ok(model.max_prompt_tokens === null || Number.isInteger(model.max_prompt_tokens),
+      `${model.id} has invalid max_prompt_tokens`);
+    assert.ok(model.uptime_1d === null || (typeof model.uptime_1d === 'number' && Number.isFinite(model.uptime_1d)),
+      `${model.id} has invalid uptime_1d`);
+
+    const key = canonicalId(model.id);
+    const resolution = [model.open_weights, model.open_weights_source, model.license];
+    if (resolvedByCanonical.has(key)) {
+      assert.deepEqual(resolution, resolvedByCanonical.get(key),
+        `${model.id} disagrees with another offering for canonical model ${key}`);
+    } else {
+      resolvedByCanonical.set(key, resolution);
+    }
+  }
+});
+
 // models.dev's `api` field is optional — ~141 enriched models legitimately
 // carry base_url: null (providers like Azure/Bedrock/Google/Perplexity that
 // don't expose a documented HTTP endpoint on models.dev). When base_url IS

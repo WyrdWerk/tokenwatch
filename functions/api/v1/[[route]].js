@@ -324,6 +324,14 @@ export async function onRequestGet(context) {
           context_length: m.context_length,
           max_completion_tokens: m.max_completion_tokens,
           uptime_30m: m.uptime_30m,
+          uptime_1d: m.uptime_1d ?? null,
+          open_weights: typeof m.open_weights === 'boolean' ? m.open_weights : null,
+          open_weights_source: m.open_weights_source ?? null,
+          license: m.license ?? null,
+          supported_parameters: m.supported_parameters ?? null,
+          supports_tool_choice: m.supports_tool_choice ?? null,
+          supports_implicit_caching: m.supports_implicit_caching ?? null,
+          max_prompt_tokens: m.max_prompt_tokens ?? null,
           pricing: m.pricing,
         })),
       });
@@ -357,6 +365,10 @@ export async function onRequestGet(context) {
 
     const quantization = params.get('quantization');
     if (quantization) models = models.filter(m => (m.quantization || 'unknown') === quantization.toLowerCase());
+
+    const openWeights = params.get('open_weights');
+    if (openWeights === 'true') models = models.filter(m => m.open_weights === true);
+    if (openWeights === 'false') models = models.filter(m => m.open_weights === false);
 
     if (params.get('cache_read') === 'true') models = models.filter(m => m.pricing?.cache_read != null);
     if (params.get('cache_write') === 'true') models = models.filter(m => m.pricing?.cache_write != null);

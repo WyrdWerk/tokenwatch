@@ -10,7 +10,7 @@ export const API_ENDPOINTS = [
   {
     path: '/api/v1/models',
     summary: 'List text-generation model offerings',
-    params: ['org', 'provider', 'min_context', 'min_output', 'min_intelligence', 'quantization', 'cache_read', 'cache_write', 'promo', 'zdr', 'sub', 'benchmarked', 'search', 'sort', 'order', 'limit', 'offset'],
+    params: ['org', 'provider', 'min_context', 'min_output', 'min_intelligence', 'quantization', 'open_weights', 'cache_read', 'cache_write', 'promo', 'zdr', 'sub', 'benchmarked', 'search', 'sort', 'order', 'limit', 'offset'],
     sort: ['id', 'input', 'output', 'cache_read', 'cache_write', 'context', 'max_output', 'uptime', 'discount', 'intelligence', 'coding', 'agentic'],
   },
   {

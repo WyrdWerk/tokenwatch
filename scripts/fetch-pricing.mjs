@@ -62,6 +62,8 @@ import { fetchModelsDevEnrichment } from './fetch-modelsdev.mjs';
 import { fetchAABenchmarks } from './fetch-aa.mjs';
 import { fetchNeuralwattEnergy } from './fetch-neuralwatt-energy.mjs';
 import { getZroCatalogRows } from './fetch-zro.mjs';
+import { resolveOpenWeightsForOfferings } from '../shared/open-weights.mjs';
+import { normalizeOpenRouterEndpointCapabilities } from '../shared/openrouter-endpoint.mjs';
 
 // ── direct providers config ───────────────────────────────────────────────────
 
@@ -560,6 +562,7 @@ async function fetchModelEndpoints(model) {
     context_length: ep.context_length ?? model.context_length ?? null,
     max_completion_tokens: ep.max_completion_tokens ?? null,
     uptime_30m: ep.uptime_last_30m ?? null,
+    ...normalizeOpenRouterEndpointCapabilities(ep),
     pricing: {
       input: perTokToPerM(ep.pricing?.prompt),
       output: perTokToPerM(ep.pricing?.completion),
@@ -1122,6 +1125,19 @@ async function main() {
     if (topUnmatched.length > 0) {
       console.log('  Unmatched by provider (top 5): ' + topUnmatched.map(([p, c]) => `${p}=${c}`).join(', '));
     }
+  }
+
+  // Resolve canonical model weight status from reviewed overrides, a strict
+  // models.dev majority, or the limited creator-org priors. Licenses are the
+  // most common non-empty models.dev license among records for the canonical.
+  const openWeightOverrides = JSON.parse(await readFile('data/open-weights-overrides.json', 'utf8'));
+  out.models = resolveOpenWeightsForOfferings(out.models, mdIndex, openWeightOverrides);
+  for (const m of out.models) {
+    m.supported_parameters ??= null;
+    m.supports_tool_choice ??= null;
+    m.supports_implicit_caching ??= null;
+    m.max_prompt_tokens ??= null;
+    m.uptime_1d ??= null;
   }
 
   // ── Benchmark enrichment (sidecar) ──

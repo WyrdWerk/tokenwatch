@@ -24,9 +24,11 @@ import { fileURLToPath } from 'node:url';
 import { canonicalId } from '../shared/normalize.mjs';
 import { blendedRate, AGENTIC_MIX } from '../shared/cost.mjs';
 import { buildOrgIndex } from '../shared/benchmark-org.mjs';
+import { normalizeProvider } from './lib.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PRICING_JSON = join(__dirname, '..', 'public', 'pricing.json');
+const PERFORMANCE_JSON = join(__dirname, '..', 'public', 'performance.json');
 const OUT_JSON = join(__dirname, '..', 'public', 'benchmarks.json');
 
 const LIVEBENCH_RELEASE = '2026_06_25';
@@ -114,10 +116,40 @@ async function fetchLiveBench(log) {
   }
 }
 
+/** Build one benchmark offering with model capabilities and provider metrics. */
+export function buildBenchmarkOffering(model, performance) {
+  const performanceKey = `${canonicalId(model.id)}|${normalizeProvider(model.provider)}`;
+  const metrics = performance[performanceKey];
+  return {
+    provider: model.provider_display || model.provider,
+    input: model.pricing.input,
+    cache_write: model.pricing.cache_write ?? null,
+    input_billing: model.pricing.input_billing ?? null,
+    output: model.pricing.output,
+    cache_read: model.pricing.cache_read ?? null,
+    quantization: model.quantization ?? null,
+    zdr: model.zdr === true,
+    context_length: model.context_length ?? null,
+    uptime_30m: model.uptime_30m ?? null,
+    open_weights: typeof model.open_weights === 'boolean' ? model.open_weights : null,
+    tool_call: model.modelsdev?.capabilities?.tool_call
+      ?? model.modelsdev_model?.capabilities?.tool_call
+      ?? null,
+    throughput_p50: metrics?.throughput?.p50 ?? null,
+    latency_p50: metrics?.latency?.p50 ?? null,
+  };
+}
+
 // ── Main build ────────────────────────────────────────────────────────────────
 
 async function main() {
   const pricing = JSON.parse(await readFile(PRICING_JSON, 'utf8'));
+  let performance = {};
+  try {
+    performance = JSON.parse(await readFile(PERFORMANCE_JSON, 'utf8'));
+  } catch (err) {
+    console.warn(`⚠ performance.json unavailable: ${err.message} — offering metrics will be null`);
+  }
   const livebench = await fetchLiveBench(console);
 
   // 1. Group provider offerings by canonical model id
@@ -188,24 +220,22 @@ async function main() {
       const rate = blendedRate(o.pricing, AGENTIC_MIX);
       if (rate == null) continue;
       const name = o.provider_display || o.provider;
-      offerings.push({
-        provider: name,
-        input: o.pricing.input,
-        cache_write: o.pricing.cache_write,
-        input_billing: o.pricing.input_billing,
-        output: o.pricing.output,
-        cache_read: o.pricing.cache_read,
-      });
+      offerings.push(buildBenchmarkOffering(o, performance));
       if (!best || rate < best.blended_per_m) {
         best = { provider: name, blended_per_m: Math.round(rate * 1000) / 1000 };
       }
     }
     if (!best) continue; // benchmarked but not priceable here — skip
 
+    const openWeights = info.offerings.find((o) => typeof o.open_weights === 'boolean')?.open_weights ?? null;
+    const license = info.offerings.find((o) => typeof o.license === 'string' && o.license.trim())?.license ?? null;
+
     models.push({
       id: cid,
       name: info.name,
       org,
+      open_weights: openWeights,
+      license,
       providers: offerings.length,
       from: best,
       offerings,

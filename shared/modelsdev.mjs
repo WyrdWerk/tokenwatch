@@ -306,6 +306,7 @@ export function applyEnrichment(models, providerIndex, log = []) {
         capabilities: hit.capabilities ?? null,
         modalities: hit.modalities ?? null,
         open_weights: hit.open_weights ?? null,
+        license: hit.license ?? null,
       };
       continue;
     }
@@ -322,6 +323,7 @@ export function applyEnrichment(models, providerIndex, log = []) {
         capabilities: modelHit.capabilities ?? null,
         modalities: modelHit.modalities ?? null,
         open_weights: modelHit.open_weights ?? null,
+        license: modelHit.license ?? null,
         doc_url: modelHit.doc_url ?? null,
       };
       modelFallbackCount++;

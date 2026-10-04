@@ -74,13 +74,14 @@ export function buildIndexFromApi(apiData) {
         description: m.description || null,
         capabilities: {
           reasoning: m.reasoning === true,
-          tool_call: m.tool_call === true,
+          tool_call: typeof m.tool_call === 'boolean' ? m.tool_call : null,
           structured_output: m.structured_output === true,
           attachment: m.attachment === true,
           temperature: m.temperature === true,
         },
         modalities: m.modalities || null,
-        open_weights: m.open_weights === true,
+        open_weights: typeof m.open_weights === 'boolean' ? m.open_weights : null,
+        license: typeof m.license === 'string' && m.license.trim() ? m.license : null,
       });
       indexedCount++;
     }

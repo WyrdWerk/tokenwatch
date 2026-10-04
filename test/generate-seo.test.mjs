@@ -338,6 +338,7 @@ test('API documentation renders from the same endpoint metadata as API discovery
     assert.ok(directory.some((line) => line.startsWith(endpoint.path + ' —')));
   }
   assert.match(docs, /min_intelligence/);
+  assert.match(docs, /open_weights=true/);
   assert.match(docs, /benchmarked/);
   assert.match(docs, /href="\/openapi\.json"/);
   assert.equal(openApi.openapi, '3.1.0');
@@ -347,6 +348,9 @@ test('API documentation renders from the same endpoint metadata as API discovery
     assert.ok(openApi.paths[path]?.get, `missing OpenAPI operation for ${endpoint.path}`);
     assert.match(openApi.paths[path].get.operationId, /^[A-Za-z][A-Za-z0-9]*$/, `operationId must be identifier-safe for ${endpoint.path}`);
   }
+  const openWeights = openApi.paths['/api/v1/models'].get.parameters.find((parameter) => parameter.name === 'open_weights');
+  assert.deepEqual(openWeights.schema, { type: 'boolean' });
+  assert.match(openWeights.description, /unknown statuses are excluded/);
 });
 
 test('dynamic sitemap rejects duplicates and includes generated routes', () => {
