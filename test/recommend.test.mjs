@@ -15,7 +15,7 @@ const mixOffering = (id, provider, intelligence, input, extra = {}) => ({
   context_length: 65536,
   quantization: 'fp8',
   pricing: { input, output: input, cache_read: input, cache_write: null },
-  benchmarks: { intelligence_index: intelligence, coding_index: intelligence },
+  benchmarks: { intelligence_index: intelligence, coding_index: intelligence, agentic_index: intelligence },
   ...extra,
 });
 
@@ -52,9 +52,12 @@ test('shortlist blended price stays in parity with the Text model summary in dol
   });
   const summary = rankOfferings([mimo], AGENTIC_MIX)[0];
   const shortlist = shortlistModels('agentic-coding', [mimo]);
+  const shortlistPick = shortlist.bestQuality
+    || shortlist.partiallyBenchmarked.find((candidate) => candidate.id === 'mimo-v2.6-pro');
 
   assert.ok(summary, 'Text model summary can price the same offering');
-  assert.ok(Math.abs(shortlist.bestQuality.blendedRate - summary.eff) < 1e-12);
+  assert.ok(shortlistPick, 'the shortlist retains the model even though its benchmark coverage is below the ranking threshold');
+  assert.ok(Math.abs(shortlistPick.blendedRate - summary.eff) < 1e-12);
   assert.ok(Math.abs(summary.eff - 0.018592) < 1e-12);
   assert.ok(Math.abs((summary.eff * 1000 / 1e6) - 0.000018592) < 1e-12,
     '1,000-token session cost is distinct from the $/M blended rate');
@@ -73,7 +76,108 @@ test('shortlist applies open-weight, capability, and context hard requirements',
     [result.bestQuality?.id, result.bestValue?.id, result.cheapestAboveFloor?.id],
     ['qualified', 'qualified', 'qualified'],
   );
+  assert.ok(result.bestQuality.reasons.some((reason) => /only qualifying option/i.test(reason)));
   assert.equal(shortlistModels('agentic-coding', catalog, { includeProprietary: true }).bestQuality?.id, 'model');
+});
+
+test('shortlist shrinks low-coverage scores and keeps them visible but out of quality and value picks', () => {
+  const result = shortlistModels('agentic-coding', [
+    mixOffering('open/thin-signal', 'thin', 46.3, 0.01, {
+      benchmarks: { intelligence_index: 46.3 },
+    }),
+    mixOffering('open/full-signal', 'full', 20, 2, {
+      benchmarks: {
+        agentic_index: 60,
+        coding_index: 40,
+        intelligence_index: 20,
+        livebench_agentic_coding: 60,
+      },
+    }),
+  ]);
+
+  assert.equal(result.bestQuality.id, 'full-signal');
+  assert.equal(result.bestValue.id, 'full-signal');
+  assert.ok(!result.paretoFrontier.some((candidate) => candidate.id === 'thin-signal'));
+  const partial = result.partiallyBenchmarked.find((candidate) => candidate.id === 'thin-signal');
+  assert.ok(partial);
+  assert.equal(partial.qualityCoverage, 0.15);
+  assert.ok(partial.qualityScore < 70, 'the one-signal score is shrunk toward the cohort median');
+  assert.ok(partial.reasons.some((reason) => /15%.*cohort median/i.test(reason)));
+});
+
+test('shortlist surfaces unknown required capabilities as unverified models', () => {
+  const result = shortlistModels('agentic-coding', [
+    mixOffering('open/unknown-tools', 'unknown-provider', 80, 1, {
+      supported_parameters: null,
+      modelsdev: null,
+      modelsdev_model: null,
+    }),
+  ]);
+
+  assert.equal(result.bestQuality, null);
+  assert.deepEqual(result.unverified.map((model) => model.id), ['unknown-tools']);
+  assert.ok(result.unverified[0].unknowns.some((unknown) => /tool-calling capability not disclosed/i.test(unknown)));
+});
+
+test('shortlist excludes subscriptions by default and permits them explicitly', () => {
+  const subscription = mixOffering('open/subscription-model', 'opencode-go', 80, 1, {
+    subscription: true,
+    benchmarks: { agentic_index: 80, coding_index: 80, intelligence_index: 80, livebench_agentic_coding: 80 },
+  });
+  assert.equal(shortlistModels('agentic-coding', [subscription]).bestQuality, null);
+
+  const included = shortlistModels('agentic-coding', [subscription], { includeSubscription: true });
+  assert.equal(included.bestQuality.id, 'subscription-model');
+  assert.ok(included.bestQuality.recommendedProvider.reasons.some((reason) => /subscription plan, not pay-as-you-go/i.test(reason)));
+});
+
+test('shortlist applies low-bit quantization fallback per model, not across the catalog', () => {
+  const result = shortlistModels('agentic-coding', [
+    mixOffering('open/fp4-only', 'fp4-provider', 90, 1, {
+      quantization: 'int4',
+      benchmarks: { agentic_index: 90, coding_index: 90, intelligence_index: 90, livebench_agentic_coding: 90 },
+    }),
+    mixOffering('open/other-model', 'fp8-provider', 10, 10, {
+      quantization: 'fp8',
+      benchmarks: { agentic_index: 10, coding_index: 10, intelligence_index: 10, livebench_agentic_coding: 10 },
+    }),
+  ]);
+
+  assert.equal(result.bestQuality.id, 'fp4-only');
+  assert.ok(result.bestQuality.reasons.some((reason) => /low-bit quantization is the only qualifying option/i.test(reason)));
+});
+
+test('LiveBench-thin use cases use AA intelligence for the absolute floor', () => {
+  for (const useCaseId of ['structured-extraction', 'creative-writing', 'reasoning-math']) {
+    assert.deepEqual(USE_CASES[useCaseId].qualityFloor, { field: 'intelligence_index', min: 15 });
+  }
+  assert.ok(USE_CASES['structured-extraction'].benchmarkWeights.livebench_instruction_following > 0);
+  assert.ok(USE_CASES['creative-writing'].benchmarkWeights.livebench_language > 0);
+  assert.ok(USE_CASES['reasoning-math'].benchmarkWeights.livebench_math > 0);
+
+  const result = shortlistModels('structured-extraction', [
+    mixOffering('open/aa-only', 'structured-provider', 15.1, 1, {
+      supported_parameters: ['structured_outputs'],
+      benchmarks: { intelligence_index: 15.1 },
+    }),
+  ]);
+  assert.equal(result.cheapestAboveFloor.id, 'aa-only');
+  assert.equal(result.cheapestAboveFloor.group, 'partiallyBenchmarked');
+  assert.ok(result.cheapestAboveFloor.reasons.some((reason) => /intelligence_index.*absolute floor of 15/i.test(reason)));
+});
+
+test('cheapest-above-floor explains when it costs more than bestValue', () => {
+  const result = shortlistModels('agentic-coding', [
+    mixOffering('open/cheap-below-floor', 'cheap', 100, 1, {
+      benchmarks: { agentic_index: 100, coding_index: 24, intelligence_index: 100, livebench_agentic_coding: 100 },
+    }),
+    mixOffering('open/expensive-above-floor', 'expensive', 0, 10, {
+      benchmarks: { agentic_index: 0, coding_index: 30, intelligence_index: 0, livebench_agentic_coding: 0 },
+    }),
+  ]);
+  assert.equal(result.bestValue.id, 'cheap-below-floor');
+  assert.equal(result.cheapestAboveFloor.id, 'expensive-above-floor');
+  assert.ok(result.cheapestAboveFloor.reasons.some((reason) => /costs more than bestValue/i.test(reason)));
 });
 
 test('shortlist selects a quality/price Pareto knee without ranking by score-to-price ratio', () => {
@@ -120,7 +224,9 @@ test('batch variants are excluded by default and enabled only by option or high-
   assert.equal(shortlistModels('high-volume-cheap', batchOnly).bestQuality.id, 'model-a:batch');
 
   assert.deepEqual(rankProviders('agentic-coding', 'model-a:batch', batchOnly, {}).ranked, []);
-  assert.equal(rankProviders('agentic-coding', 'model-a:batch', batchOnly, {}, { includeBatch: true }).ranked[0].provider, 'batch-provider');
+  const included = rankProviders('agentic-coding', 'model-a:batch', batchOnly, {}, { includeBatch: true });
+  assert.equal(included.ranked[0].provider, 'batch-provider');
+  assert.ok(included.ranked[0].reasons.some((reason) => /asynchronous batch endpoint/i.test(reason)));
   assert.equal(rankProviders('high-volume-cheap', 'model-a:batch', batchOnly, {}).ranked[0].provider, 'batch-provider');
 });
 
@@ -184,6 +290,88 @@ test('rankProviders gates required capability, context, ZDR, HQ, and uptime befo
   assert.deepEqual(rows.ranked.map((row) => row.provider), ['eligible']);
   assert.ok(rows.ranked[0].reasons.some((reason) => /tool.calling/i.test(reason)));
   assert.ok(rows.ranked[0].reasons.some((reason) => /ZDR/i.test(reason)));
+});
+
+test('shortlist provider and price picks use rankProviders gates and expose the top-ranked provider', () => {
+  const offerings = [
+    mixOffering('open/model-a', 'fast-approved', 90, 5, { zdr: true, uptime_30m: 99.7 }),
+    mixOffering('open/model-a', 'cheap-approved', 90, 1, { zdr: true, uptime_30m: 99.5 }),
+    mixOffering('open/model-a', 'blocked-zdr', 90, 0.1, { zdr: false, uptime_30m: 100 }),
+    mixOffering('open/model-a', 'blocked-issue', 90, 0.2, { zdr: true, uptime_30m: 99.9 }),
+  ];
+  const performance = {
+    'model-a|fast-approved': { latency: { p50: 100 }, throughput: { p50: 100 } },
+    'model-a|cheap-approved': { latency: { p50: 10000 }, throughput: { p50: 1 } },
+  };
+  const constraints = {
+    requireZdr: true,
+    minUptime: 99,
+    knownIssues: [{ canonicalId: 'model-a', provider: 'blocked-issue', verdict: 'unavailable' }],
+  };
+  const result = shortlistModels('agentic-coding', offerings, { performance, constraints });
+
+  assert.equal(result.bestQuality.recommendedProvider.provider, 'fast-approved');
+  assert.equal(result.bestQuality.provider, 'fast-approved');
+  assert.equal(result.bestQuality.recommendedProvider.blendedRate, 5);
+  assert.equal(result.bestQuality.cheapestProvider.provider, 'cheap-approved');
+  assert.equal(result.bestQuality.blendedRate, 1, 'Pareto price uses the cheapest provider that passes all gates');
+  assert.ok(!['blocked-zdr', 'blocked-issue'].includes(result.bestQuality.cheapestProvider?.provider));
+});
+
+test('rankProviders makes a priced workload mix a hard gate', () => {
+  const result = rankProviders('agentic-coding', 'model-a', [
+    mixOffering('open/model-a', 'unpriced-fast', 90, 1, {
+      pricing: { input: null, output: null, cache_read: null, cache_write: null },
+      uptime_30m: 100,
+    }),
+    mixOffering('open/model-a', 'priced', 90, 2, { uptime_30m: 99 }),
+  ], {
+    'model-a|unpriced-fast': { latency: { p50: 1 }, throughput: { p50: 10000 } },
+  });
+  assert.deepEqual(result.ranked.map((row) => row.provider), ['priced']);
+  assert.ok(result.ranked[0].reasons.some((reason) => /only qualifying option/i.test(reason)));
+  assert.ok(!result.ranked[0].reasons.some((reason) => /lowest blended price among eligible/i.test(reason)));
+});
+
+test('uptime uses explicit percent units, prefers 30-minute data, and labels its window', () => {
+  const result = rankProviders('agentic-coding', 'model-a', [
+    mixOffering('open/model-a', 'short-window', 90, 1, { uptime_30m: 99.25, uptime_1d: 100 }),
+    mixOffering('open/model-a', 'daily-fallback', 90, 2, { uptime_30m: null, uptime_1d: 99.75 }),
+  ], {});
+  const short = result.ranked.find((row) => row.provider === 'short-window');
+  const daily = result.ranked.find((row) => row.provider === 'daily-fallback');
+  assert.equal(short.uptime, 99.25);
+  assert.equal(short.uptimeWindow, '30m');
+  assert.ok(short.reasons.some((reason) => /30-minute.*99\.25%/i.test(reason)));
+  assert.equal(daily.uptimeWindow, '1d');
+  assert.ok(daily.reasons.some((reason) => /1-day.*99\.75%/i.test(reason)));
+
+  const fractional = rankProviders('agentic-coding', 'model-a', [
+    mixOffering('open/model-a', 'fraction-not-percent', 90, 1, { uptime_30m: 0.99 }),
+  ], {}, { minUptime: 99 });
+  assert.deepEqual(fractional.ranked, [], '0.99 in a percent-valued field means 0.99%, not 99%');
+});
+
+test('latency reasons name the telemetry source and measurement window', () => {
+  const result = rankProviders('agentic-coding', 'model-a', [
+    mixOffering('open/model-a', 'openrouter', 90, 1),
+    mixOffering('open/model-a', 'coralbricks', 90, 2),
+    mixOffering('open/model-a', 'lilac', 90, 3),
+    mixOffering('open/model-a', 'umans', 90, 4),
+  ], {
+    'model-a|openrouter': { latency: { p50: 123 } },
+    'model-a|coralbricks': { source: 'coralbricks', latency: { p50: 456, window: '1d' } },
+    'model-a|lilac': { latency: { p50: 654 } },
+    'model-a|umans': { latency: { ttft_ms: { p50: 789 } } },
+  });
+  assert.ok(result.ranked.find((row) => row.provider === 'openrouter').reasons
+    .some((reason) => /OpenRouter 30-minute TTFT p50: 123 ms/i.test(reason)));
+  assert.ok(result.ranked.find((row) => row.provider === 'coralbricks').reasons
+    .some((reason) => /CoralBricks 1-day TTFT p50: 456 ms/i.test(reason)));
+  assert.ok(result.ranked.find((row) => row.provider === 'lilac').reasons
+    .some((reason) => /Lilac 1-hour TTFT p50: 654 ms/i.test(reason)));
+  assert.ok(result.ranked.find((row) => row.provider === 'umans').reasons
+    .some((reason) => /Umans window not disclosed TTFT p50: 789 ms/i.test(reason)));
 });
 
 test('structured-extraction requires explicit structured-output support', () => {
