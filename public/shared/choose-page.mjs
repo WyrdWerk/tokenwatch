@@ -67,6 +67,11 @@ export function buildCalculatorHref(modelId, mix) {
   return `/#${params.toString()}`;
 }
 
+/** Quote untrusted catalog text as one POSIX-shell word. */
+export function shellQuote(value) {
+  return `'${String(value).replaceAll("'", "'\\''")}'`;
+}
+
 export function isCloseCall(confidence) {
   return confidence?.level === 'close_call';
 }
