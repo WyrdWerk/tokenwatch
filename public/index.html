@@ -70,7 +70,16 @@
     </nav>
   </header>
   <!-- TW:SEO:tw-finder:START -->
-  <!-- TW:SEO:tw-finder:END -->
+<section class="tw-finder" aria-label="Find a model for your workload">
+  <form class="tw-finder-form" id="twFinder" action="/choose/" method="get">
+    <label class="tw-finder-label" for="twFinderUseCase">Which model suits my workload?</label>
+    <div class="tw-finder-controls">
+      <select id="twFinderUseCase" name="useCase"><option value="agentic-coding">Coding agent</option><option value="tool-agents">Tool-using agent</option><option value="long-context-rag">Chat over my documents</option><option value="structured-extraction">Extract data to JSON</option><option value="high-volume-cheap">Cheap bulk processing</option><option value="chat-assistant">Chatbot</option><option value="creative-writing">Creative writing</option><option value="reasoning-math">Reasoning / math</option><option value="frontend-ui">Websites / UI</option></select>
+      <button type="submit" class="tw-finder-go">Go →</button>
+    </div>
+  </form>
+</section>
+<!-- TW:SEO:tw-finder:END -->
   <!-- TW:SEO:tw-hero:START -->
 <section class="tw-hero" id="twHero" aria-label="Why the provider matters">
   <div class="tw-hero-copy">
@@ -79,7 +88,6 @@
     <div class="tw-hero-ctas">
       <button type="button" class="tw-hero-cta" data-hero-action="estimate">Estimate my workload ↓</button>
       <button type="button" class="tw-hero-cta tw-hero-cta-ghost" data-hero-model="glm-5.3-flash">Compare GLM 5.3 Flash</button>
-      <a class="tw-hero-cta tw-hero-cta-ghost" href="/choose/">Find the right model for your use case →</a>
     </div>
   </div>
   <svg class="tw-hero-scene" viewBox="0 0 560 200" role="img" aria-label="Blended price at an agentic mix: CoralBricks $0.0083 per million tokens; Decart $0.030 per million tokens (promo); Reka $0.035 per million tokens; gonka24 $0.039 per million tokens; PrimeIntellect $0.152 per million tokens">

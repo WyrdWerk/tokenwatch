@@ -9,6 +9,9 @@ import { blendedRate } from './cost.mjs';
 import { canonicalId, quantFromId } from './normalize.mjs';
 import { getUseCase, resolveProviderWeights } from './use-cases.mjs';
 
+/** Share of a use case's benchmark weight a model needs observed to be quality-eligible. */
+export const MIN_BENCHMARK_COVERAGE = 0.5;
+
 const BENCHMARK_FIELDS = new Set([
   'intelligence_index', 'coding_index', 'agentic_index', 'design_arena_best',
   'livebench_math', 'livebench_coding', 'livebench_language',
@@ -337,7 +340,7 @@ function candidateGates(group, model, useCase, pick) {
     { key: 'minimum_context', applied: finiteNonNegative(requirements.minContext) && requirements.minContext > 0, passed: capacity === null ? null : capacity >= (requirements.minContext || 0), minimum: requirements.minContext || 0, observed: capacity },
     { key: 'priceable_mix', applied: true, passed: finiteNonNegative(group.blendedRate), mix: useCase.mix, observedBlendedRate: group.blendedRate },
     { key: 'quantization_policy', applied: Boolean(useCase.quantizationPolicy?.reject?.length), passed: true, rejected: useCase.quantizationPolicy?.reject || [], fallbackUsed: Boolean(group.quantFallback) },
-    { key: 'benchmark_coverage', applied: qualityGateApplied, passed: group.qualityCoverage >= 0.5, minimumCoverage: 0.5, observedCoverage: group.qualityCoverage },
+    { key: 'benchmark_coverage', applied: qualityGateApplied, passed: group.qualityCoverage >= MIN_BENCHMARK_COVERAGE, minimumCoverage: MIN_BENCHMARK_COVERAGE, observedCoverage: group.qualityCoverage },
     { key: 'quality_floor', applied: pick === 'cheapestAboveFloor', passed: pick === 'cheapestAboveFloor' ? finite(primaryScore) && primaryScore >= useCase.qualityFloor.min : null, field: useCase.qualityFloor.field, minimum: useCase.qualityFloor.min, observed: primaryScore },
   ];
 }
@@ -482,7 +485,7 @@ function candidateResult(group, useCase, {
     providers: providerRanking.ranked,
     unverifiedProviders: providerRanking.unverified,
     ...(unbenchmarked ? { group: 'unbenchmarked' } : {}),
-    ...(group.qualityScore !== null && group.qualityCoverage < 0.5 ? { group: 'partiallyBenchmarked' } : {}),
+    ...(group.qualityScore !== null && group.qualityCoverage < MIN_BENCHMARK_COVERAGE ? { group: 'partiallyBenchmarked' } : {}),
     offering: recommendedProvider?.offering ?? cheapestProvider?.offering ?? null,
     cheapestOffering: cheapestProvider?.offering ?? null,
   };
@@ -629,13 +632,13 @@ export function shortlistModels(useCaseId, catalog, opts = {}) {
 
   scoreModelCandidates(eligibleGroups, opts.benchmarks, useCase);
   const scored = eligibleGroups.filter((candidate) => candidate.qualityScore !== null);
-  const qualityEligible = scored.filter((candidate) => candidate.qualityCoverage >= 0.5);
+  const qualityEligible = scored.filter((candidate) => candidate.qualityCoverage >= MIN_BENCHMARK_COVERAGE);
   const unbenchmarked = eligibleGroups
     .filter((candidate) => candidate.qualityScore === null)
     .map((candidate) => candidateResult(candidate, useCase, { unbenchmarked: true }))
     .sort((a, b) => (a.blendedRate ?? Infinity) - (b.blendedRate ?? Infinity) || a.id.localeCompare(b.id));
   const partiallyBenchmarked = scored
-    .filter((candidate) => candidate.qualityCoverage < 0.5)
+    .filter((candidate) => candidate.qualityCoverage < MIN_BENCHMARK_COVERAGE)
     .map((candidate) => candidateResult(candidate, useCase, {
       candidateCount: scored.length,
     }))
