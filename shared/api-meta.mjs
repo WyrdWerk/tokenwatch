@@ -16,7 +16,7 @@ export const API_ENDPOINTS = [
   {
     path: '/api/v1/recommend',
     summary: 'Recommend models for a workload with compact candidate groups and full explanations for the three picks',
-    params: ['use_case', 'priority', 'zdr', 'exclude_hq', 'include_proprietary', 'detail', 'limit'],
+    params: ['use_case', 'priority', 'zdr', 'exclude_hq', 'include_proprietary', 'detail', 'limit', 'pretty'],
     requiredParams: ['use_case'],
     parameterLimits: { limit: 100 },
     sort: [],
@@ -24,7 +24,7 @@ export const API_ENDPOINTS = [
   {
     path: '/api/v1/recommend/providers',
     summary: 'Rank providers for one model with full explanations for the top three and compact remaining rows',
-    params: ['use_case', 'model', 'priority', 'zdr', 'exclude_hq', 'include_proprietary', 'detail', 'limit'],
+    params: ['use_case', 'model', 'priority', 'zdr', 'exclude_hq', 'include_proprietary', 'detail', 'limit', 'pretty'],
     requiredParams: ['use_case', 'model'],
     parameterLimits: { limit: 100 },
     sort: [],

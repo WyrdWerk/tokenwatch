@@ -42,8 +42,8 @@ const CORS_HEADERS = {
   'X-Robots-Tag': 'noindex',
 };
 
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data, null, 2), {
+function json(data, status = 200, { pretty = true } = {}) {
+  return new Response(pretty ? JSON.stringify(data, null, 2) : JSON.stringify(data), {
     status,
     headers: CORS_HEADERS,
   });
@@ -73,6 +73,15 @@ function parseRecommendationParams(params, { requireModel = false } = {}) {
   const detail = params.get('detail') ?? 'compact';
   if (detail !== 'compact' && detail !== 'full') {
     return { ok: false, error: 'detail must be compact or full', parameter: 'detail' };
+  }
+
+  let pretty = false;
+  if (params.has('pretty')) {
+    const value = params.get('pretty');
+    if (value === '1' || value === 'true') pretty = true;
+    else if (value !== '0' && value !== 'false') {
+      return { ok: false, error: 'pretty must be 1, 0, true, or false', parameter: 'pretty' };
+    }
   }
 
   let limit = 10;
@@ -109,6 +118,7 @@ function parseRecommendationParams(params, { requireModel = false } = {}) {
     useCase,
     priority,
     detail,
+    pretty,
     limit,
     requireZdr: zdr.value,
     includeProprietary: includeProprietary.value,
@@ -168,7 +178,8 @@ function compactRecommendationCandidate(candidate, includeProviderExplanations =
     cheapestProvider: compactRecommendationProvider(candidate.cheapestProvider, includeProviderExplanations),
     offering: compactRecommendationOffering(candidate.offering),
     cheapestOffering: compactRecommendationOffering(candidate.cheapestOffering),
-    unverifiedProviders: (candidate.unverifiedProviders || []).map((provider) => compactRecommendationProvider(provider, includeProviderExplanations)),
+    unverifiedProviders: (candidate.unverifiedProviders || []).map((provider) =>
+      includeProviderExplanations ? compactRecommendationProvider(provider, true) : compactUnverifiedProviderRow(provider)),
     ...(Array.isArray(candidate.providers)
       ? { providers: includeProviderExplanations ? candidate.providers : candidate.providers.map(compactProviderRow) }
       : {}),
@@ -194,6 +205,15 @@ function compactProviderRow(provider) {
     blendedRate: provider.blendedRate ?? null,
     confidence: provider.confidence?.level ?? null,
     reason: reason ?? provider.reasons?.[0] ?? provider.unknowns?.[0] ?? null,
+  };
+}
+
+function compactUnverifiedProviderRow(provider) {
+  return {
+    provider: provider.provider,
+    offeringId: provider.offering?.id ?? null,
+    blendedRate: provider.blendedRate ?? null,
+    reason: provider.unknowns?.[0] ?? provider.reasons?.[0] ?? null,
   };
 }
 
@@ -391,9 +411,12 @@ async function recommendationResponse(context, pricing, providersOnly) {
       mix: { ...USE_CASES[parsed.useCase].mix, assumed: true },
       canonical_id: target,
       ranked: providerGroup(result.ranked, parsed, { explainTopThree: true }),
-      unverified: providerGroup(result.unverified, parsed),
+      unverified: {
+        totalCount: result.unverified.length,
+        items: result.unverified.slice(0, parsed.limit).map((item) => parsed.detail === 'full' ? item : compactUnverifiedProviderRow(item)),
+      },
       message: result.message,
-    });
+    }, 200, { pretty: parsed.pretty });
   }
 
   const result = shortlistModels(parsed.useCase, pricing.models, {
@@ -427,7 +450,7 @@ async function recommendationResponse(context, pricing, providersOnly) {
     partiallyBenchmarked: recommendationGroup(result.partiallyBenchmarked, parsed, compactRecommendationRow),
     unbenchmarked: recommendationGroup(result.unbenchmarked, parsed, compactRecommendationRow),
     unverified: recommendationGroup(result.unverified, parsed, compactRecommendationRow),
-  });
+  }, 200, { pretty: parsed.pretty });
 }
 
 export async function onRequestGet(context) {

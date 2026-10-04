@@ -969,7 +969,7 @@ export function renderApiDocsPage() {
       <h2>Public JSON API</h2>
       <p>All endpoints accept GET requests and return JSON with permissive CORS headers. List endpoints paginate with <code>limit</code> and <code>offset</code>; the limit is clamped to 1–500 and defaults to 100. A machine-readable <a href="/openapi.json">OpenAPI 3.1 description</a> is also available.</p>
       <p>Recommendation mixes are assumed workload defaults, not claims about your traffic. Model picks include best quality, best value, and the cheapest model above an absolute quality floor; explanations label benchmark coverage, provider ranking, missing signals, and confidence. Provider ranking requires confirmed capability and context metadata and keeps unverified options separate.</p>
-      <p>Recommendation responses default to compact candidate groups (up to 10 rows each, with total counts) and full explanations on the three model picks. Provider results keep full explanations on the top three. Add <code>detail=full</code> to expand explanations for returned rows, or set <code>limit=1..100</code> to change each group cap.</p>
+      <p>Recommendation responses default to compact candidate groups (up to 10 rows each, with total counts) and full explanations on the three model picks. Provider results keep full explanations on the top three. Add <code>detail=full</code> to expand explanations for returned rows, or set <code>limit=1..100</code> to change each group cap. Recommendation JSON is compact (no indentation); add <code>pretty=1</code> for indented output.</p>
       <div class="table-wrap"><table><caption>TokenWatch API endpoints</caption><thead><tr><th scope="col">Endpoint</th><th scope="col">Response</th><th scope="col">Query parameters</th><th scope="col">Sort values</th></tr></thead><tbody>${rows}</tbody></table></div>
       <h2>Examples</h2>
       <pre><code>curl '${SITE}/api/v1/models?provider=aster&amp;sort=input&amp;limit=20'
@@ -1013,6 +1013,7 @@ function openApiParameter(name, required = false, parameterLimits = {}) {
   if (name === 'priority') schema = { type: 'string', enum: Object.keys(PRIORITY_PROVIDER_WEIGHTS) };
   if (name === 'exclude_hq') schema = { type: 'string', pattern: '^[A-Za-z]{2}(,[A-Za-z]{2})*$' };
   if (name === 'detail') schema = { type: 'string', enum: ['compact', 'full'], default: 'compact' };
+  if (name === 'pretty') schema = { type: 'string', enum: ['1', '0', 'true', 'false'], default: '0' };
   if (name === 'limit' && parameterLimits.limit) schema.default = 10;
   if (schema.maximum === undefined) delete schema.maximum;
   return {
@@ -1033,6 +1034,8 @@ function openApiParameter(name, required = false, parameterLimits = {}) {
                 ? 'Include models not confirmed open-weight; defaults to false for model recommendations.'
                 : name === 'model'
                   ? 'Required canonical model id. An unknown model returns 404.'
+                  : name === 'pretty'
+                    ? 'Set to 1 for indented JSON; responses are compact (unindented) by default.'
                   : name === 'detail'
                     ? 'Defaults to compact; full returns explanations for all returned rows.'
                     : name === 'limit'

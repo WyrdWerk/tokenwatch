@@ -323,6 +323,44 @@ test('/api/v1/recommend supports full detail and a validated limit for candidate
   }
 });
 
+test('/api/v1/recommend returns compact JSON unless pretty=1, with short unverified provider rows', async () => {
+  const catalog = recommendationCatalog();
+  catalog.models.push({ ...catalog.models[0], provider: 'mystery-provider', supported_parameters: null, context_length: null });
+  const context = makeContext('/api/v1/recommend', '?use_case=agentic-coding');
+  context.env.ASSETS = recommendationAssets(catalog);
+  const compact = await onRequestGet(context);
+  const compactText = await compact.text();
+  assert.equal(compact.status, 200);
+  assert.ok(!compactText.includes('\n'), 'default recommendation JSON has no indentation');
+  const body = JSON.parse(compactText);
+  const unverified = body.picks.bestQuality.unverifiedProviders;
+  assert.ok(unverified.length >= 1, 'fixture produces an unverified provider');
+  for (const row of unverified) {
+    assert.deepEqual(Object.keys(row).sort(), ['blendedRate', 'offeringId', 'provider', 'reason']);
+  }
+
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend?use_case=agentic-coding&pretty=1');
+  const prettyText = await (await onRequestGet(context)).text();
+  assert.match(prettyText, /^\{\n  "/);
+  assert.deepEqual(JSON.parse(prettyText), body);
+
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend?use_case=agentic-coding&detail=full');
+  const full = JSON.parse(await (await onRequestGet(context)).text());
+  assert.ok(Array.isArray(full.picks.bestQuality.unverifiedProviders[0].unknowns));
+
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend/providers?use_case=agentic-coding&model=agent-alpha');
+  const providersText = await (await onRequestGet(context)).text();
+  assert.ok(!providersText.includes('\n'));
+  const providers = JSON.parse(providersText);
+  assert.ok(providers.unverified.totalCount >= 1);
+  assert.deepEqual(Object.keys(providers.unverified.items[0]).sort(), ['blendedRate', 'offeringId', 'provider', 'reason']);
+
+  context.request = new Request('https://tokenwatch.test/api/v1/recommend?use_case=agentic-coding&pretty=yes');
+  const invalid = await onRequestGet(context);
+  assert.equal(invalid.status, 400);
+  assert.equal((await invalid.json()).parameter, 'pretty');
+});
+
 test('/api/v1/recommend default response stays under 50 KB with the committed catalogs', async () => {
   const publicDir = join(__dirname, '..', 'public');
   const catalogFiles = Object.fromEntries(await Promise.all(
