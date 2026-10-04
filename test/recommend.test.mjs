@@ -276,6 +276,16 @@ test('rankProviders uses shared blended cost, exposes performance unknowns, and 
   assert.ok(rows.ranked[1].reasons.some((reason) => /known issue.*degraded warning.*provider status page/i.test(reason)));
 });
 
+test('rankProviders labels subscription offerings as not pay-as-you-go', () => {
+  const result = rankProviders('agentic-coding', 'model-a', [
+    mixOffering('open/model-a', 'confirmed-subscription', 90, 1, { subscription: true }),
+    mixOffering('open/model-a', 'unverified-subscription', 90, 2, { subscription: true, supported_parameters: null }),
+  ], {});
+
+  assert.ok(result.ranked[0].reasons.some((reason) => /subscription plan, not pay-as-you-go/i.test(reason)));
+  assert.ok(result.unverified[0].reasons.some((reason) => /subscription plan, not pay-as-you-go/i.test(reason)));
+});
+
 test('broken and unavailable known-issue verdicts gate providers while degraded only warns', () => {
   const rows = rankProviders('agentic-coding', 'model-a', [
     mixOffering('open/model-a', 'broken', 90, 1),

@@ -539,6 +539,7 @@ export function rankProviders(useCaseId, canonicalModelId, offerings, perf = {},
     const { model, metrics, gate } = row;
     const reasons = [];
     const unknowns = [];
+    if (model.subscription === true) reasons.push('Subscription plan, not pay-as-you-go.');
     if (useCase.hardRequirements.needsToolCalling) reasons.push('Meets required tool-calling capability.');
     if (useCase.hardRequirements.needsStructuredOutput) reasons.push('Meets required structured-output capability.');
     if (useCase.id === 'reasoning-math') addReasoningInformation(model, reasons, unknowns);
@@ -616,6 +617,7 @@ export function rankProviders(useCaseId, canonicalModelId, offerings, perf = {},
     const metrics = metricsForProvider(model, canonical, perf, useCase);
     const reasons = group.gate.requirementUnknowns.map((reason) => `${reason} Provider is listed as unverified and omitted from the confirmed ranking.`);
     const unknowns = [...group.gate.requirementUnknowns];
+    if (model.subscription === true) reasons.push('Subscription plan, not pay-as-you-go.');
     if (group.gate.capacity !== null && group.gate.capacity !== undefined) {
       reasons.push(`Prompt capacity ${group.gate.capacity.toLocaleString()} tokens meets the ${useCase.hardRequirements.minContext.toLocaleString()}-token minimum.`);
     }
