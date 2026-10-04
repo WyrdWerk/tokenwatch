@@ -3,6 +3,7 @@ import { USE_CASES } from '/shared/use-cases.mjs';
 import {
   DEFAULT_CHOOSE_STATE,
   buildCalculatorHref,
+  gateStatusText,
   isCloseCall,
   isStale,
   FEATURED_PROVIDER_COUNT,
@@ -196,13 +197,9 @@ function explanationMarkup(candidate) {
   `).join('');
   const weights = Object.entries(explanation.weights.benchmark)
     .map(([field, weight]) => `<li>${escapeHtml(field.replaceAll('_', ' '))}: ${formatNumber(weight * 100, 0)}%</li>`).join('');
-  const gates = explanation.gates.map((gate) => {
-    const status = gate.passed === true ? 'Passed' : gate.passed === false ? 'Not met' : 'Unknown / not ranked';
-    const details = gate.observedCoverage !== undefined
-      ? ` ${formatNumber(gate.observedCoverage * 100, 0)}% observed.`
-      : gate.minimum ? ` Minimum: ${formatNumber(gate.minimum)}.` : '';
-    return `<li><strong>${escapeHtml(GATE_LABELS[gate.key] || gate.key.replaceAll('_', ' '))}:</strong> ${status}.${escapeHtml(details)}</li>`;
-  }).join('');
+  const gates = explanation.gates.map((gate) => (
+    `<li><strong>${escapeHtml(GATE_LABELS[gate.key] || gate.key.replaceAll('_', ' '))}:</strong> ${escapeHtml(gateStatusText(gate))}</li>`
+  )).join('');
   const providerWeights = Object.entries(providerExplanation?.weights || {})
     .map(([field, weight]) => `<li>${escapeHtml(field)}: ${formatNumber(weight * 100, 0)}%</li>`).join('');
   const providerSignals = (providerExplanation?.signals || []).map((signal) => `
@@ -212,10 +209,9 @@ function explanationMarkup(candidate) {
   const providerMissing = providerExplanation?.missingSignals?.length
     ? `<ul>${providerExplanation.missingSignals.map((signal) => `<li>${escapeHtml(signal.field)}: ${escapeHtml(signal.reason)}</li>`).join('')}</ul>`
     : '<p>No provider telemetry signals are missing.</p>';
-  const providerGates = (providerExplanation?.gates || []).map((gate) => {
-    const status = gate.passed === true ? 'Passed' : gate.passed === false ? 'Not met' : 'Unknown / not ranked';
-    return `<li><strong>${escapeHtml(GATE_LABELS[gate.key] || gate.key.replaceAll('_', ' '))}:</strong> ${status}</li>`;
-  }).join('');
+  const providerGates = (providerExplanation?.gates || []).map((gate) => (
+    `<li><strong>${escapeHtml(GATE_LABELS[gate.key] || gate.key.replaceAll('_', ' '))}:</strong> ${escapeHtml(gateStatusText(gate))}</li>`
+  )).join('');
   const missing = explanation.benchmark.missingSignals.length
     ? `<ul>${explanation.benchmark.missingSignals.map((signal) => `<li>${escapeHtml(signal.field.replaceAll('_', ' '))}: ${escapeHtml(signal.reason)}</li>`).join('')}</ul>`
     : '<p>No benchmark fields in this use case are missing.</p>';

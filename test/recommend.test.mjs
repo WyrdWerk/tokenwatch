@@ -655,3 +655,36 @@ test('provider priority presets override use-case weights and reject unknown pri
     scenario: { providerWeights: { price: 1 } },
   }), /Unknown provider priority/);
 });
+
+test('quality-floor gate reports the observed score for every pick, not only cheapestAboveFloor', () => {
+  const result = shortlistModels('agentic-coding', FRONTIER_CATALOG);
+  const { min } = USE_CASES['agentic-coding'].qualityFloor;
+  for (const pick of [result.bestQuality, result.bestValue, result.cheapestAboveFloor]) {
+    const floor = pick.explanation.gates.find((gate) => gate.key === 'quality_floor');
+    assert.equal(floor.applied, pick.explanation.pick === 'cheapestAboveFloor', `${pick.id} floor applied only for the floor pick`);
+    assert.ok(Number.isFinite(floor.observed), `${pick.id} reports its observed coding score`);
+    assert.equal(floor.passed, floor.observed >= min, `${pick.id} floor status matches its observed score`);
+  }
+  assert.equal(result.bestQuality.explanation.gates.find((gate) => gate.key === 'quality_floor').passed, true);
+});
+
+test('close-call confidence covers only the top-two provider margin, never every row', () => {
+  const offerings = ['alpha', 'beta', 'gamma', 'delta', 'epsilon'].map((provider) =>
+    mixOffering('open/model-a', provider, 90, 1, { uptime_30m: 99.5 }));
+  const { ranked } = rankProviders('agentic-coding', 'model-a', offerings, {});
+  assert.equal(ranked.length, 5);
+  // Identical scores: leader and runner-up form the close call...
+  assert.equal(ranked[0].confidence.level, 'close_call');
+  assert.equal(ranked[1].confidence.level, 'close_call');
+  assert.equal(ranked[1].confidence.runnerUpId, ranked[0].provider);
+  // ...but lower rows are not compared at all.
+  for (const row of ranked.slice(2)) assert.equal(row.confidence.level, 'uncompared', `${row.provider} carries no close-call verdict`);
+
+  const spread = rankProviders('agentic-coding', 'model-a', [
+    mixOffering('open/model-a', 'cheap', 90, 0.1, { uptime_30m: 99.9 }),
+    mixOffering('open/model-a', 'pricey', 90, 50, { uptime_30m: 90 }),
+    mixOffering('open/model-a', 'pricier', 90, 51, { uptime_30m: 90 }),
+  ], {});
+  assert.notEqual(spread.ranked[0].confidence.level, 'close_call');
+  assert.ok(spread.ranked.every((row) => row.confidence.level !== 'close_call'), 'a clear top-2 margin flags no row');
+});
