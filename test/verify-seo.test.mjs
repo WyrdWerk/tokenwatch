@@ -147,3 +147,22 @@ test('history validation accepts omission but rejects partially wired or mislead
   }
   assert.throws(() => verifier.assertModelHistory(disabled.replace('</main>', '<p>Retained for up to 90 days</p></main>'), 'misleading'), /verify-seo:/);
 });
+
+test('_redirects: committed 301s for retired URLs never shadow live routes', async () => {
+  const { assertRedirects, parseRedirects } = await import('../scripts/verify-seo.mjs');
+  const text = await readFile(join(ROOT, 'public', '_redirects'), 'utf8');
+  const rules = assertRedirects(text, join(ROOT, 'public'));
+  const map = Object.fromEntries(rules.map((rule) => [rule.source, rule.target]));
+  assert.equal(map['/text'], '/');
+  assert.equal(map['/text/'], '/');
+  assert.equal(map['/docs/image'], '/image');
+  assert.equal(map['/docs/image/'], '/image');
+  assert.equal(map['/providers/hypercharm/'], '/providers/hyper/');
+  assert.ok(rules.every((rule) => rule.status === '301'));
+
+  assert.throws(() => assertRedirects('/providers/hyper/ / 301', join(ROOT, 'public')), /shadow a deployed page/);
+  assert.throws(() => assertRedirects('/gone /nowhere/ 301', join(ROOT, 'public')), /does not serve a page/);
+  assert.throws(() => assertRedirects('/gone / 302', join(ROOT, 'public')), /must be a 301/);
+  assert.throws(() => assertRedirects('/old/* /new/:splat 301', join(ROOT, 'public')), /static/);
+  assert.deepEqual(parseRedirects('# comment\n\n/a /b 301 # trailing').map((rule) => [rule.source, rule.target, rule.status]), [['/a', '/b', '301']]);
+});

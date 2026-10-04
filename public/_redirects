@@ -1,0 +1,9 @@
+# Cloudflare Pages redirects. Static 301s for retired URLs Google still lists.
+# Every source must be a path with no deployed page and every target must
+# resolve to a deployed page; scripts/verify-seo.mjs enforces both.
+/text                  /                   301
+/text/                 /                   301
+/docs/image            /image              301
+/docs/image/           /image              301
+/providers/hypercharm  /providers/hyper/   301
+/providers/hypercharm/ /providers/hyper/   301

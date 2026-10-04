@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { readFile, readdir, stat } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 import { findHtmlFiles } from './bust-cache.mjs';
@@ -35,6 +35,47 @@ async function assertFile(path, label) {
   } catch (error) {
     throw new Error(`verify-seo: missing ${label}: ${error.message}`);
   }
+}
+
+/** Parse Cloudflare Pages `_redirects` rules: `source target [status]`, `#` comments. */
+export function parseRedirects(text) {
+  return String(text || '').split('\n')
+    .map((line) => line.replace(/#.*/, '').trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [source, target, status = '302', ...extra] = line.split(/\s+/);
+      return { source, target, status, extra, line };
+    });
+}
+
+/** Deployed file a Pages URL path serves, or null (pretty URLs: /x → x.html or x/index.html). */
+export function servedFile(root, urlPath) {
+  const clean = urlPath.replace(/^\/+|\/+$/g, '');
+  const candidates = clean
+    ? [join(root, clean, 'index.html'), join(root, `${clean}.html`), join(root, clean)]
+    : [join(root, 'index.html')];
+  return candidates.find((candidate) => existsSync(candidate) && statSync(candidate).isFile()) || null;
+}
+
+/**
+ * Redirect rules must be static 301s from paths with no deployed page (so a
+ * rule can never shadow a live route) to paths that do serve a page.
+ */
+export function assertRedirects(text, root) {
+  const rules = parseRedirects(text);
+  const seen = new Set();
+  for (const rule of rules) {
+    if (!rule.source?.startsWith('/') || !rule.target?.startsWith('/') || rule.extra.length) {
+      throw new Error(`verify-seo: malformed _redirects rule: ${rule.line}`);
+    }
+    if (/[*:]/.test(rule.source) || /[*:]/.test(rule.target)) throw new Error(`verify-seo: _redirects must stay static (no splats/placeholders): ${rule.line}`);
+    if (rule.status !== '301') throw new Error(`verify-seo: _redirects rule must be a 301: ${rule.line}`);
+    if (seen.has(rule.source)) throw new Error(`verify-seo: duplicate _redirects source: ${rule.source}`);
+    seen.add(rule.source);
+    if (servedFile(root, rule.source)) throw new Error(`verify-seo: _redirects source ${rule.source} would shadow a deployed page`);
+    if (!servedFile(root, rule.target)) throw new Error(`verify-seo: _redirects target ${rule.target} does not serve a page`);
+  }
+  return rules;
 }
 
 export function assertModelHistory(html, label) {
@@ -235,6 +276,14 @@ export async function main() {
     throw new Error(`verify-seo: ${missingHashedAssets.length} committed HTML ref(s) point at absent /h/ assets (use a plain ?v= source path), e.g. ${missingHashedAssets.slice(0, 3).join(', ')}`);
   }
 
+  const redirectsPath = join(PUBLIC, '_redirects');
+  const redirects = existsSync(redirectsPath) ? assertRedirects(await readFile(redirectsPath, 'utf8'), PUBLIC) : [];
+  const sitemapPaths = new Set(urls.map((url) => url.replace(SITE, '')));
+  for (const rule of redirects) {
+    if (sitemapPaths.has(rule.source)) throw new Error(`verify-seo: sitemap lists redirected URL ${rule.source}`);
+  }
+
+  console.log(`verify-seo: ${redirects.length} redirect rules checked`);
   console.log(`verify-seo: ${htmlFiles.length} HTML pages, ${providerDirs.length} providers, ${modelDirs.length} models, ${urls.length} sitemap URLs`);
   console.log('verify-seo: calculator pricing, FAQ/JSON-LD parity, optional history, canonical targets, and full HTML-link discovery passed');
 }
