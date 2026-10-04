@@ -58,7 +58,7 @@ import {
   buildBenchmarkIndex,
   maybeWriteJson,
 } from './lib.mjs';
-import { fetchModelsDevEnrichment } from './fetch-modelsdev.mjs';
+import { fetchModelsDevIndexes } from './fetch-modelsdev.mjs';
 import { fetchAABenchmarks } from './fetch-aa.mjs';
 import { fetchNeuralwattEnergy } from './fetch-neuralwatt-energy.mjs';
 import { getZroCatalogRows } from './fetch-zro.mjs';
@@ -1102,7 +1102,11 @@ async function main() {
   // ── models.dev enrichment (sidecar) ──
   // Attaches base_url, native model_id, capability metadata, and fills
   // cache/context nulls. Never overwrites existing values. Non-fatal.
-  const mdIndex = await fetchModelsDevEnrichment();
+  const {
+    enrichmentIndex: mdIndex,
+    openWeightIndex: mdOpenWeightIndex,
+    modelLicenseIndex: mdLicenseIndex,
+  } = await fetchModelsDevIndexes();
   if (mdIndex.size > 0) {
     const disagreements = [];
     const { modelFallbackCount } = applyEnrichment(out.models, mdIndex, disagreements);
@@ -1128,10 +1132,10 @@ async function main() {
   }
 
   // Resolve canonical model weight status from reviewed overrides, a strict
-  // models.dev majority, or the limited creator-org priors. Licenses are the
-  // most common non-empty models.dev license among records for the canonical.
+  // models.dev majority across all providers, or a known-closed creator-org
+  // prior. License tags come from models.dev models.json when available.
   const openWeightOverrides = JSON.parse(await readFile('data/open-weights-overrides.json', 'utf8'));
-  out.models = resolveOpenWeightsForOfferings(out.models, mdIndex, openWeightOverrides);
+  out.models = resolveOpenWeightsForOfferings(out.models, mdOpenWeightIndex, openWeightOverrides, mdLicenseIndex);
   for (const m of out.models) {
     m.supported_parameters ??= null;
     m.supports_tool_choice ??= null;

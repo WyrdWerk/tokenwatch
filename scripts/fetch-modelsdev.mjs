@@ -1,23 +1,26 @@
 /**
- * fetch-modelsdev.mjs — pulls https://models.dev/api.json and builds the
- * enrichment index consumed by applyEnrichment().
+ * fetch-modelsdev.mjs — pulls models.dev's provider and model catalogs and
+ * builds separate enrichment and all-provider open-weight indexes.
  *
- * Returns: Map<twProviderKey, Map<normalizedId, enrichmentRecord>>
+ * Indexes: a TokenWatch-mapped enrichment index, an all-provider weight index,
+ * and a model-level license index from models.json.
  *
  * The index is built by iterating models.dev providers, finding the matching
  * TW provider key via the reverse map, and keying each model by its
  * normalizeForMatch() output. Unmatched providers (no TW counterpart) are
  * skipped silently.
  *
- * On fetch failure (network, non-OK, malformed JSON), logs a warning and
- * returns an empty Map — the pipeline continues without enrichment.
+ * Provider-catalog failure is non-fatal and returns empty indexes. The
+ * separate models.json catalog supplies model-level license strings.
  */
 
 // Import shared helpers from lib.mjs (the Node-pipeline convention — it re-exports
 // the pure shared/*.mjs modules). fetchJson is node:fs-backed and lives here.
 import { fetchJson, REVERSE_PROVIDER_MAP, normalizeForMatch } from './lib.mjs';
+import { openWeightLookupId } from '../shared/open-weights.mjs';
 
 const MODELSDEV_URL = 'https://models.dev/api.json';
+const MODELSDEV_MODELS_URL = 'https://models.dev/models.json';
 
 // Reverse map: models.dev provider_id → TW provider slug.
 // Single source of truth is REVERSE_PROVIDER_MAP in shared/modelsdev.mjs
@@ -90,20 +93,83 @@ export function buildIndexFromApi(apiData) {
   return index;
 }
 
+/** Build model-level license strings from the models.dev models.json catalog. */
+export function buildModelsDevLicenseIndex(modelsData) {
+  const countsById = new Map();
+  for (const [modelId, model] of Object.entries(modelsData || {})) {
+    const id = openWeightLookupId(modelId);
+    const license = typeof model?.license === 'string' ? model.license.trim() : '';
+    if (!id || !license) continue;
+    if (!countsById.has(id)) countsById.set(id, new Map());
+    const licenseCounts = countsById.get(id);
+    licenseCounts.set(license, (licenseCounts.get(license) || 0) + 1);
+  }
+
+  return new Map([...countsById].map(([id, licenseCounts]) => [
+    id,
+    [...licenseCounts]
+      .sort(([licenseA, countA], [licenseB, countB]) => countB - countA || licenseA.localeCompare(licenseB))[0][0],
+  ]));
+}
+
+/** Build weight facts from every models.dev provider, not only TW-mapped ones. */
+export function buildOpenWeightIndexFromApi(apiData, modelLicenseIndex = new Map()) {
+  const index = new Map();
+  for (const [providerId, provider] of Object.entries(apiData || {})) {
+    if (!provider?.models) continue;
+    const providerModels = new Map();
+    for (const [modelId, model] of Object.entries(provider.models)) {
+      const id = openWeightLookupId(modelId);
+      if (!id) continue;
+      const previous = providerModels.get(id);
+      const openWeights = typeof model?.open_weights === 'boolean' ? model.open_weights : null;
+      const rawLicense = typeof model?.license === 'string' ? model.license.trim() : '';
+      const license = rawLicense || modelLicenseIndex.get(id) || null;
+      if (!previous && openWeights === null && license === null) continue;
+      providerModels.set(id, {
+        open_weights: previous?.open_weights ?? openWeights,
+        license: previous?.license ?? license,
+      });
+    }
+    if (providerModels.size > 0) index.set(providerId, providerModels);
+  }
+  return index;
+}
+
 /**
  * Fetch the live models.dev API and build the enrichment index.
  * Non-fatal: returns an empty Map on any failure.
  */
-export async function fetchModelsDevEnrichment() {
+export async function fetchModelsDevIndexes() {
   try {
     const t0 = Date.now();
-    const data = await fetchJson(MODELSDEV_URL);
-    const ms = Date.now() - t0;
-    const providerCount = Object.keys(data).length;
-    console.log(`✓ models.dev: ${providerCount} providers fetched (${ms}ms)`);
-    return buildIndexFromApi(data);
+    const providerData = await fetchJson(MODELSDEV_URL);
+    const providerFetchMs = Date.now() - t0;
+    const providerCount = Object.keys(providerData).length;
+    let modelsData = {};
+    try {
+      modelsData = await fetchJson(MODELSDEV_MODELS_URL);
+    } catch (err) {
+      console.warn(`⚠ models.dev models.json unavailable — licenses may be incomplete: ${err.message}`);
+    }
+    console.log(`✓ models.dev: ${providerCount} providers fetched (${providerFetchMs}ms), ${Object.keys(modelsData).length} model records`);
+    const modelLicenseIndex = buildModelsDevLicenseIndex(modelsData);
+    return {
+      enrichmentIndex: buildIndexFromApi(providerData),
+      openWeightIndex: buildOpenWeightIndexFromApi(providerData, modelLicenseIndex),
+      modelLicenseIndex,
+    };
   } catch (err) {
     console.warn(`⚠ models.dev fetch failed — continuing without enrichment: ${err.message}`);
-    return new Map();
+    return {
+      enrichmentIndex: new Map(),
+      openWeightIndex: new Map(),
+      modelLicenseIndex: new Map(),
+    };
   }
+}
+
+/** Backwards-compatible enrichment-only accessor. */
+export async function fetchModelsDevEnrichment() {
+  return (await fetchModelsDevIndexes()).enrichmentIndex;
 }

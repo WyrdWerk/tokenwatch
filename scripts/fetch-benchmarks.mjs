@@ -132,9 +132,11 @@ export function buildBenchmarkOffering(model, performance) {
     context_length: model.context_length ?? null,
     uptime_30m: model.uptime_30m ?? null,
     open_weights: typeof model.open_weights === 'boolean' ? model.open_weights : null,
-    tool_call: model.modelsdev?.capabilities?.tool_call
-      ?? model.modelsdev_model?.capabilities?.tool_call
-      ?? null,
+    tool_call: Array.isArray(model.supported_parameters)
+      ? model.supported_parameters.includes('tools')
+      : model.modelsdev?.capabilities?.tool_call
+        ?? model.modelsdev_model?.capabilities?.tool_call
+        ?? null,
     throughput_p50: metrics?.throughput?.p50 ?? null,
     latency_p50: metrics?.latency?.p50 ?? null,
   };

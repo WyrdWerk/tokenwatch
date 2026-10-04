@@ -8,14 +8,16 @@ Every offering in `public/pricing.json` has these top-level fields:
 
 - `open_weights`: `true`, `false`, or `null` when unknown.
 - `open_weights_source`: `override`, `modelsdev`, `org_prior`, or `null`.
-- `license`: the most common non-empty models.dev license string for the canonical model, or `null`.
+- `license`: source-cited override license when reviewed; otherwise the models.dev `models.json` license or most common provider-catalog license, or `null`.
 
-`shared/open-weights.mjs` resolves once per `canonicalId`, in this order:
+`shared/open-weights.mjs` resolves each offering in this order:
 
-1. `data/open-weights-overrides.json`, with a source URL and review note on every entry.
-2. Strict majority of known models.dev booleans. A tie is not a majority.
-3. Creator-org prior: `anthropic`, `xai`, `amazon`, and `perplexity` resolve false; `moonshot`, `z-ai`, `mistral`, `nvidia`, and `deepseek` resolve true. Other orgs, or multiple distinct orgs for one canonical ID, resolve unknown.
+1. Exact or base-ID entry in `data/open-weights-overrides.json`, with a source URL and review note on every entry. `license` is optional in the file; an omitted value falls back to models.dev.
+2. Strict majority of known booleans from all models.dev providers, not just TokenWatch-mapped providers. A provider contributes at most one vote per base model; ties do not resolve.
+3. Known-closed creator-org prior: `anthropic`, `xai`, `amazon`, and `perplexity` resolve false. There are no positive org priors; unknown or mixed orgs remain unknown.
 4. `null` when no source resolves the value.
+
+For lookup only, terminal `:batch`, `-turbo`, and `-fast` suffixes are stripped; the offering ID itself is not changed. Model-level license strings are fetched from `https://models.dev/models.json`; provider-level data and open-weight votes come from `https://models.dev/api.json`.
 
 The status describes model weight availability, not the license's permissions. Preserve license text as a separate field; do not infer `open_weights` from a license name.
 
@@ -37,7 +39,7 @@ Direct-provider offerings use `null` for these endpoint-specific fields unless t
 
 - `GET /api/v1/models?open_weights=true` and `?open_weights=false` filter by resolved boolean status; unknown values are excluded from either filter.
 - `GET /api/v1/models/:canonicalId/providers` includes the resolved open-weight fields, `license`, and endpoint capability fields on each provider offering.
-- `public/benchmarks.json` includes `open_weights` and `license` at model level. Each offering carries `quantization`, `zdr`, `context_length`, `uptime_30m`, `open_weights`, `tool_call`, `throughput_p50`, and `latency_p50`. Performance values join from `performance.json` by `canonicalModelId|provider`; unavailable values stay `null`.
+- `public/benchmarks.json` includes `open_weights` and `license` at model level. Each offering carries `quantization`, `zdr`, `context_length`, `uptime_30m`, `open_weights`, `tool_call`, `throughput_p50`, and `latency_p50`. `tool_call` uses OpenRouter `supported_parameters` first (`tools` means true; an available array without it means false), then models.dev. Performance values join from `performance.json` by `canonicalModelId|provider`; unavailable values stay `null`.
 
 ## Coverage guardrails
 

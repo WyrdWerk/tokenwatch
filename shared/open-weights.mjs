@@ -12,12 +12,12 @@ const ORG_PRIORS = new Map([
   ['xai', false],
   ['amazon', false],
   ['perplexity', false],
-  ['moonshot', true],
-  ['z-ai', true],
-  ['mistral', true],
-  ['nvidia', true],
-  ['deepseek', true],
 ]);
+
+/** Normalize only the lookup key; offering IDs remain unchanged. */
+export function openWeightLookupId(id) {
+  return normalizeCanonicalId(id).replace(/(:batch|-turbo|-fast)$/i, '');
+}
 
 function licenseFromRecords(records) {
   const counts = new Map();
@@ -37,8 +37,11 @@ function licenseFromRecords(records) {
 export function buildModelsDevOpenWeightIndex(providerIndex) {
   const index = new Map();
   for (const providerModels of providerIndex.values()) {
+    const seenByProvider = new Set();
     for (const [normalizedId, record] of providerModels) {
-      const key = normalizeCanonicalId(normalizedId);
+      const key = openWeightLookupId(normalizedId);
+      if (!key || seenByProvider.has(key)) continue;
+      seenByProvider.add(key);
       if (!index.has(key)) index.set(key, []);
       index.get(key).push({
         open_weights: typeof record.open_weights === 'boolean' ? record.open_weights : null,
@@ -53,7 +56,7 @@ export function buildModelsDevOpenWeightIndex(providerIndex) {
  * Resolve one status and license per canonical ID, then project it onto every
  * offering for that ID. Org priors are used only when all reported orgs agree.
  */
-export function resolveOpenWeightsForOfferings(offerings, providerIndex, overrides = {}) {
+export function resolveOpenWeightsForOfferings(offerings, providerIndex, overrides = {}, modelLicenseIndex = new Map()) {
   const modelsDevRecords = buildModelsDevOpenWeightIndex(providerIndex);
   const orgsByCanonical = new Map();
   for (const offering of offerings) {
@@ -68,10 +71,12 @@ export function resolveOpenWeightsForOfferings(offerings, providerIndex, overrid
   return offerings.map((offering) => {
     const id = normalizeCanonicalId(offering.id);
     if (!resolutions.has(id)) {
+      const lookupId = openWeightLookupId(id);
       resolutions.set(id, resolveOpenWeights({
         canonicalId: id,
         org: [...(orgsByCanonical.get(id) || [])],
-        modelsDevRecords: modelsDevRecords.get(id) || [],
+        modelsDevRecords: modelsDevRecords.get(lookupId) || [],
+        licenseFallback: modelLicenseIndex.get(lookupId) ?? null,
         overrides,
       }));
     }
@@ -81,14 +86,21 @@ export function resolveOpenWeightsForOfferings(offerings, providerIndex, overrid
 
 /**
  * Resolve one canonical model's weight status, in priority order:
- * reviewed override → strict models.dev majority → creator-org prior → unknown.
+ * reviewed override → strict models.dev majority → known-closed creator-org
+ * prior → unknown.
  *
- * A models.dev tie is not a majority and falls through to the org prior.
+ * A models.dev tie is not a majority and falls through only to a safe org prior.
  */
-export function resolveOpenWeights({ canonicalId, org, modelsDevRecords = [], overrides = {} }) {
+export function resolveOpenWeights({ canonicalId, org, modelsDevRecords = [], licenseFallback = null, overrides = {} }) {
   const id = normalizeCanonicalId(canonicalId);
-  const override = overrides[id];
-  const license = licenseFromRecords(modelsDevRecords);
+  const lookupId = openWeightLookupId(id);
+  const override = overrides[id] || overrides[lookupId];
+  const overrideLicense = typeof override?.license === 'string' && override.license.trim()
+    ? override.license.trim()
+    : null;
+  const license = overrideLicense
+    ?? licenseFromRecords(modelsDevRecords)
+    ?? (typeof licenseFallback === 'string' && licenseFallback.trim() ? licenseFallback.trim() : null);
   if (override && typeof override.open_weights === 'boolean') {
     return { open_weights: override.open_weights, open_weights_source: 'override', license };
   }

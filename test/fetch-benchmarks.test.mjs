@@ -58,6 +58,20 @@ test('benchmark tool-call and performance fields remain null when unavailable', 
   assert.equal(offering.open_weights, null);
 });
 
+test('benchmark tool-call capability prefers OpenRouter supported_parameters', () => {
+  const offering = (supported_parameters, modelsdevToolCall) => buildBenchmarkOffering({
+    id: 'sample-model',
+    provider: 'provider',
+    supported_parameters,
+    modelsdev: { capabilities: { tool_call: modelsdevToolCall } },
+    pricing: { input: 1, output: 2 },
+  }, {});
+
+  assert.equal(offering(['tools'], false).tool_call, true);
+  assert.equal(offering([], true).tool_call, false);
+  assert.equal(offering(null, true).tool_call, true, 'models.dev is the fallback when OR is unavailable');
+});
+
 test('generated benchmark catalog exposes model- and offering-level recommender fields', async (t) => {
   const data = JSON.parse(await readFile(join(__dirname, '..', 'public', 'benchmarks.json'), 'utf8'));
   if (!data.models.some((model) => Object.hasOwn(model, 'open_weights'))) {
