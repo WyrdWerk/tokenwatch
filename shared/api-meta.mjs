@@ -10,12 +10,14 @@ export const API_ENDPOINTS = [
   {
     path: '/api/v1/use-cases',
     summary: 'List workload recommendation presets and their assumed mixes, weights, requirements, and quality floors',
+    description: 'Returns the nine use-case presets used by /choose/ and the recommend endpoints. Every mix is flagged assumed: true; weights and floors are documented judgments, not measurements.',
     params: [],
     sort: [],
   },
   {
     path: '/api/v1/recommend',
     summary: 'Recommend models for a workload; chat and creative-writing also return an Arena preference favorite with source metadata',
+    description: 'Open-weight model shortlist for one use case: picks.bestQuality, picks.bestValue (quality/price Pareto frontier) and picks.cheapestAboveFloor, each with a recommended provider, explanation, and confidence (stable, moderately_stable, close_call). Also returns alsoConsidered, partiallyBenchmarked, unbenchmarked, and unverified groups. Arena ratings in preference are from the LMArena leaderboard dataset (CC BY 4.0); display the attribution in preference.source.',
     params: ['use_case', 'priority', 'zdr', 'exclude_hq', 'include_proprietary', 'detail', 'limit', 'pretty'],
     requiredParams: ['use_case'],
     parameterLimits: { limit: 100 },
@@ -24,6 +26,7 @@ export const API_ENDPOINTS = [
   {
     path: '/api/v1/recommend/providers',
     summary: 'Rank providers for one model with full explanations for the top three and compact remaining rows',
+    description: 'Ranks eligible providers for one canonical model at the use case assumed mix on blended price, TTFT p50, throughput p50, and uptime, weighted by priority. Providers missing required capability or context metadata are returned in unverified, never ranked.',
     params: ['use_case', 'model', 'priority', 'zdr', 'exclude_hq', 'include_proprietary', 'detail', 'limit', 'pretty'],
     requiredParams: ['use_case', 'model'],
     parameterLimits: { limit: 100 },
