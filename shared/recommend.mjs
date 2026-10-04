@@ -53,9 +53,11 @@ function openWeightInfo(model) {
 
 function capabilityValue(model, capability) {
   const parameters = model?.supported_parameters;
-  if (capability === 'tool_call' && Array.isArray(parameters) && parameters.includes('tools')) return true;
-  if (capability === 'structured_output' && Array.isArray(parameters)
-      && (parameters.includes('response_format') || parameters.includes('structured_outputs'))) return true;
+  if (Array.isArray(parameters)) {
+    if (capability === 'tool_call') return parameters.includes('tools');
+    return parameters.includes('response_format') || parameters.includes('structured_outputs');
+  }
+  if (parameters !== null && parameters !== undefined) return null;
 
   const modelDevValue = capability === 'tool_call'
     ? (model?.modelsdev?.tool_call ?? model?.modelsdev?.capabilities?.tool_call)

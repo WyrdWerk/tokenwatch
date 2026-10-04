@@ -190,6 +190,7 @@ test('structured-extraction requires explicit structured-output support', () => 
   const rows = rankProviders('structured-extraction', 'model-a', [
     mixOffering('open/model-a', 'response-format', 90, 1, { supported_parameters: ['response_format'] }),
     mixOffering('open/model-a', 'structured-outputs', 90, 2, { supported_parameters: ['structured_outputs'] }),
+    mixOffering('open/model-a', 'parameter-list-omits-structured-output', 90, 2.5, { supported_parameters: ['tools'], modelsdev: { capabilities: { structured_output: true } } }),
     mixOffering('open/model-a', 'modelsdev-flag', 90, 3, { supported_parameters: null, modelsdev: { capabilities: { structured_output: true } } }),
     mixOffering('open/model-a', 'unknown', 90, 0.1, { supported_parameters: null }),
   ], {});
@@ -201,12 +202,15 @@ test('structured-extraction requires explicit structured-output support', () => 
 test('rankProviders resolves tool support from supported_parameters then models.dev fallbacks', () => {
   const offerings = [
     mixOffering('open/model-a', 'explicit', 90, 1, { supported_parameters: ['tools'], modelsdev: { capabilities: { tool_call: false } } }),
+    mixOffering('open/model-a', 'parameter-list-omits-tools', 90, 1.5, { supported_parameters: ['response_format'], modelsdev: { tool_call: true } }),
     mixOffering('open/model-a', 'modelsdev', 90, 2, { supported_parameters: null, modelsdev: { tool_call: true } }),
     mixOffering('open/model-a', 'modelsdev-nested', 90, 2.5, { supported_parameters: null, modelsdev: { capabilities: { tool_call: true } } }),
     mixOffering('open/model-a', 'modelsdev-model', 90, 3, { supported_parameters: null, modelsdev_model: { tool_call: true } }),
     mixOffering('open/model-a', 'unknown', 90, 0.1, { supported_parameters: null }),
   ];
   const rows = rankProviders('agentic-coding', 'model-a', offerings, {});
+  assert.ok(!rows.ranked.some((row) => row.provider === 'parameter-list-omits-tools'),
+    'a present supported_parameters array is authoritative even when models.dev claims tool support');
   assert.deepEqual(rows.ranked.map((row) => row.provider), ['explicit', 'modelsdev', 'modelsdev-nested', 'modelsdev-model']);
   assert.deepEqual(rows.unverified.map((row) => row.provider), ['unknown']);
 });
