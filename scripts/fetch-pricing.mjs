@@ -7,7 +7,7 @@
  *
  * Tier 1 — Direct providers: DeepInfra, EmberCloud, Wafer, Synthetic, Lilac,
  *          SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs,
- *          CoralBricks (authenticated, public fallback), SingularityAPI, RunInfra,
+ *          Avian, CoralBricks (authenticated, public fallback), SingularityAPI, RunInfra,
  *          LLM Gateway (differential hosts only)
  *          (authoritative source for their own offerings; Singularity + RunInfra
  *          are auth-gated via SINGULARITY_API_KEY / RUNINFRA_API_KEY;
@@ -42,7 +42,7 @@
 
 import { readFile } from 'node:fs/promises';
 import {
-  perTokToPerM, centsToDollars, passthrough, parseSference, parseNeuralwatt, parseMerius, parseAster,
+  perTokToPerM, centsToDollars, passthrough, parseSference, parseAvian, parseNeuralwatt, parseMerius, parseAster,
   parseCoralbricks, fetchCoralbricksCatalog, parseSingularity, parseRuninfra, parseLlmgateway,
   parseOpenCodeGoDocs,
   NON_TEXT_ID, isTextModel,
@@ -138,6 +138,12 @@ const DIRECT_PROVIDERS = [
     name: 'Aster Labs',
     url: 'https://api.asterlab.ai/v1/models',
     parse: parseAster,
+  },
+  {
+    key: 'avian',
+    name: 'Avian',
+    url: 'https://api.avian.io/v1/models',
+    parse: parseAvian,
   },
   {
     key: 'coralbricks',
@@ -304,6 +310,16 @@ const MANUAL_PROVIDER_META = {
     retains_prompts: false,  // Inference FAQ: zero data retention by default — prompts/outputs run in memory and are never stored
     may_train: null,         // Terms/privacy make no explicit no-training promise for the inference API; cannot claim false
     retention_days: 0,       // Inference FAQ: ZDR by default — token counts are the only thing retained (for billing)
+  },
+  avian: {
+    privacy_policy_url: 'https://avian.io/privacy',
+    terms_of_service_url: 'https://avian.io/terms',
+    status_page_url: null,        // None found — homepage cites a 99.9% uptime SLA but publishes no status page
+    headquarters: 'US',           // Avian Data Inc.; privacy §10: servers in the United States (Azure)
+    datacenters: ['US'],          // Privacy §10
+    retains_prompts: false,  // Privacy §2.3/§4: prompts/completions not logged, stored, or retained — processed in memory, not persisted after delivery
+    may_train: false,         // Privacy §4: explicit — prompts/completions/API inputs/outputs never used to train, fine-tune, or improve models
+    retention_days: 0,       // Privacy §6: prompt/completion content never retained; only request metadata (timestamps, model, token counts) for billing, periodically purged
   },
   coralbricks: {
     privacy_policy_url: 'https://www.coralbricks.ai/privacy',
