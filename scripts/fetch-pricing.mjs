@@ -311,6 +311,16 @@ const MANUAL_PROVIDER_META = {
     may_train: null,         // Terms/privacy make no explicit no-training promise for the inference API; cannot claim false
     retention_days: 0,       // Inference FAQ: ZDR by default — token counts are the only thing retained (for billing)
   },
+  avian: {
+    privacy_policy_url: 'https://avian.io/privacy',
+    terms_of_service_url: 'https://avian.io/terms',
+    status_page_url: null,        // None found — homepage cites a 99.9% uptime SLA but publishes no status page
+    headquarters: 'US',           // Avian Data Inc.; privacy §10: servers in the United States (Azure)
+    datacenters: ['US'],          // Privacy §10
+    retains_prompts: false,  // Privacy §2.3/§4: prompts/completions not logged, stored, or retained — processed in memory, not persisted after delivery
+    may_train: false,         // Privacy §4: explicit — prompts/completions/API inputs/outputs never used to train, fine-tune, or improve models
+    retention_days: 0,       // Privacy §6: prompt/completion content never retained; only request metadata (timestamps, model, token counts) for billing, periodically purged
+  },
   coralbricks: {
     privacy_policy_url: 'https://www.coralbricks.ai/privacy',
     terms_of_service_url: 'https://www.coralbricks.ai/terms',
