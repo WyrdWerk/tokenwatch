@@ -7,7 +7,7 @@
  *
  * Tier 1 — Direct providers: DeepInfra, EmberCloud, Wafer, Synthetic, Lilac,
  *          SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs,
- *          CoralBricks (authenticated, public fallback), SingularityAPI, RunInfra,
+ *          Avian, CoralBricks (authenticated, public fallback), SingularityAPI, RunInfra,
  *          LLM Gateway (differential hosts only)
  *          (authoritative source for their own offerings; Singularity + RunInfra
  *          are auth-gated via SINGULARITY_API_KEY / RUNINFRA_API_KEY;
@@ -42,7 +42,7 @@
 
 import { readFile } from 'node:fs/promises';
 import {
-  perTokToPerM, centsToDollars, passthrough, parseSference, parseNeuralwatt, parseMerius, parseAster,
+  perTokToPerM, centsToDollars, passthrough, parseSference, parseAvian, parseNeuralwatt, parseMerius, parseAster,
   parseCoralbricks, fetchCoralbricksCatalog, parseSingularity, parseRuninfra, parseLlmgateway,
   parseOpenCodeGoDocs,
   NON_TEXT_ID, isTextModel,
@@ -138,6 +138,12 @@ const DIRECT_PROVIDERS = [
     name: 'Aster Labs',
     url: 'https://api.asterlab.ai/v1/models',
     parse: parseAster,
+  },
+  {
+    key: 'avian',
+    name: 'Avian',
+    url: 'https://api.avian.io/v1/models',
+    parse: parseAvian,
   },
   {
     key: 'coralbricks',

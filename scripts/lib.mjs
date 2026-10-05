@@ -47,6 +47,28 @@ export function parseSference(data) {
       },
     }));
 }
+/** Avian https://api.avian.io/v1/models → model records (prices already $/M). */
+export function parseAvian(data) {
+  return (data.data || [])
+    .map((m) => {
+      const p = m.pricing || {};
+      return {
+        id: m.id,
+        name: m.display_name || m.id,
+        provider: 'avian',
+        quantization: null,
+        discount: 0,
+        context_length: m.context_length ?? null,
+        max_completion_tokens: m.max_output ?? null,
+        pricing: {
+          input: passthrough(p.input_per_million),
+          output: passthrough(p.output_per_million),
+          cache_read: passthrough(p.cache_read_per_million),
+          cache_write: passthrough(p.cache_write_per_million),
+        },
+      };
+    });
+}
 /** Neuralwatt https://api.neuralwatt.com/v1/models → model records (prices already $/M). */
 export function parseNeuralwatt(data) {
   return (data.data || [])
@@ -991,6 +1013,7 @@ export const PROVIDER_NAME_MAP = {
   'neuralwatt': 'neuralwatt',
   'aster': 'aster',
   'aster labs': 'aster',
+  'avian': 'avian',
   'singularity': 'singularity',
   'singularityapi': 'singularity',
   'singularity api': 'singularity',
