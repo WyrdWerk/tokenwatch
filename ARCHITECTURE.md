@@ -23,7 +23,7 @@ flowchart TD
       T1B["EmberCloud /v1/models"]
       T1D["Wafer /v1/models"]
       T1E["Synthetic /v1/models"]
-      T1F["Lilac /v1/models"]
+      T1F["Arilo.id /v1/models"]
       T1G["SambaNova /v1/models"]
       T1H["HyperCharm /v1/models"]
       T1I["Sference /v1/models"]

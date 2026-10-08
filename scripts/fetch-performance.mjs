@@ -4,16 +4,16 @@
  *
  *   - Primary source: OpenRouter `/endpoints` API (requires OPENROUTER_API_KEY)
  *     → ~1000+ records with full latency + throughput percentiles
- *   - Supplementary: Lilac, Umans (direct providers, no key needed),
+ *   - Supplementary: Umans (direct provider, no key needed),
  *     CoralBricks (/v1/models, CORAL_API_KEY)
- *     → Lilac/Umans: latency + throughput from their status APIs
+ *     → Umans: latency + throughput from its status API
  *
  * Writes a compact lookup table to public/performance.json, keyed by the same
  * dedup key the main pipeline uses: canonicalId|normalizedProvider
  *
  * Graceful degradation WITHOUT an OPENROUTER_API_KEY:
  *   - OR portion is skipped — existing OR records are preserved via merge
- *   - Lilac/Umans are still fetched and merged into existing data
+ *   - Direct providers are still fetched and merged into existing data
  *   - 85% threshold guard protects against degraded datasets after the direct merge
  *
  * Usage:
@@ -149,30 +149,6 @@ async function main() {
     }
   }
 
-  // ── Lilac (direct provider) performance data ───────────────────────────────
-  // Lilac isn't routed through OpenRouter, so fetch from their own status API.
-  console.log('  Fetching Lilac performance data...');
-  try {
-    const lilacRes = await fetchJson('https://api.getlilac.com/status?window=1h');
-    const lilacModels = lilacRes.models || [];
-    let lilacCount = 0;
-    for (const lm of lilacModels) {
-      if (!lm.id || (!lm.tps && !lm.ttfb_seconds)) continue;
-      const key = perfKey(lm.id, 'Lilac');
-      // Lilac API gives scalar tps and ttfb_seconds — wrap as p50 for shape consistency
-      const tps = typeof lm.tps === 'number' ? lm.tps : null;
-      const ttfbMs = typeof lm.ttfb_seconds === 'number' ? Math.round(lm.ttfb_seconds * 1000) : null;
-      perfData[key] = {
-        latency: ttfbMs !== null ? { p50: ttfbMs, p75: null, p90: null, p99: null } : null,
-        throughput: tps !== null ? { p50: tps, p75: null, p90: null, p99: null } : null,
-      };
-      lilacCount++;
-    }
-    console.log(`    Lilac: ${lilacCount} models indexed`);
-  } catch (err) {
-    console.warn(`    ⚠ Lilac status fetch failed: ${err.message} — continuing without Lilac perf data`);
-  }
-
   // ── Umans AI (direct provider) performance data ────────────────────────────
   // Direct scrape from status.umans.ai SSR page — no auth, no proxy needed.
   console.log('  Fetching Umans AI performance data from status.umans.ai...');
@@ -239,7 +215,7 @@ async function main() {
   // ── Guard: don't overwrite with degraded data ──
   // If we fetched from OR and got zero catalog matches (API outage,
   // key revoked), perfData only has direct-provider records
-  // (Lilac/Umans). Never overwrite 700+ OR records with ~9
+  // (Umans/CoralBricks). Never overwrite 700+ OR records with ~9
   // direct-only records — preserve last-good.
   // Only relevant when we actually attempted the OR fetch.
   if (hasKey && catalogCanonicalIds.size > 0 && modelSlugs.size === 0) {
@@ -255,7 +231,7 @@ async function main() {
   // records into the existing file's data so OR records are preserved while
   // direct-provider keys get updated with current values. Without this, the
   // 15% guard below would see 30 records vs 780 existing and bail, leaving
-  // stale Umans/Lilac data forever.
+  // stale direct-provider data forever.
   if (!hasKey) {
     try {
       const existing = JSON.parse(await readFile(OUTPUT_PATH, 'utf-8'));

@@ -50,7 +50,6 @@ export const PROVIDER_MAP = {
   groq: 'groq',
   inception: 'inception',
   'io-net': 'io-net',
-  lilac: 'lilac',
   minimax: 'minimax',
   mistral: 'mistral',
   modal: 'modal',
