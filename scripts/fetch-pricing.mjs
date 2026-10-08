@@ -5,9 +5,9 @@
  * Fetches pricing from direct providers + OpenRouter (de-aggregated per backend
  * inference provider), normalizes to $/M tokens, and writes public/pricing.json.
  *
- * Tier 1 — Direct providers: DeepInfra, EmberCloud, Wafer, Synthetic, Lilac,
+ * Tier 1 — Direct providers: DeepInfra, EmberCloud, Wafer, Synthetic,
  *          SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs,
- *          Avian, CoralBricks (authenticated, public fallback), SingularityAPI, RunInfra,
+ *          Arilo.id, Avian, CoralBricks (authenticated, public fallback), SingularityAPI, RunInfra,
  *          LLM Gateway (differential hosts only)
  *          (authoritative source for their own offerings; Singularity + RunInfra
  *          are auth-gated via SINGULARITY_API_KEY / RUNINFRA_API_KEY;
@@ -42,7 +42,7 @@
 
 import { readFile } from 'node:fs/promises';
 import {
-  perTokToPerM, centsToDollars, passthrough, parseSference, parseAvian, parseNeuralwatt, parseMerius, parseAster,
+  perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseNeuralwatt, parseMerius, parseAster,
   parseCoralbricks, fetchCoralbricksCatalog, parseSingularity, parseRuninfra, parseLlmgateway,
   parseOpenCodeGoDocs,
   NON_TEXT_ID, isTextModel,
@@ -95,12 +95,6 @@ const DIRECT_PROVIDERS = [
     parse: parseSynthetic,
   },
   {
-    key: 'lilac',
-    name: 'Lilac',
-    url: 'https://api.getlilac.com/v1/models',
-    parse: parseLilac,
-  },
-  {
     key: 'sambanova',
     name: 'SambaNova',
     url: 'https://api.sambanova.ai/v1/models',
@@ -138,6 +132,12 @@ const DIRECT_PROVIDERS = [
     name: 'Aster Labs',
     url: 'https://api.asterlab.ai/v1/models',
     parse: parseAster,
+  },
+  {
+    key: 'arilo',
+    name: 'Arilo.id',
+    url: 'https://api.arilo.id/v1/models',
+    parse: parseArilo,
   },
   {
     key: 'avian',
@@ -205,16 +205,6 @@ const MANUAL_PROVIDER_META = {
     retains_prompts: false,  // ZDR-by-default (owner-directed classification): "not stored by default" — conditional retention only
     may_train: false,         // "Your prompts and outputs are never used to train AI models"
     retention_days: 30,       // Caveat preserved: may retain up to 30 days for debugging/abuse/legal (privacy §4, §7)
-  },
-  lilac: {
-    privacy_policy_url: 'https://getlilac.com/privacy',
-    terms_of_service_url: 'https://getlilac.com/terms',
-    status_page_url: null,
-    headquarters: 'US',
-    datacenters: null,
-    retains_prompts: false,  // ZDR (API): "not stored at rest after the response is returned"
-    may_train: false,         // "We do not use your API inputs or outputs for training models — ever"
-    retention_days: null,
   },
   makora: {
     privacy_policy_url: 'https://www.makora.com/privacy-policy',
@@ -311,6 +301,18 @@ const MANUAL_PROVIDER_META = {
     may_train: null,         // Terms/privacy make no explicit no-training promise for the inference API; cannot claim false
     retention_days: 0,       // Inference FAQ: ZDR by default — token counts are the only thing retained (for billing)
   },
+  arilo: {
+    privacy_policy_url: 'https://arilo.id/privacy',
+    terms_of_service_url: 'https://arilo.id/terms',
+    status_page_url: 'https://arilo.id/status',
+    headquarters: null,
+    datacenters: ['HK', 'IE'], // Provider-reported in issue #22; not headquarters
+    // Issue #22 claims ZDR, but privacy §2 still permits brief diagnostic content
+    // logging and image-description caching. Leave the blanket verdict unknown.
+    retains_prompts: null,
+    may_train: false,         // Privacy §3: training only via the opt-in Research Program
+    retention_days: null,     // Privacy §8's 30 days cover request metadata, not prompt content
+  },
   avian: {
     privacy_policy_url: 'https://avian.io/privacy',
     terms_of_service_url: 'https://avian.io/terms',
@@ -376,9 +378,9 @@ const MANUAL_PROVIDER_META = {
 
 // ── Subscription providers (coding plans) — provider-level badge ──
 const SUBSCRIPTION_PROVIDERS = new Set([
+  'arilo',
   'hyper',
   'synthetic',
-  'lilac',
   'makora',
   'opencode',
   'z-ai',
@@ -498,23 +500,6 @@ function parseSynthetic(data) {
       },
     };
   });
-}
-
-function parseLilac(data) {
-  return (data.data || []).map((m) => ({
-    id: m.id,
-    name: m.name || m.id,
-    provider: 'lilac',
-    quantization: null,
-    discount: 0,
-    context_length: m.context_length ?? null,
-    pricing: {
-      input: perTokToPerM(m.pricing?.prompt),
-      output: perTokToPerM(m.pricing?.completion),
-      cache_read: perTokToPerM(m.pricing?.input_cache_read),
-      cache_write: perTokToPerM(m.pricing?.input_cache_write ?? m.pricing?.cache_write),
-    },
-  }));
 }
 
 function parseSambaNova(data) {

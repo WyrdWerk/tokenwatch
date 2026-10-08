@@ -1,0 +1,61 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "glm-5.3-flash",
+      "object": "model",
+      "owned_by": "arilo",
+      "max_context_tokens": 1000000,
+      "capabilities": {
+        "vision": true,
+        "toolCall": true,
+        "structuredOutput": false,
+        "thinking": true
+      },
+      "cost": {
+        "input": 0.05,
+        "output": 0.5,
+        "cache_read": 0.01
+      }
+    },
+    {
+      "id": "deepseek-v4.1-flash",
+      "object": "model",
+      "owned_by": "arilo",
+      "max_context_tokens": 1000000,
+      "capabilities": {
+        "vision": true,
+        "toolCall": true,
+        "structuredOutput": false,
+        "thinking": true
+      },
+      "cost": {
+        "input": 0.28,
+        "output": 0.6,
+        "cache_read": 0.01
+      }
+    },
+    {
+      "id": "qwen-3.8-max",
+      "object": "model",
+      "owned_by": "arilo",
+      "capabilities": {
+        "vision": false,
+        "toolCall": false,
+        "structuredOutput": false,
+        "thinking": false
+      }
+    },
+    {
+      "id": "deepseek-v4.1-flash-alt",
+      "object": "model",
+      "owned_by": "arilo",
+      "max_context_tokens": 1000000,
+      "cost": {
+        "input": 0.28,
+        "output": 0.6,
+        "cache_read": 0.01
+      }
+    }
+  ]
+}
