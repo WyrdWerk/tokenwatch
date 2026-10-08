@@ -412,12 +412,57 @@ export const LLMGATEWAY_SKIP_PROVIDERS = new Set([
   'google-vertex', 'groq', 'llmgateway', 'meta', 'minimax', 'mistral', 'moonshot',
   'nebius', 'novita', 'openai', 'perplexity', 'sakana', 'together', 'together-ai',
   'vertex-anthropic', 'vertex-openai', 'xai', 'xiaomi', 'z-ai', 'zai',
+  // Inference.net is an OpenRouter backend (`InferenceNet` → `inferencenet`).
+  'inference.net', 'inference-net', 'inferencenet',
 ]);
 
 /** Map LLM Gateway providerId → TokenWatch provider slug. */
 export const LLMGATEWAY_PROVIDER_MAP = {
   'inference.net': 'inference-net',
 };
+
+/** Display names for LLM Gateway differential hosts (the API only returns slugs). */
+export const LLMGATEWAY_PROVIDER_DISPLAY = {
+  bytedance: 'ByteDance',
+  canopywave: 'CanopyWave',
+  consensusprotocol: 'Consensus Protocol',
+  glacier: 'Glacier',
+  gonka24: 'Gonka24',
+  iceberg: 'Iceberg',
+  nanogpt: 'NanoGPT',
+  quartz: 'Quartz',
+  ranoai: 'RanoAI',
+  runware: 'Runware',
+  'scx-ai': 'SCX.ai',
+  'scx-ai-gp': 'SCX.ai GP',
+};
+
+/** Display name for an LLM Gateway host slug: reviewed name, else title-cased slug. */
+export function llmgatewayProviderDisplay(slug) {
+  const key = String(slug || '');
+  if (LLMGATEWAY_PROVIDER_DISPLAY[key]) return LLMGATEWAY_PROVIDER_DISPLAY[key];
+  return key.split(/[-_.\s]+/).filter(Boolean)
+    .map((part) => part[0].toUpperCase() + part.slice(1)).join(' ') || key;
+}
+
+/** Provider identity with case and punctuation removed: `InferenceNet`,
+ *  `inference-net`, and `inference.net` all compact to `inferencenet`. */
+export function compactProviderKey(provider) {
+  return String(provider || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Enforce LLM Gateway's differential-only rule against the providers the other
+ * tiers actually returned: drop any LLM Gateway row whose host is already
+ * fetched under another spelling. `llmgatewayRows` is the Set of row objects
+ * the LLM Gateway parser emitted; order (and so tier precedence) is preserved.
+ */
+export function dropCoveredLlmgatewayRows(rows, llmgatewayRows) {
+  const covered = new Set(rows
+    .filter((row) => !llmgatewayRows.has(row))
+    .map((row) => compactProviderKey(row.provider)));
+  return rows.filter((row) => !llmgatewayRows.has(row) || !covered.has(compactProviderKey(row.provider)));
+}
 
 function llmgatewayTextOutput(m) {
   const out = m?.architecture?.output_modalities;
@@ -451,6 +496,7 @@ export function parseLlmgateway(data) {
         name: m.display_name || m.name || m.id,
         org: orgFromBareModelId(m.id),
         provider: mapped,
+        provider_display: llmgatewayProviderDisplay(mapped),
         quantization: null,
         discount: 0,
         context_length: m.context_length || null,

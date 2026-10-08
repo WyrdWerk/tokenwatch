@@ -200,7 +200,7 @@ test('homepage metadata uses current offering counts in search, social, and visi
   const refreshed = renderHomepageMeta(stale, 1181, 83);
   assert.match(refreshed, /<title>LLM API Pricing Comparison &amp; Open Model Finder \| TokenWatch<\/title>/);
   for (const field of ['name="description"', 'property="og:description"', 'name="twitter:description"']) {
-    assert.ok(refreshed.includes(`<meta ${field} content="Compare pay-as-you-go LLM API pricing across 83 providers and 1181 text-model offerings. Find the right open-weight model and provider for your use case`));
+    assert.ok(refreshed.includes(`<meta ${field} content="Compare 1,181 LLM API prices across 83 providers, updated every 2 hours. Find the cheapest provider for your workload`));
   }
   for (const field of ['property="og:title"', 'name="twitter:title"']) {
     assert.ok(refreshed.includes(`<meta ${field} content="LLM API Pricing Comparison &amp; Open Model Finder | TokenWatch"`));
@@ -218,7 +218,7 @@ test('renderHomepageMeta overwrites placeholder homepage fields after token subs
 <p class="subtitle">Compare across {{providerCount}} providers and {{modelCount}} models.</p>`;
   const refreshed = renderHomepageMeta(renderCounts(templated, 1181, 82), 1181, 82);
   assert.match(refreshed, /LLM API Pricing Comparison &amp; Open Model Finder \| TokenWatch/);
-  assert.match(refreshed, /<meta name="description" content="Compare [^"]*across 82 providers and 1181 text-model offerings[^"]*" \/>/);
+  assert.match(refreshed, /<meta name="description" content="Compare 1,181 LLM API prices across 82 providers[^"]*" \/>/);
   assert.match(refreshed, /<p class="subtitle">Compare pay-as-you-go LLM API pricing across 82 providers and 1181 text-model offerings\./);
   assert.doesNotMatch(refreshed, /{{/);
 });
@@ -329,8 +329,8 @@ test('published model URLs survive low or absent coverage and do not authorize n
   assert.deepEqual(pages.map(p => p.canonical), ['cheap', 'missing-model']);
   assert.equal(pages[0].providerCount, 1);
   const thinHtml = renderModelPage(pages[0], { historyEnabled: false });
-  assert.match(thinHtml, /API Pricing Across 1 Provider \| TokenWatch/);
-  assert.match(thinHtml, /across 1 tracked provider\./);
+  assert.match(thinHtml, /<title>[^<]* API Pricing: 1 Provider from \$[\d.]+\/M[^<]*<\/title>/);
+  assert.match(thinHtml, /API pricing across 1 provider\./);
   assert.match(thinHtml, /1 tracked provider; 1 priced offering/);
   assert.equal(pages[1].cheapestEff, null);
   const html = renderModelPage(pages[1], { historyEnabled: false });
@@ -554,4 +554,67 @@ test('recommender discovery: llms.txt, FAQ, methodology, explore links, and mode
     { id: 'm', name: 'M', provider: 'c', pricing: { input: 1, output: 2 } },
   ] } })[0];
   assert.match(renderModelPage(page, { historyEnabled: false }), /Is this the right model for your workload\? <a href="\/choose\/">/);
+});
+
+test('provider snippet: concrete title and description computed from the rendered records', async () => {
+  const { catalogMonth, snippetPrice, fitTitle, providerPageTitle } = await import('../scripts/seo-pages.mjs');
+  assert.equal(catalogMonth('2026-10-04T16:20:00.000Z'), 'Oct 2026');
+  assert.equal(catalogMonth('2026-01-31'), 'Jan 2026');
+  assert.equal(catalogMonth('garbage'), null);
+  assert.equal(snippetPrice(0.05), '$0.05');
+  assert.equal(snippetPrice(1.5), '$1.50');
+  assert.equal(snippetPrice(0.0044), '$0.0044');
+  assert.equal(snippetPrice(0), null);
+  assert.equal(fitTitle(['x'.repeat(70), 'short']), 'short');
+  assert.equal(fitTitle(['x'.repeat(70), 'y'.repeat(80)]), 'y'.repeat(80), 'last candidate is the fallback');
+
+  const pricing = {
+    providers: [{ key: 'alpha', name: 'Alpha' }],
+    providers_meta: { alpha: { retains_prompts: false } },
+    models: [
+      { ...textModels[0], name: 'Org: Cheap Model', zdr: true },
+      textModels[1],
+      { id: 'org/third', name: 'Third', provider: 'alpha', pricing: { input: 3, output: 6, cache_read: null } },
+    ],
+  };
+  const provider = collectProviderPages({ pricing, imagePricing: { models: [] }, videoPricing: { models: [] } })[0];
+  const html = renderProviderPage(provider, { text: '2026-10-04' });
+  const title = html.match(/<title>(.*?)<\/title>/)[1];
+  assert.equal(title, 'Alpha API Pricing (Oct 2026): 3 Models from $1.00/M | TokenWatch');
+  assert.ok(title.length <= 65);
+  const description = html.match(/name="description" content="([^"]+)"/)[1];
+  assert.match(description, /^Alpha API pricing \(Oct 2026\): 3 models tracked\. Cheapest: Cheap Model at \$1\.00\/M input, \$2\.00\/M output\./);
+  assert.match(description, /Cache-read pricing on 2 of 3 text models\./);
+  assert.match(description, /Zero data retention\./);
+  for (const field of ['property="og:title"', 'name="twitter:title"']) assert.ok(html.includes(`<meta ${field} content="${title}"`), field);
+  for (const field of ['property="og:description"', 'name="twitter:description"']) assert.ok(html.includes(`<meta ${field} content="${description}"`), field);
+  // The snippet's cheapest model and price also appear in the page body.
+  assert.match(html, /data-snippet-facts>Cheapest input price: Cheap Model at \$1\.00 per million input tokens/);
+
+  // Long names fall back gracefully within the budget.
+  const long = { ...provider, name: 'An Extremely Long Inference Provider Name' };
+  const longTitle = providerPageTitle(long, 'Oct 2026');
+  assert.ok(longTitle.length <= 65, longTitle);
+  assert.match(longTitle, /^An Extremely Long Inference Provider Name API Pricing/);
+});
+
+test('model snippet: provider count, cheapest input, month, and readable model name', () => {
+  const pricing = { models: ['a', 'b', 'c'].map((provider, index) => ({
+    id: 'zai-org/GLM-9', name: 'zai-org/GLM-9', provider, pricing: { input: 0.5 + index, output: 2 + index, cache_read: index ? 0.1 : null },
+  })).concat([{ id: 'z-ai/glm-9', name: 'Z.ai: GLM 9', provider: 'd', provider_display: 'Delta Cloud', pricing: { input: 0.2, output: 1, cache_read: 0.01 } }]) };
+  const [page] = collectModelPages({ pricing }, { minProviders: 3 });
+  assert.equal(page.name, 'GLM 9');
+  const html = renderModelPage(page, { lastmod: '2026-10-04' });
+  const title = html.match(/<title>(.*?)<\/title>/)[1];
+  assert.equal(title, 'GLM 9 API Pricing: 4 Providers from $0.20/M (Oct 2026)', 'brand suffix dropped to fit 65 chars');
+  const description = html.match(/name="description" content="([^"]+)"/)[1];
+  assert.match(description, /^GLM 9 API pricing \(Oct 2026\) across 4 providers\. Input \$0\.20–\$2\.50\/M, output \$1\.00–\$4\.00\/M\./);
+  assert.match(description, /Cheapest for cached agent workloads: Delta Cloud at \$[\d.]+\/M blended\./);
+  assert.match(description, /Cache-read pricing on 3 of 4 offerings\./);
+  assert.ok(html.includes(`<meta name="twitter:description" content="${description}"`));
+});
+
+test('homepage description leads with real offering and provider counts', () => {
+  const html = renderHomepageMeta('<title>x</title><meta name="description" content="old" />', 1597, 101);
+  assert.match(html, /content="Compare 1,597 LLM API prices across 101 providers, updated every 2 hours\./);
 });

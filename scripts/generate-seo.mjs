@@ -91,7 +91,7 @@ async function stageProviderPages(providers, dates, links) {
   const stage = join(PUBLIC, `.providers-${process.pid}.tmp`);
   await rm(stage, { recursive: true, force: true });
   await mkdir(stage, { recursive: true });
-  await writeFile(join(stage, 'index.html'), renderProviderDirectoryPage(providers));
+  await writeFile(join(stage, 'index.html'), renderProviderDirectoryPage(providers, dates));
   for (const provider of providers) {
     const dir = join(stage, provider.slug);
     await mkdir(dir, { recursive: true });
@@ -122,7 +122,7 @@ async function stageModelPages(pages, dates, linkedProviderSlugs) {
   const stage = join(PUBLIC, `.models-${process.pid}.tmp`);
   await rm(stage, { recursive: true, force: true });
   await mkdir(stage, { recursive: true });
-  await writeFile(join(stage, 'index.html'), renderModelDirectoryPage(pages));
+  await writeFile(join(stage, 'index.html'), renderModelDirectoryPage(pages, dates));
   for (const page of pages) {
     const dir = join(stage, page.slug);
     await mkdir(dir, { recursive: true });

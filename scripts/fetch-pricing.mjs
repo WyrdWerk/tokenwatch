@@ -43,7 +43,7 @@
 import { readFile } from 'node:fs/promises';
 import {
   perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseNeuralwatt, parseMerius, parseAster,
-  parseCoralbricks, fetchCoralbricksCatalog, parseSingularity, parseRuninfra, parseLlmgateway,
+  parseCoralbricks, fetchCoralbricksCatalog, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
   parseOpenCodeGoDocs,
   NON_TEXT_ID, isTextModel,
   ORG_ALIASES, PROVIDER_NAME_MAP,
@@ -917,7 +917,8 @@ async function main() {
   const dryRun = process.argv.includes('--dry-run');
 
   const out = { generated_at: new Date().toISOString(), providers: [], models: [] };
-  const tieredModels = []; // collected in tier order for dedup
+  let tieredModels = []; // collected in tier order for dedup
+  const llmgatewayRows = new Set(); // rows emitted by LLM Gateway (differential-only guard)
 
   // ── Tier 1: Direct providers ──
   for (const prov of DIRECT_PROVIDERS) {
@@ -947,6 +948,7 @@ async function main() {
         ((m.pricing.input ?? 0) > 0 || (m.pricing.output ?? 0) > 0)
       );
       out.providers.push({ key: prov.key, name: prov.name, model_count: models.length, status: 'ok' });
+      if (prov.key === 'llmgateway') for (const m of models) llmgatewayRows.add(m);
       tieredModels.push(...models);
       console.log(`✓ ${prov.name}: ${models.length} models`);
     } catch (err) {
@@ -1021,6 +1023,16 @@ async function main() {
   } catch (err) {
     out.providers.push({ key: 'umans', name: 'Umans AI', model_count: 0, status: `error: ${err.message}` });
     console.error(`✗ Umans AI: ${err.message}`);
+  }
+
+  // ── LLM Gateway differential-only guard ──
+  // Drop LLM Gateway rows for hosts another tier already fetched under a
+  // different spelling (e.g. `inference-net` vs OpenRouter's `inferencenet`),
+  // so one host never appears twice.
+  const beforeLlmgGuard = tieredModels.length;
+  tieredModels = dropCoveredLlmgatewayRows(tieredModels, llmgatewayRows);
+  if (beforeLlmgGuard !== tieredModels.length) {
+    console.log(`  Dropped ${beforeLlmgGuard - tieredModels.length} LLM Gateway rows for hosts already covered by another tier`);
   }
 
   // ── Dedup with 3-tier precedence ──

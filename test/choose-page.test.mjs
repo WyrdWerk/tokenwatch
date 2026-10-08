@@ -164,3 +164,30 @@ test('provider list features the top three, or the close-call priority winners, 
   assert.match(app, /Show all \$\{providers\.length\} providers/);
   assert.match(app, /cappedList\(unverified, 'unverified providers', [\s\S]*?, FEATURED_PROVIDER_COUNT\)/);
 });
+
+test('gate status text: inapplicable gates read "Not required", the quality floor reports its observed score', async () => {
+  const { gateStatusText } = await import('../shared/choose-page.mjs');
+  // GLM 5.3 regression: best-quality pick, floor not applied, coding 74.8 ≥ 25.
+  assert.equal(gateStatusText({ key: 'quality_floor', applied: false, passed: true, minimum: 25, observed: 74.8 }),
+    'Passed. Observed: 74.8. Minimum: 25.');
+  assert.equal(gateStatusText({ key: 'quality_floor', applied: true, passed: false, minimum: 25, observed: 12 }),
+    'Not met. Observed: 12. Minimum: 25.');
+  assert.match(gateStatusText({ key: 'quality_floor', applied: false, passed: false, minimum: 25, observed: 12 }), /not required/i);
+  assert.equal(gateStatusText({ key: 'quality_floor', applied: false, passed: null, minimum: 25, observed: null }),
+    'Not required. Minimum: 25.');
+  // DeepSeek V4 Flash 0731 regression: agentic-coding does not require structured output.
+  const structured = gateStatusText({ key: 'structured_output', applied: false, passed: false, required: false, observed: false });
+  assert.equal(structured, 'Not required. Observed: not supported.');
+  assert.doesNotMatch(structured, /not met/i);
+  assert.equal(gateStatusText({ key: 'structured_output', applied: false, passed: true, observed: null }), 'Not required.');
+  assert.equal(gateStatusText({ key: 'tool_calling', applied: true, passed: false, observed: false }), 'Not met.');
+  assert.equal(gateStatusText({ key: 'minimum_context', applied: true, passed: true, minimum: 65536, observed: 131072 }), 'Passed. Minimum: 65,536.');
+  assert.equal(gateStatusText({ key: 'benchmark_coverage', applied: true, passed: true, observedCoverage: 0.8 }), 'Passed. 80% observed.');
+  assert.equal(gateStatusText({ key: 'benchmark_coverage', applied: false, passed: false, observedCoverage: 0.2 }), 'Not required. 20% observed.');
+});
+
+test('choose page renders gate status through the shared helper, never a hard-coded Not met', async () => {
+  const source = await readFile(new URL('../public/choose-app.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /'Not met'/);
+  assert.match(source, /gateStatusText\(gate\)/);
+});

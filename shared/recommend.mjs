@@ -360,7 +360,7 @@ function candidateGates(group, model, useCase, pick) {
     { key: 'priceable_mix', applied: true, passed: finiteNonNegative(group.blendedRate), mix: useCase.mix, observedBlendedRate: group.blendedRate },
     { key: 'quantization_policy', applied: Boolean(useCase.quantizationPolicy?.reject?.length), passed: true, rejected: useCase.quantizationPolicy?.reject || [], fallbackUsed: Boolean(group.quantFallback) },
     { key: 'benchmark_coverage', applied: qualityGateApplied, passed: group.qualityCoverage >= MIN_BENCHMARK_COVERAGE, minimumCoverage: MIN_BENCHMARK_COVERAGE, observedCoverage: group.qualityCoverage },
-    { key: 'quality_floor', applied: pick === 'cheapestAboveFloor', passed: pick === 'cheapestAboveFloor' ? finite(primaryScore) && primaryScore >= useCase.qualityFloor.min : null, field: useCase.qualityFloor.field, minimum: useCase.qualityFloor.min, observed: primaryScore },
+    { key: 'quality_floor', applied: pick === 'cheapestAboveFloor', required: pick === 'cheapestAboveFloor', passed: finite(primaryScore) ? primaryScore >= useCase.qualityFloor.min : (pick === 'cheapestAboveFloor' ? false : null), field: useCase.qualityFloor.field, minimum: useCase.qualityFloor.min, observed: primaryScore },
   ];
 }
 
@@ -422,6 +422,12 @@ function candidateExplanation(group, model, useCase, pick) {
   };
 }
 
+/** Human-readable provider name for reason text: the catalog's display name, else the slug. */
+function providerLabel(row) {
+  const display = row?.offering?.provider_display;
+  return typeof display === 'string' && display.trim() ? display.trim() : row?.provider;
+}
+
 function candidateResult(group, useCase, {
   unbenchmarked = false,
   meetsQualityFloor = false,
@@ -453,9 +459,9 @@ function candidateResult(group, useCase, {
   } else if (cheapestProvider) {
     reasons.push(`Lowest qualifying blended price: $${cheapestProvider.blendedRate.toPrecision(4)} per million tokens at the ${useCase.id} mix.`);
   } else unknowns.push('blended price unavailable for this workload');
-  if (recommendedProvider) reasons.push(`Recommended provider: ${recommendedProvider.provider}, top-ranked after provider gates.`);
+  if (recommendedProvider) reasons.push(`Recommended provider: ${providerLabel(recommendedProvider)}, top-ranked after provider gates.`);
   if (recommendedProvider && cheapestProvider && recommendedProvider.provider !== cheapestProvider.provider) {
-    reasons.push(`Cheapest qualifying provider is ${cheapestProvider.provider}; provider ranking prefers ${recommendedProvider.provider}.`);
+    reasons.push(`Cheapest qualifying provider is ${providerLabel(cheapestProvider)}; provider ranking prefers ${providerLabel(recommendedProvider)}.`);
   }
   if (meetsQualityFloor) {
     const { field, min } = useCase.qualityFloor;
@@ -466,11 +472,11 @@ function candidateResult(group, useCase, {
   if (recommendedProvider && isBatchVariant(recommendedProvider.offering)) reasons.push('Asynchronous batch endpoint.');
   if (cheapestProvider && isBatchVariant(cheapestProvider.offering)
       && cheapestProvider.provider !== recommendedProvider?.provider) {
-    reasons.push(`Cheapest provider ${cheapestProvider.provider} is an asynchronous batch endpoint.`);
+    reasons.push(`Cheapest provider ${providerLabel(cheapestProvider)} is an asynchronous batch endpoint.`);
   }
   if (model?.subscription === true) reasons.push('Subscription plan, not pay-as-you-go.');
   if (cheapestProvider?.offering?.subscription === true && model?.subscription !== true) {
-    reasons.push(`Cheapest provider ${cheapestProvider.provider} is a subscription plan, not pay-as-you-go.`);
+    reasons.push(`Cheapest provider ${providerLabel(cheapestProvider)} is a subscription plan, not pay-as-you-go.`);
   }
   if (!quantization) unknowns.push('quantization not disclosed');
   if (useCase.id === 'reasoning-math') addReasoningInformation(model, reasons, unknowns);
@@ -606,8 +612,8 @@ function unverifiedModelResult(group, providerResults) {
   const reasons = ['No provider has confirmed all required capability and context metadata; this model remains unverified.'];
   const unknowns = [];
   for (const provider of providerResults) {
-    for (const reason of provider.reasons) reasons.push(`${provider.provider}: ${reason}`);
-    for (const unknown of provider.unknowns) unknowns.push(`${provider.provider}: ${unknown}`);
+    for (const reason of provider.reasons) reasons.push(`${providerLabel(provider)}: ${reason}`);
+    for (const unknown of provider.unknowns) unknowns.push(`${providerLabel(provider)}: ${unknown}`);
   }
   return {
     id: group.id,
@@ -1110,12 +1116,17 @@ export function rankProviders(useCaseId, canonicalModelId, offerings, perf = {},
   const rankedRows = [...rows].sort((a, b) => (b.score ?? -Infinity) - (a.score ?? -Infinity)
     || (a.metrics.price ?? Infinity) - (b.metrics.price ?? Infinity)
     || String(a.model.provider).localeCompare(String(b.model.provider)));
+  // Close-call confidence describes the top-2 margin only: the leader and the
+  // runner-up share it (runnerUpId names the other row of that pair). Lower
+  // rows are not compared, so they never carry a close-call verdict.
+  const topPair = rankedRows.slice(0, 2).map((row) => ({ id: row.model.provider, score: row.score }));
+  const topConfidence = confidenceFromRanking(topPair, topPair[0]?.id, 'provider_score_margin');
   const ranked = rankedRows.map((row, index) => {
-    const runnerUp = rankedRows[index + 1];
-    const confidence = confidenceFromRanking([
-      { id: row.model.provider, score: row.score },
-      ...(runnerUp ? [{ id: runnerUp.model.provider, score: runnerUp.score }] : []),
-    ], row.model.provider, 'provider_score_margin');
+    const confidence = index === 0
+      ? topConfidence
+      : index === 1
+        ? { ...topConfidence, runnerUpId: topPair[0].id, runnerUpScore: finite(topPair[0].score) ? rounded(topPair[0].score, 2) : null }
+        : { level: 'uncompared', method: 'provider_score_margin', scoreMargin: null, runnerUpId: null, runnerUpScore: null };
     return {
       ...row.result,
       confidence,

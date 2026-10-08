@@ -199,3 +199,43 @@ export function isStale(generatedAt, now = Date.now(), maxAgeHours = 6) {
   if (!Number.isFinite(timestamp) || !Number.isFinite(now) || !Number.isFinite(maxAgeHours) || maxAgeHours < 0) return false;
   return now - timestamp > maxAgeHours * HOUR;
 }
+
+function formatGateValue(value) {
+  if (value === true) return 'supported';
+  if (value === false) return 'not supported';
+  if (typeof value === 'number' && Number.isFinite(value)) return value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  if (typeof value === 'string' && value.trim()) return value.trim();
+  return null;
+}
+
+/**
+ * Visitor-facing status for one explanation gate. A gate the use case or pick
+ * does not apply reads "Not required" (with the observed value when known),
+ * never "Not met". Numeric floors always report the observed value, so a
+ * model that clears the quality floor reads "Passed" even when the floor was
+ * not what selected it.
+ */
+export function gateStatusText(gate = {}) {
+  const observed = formatGateValue(gate.observed);
+  const minimum = typeof gate.minimum === 'number' && Number.isFinite(gate.minimum) && gate.minimum > 0
+    ? gate.minimum.toLocaleString('en-US', { maximumFractionDigits: 2 })
+    : null;
+  if (gate.observedCoverage !== undefined) {
+    const coverage = Number.isFinite(gate.observedCoverage) ? `${Math.round(gate.observedCoverage * 100)}% observed` : null;
+    const base = gate.applied === false ? 'Not required' : gate.passed === true ? 'Passed' : gate.passed === false ? 'Not met' : 'Unknown';
+    return [base, coverage].filter(Boolean).join('. ') + '.';
+  }
+  if (gate.key === 'quality_floor') {
+    const detail = [observed !== null ? `Observed: ${observed}` : null, minimum ? `Minimum: ${minimum}` : null].filter(Boolean).join('. ');
+    const base = gate.passed === true ? 'Passed'
+      : gate.applied === false ? (gate.passed === false ? 'Below floor (not required for this pick)' : 'Not required')
+        : gate.passed === false ? 'Not met' : 'Unknown / not ranked';
+    return `${base}.${detail ? ` ${detail}.` : ''}`;
+  }
+  if (gate.applied === false) {
+    return observed !== null ? `Not required. Observed: ${observed}.` : 'Not required.';
+  }
+  const base = gate.passed === true ? 'Passed' : gate.passed === false ? 'Not met' : 'Unknown / not ranked';
+  const detail = minimum ? ` Minimum: ${minimum}.` : '';
+  return `${base}.${detail}`;
+}
