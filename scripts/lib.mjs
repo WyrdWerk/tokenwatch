@@ -24,6 +24,31 @@ export const passthrough = (v) => num(v);
 
 // ── direct provider parsers ───────────────────────────────────────────────────
 
+/** Arilo https://api.arilo.id/v1/models → requested DeepSeek SKU (costs already USD/M). */
+export function parseArilo(data) {
+  const models = Array.isArray(data?.data) ? data.data : [];
+  return models
+    .filter((m) => m?.id === 'deepseek-v4.1-flash')
+    .map((m) => ({
+      id: m.id,
+      name: 'DeepSeek V4.1 Flash',
+      org: 'deepseek',
+      provider: 'arilo',
+      // Provider-confirmed SKU details not exposed in the public catalog:
+      // https://github.com/WyrdWerk/tokenwatch/issues/22#issuecomment-5992990470
+      quantization: 'mxfp4',
+      max_completion_tokens: 60000,
+      discount: 0,
+      context_length: m.max_context_tokens ?? null,
+      pricing: {
+        input: passthrough(m.cost?.input),
+        output: passthrough(m.cost?.output),
+        cache_read: passthrough(m.cost?.cache_read),
+        cache_write: null, // No separate cache-write charge (same provider confirmation)
+      },
+    }));
+}
+
 /** Sference https://api.sference.com/v1/models → model records (prices already $/M). */
 export function parseSference(data) {
   return (data.data || [])
@@ -973,6 +998,9 @@ export {
 export const PROVIDER_NAME_MAP = {
   'deepinfra': 'deepinfra',
   'embercloud': 'ember',
+  'arilo': 'arilo',
+  'arilo.id': 'arilo',
+  'arilo-id': 'arilo',
   'wafer': 'wafer',
   'synthetic': 'synthetic',
   'lilac': 'lilac',
