@@ -688,3 +688,29 @@ test('close-call confidence covers only the top-two provider margin, never every
   assert.notEqual(spread.ranked[0].confidence.level, 'close_call');
   assert.ok(spread.ranked.every((row) => row.confidence.level !== 'close_call'), 'a clear top-2 margin flags no row');
 });
+
+test('rankProviders never ranks deprecated offerings and warns about long-context price tiers', () => {
+  const offerings = [
+    mixOffering('open/model-a', 'deprecated-cheap', 90, 0.1, { lifecycle_status: 'deprecated' }),
+    mixOffering('open/model-a', 'tiered', 90, 1, {
+      context_price_tiers: [
+        { above_tokens: 32000, input: 2, output: 4, cache_read: null, cache_write: null },
+        { above_tokens: 128000, input: 3, output: 6, cache_read: null, cache_write: null },
+      ],
+    }),
+    mixOffering('open/model-a', 'beta-host', 90, 2, { lifecycle_status: 'beta' }),
+  ];
+  const rows = rankProviders('agentic-coding', 'open/model-a', offerings);
+  assert.deepEqual(rows.ranked.map((row) => row.provider).sort(), ['beta-host', 'tiered']);
+  const tiered = rows.ranked.find((row) => row.provider === 'tiered');
+  assert.ok(tiered.reasons.some((reason) => /^Long-context price increase: requests above 32,000 tokens.*\$3 input \/ \$6 output/.test(reason)));
+  const beta = rows.ranked.find((row) => row.provider === 'beta-host');
+  assert.ok(beta.reasons.some((reason) => /Pre-release offering: models\.dev lists it as beta/.test(reason)));
+
+  const shortlist = shortlistModels('agentic-coding', [offerings[0], mixOffering('open/model-b', 'live', 50, 1)]);
+  assert.deepEqual(
+    [shortlist.bestQuality?.id, shortlist.bestValue?.id, shortlist.cheapestAboveFloor?.id],
+    ['model-b', 'model-b', 'model-b'],
+    'a model offered only through deprecated endpoints is never picked',
+  );
+});

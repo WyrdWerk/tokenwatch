@@ -36,13 +36,14 @@ const GATE_LABELS = {
   excluded_headquarters: 'Excluded headquarters',
   minimum_uptime: 'Minimum uptime',
   known_issue: 'Known provider issues',
+  lifecycle: 'Not deprecated (models.dev)',
   priceable_mix: 'Price for this workload mix',
   quantization_policy: 'Quantization policy',
   benchmark_coverage: 'Benchmark coverage',
   quality_floor: 'Minimum quality score',
 };
 
-const WARNING_REASON = /degraded warning|low-bit quantization|asynchronous batch|subscription plan|tool-choice control|no implicit prompt-caching/i;
+const WARNING_REASON = /degraded warning|low-bit quantization|asynchronous batch|subscription plan|tool-choice control|no implicit prompt-caching|long-context price increase|pre-release offering/i;
 const elements = Object.fromEntries([
   'chooseStatus', 'useCaseNotice', 'preferenceFeature', 'preferenceSummary', 'preferenceAttribution',
   'modelCards', 'alsoConsidered', 'notEnoughData',
@@ -429,6 +430,28 @@ function selectedProvider(candidate) {
   return providers.find((provider) => provider.provider === state.provider) || providers[0] || null;
 }
 
+// Setup hints from models.dev provider metadata. Only well-formed names are echoed into the
+// copyable shell snippet; anything else is dropped rather than quoted. models.dev lists every
+// env var a provider needs (e.g. an account id next to the key), unordered, so API_KEY is only
+// wired when exactly one name looks like a credential.
+function setupHintLines(providerKey) {
+  const meta = catalogs?.pricing?.providers_meta?.[providerKey];
+  const lines = [];
+  const envNames = (Array.isArray(meta?.setup_env) ? meta.setup_env : [])
+    .filter((name) => typeof name === 'string' && /^[A-Z][A-Z0-9_]*$/.test(name));
+  const credentials = envNames.length === 1 ? envNames : envNames.filter((name) => /(?:_API_KEY|_API_TOKEN|_TOKEN)$/.test(name));
+  if (credentials.length === 1) {
+    lines.push(`# API key variable listed by models.dev: ${credentials[0]}`, `export API_KEY="\${${credentials[0]}}"`);
+  }
+  const others = envNames.filter((name) => name !== credentials[0] || credentials.length !== 1);
+  if (others.length) lines.push(`# Also required by this provider (models.dev): ${others.join(', ')}`);
+  const sdkPackage = meta?.ai_sdk_package;
+  if (typeof sdkPackage === 'string' && /^(@[a-z0-9][\w.-]*\/)?[a-z0-9][\w.-]*$/.test(sdkPackage)) {
+    lines.push(`# Vercel AI SDK provider package: ${sdkPackage}`);
+  }
+  return lines;
+}
+
 function setupText(provider) {
   const offering = provider.offering;
   const baseURL = offering.modelsdev?.base_url || offering.base_url || null;
@@ -443,6 +466,7 @@ function setupText(provider) {
     `# ${baseURL ? 'Base URL from models.dev/catalog' : 'Base URL is not published in this catalog; replace this placeholder with the provider endpoint'}`,
     `export BASE_URL=${shellQuote(baseURLForCopy)}`,
     `export MODEL_ID=${shellQuote(modelId)}`,
+    ...setupHintLines(provider.provider),
     '',
     '# curl',
     'curl "$BASE_URL/chat/completions" \\',

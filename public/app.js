@@ -1117,19 +1117,37 @@ function showDetailModal(idx) {
   parts.push(`<div class="detail-subtitle">${esc(orgDisplay(r.org))} · via ${esc(providerName(r.provider, r.provider_display))}` +
     (md && md.confidence === 'medium' ? ' <span class="approx-badge" title="Matched by fuzzy logic against models.dev — verify before configuring">⚠ approx</span>' : '') +
     `</div>`);
+  if (r.lifecycle_status === 'deprecated' || r.lifecycle_status === 'beta' || r.lifecycle_status === 'alpha') {
+    parts.push(`<div class="detail-provenance detail-lifecycle">Lifecycle: <span class="lifecycle-badge lifecycle-${r.lifecycle_status}">${r.lifecycle_status}</span> (models.dev)` +
+      (r.lifecycle_status === 'deprecated' ? ' — may be retired; check the provider\'s docs before relying on it.' : ' — pre-release.') + '</div>');
+  }
 
-  // Section: Connect (only if provider-specific enrichment exists)
-  if (md) {
+  // Section: Connect (provider-specific enrichment and/or provider setup hints)
+  const pmeta = state.data.providers_meta?.[r.provider];
+  const envNames = Array.isArray(pmeta?.setup_env) ? pmeta.setup_env.filter((n) => typeof n === 'string' && n) : [];
+  const sdkPackage = typeof pmeta?.ai_sdk_package === 'string' ? pmeta.ai_sdk_package : '';
+  if (md || envNames.length || sdkPackage) {
     parts.push('<div class="detail-section"><div class="detail-section-title">Connect</div>');
-    const baseUrl = md.base_url;
-    parts.push(`<div class="detail-field"><span class="detail-field-label">Base URL</span>` +
-      `<span class="detail-field-value">${baseUrl ? esc(baseUrl) + ' <button class="copy-btn" data-copy="' + esc(baseUrl) + '" aria-label="Copy base URL" title="Copy base URL">📋</button>' : '<span class="detail-no-url">Provider uses its own SDK package — no generic base URL</span>'}</span></div>`);
-    parts.push(`<div class="detail-field"><span class="detail-field-label">Model ID</span>` +
-      `<span class="detail-field-value">${esc(md.model_id || '—')} <button class="copy-btn" data-copy="${esc(md.model_id || '')}" aria-label="Copy model ID" title="Copy model ID">📋</button></span></div>`);
-    if (md.doc_url) {
-      parts.push(`<div class="detail-field"><span class="detail-field-label">Docs</span>` +
-        `<span class="detail-field-value"><a href="${esc(md.doc_url)}">${esc(md.doc_url)} ↗</a></span></div>`);
+    if (md) {
+      const baseUrl = md.base_url;
+      parts.push(`<div class="detail-field"><span class="detail-field-label">Base URL</span>` +
+        `<span class="detail-field-value">${baseUrl ? esc(baseUrl) + ' <button class="copy-btn" data-copy="' + esc(baseUrl) + '" aria-label="Copy base URL" title="Copy base URL">📋</button>' : '<span class="detail-no-url">Provider uses its own SDK package — no generic base URL</span>'}</span></div>`);
+      parts.push(`<div class="detail-field"><span class="detail-field-label">Model ID</span>` +
+        `<span class="detail-field-value">${esc(md.model_id || '—')} <button class="copy-btn" data-copy="${esc(md.model_id || '')}" aria-label="Copy model ID" title="Copy model ID">📋</button></span></div>`);
+      if (md.doc_url) {
+        parts.push(`<div class="detail-field"><span class="detail-field-label">Docs</span>` +
+          `<span class="detail-field-value"><a href="${esc(md.doc_url)}">${esc(md.doc_url)} ↗</a></span></div>`);
+      }
     }
+    if (envNames.length) {
+      parts.push(`<div class="detail-field"><span class="detail-field-label">Env vars</span>` +
+        `<span class="detail-field-value">${esc(envNames.join(', '))}</span></div>`);
+    }
+    if (sdkPackage) {
+      parts.push(`<div class="detail-field"><span class="detail-field-label">AI SDK package</span>` +
+        `<span class="detail-field-value">${esc(sdkPackage)}</span></div>`);
+    }
+    if (!md) parts.push('<div class="detail-no-enrich">Direct configuration (base URL, model ID) not available for this provider.</div>');
     parts.push('</div>');
   } else {
     parts.push('<div class="detail-section"><div class="detail-no-enrich">Direct configuration not available for this provider.</div></div>');
@@ -1147,6 +1165,14 @@ function showDetailModal(idx) {
   if (p.input_billing === 'cache_write') {
     parts.push('<div class="detail-provenance">Fresh input uses the cache-write tariff under the provider\'s default billing.</div>');
   }
+  if (Array.isArray(r.context_price_tiers) && r.context_price_tiers.length) {
+    const cell = (v) => (v != null ? fmtPrice(v) : '—');
+    parts.push('<div class="detail-tiers-title">Long-context pricing (models.dev)</div>');
+    parts.push('<div class="detail-tiers-wrap"><table class="detail-tiers-table"><thead><tr><th>Requests above</th><th>Input</th><th>Output</th><th>Cache read</th><th>Cache write</th></tr></thead><tbody>' +
+      r.context_price_tiers.map((t) => `<tr><td>${esc(fmtTierTokens(t.above_tokens))} tokens</td><td>${cell(t.input)}</td><td>${cell(t.output)}</td><td>${cell(t.cache_read)}</td><td>${cell(t.cache_write)}</td></tr>`).join('') +
+      '</tbody></table></div>');
+    parts.push('<div class="detail-provenance">Totals in the table assume requests below the first threshold.</div>');
+  }
   parts.push('</div>');
 
   if (r.capabilities) {
@@ -1162,11 +1188,12 @@ function showDetailModal(idx) {
   // Section: Capabilities + About (from provider-specific OR model-level fallback)
   // Prefer md (provider-specific); fall back to md_model (model-level from any provider).
   const meta = md || mdModel;
-  if (meta && (meta.capabilities || meta.description || meta.modalities || meta.release_date)) {
+  const reasoningChips = reasoningChipLabels(meta);
+  if (meta && (meta.capabilities || meta.description || meta.modalities || meta.release_date || reasoningChips.length)) {
     const usingFallback = !md && !!mdModel;
 
     // Section: Capabilities
-    if (meta.capabilities || meta.modalities) {
+    if (meta.capabilities || meta.modalities || reasoningChips.length) {
       parts.push('<div class="detail-section"><div class="detail-section-title">Capabilities</div>');
       if (meta.capabilities) {
         const caps = meta.capabilities;
@@ -1179,6 +1206,9 @@ function showDetailModal(idx) {
         if (trueCaps.length > 0) {
           parts.push('<div class="detail-capabilities">' + trueCaps.map((c) => `<span class="detail-capability">✓ ${esc(c)}</span>`).join('') + '</div>');
         }
+      }
+      if (reasoningChips.length) {
+        parts.push('<div class="detail-capabilities">' + reasoningChips.map((c) => `<span class="detail-capability">${esc(c)}</span>`).join('') + '</div>');
       }
       if (meta.modalities) {
         const inp = (meta.modalities.input || []).join(', ');
@@ -2207,6 +2237,53 @@ function fmtContext(ctx) {
   return String(ctx);
 }
 
+/** Compact token threshold for tier labels: 32000 → "32K", 131072 → "128K", 1000000 → "1M". */
+function fmtTierTokens(n) {
+  if (!(n > 0)) return '?';
+  if (n >= 1e6) return `${parseFloat((n / 1e6).toFixed(1))}M`;
+  if (n % 1000 === 0) return `${n / 1000}K`;
+  if (n % 1024 === 0) return `${n / 1024}K`;
+  return `${Math.round(n / 1000)}K`;
+}
+
+/** Lifecycle badge (models.dev, provider-offering specific). Nothing when absent/unknown. */
+function lifecycleBadgeHtml(model) {
+  const status = model.lifecycle_status;
+  if (status !== 'deprecated' && status !== 'beta' && status !== 'alpha') return '';
+  const tip = status === 'deprecated'
+    ? "models.dev lists this provider offering as deprecated; it may be retired. Check the provider's docs before relying on it."
+    : `models.dev lists this provider offering as ${status} (pre-release).`;
+  return ` <span class="lifecycle-badge lifecycle-${status}" tabindex="0" data-tip="${esc(tip)}">${status}</span>`;
+}
+
+/** Reasoning-control chip labels from models.dev `reasoning_options` + `interleaved_reasoning`. Unknown option types are skipped; null/[] yield nothing. */
+function reasoningChipLabels(meta) {
+  const labels = [];
+  for (const opt of Array.isArray(meta?.reasoning_options) ? meta.reasoning_options : []) {
+    if (opt?.type === 'effort') {
+      const values = Array.isArray(opt.values) ? opt.values.filter((v) => typeof v === 'string' && v) : [];
+      labels.push(values.length ? `Reasoning effort: ${values.join(' · ')}` : 'Reasoning effort');
+    } else if (opt?.type === 'toggle') {
+      labels.push('Reasoning on/off toggle');
+    } else if (opt?.type === 'budget_tokens') {
+      labels.push('Reasoning token budget');
+    }
+  }
+  if (meta?.interleaved_reasoning === true) labels.push('Interleaved thinking');
+  return labels;
+}
+
+/** Context-tier badge: price rises above the first threshold. Nothing when no tiers. */
+function tierBadgeHtml(model) {
+  const tiers = model.context_price_tiers;
+  if (!Array.isArray(tiers) || !tiers.length) return '';
+  const first = tiers[0];
+  const last = tiers[tiers.length - 1];
+  const rate = (v) => (v == null ? '—' : fmtPlain(fmtPrice(v)));
+  const tip = `Price rises for requests above ${fmtTierTokens(first.above_tokens)} tokens: up to ${rate(last.input)} input / ${rate(last.output)} output per M (models.dev). Costs here assume shorter requests.`;
+  return ` <span class="tier-badge" tabindex="0" data-tip="${esc(tip)}">↑ &gt;${esc(fmtTierTokens(first.above_tokens))}</span>`;
+}
+
 const HQ_FLAGS = { US:'🇺🇸', SG:'🇸🇬', CN:'🇨🇳', IL:'🇮🇱', FR:'🇫🇷', NL:'🇳🇱', ES:'🇪🇸', ID:'🇮🇩', SE:'🇸🇪', GB:'🇬🇧', DE:'🇩🇪', CA:'🇨🇦', JP:'🇯🇵', KR:'🇰🇷', IN:'🇮🇳' };
 
 function providerMetaHtml(providerKey) {
@@ -2338,7 +2415,7 @@ function renderModelRow(r, rank, groupKey, cheapest) {
     <td class="rank" data-label="#">${checkbox} ${rank}${cheapest ? ' 🏆' : ''}</td>
     <td data-label="Org"><span class="org-badge">${esc(orgDisplay(r.model.org))}</span></td>
     <td data-label="Provider">${renderProviderCell(r)}</td>
-    <td data-label="Model">${esc(modelDisplay)}${promo}</td>
+    <td data-label="Model">${esc(modelDisplay)}${promo}${lifecycleBadgeHtml(r.model)}${tierBadgeHtml(r.model)}</td>
     <td data-label="Quantization">${r.model.quantization ? esc(String(r.model.quantization)) : '<span class="missing">Unknown</span>'}</td>
     <td class="num" data-label="Input $/M">${fmtPrice(p.input)}</td>
     <td class="num" data-label="Output $/M">${fmtPrice(p.output)}</td>
@@ -2737,8 +2814,9 @@ function renderModelSummary(rows, tokens) {
       const promo = r.model.discount > 0
         ? ` <span class="promo-badge" title="${(r.model.discount * 100).toFixed(0)}% off">promo</span>`
         : '';
+      const badges = promo + lifecycleBadgeHtml(r.model) + tierBadgeHtml(r.model);
       const tip = `${provider}: ${fmtPlain(fmtV(r.cost))} — #${i + 1} of ${sorted.length}`;
-      return `<div class="model-summary-bar-row${r === best ? ' is-best' : ''}" data-tip="${esc(tip)}"><span class="model-summary-bar-label">${esc(provider)}${promo}</span>` +
+      return `<div class="model-summary-bar-row${r === best ? ' is-best' : ''}" data-tip="${esc(tip)}"><span class="model-summary-bar-label"><span class="model-summary-bar-name">${esc(provider)}</span>${badges}</span>` +
         `<span class="model-summary-bar-track"><span class="dist-stem" style="width:${pct.toFixed(2)}%"></span><span class="dist-dot" style="left:${pct.toFixed(2)}%"></span></span>` +
         `<span class="model-summary-bar-value">${fmtV(r.cost)}</span></div>`;
     }).join('') + `</div>`;

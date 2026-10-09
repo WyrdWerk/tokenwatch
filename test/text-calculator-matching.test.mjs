@@ -233,14 +233,14 @@ test('budget distribution preserves unlimited affordability instead of displayin
   const summaryElement = { innerHTML: '', insertAdjacentHTML() {}, querySelector: (sel) => (/crossover|history/.test(sel) ? null : details) };
   const els = { modelSearch: { value: 'sample' }, modelSummary: summaryElement, budgetInput: { value: '20' } };
   const render = new Function('els', 'state', 'canonicalSummary', 'MIN_PROVIDER_ROWS', 'summaryWinners',
-    'providerName', 'esc', 'fmtAffordability', 'fmtCost', 'fmtPrice', 'resolveModelSelection', 'selectionKeyOf', 'median', 'fmtPlain',
+    'providerName', 'esc', 'fmtAffordability', 'fmtCost', 'fmtPrice', 'resolveModelSelection', 'selectionKeyOf', 'median', 'fmtPlain', 'lifecycleBadgeHtml', 'tierBadgeHtml',
     `${extractFn(src, 'renderModelSummary')}\nreturn renderModelSummary;`)(
     els, { costMode: 'perRequest', computeBy: 'budget', modelDisplayName: {}, familyByLabel: {} },
     () => ({ name: 'Sample', canonical: 'sample' }), 1,
     () => ({ costWinner: rows[0], costValue: Infinity, blendedWinner: rows[0], blendedValue: 0 }),
     (p) => p, (v) => v, (v) => v === Infinity ? '∞' : String(v), String, String,
     () => ({ level: 'family', key: 'sample' }), () => (id) => id,
-    (a) => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)], (v) => String(v),
+    (a) => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)], (v) => String(v), () => '', () => '',
   );
   render(rows, MIX);
   assert.match(bars.innerHTML, /model-summary-bar-value">∞<\/span>/);

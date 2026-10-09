@@ -571,6 +571,8 @@ test('/api/v1/models filters on resolved open-weight status and providers expose
       open_weights_source: 'override', license: 'mit', pricing: { input: 1, output: 2 },
       supported_parameters: ['tools'], supports_tool_choice: true,
       supports_implicit_caching: false, max_prompt_tokens: 12000, uptime_1d: 99.5,
+      lifecycle_status: 'beta',
+      context_price_tiers: [{ above_tokens: 128000, input: 2, output: 4, cache_read: null, cache_write: null }],
     },
     {
       id: 'closed-model', org: 'anthropic', provider: 'beta', open_weights: false,
@@ -600,6 +602,8 @@ test('/api/v1/models filters on resolved open-weight status and providers expose
     supports_implicit_caching: providers.body.providers[0].supports_implicit_caching,
     max_prompt_tokens: providers.body.providers[0].max_prompt_tokens,
     uptime_1d: providers.body.providers[0].uptime_1d,
+    lifecycle_status: providers.body.providers[0].lifecycle_status,
+    context_price_tiers: providers.body.providers[0].context_price_tiers,
   }, {
     open_weights: true,
     open_weights_source: 'override',
@@ -609,6 +613,8 @@ test('/api/v1/models filters on resolved open-weight status and providers expose
     supports_implicit_caching: false,
     max_prompt_tokens: 12000,
     uptime_1d: 99.5,
+    lifecycle_status: 'beta',
+    context_price_tiers: [{ above_tokens: 128000, input: 2, output: 4, cache_read: null, cache_write: null }],
   });
 
   context.request = new Request('https://tokenwatch.test/api/v1/models/unknown-model/providers');
@@ -617,6 +623,7 @@ test('/api/v1/models filters on resolved open-weight status and providers expose
   for (const field of [
     'open_weights', 'open_weights_source', 'license', 'supported_parameters',
     'supports_tool_choice', 'supports_implicit_caching', 'max_prompt_tokens', 'uptime_1d',
+    'lifecycle_status', 'context_price_tiers',
   ]) {
     assert.equal(unknownProvider[field], null, `${field} should be explicit null when unavailable`);
   }

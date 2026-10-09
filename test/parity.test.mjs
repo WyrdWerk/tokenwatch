@@ -201,6 +201,22 @@ test('pricing offerings expose the recommender data contract consistently per ca
       `${model.id} has invalid max_prompt_tokens`);
     assert.ok(model.uptime_1d === null || (typeof model.uptime_1d === 'number' && Number.isFinite(model.uptime_1d)),
       `${model.id} has invalid uptime_1d`);
+    // models.dev lifecycle + context tiers (absent until the first refresh that carries them).
+    if (Object.hasOwn(model, 'lifecycle_status')) {
+      assert.ok([null, 'deprecated', 'beta', 'alpha'].includes(model.lifecycle_status),
+        `${model.id} has invalid lifecycle_status`);
+    }
+    if (Object.hasOwn(model, 'context_price_tiers') && model.context_price_tiers !== null) {
+      const tiers = model.context_price_tiers;
+      assert.ok(Array.isArray(tiers) && tiers.length > 0, `${model.id} has invalid context_price_tiers`);
+      tiers.forEach((tier, i) => {
+        assert.ok(Number.isInteger(tier.above_tokens) && tier.above_tokens > 0, `${model.id} tier ${i} above_tokens`);
+        if (i > 0) assert.ok(tier.above_tokens > tiers[i - 1].above_tokens, `${model.id} tiers must ascend`);
+        for (const field of ['input', 'output']) {
+          assert.ok(Number.isFinite(tier[field]) && tier[field] >= 0, `${model.id} tier ${i} ${field}`);
+        }
+      });
+    }
 
     const key = canonicalId(model.id);
     const resolution = [model.open_weights, model.open_weights_source, model.license];
