@@ -21,7 +21,7 @@
  */
 
 import {
-  orgFromId, orgFromName, canonicalId, orgLookupKey, ORG_ALIASES,
+  orgFromId, orgFromName, canonicalId, orgLookupKey,
   num, fetchJsonWithRetry, checkCoverageDrop, CoverageDropError, parseArgs, dedupModels,
   maybeWriteJson,
 } from './lib.mjs';

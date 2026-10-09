@@ -594,14 +594,6 @@ export const ZRO_MAX_ROW_DROP = 0.20;
 /** Reuse window for the committed last-good snapshot. */
 export const ZRO_SNAPSHOT_TTL_MS = 24 * 60 * 60 * 1000;
 
-/** Parse a `$1.23` cell into a number, or null when absent/unparseable. */
-function parseZroPrice(value) {
-  const m = String(value ?? '').match(/\$?\s*([0-9]+(?:\.[0-9]+)?)/);
-  if (!m) return null;
-  const n = Number.parseFloat(m[1]);
-  return Number.isFinite(n) ? n : null;
-}
-
 /**
  * Flatten the React Flight payload embedded in `self.__next_f.push` script tags
  * into one searchable string per chunk.
