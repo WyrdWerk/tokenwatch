@@ -293,8 +293,6 @@ Safety checks:
 - Aborts if model count drops >15% vs previous run
 - Tests must pass before deploy (`needs: test`)
 
-GitHub secrets required: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `SINGULARITY_API_KEY`, `RUNINFRA_API_KEY` (the last two are used by the 2-hourly text pricing refresh).
-
 ## License
 
 MIT. See [LICENSE](LICENSE).
