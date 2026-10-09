@@ -646,6 +646,8 @@ export async function onRequestGet(context) {
           supports_tool_choice: m.supports_tool_choice ?? null,
           supports_implicit_caching: m.supports_implicit_caching ?? null,
           max_prompt_tokens: m.max_prompt_tokens ?? null,
+          lifecycle_status: m.lifecycle_status ?? null,
+          context_price_tiers: m.context_price_tiers ?? null,
           pricing: m.pricing,
         })),
       });

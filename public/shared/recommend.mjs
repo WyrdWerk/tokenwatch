@@ -887,6 +887,17 @@ function scaleMetric(value, values, lowerIsBetter) {
   return lowerIsBetter ? (max - value) / (max - min) : (value - min) / (max - min);
 }
 
+/** Warning text when per-request price rises with context size (models.dev tiers). */
+function contextTierReason(model) {
+  const tiers = Array.isArray(model?.context_price_tiers) ? model.context_price_tiers : [];
+  const first = tiers.find((tier) => Number.isInteger(tier?.above_tokens) && finite(tier.input) && finite(tier.output));
+  if (!first) return null;
+  const top = tiers[tiers.length - 1];
+  const fmt = (value) => `$${Number(value.toPrecision(4))}`;
+  return `Long-context price increase: requests above ${first.above_tokens.toLocaleString()} tokens cost more per token`
+    + ` (up to ${fmt(top.input)} input / ${fmt(top.output)} output per million, source: models.dev); the blended price assumes shorter requests.`;
+}
+
 function gateProvider(model, useCase, constraints, canonical) {
   const hardRequirements = assessHardRequirements(model, useCase);
   if (hardRequirements.blocked) return null;
@@ -904,6 +915,8 @@ function gateProvider(model, useCase, constraints, canonical) {
 
   const issues = matchingIssue(model, canonical, constraints.knownIssues);
   if (issues.some((issue) => BLOCKING_ISSUES.has(String(issue.verdict || '').toLowerCase()))) return null;
+  // models.dev marks this exact provider offering as deprecated: never rank it.
+  if (model.lifecycle_status === 'deprecated') return null;
 
   return {
     headquarters,
@@ -929,6 +942,7 @@ function providerGates(model, useCase, constraints, gate, quantFallback, price) 
     { key: 'excluded_headquarters', applied: excludedHQ.length > 0, passed: !excludedHQ.length ? true : !gate.headquarters ? null : !excludedHQ.includes(String(gate.headquarters).toUpperCase()), excluded: excludedHQ, observed: gate.headquarters },
     { key: 'minimum_uptime', applied: minUptime !== null, passed: minUptime === null || Boolean(gate.uptime && gate.uptime.value >= minUptime), minimum: minUptime, observed: gate.uptime?.value ?? null, window: gate.uptime?.window ?? null },
     { key: 'known_issue', applied: true, passed: !gate.issues.some((issue) => BLOCKING_ISSUES.has(String(issue.verdict || '').toLowerCase())), blockingVerdicts: ['broken', 'unavailable'], observed: gate.issues.map((issue) => ({ verdict: issue.verdict || 'unspecified', source: issue.source || null })) },
+    { key: 'lifecycle', applied: true, passed: model.lifecycle_status !== 'deprecated', observed: model.lifecycle_status ?? null, source: model.lifecycle_status ? 'models.dev' : null },
     { key: 'priceable_mix', applied: true, passed: finiteNonNegative(price), mix: useCase.mix, observedBlendedRate: price },
     { key: 'quantization_policy', applied: Boolean(useCase.quantizationPolicy?.reject?.length), passed: true, rejected: useCase.quantizationPolicy?.reject || [], fallbackUsed: quantFallback },
   ];
@@ -1088,6 +1102,9 @@ export function rankProviders(useCaseId, canonicalModelId, offerings, perf = {},
     if (license) reasons.push(`License: ${license}.`);
     else unknowns.push('license not disclosed');
     if (row.quantFallback) reasons.push('Low-bit quantization is the only qualifying option for this workload.');
+    if (model.lifecycle_status === 'beta' || model.lifecycle_status === 'alpha') reasons.push(`Pre-release offering: models.dev lists it as ${model.lifecycle_status}.`);
+    const tierReason = contextTierReason(model);
+    if (tierReason) reasons.push(tierReason);
     if (gate.issues.length) {
       for (const issue of gate.issues) {
         reasons.push(issueReason(issue));
