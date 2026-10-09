@@ -24,10 +24,10 @@
  *   - One score per family, applied to all matching TW rows
  */
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { fetchJsonWithRetry } from './lib.mjs';
+import { fetchJsonWithRetry, writeJsonAtomic } from './lib.mjs';
 import { canonicalId } from '../shared/normalize.mjs';
 import { conservativeBase } from '../shared/benchmarks.mjs';
 
@@ -126,7 +126,7 @@ async function writeCache(models, fetchedAt) {
     },
     models,
   };
-  await writeFile(CACHE_PATH, JSON.stringify(cache, null, 2) + '\n', 'utf-8');
+  await writeJsonAtomic(CACHE_PATH, cache);
 }
 
 /**

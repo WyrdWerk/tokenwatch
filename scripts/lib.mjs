@@ -3,7 +3,7 @@
  * Used by fetch-pricing.mjs, fetch-images.mjs, fetch-videos.mjs.
  */
 
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -1176,6 +1176,17 @@ export async function maybeWriteJson(outputPath, out) {
   }
   await writeFile(outputPath, JSON.stringify(out, null, 2));
   return true;
+}
+
+/**
+ * Write pretty-printed JSON (trailing newline) via a sibling `.tmp` file and
+ * rename, so an interrupted write never leaves a truncated last-good cache.
+ */
+export async function writeJsonAtomic(path, data) {
+  await mkdir(dirname(path), { recursive: true });
+  const tmp = `${path}.tmp`;
+  await writeFile(tmp, `${JSON.stringify(data, null, 2)}\n`, 'utf8');
+  await rename(tmp, path);
 }
 
 // ── fal.ai helpers ──

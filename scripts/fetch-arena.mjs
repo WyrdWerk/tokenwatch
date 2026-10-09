@@ -8,11 +8,11 @@
  * fetch-pricing; pricing enrichment reads this cache and remains non-fatal.
  */
 
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildArenaIndex } from '../shared/benchmarks.mjs';
-import { fetchJsonWithRetry } from './lib.mjs';
+import { fetchJsonWithRetry, writeJsonAtomic } from './lib.mjs';
 
 const DATASET = 'lmarena-ai/leaderboard-dataset';
 const DATASET_URL = `https://huggingface.co/datasets/${DATASET}`;
@@ -164,13 +164,6 @@ async function readCache() {
   }
 }
 
-async function writeCache(snapshot) {
-  await mkdir(dirname(CACHE_PATH), { recursive: true });
-  const temporary = `${CACHE_PATH}.tmp`;
-  await writeFile(temporary, `${JSON.stringify(snapshot, null, 2)}\n`, 'utf8');
-  await rename(temporary, CACHE_PATH);
-}
-
 function makeSnapshot(models, fetchedAt) {
   const categories = {};
   for (const category of CATEGORIES) {
@@ -204,7 +197,7 @@ export async function refreshArenaSnapshot({ log = console, now = () => new Date
     for (const category of CATEGORIES) models.push(...await fetchCategory(category, rows));
     const snapshot = makeSnapshot(models, now().toISOString());
     validateArenaSnapshot(snapshot, { previous });
-    await writeCache(snapshot);
+    await writeJsonAtomic(CACHE_PATH, snapshot);
     log.log(`✓ Arena leaderboard snapshot: ${models.length} rows (${DATASET}, ${snapshot._meta.categories.overall.leaderboard_publish_date})`);
     return snapshot;
   } catch (error) {
