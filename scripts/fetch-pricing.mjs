@@ -40,7 +40,7 @@
  * }
  */
 
-import { readFile } from 'node:fs/promises';
+import { appendFile, readFile } from 'node:fs/promises';
 import {
   perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseNeuralwatt, parseMerius, parseAster,
   parseCoralbricks, fetchCoralbricksCatalog, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
@@ -53,13 +53,14 @@ import {
   fetchJson, fetchJsonWithRetry,
   checkCoverageDrop,
   applyEnrichment,
+  modelsDevPriceDrift,
   applyBenchmarkEnrichment,
   applyAAEnrichment,
   applyArenaEnrichment,
   buildBenchmarkIndex,
   maybeWriteJson,
 } from './lib.mjs';
-import { fetchModelsDevIndexes } from './fetch-modelsdev.mjs';
+import { fetchModelsDevIndexes, formatPriceDriftReport } from './fetch-modelsdev.mjs';
 import { fetchAABenchmarks } from './fetch-aa.mjs';
 import { fetchArenaBenchmarks } from './fetch-arena.mjs';
 import { fetchNeuralwattEnergy } from './fetch-neuralwatt-energy.mjs';
@@ -918,6 +919,10 @@ async function main() {
 
   const out = { generated_at: new Date().toISOString(), providers: [], models: [] };
   let tieredModels = []; // collected in tier order for dedup
+  // Which tier priced each row (row identity survives dedup). Internal only —
+  // feeds the models.dev price-drift report, never written to pricing.json.
+  const pricingSource = new WeakMap();
+  const stampSource = (rows, source) => { for (const m of rows) pricingSource.set(m, source); };
   const llmgatewayRows = new Set(); // rows emitted by LLM Gateway (differential-only guard)
 
   // ── Tier 1: Direct providers ──
@@ -949,6 +954,7 @@ async function main() {
       );
       out.providers.push({ key: prov.key, name: prov.name, model_count: models.length, status: 'ok' });
       if (prov.key === 'llmgateway') for (const m of models) llmgatewayRows.add(m);
+      stampSource(models, prov.key === 'llmgateway' ? 'llmgateway' : 'direct');
       tieredModels.push(...models);
       console.log(`✓ ${prov.name}: ${models.length} models`);
     } catch (err) {
@@ -968,6 +974,7 @@ async function main() {
     const zro = await getZroCatalogRows();
     if (zro.rows.length) {
       out.providers.push({ key: 'zro', name: 'Zro', model_count: zro.rows.length, status: `ok (${zro.source})` });
+      stampSource(zro.rows, 'direct');
       tieredModels.push(...zro.rows);
       console.log(`✓ Zro: ${zro.rows.length} models (${zro.source})`);
     } else {
@@ -985,6 +992,7 @@ async function main() {
     const or = await fetchOpenRouter();
     orRawModels = or.orModels || [];
     out.providers.push({ key: 'openrouter', name: 'OpenRouter (de-aggregated)', model_count: or.models.length, status: 'ok' });
+    stampSource(or.models, 'openrouter');
     tieredModels.push(...or.models);
     console.log(`✓ OpenRouter: ${or.models.length} backend rows`);
   } catch (err) {
@@ -998,6 +1006,7 @@ async function main() {
     const csvProviders = parseCsvProviders(csvText);
     for (const prov of csvProviders) {
       out.providers.push({ key: prov.key, name: prov.name, model_count: prov.models.length, status: 'ok' });
+      stampSource(prov.models, 'manual');
       tieredModels.push(...prov.models);
       console.log(`✓ ${prov.name} (CSV): ${prov.models.length} models`);
     }
@@ -1008,6 +1017,7 @@ async function main() {
   try {
     const ocModels = await fetchOpenCodeGoPricing();
     out.providers.push({ key: 'opencode', name: 'OpenCode Go', model_count: ocModels.length, status: 'ok' });
+    stampSource(ocModels, 'scraped');
     tieredModels.push(...ocModels);
     console.log(`✓ OpenCode Go: ${ocModels.length} models`);
   } catch (err) {
@@ -1018,6 +1028,7 @@ async function main() {
   try {
     const umansModels = parseUmansHardcoded();
     out.providers.push({ key: 'umans', name: 'Umans AI', model_count: umansModels.length, status: 'ok' });
+    stampSource(umansModels, 'manual');
     tieredModels.push(...umansModels);
     console.log(`✓ Umans AI: ${umansModels.length} models`);
   } catch (err) {
@@ -1121,6 +1132,7 @@ async function main() {
     enrichmentIndex: mdIndex,
     openWeightIndex: mdOpenWeightIndex,
     modelLicenseIndex: mdLicenseIndex,
+    providerSetupIndex: mdProviderSetupIndex,
   } = await fetchModelsDevIndexes();
   if (mdIndex.size > 0) {
     const disagreements = [];
@@ -1135,6 +1147,19 @@ async function main() {
       for (const d of disagreements.slice(0, 5)) console.log(`    ${d}`);
       if (disagreements.length > 5) console.log(`    ... ${disagreements.length - 5} more`);
     }
+    const tiered = out.models.filter((m) => m.context_price_tiers).length;
+    const lifecycle = out.models.filter((m) => m.lifecycle_status).length;
+    console.log(`  models.dev context price tiers: ${tiered} offerings; lifecycle status (deprecated/beta/alpha): ${lifecycle}`);
+    // Report-only: same provider + model compared, OpenRouter promos undone
+    // before comparing, :batch skipped. Never changes a price.
+    const drift = modelsDevPriceDrift(out.models, mdIndex, { sourceOf: (m) => pricingSource.get(m) ?? null });
+    const driftReport = formatPriceDriftReport(drift);
+    for (const line of driftReport.consoleLines) console.log(line);
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      await appendFile(process.env.GITHUB_STEP_SUMMARY, driftReport.markdown).catch((err) => {
+        console.warn(`⚠ Could not write price-drift step summary: ${err.message}`);
+      });
+    }
     // Unmatched-by-provider breakdown (models with neither modelsdev nor modelsdev_model).
     const unmatchedByProvider = {};
     for (const m of out.models) {
@@ -1145,6 +1170,19 @@ async function main() {
       console.log('  Unmatched by provider (top 5): ' + topUnmatched.map(([p, c]) => `${p}=${c}`).join(', '));
     }
   }
+
+  // Provider setup hints (required env var names, AI SDK package) from
+  // models.dev. Fill-only: never replaces a value already in providers_meta.
+  let setupCount = 0;
+  for (const [providerKey, setup] of mdProviderSetupIndex || []) {
+    const meta = out.providers_meta?.[providerKey];
+    if (!meta || !out.models.some((m) => m.provider === providerKey)) continue;
+    let filled = false;
+    if (meta.setup_env == null && setup.setup_env) { meta.setup_env = setup.setup_env; filled = true; }
+    if (meta.ai_sdk_package == null && setup.ai_sdk_package) { meta.ai_sdk_package = setup.ai_sdk_package; filled = true; }
+    if (filled) setupCount++;
+  }
+  if (setupCount > 0) console.log(`  models.dev provider setup hints: ${setupCount} providers`);
 
   // Resolve canonical model weight status from reviewed overrides, a strict
   // models.dev majority across all providers, or a known-closed creator-org
@@ -1157,6 +1195,8 @@ async function main() {
     m.supports_implicit_caching ??= null;
     m.max_prompt_tokens ??= null;
     m.uptime_1d ??= null;
+    m.context_price_tiers ??= null;
+    m.lifecycle_status ??= null;
   }
 
   // ── Benchmark enrichment (sidecar) ──

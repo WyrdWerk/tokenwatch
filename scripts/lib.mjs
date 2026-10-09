@@ -1025,7 +1025,10 @@ import { canonicalId, orgLookupKey, quantFromId } from '../shared/normalize.mjs'
 // models.dev reconciliation helpers live in shared/modelsdev.mjs (pure, no
 // node: imports) so they could in principle be bundled into the Worker too.
 // Re-exported here for fetch-modelsdev.mjs to consume.
-export { PROVIDER_MAP, REVERSE_PROVIDER_MAP, normalizeForMatch, findEnrichment, applyEnrichment } from '../shared/modelsdev.mjs';
+export {
+  PROVIDER_MAP, REVERSE_PROVIDER_MAP, MODELSDEV_PROVIDER_TARGETS, normalizeForMatch, findEnrichment,
+  applyEnrichment, normalizeContextTiers, modelsDevPriceDrift,
+} from '../shared/modelsdev.mjs';
 
 // Benchmark matching helpers live in shared/benchmarks.mjs (pure, no node:
 // imports) — same purity contract as normalize.mjs and modelsdev.mjs so they

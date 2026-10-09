@@ -70,6 +70,26 @@ export const PROVIDER_MAP = {
   venice: 'venice',
   wandb: 'wandb',
   xai: 'xai',
+  // Verified 2026-10-09 by catalog overlap: each shares model ids with the
+  // models.dev provider and lists the same base URL host.
+  arcee: 'arcee',
+  coralbricks: 'coralbricks',
+  inceptron: 'inceptron',
+  meta: 'meta',
+  'scx-ai': 'scx-ai',
+  tencent: 'tencent-tokenhub',
+};
+
+/**
+ * Additional TW provider slugs that read from an md provider already claimed
+ * in PROVIDER_MAP. Kept separate so PROVIDER_MAP stays injective and
+ * REVERSE_PROVIDER_MAP stays a 1:1 lookup.
+ *   - xiaomi: OpenRouter's Xiaomi backend; xiaomimimo (CSV) owns 'xiaomi'.
+ *   - meta-contributor: Meta's contributor-tier SKUs on the same API.
+ */
+export const EXTRA_PROVIDER_ALIASES = {
+  xiaomi: 'xiaomi',
+  'meta-contributor': 'meta',
 };
 
 /**
@@ -81,6 +101,15 @@ export const PROVIDER_MAP = {
 export const REVERSE_PROVIDER_MAP = Object.fromEntries(
   Object.entries(PROVIDER_MAP).map(([tw, md]) => [md, tw]),
 );
+
+/** models.dev provider_id → every TW provider slug indexed from it. */
+export const MODELSDEV_PROVIDER_TARGETS = (() => {
+  const targets = {};
+  for (const [tw, md] of [...Object.entries(PROVIDER_MAP), ...Object.entries(EXTRA_PROVIDER_ALIASES)]) {
+    (targets[md] ||= []).push(tw);
+  }
+  return targets;
+})();
 
 /**
  * Normalize a model ID for join-key purposes, applying any provider-specific
@@ -193,6 +222,32 @@ function boundedFuzzyMatch(needle, haystack) {
   return candidates.length === 1 ? candidates[0] : null;
 }
 
+/** Lowercased last path segment without `:batch` — the id as a provider spells it. */
+function idTail(id) {
+  return String(id || '').toLowerCase().replace(/:batch$/, '').split('/').pop();
+}
+
+/** Fields that must agree across collapsed md ids before SKU-specific facts are trusted. */
+const SKU_FACT_KEYS = ['status', 'cost_input', 'cost_output', 'context_tiers', 'max_input'];
+
+/**
+ * When several md ids collapsed to one key, prefer the candidate whose raw id
+ * equals the TokenWatch id. Without such a candidate the primary record is
+ * kept (descriptive metadata unchanged) but flagged `ambiguous` when the
+ * candidates disagree on SKU-specific facts — lifecycle, tiers and the price
+ * check then skip it rather than borrow another SKU's facts.
+ */
+function resolveAlternate(record, twModelId) {
+  const alternates = record?.alternates;
+  if (!alternates) return record;
+  const tail = idTail(twModelId);
+  const exact = alternates.find((candidate) => idTail(candidate.model_id) === tail);
+  if (exact) return exact;
+  const disagree = SKU_FACT_KEYS.some((key) =>
+    new Set(alternates.map((candidate) => JSON.stringify(candidate[key] ?? null))).size > 1);
+  return disagree ? { ...record, ambiguous: true } : record;
+}
+
 /**
  * Two-tier matcher. Returns the enrichment record with a `confidence` field
  * ('high' for exact normalized, 'medium' for bounded fuzzy), or null if no match.
@@ -206,11 +261,11 @@ export function findEnrichment(twProvider, twModelId, providerIndex) {
   if (!providerMap) return null;
   const exactNorm = normalizeForMatch(twProvider, twModelId);
   if (providerMap.has(exactNorm)) {
-    return { ...providerMap.get(exactNorm), confidence: 'high' };
+    return { ...resolveAlternate(providerMap.get(exactNorm), twModelId), confidence: 'high', match: 'exact' };
   }
   const fuzzy = boundedFuzzyMatch(exactNorm, [...providerMap.keys()]);
   if (fuzzy) {
-    return { ...providerMap.get(fuzzy), confidence: 'medium' };
+    return { ...resolveAlternate(providerMap.get(fuzzy), twModelId), confidence: 'medium', match: 'fuzzy' };
   }
   // Metadata-only fallback: ':batch' billing variants (azure/openai/google/…)
   // share the base model's metadata. Row identity and dedup are untouched —
@@ -219,7 +274,7 @@ export function findEnrichment(twProvider, twModelId, providerIndex) {
     const batchNorm = normalizeForMatch(twProvider, twModelId.slice(0, -':batch'.length));
     if (providerMap.has(batchNorm)) {
       // 'medium' (⚠ pill) — variant match: batch SKU borrows base model metadata.
-      return { ...providerMap.get(batchNorm), confidence: 'medium' };
+      return { ...resolveAlternate(providerMap.get(batchNorm), twModelId), confidence: 'medium', match: 'batch-base' };
     }
   }
   return null;
@@ -292,6 +347,23 @@ export function applyEnrichment(models, providerIndex, log = []) {
           log.push(`${m.provider}/${m.id} max_output disagreement: TW=${m.max_completion_tokens} MD=${hit.max_output} (kept TW)`);
         }
       }
+      if (hit.max_input != null) {
+        if (m.max_prompt_tokens === null || m.max_prompt_tokens === undefined) {
+          m.max_prompt_tokens = hit.max_input;
+        } else if (m.max_prompt_tokens !== hit.max_input) {
+          log.push(`${m.provider}/${m.id} max_prompt_tokens disagreement: TW=${m.max_prompt_tokens} MD=${hit.max_input} (kept TW)`);
+        }
+      }
+      // Lifecycle status is SKU-specific: never borrow it through a fuzzy
+      // match (base id → suffixed md SKU). A :batch row shares its base model's
+      // lifecycle, so the batch-base fallback is allowed.
+      if (hit.status && hit.match !== 'fuzzy' && !hit.ambiguous) m.lifecycle_status = hit.status;
+      // Context tiers describe one tariff. Attach them only for an exact SKU
+      // match whose base price IS the row's price — a promo, batch, fuzzy or
+      // differently priced row would otherwise inherit tiers that do not apply.
+      if (hit.context_tiers && hit.match === 'exact' && !hit.ambiguous && sameTariff(m.pricing, hit)) {
+        m.context_price_tiers = hit.context_tiers.map((tier) => ({ ...tier }));
+      }
 
       m.modelsdev = {
         base_url: hit.base_url,
@@ -306,6 +378,8 @@ export function applyEnrichment(models, providerIndex, log = []) {
         modalities: hit.modalities ?? null,
         open_weights: hit.open_weights ?? null,
         license: hit.license ?? null,
+        reasoning_options: hit.reasoning_options ?? null,
+        interleaved_reasoning: hit.interleaved_reasoning ?? null,
       };
       continue;
     }
@@ -324,6 +398,8 @@ export function applyEnrichment(models, providerIndex, log = []) {
         open_weights: modelHit.open_weights ?? null,
         license: modelHit.license ?? null,
         doc_url: modelHit.doc_url ?? null,
+        reasoning_options: modelHit.reasoning_options ?? null,
+        interleaved_reasoning: modelHit.interleaved_reasoning ?? null,
       };
       modelFallbackCount++;
     }
@@ -337,3 +413,105 @@ const PROVIDER_NORMALIZERS = {
   fireworks: normalizeFireworks,
   minimax: normalizeMinimax,
 };
+
+/** Relative closeness for $/M prices (1% default — float noise, not policy). */
+function priceClose(a, b, tolerance = 0.01) {
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+  if (a === b) return true;
+  return Math.abs(a - b) <= tolerance * Math.max(Math.abs(a), Math.abs(b));
+}
+
+/** True when a row's input AND output equal the md record's base tariff. */
+function sameTariff(pricing, hit) {
+  return priceClose(pricing?.input, hit.cost_input) && priceClose(pricing?.output, hit.cost_output);
+}
+
+/**
+ * Normalize models.dev `cost.tiers` / `cost.context_over_200k` into
+ * [{ above_tokens, input, output, cache_read, cache_write }] sorted ascending.
+ * Only context-size tiers are kept; malformed entries are dropped. Returns
+ * null when nothing usable remains.
+ */
+export function normalizeContextTiers(cost) {
+  const out = [];
+  const num = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
+  const push = (size, t) => {
+    const input = num(t?.input);
+    const output = num(t?.output);
+    if (!Number.isInteger(size) || size <= 0 || input === null || output === null) return;
+    if (out.some((tier) => tier.above_tokens === size)) return;
+    out.push({ above_tokens: size, input, output, cache_read: num(t.cache_read), cache_write: num(t.cache_write) });
+  };
+  if (Array.isArray(cost?.tiers)) {
+    for (const t of cost.tiers) if (t?.tier?.type === 'context') push(t.tier.size, t);
+  }
+  if (cost?.context_over_200k) push(200000, cost.context_over_200k);
+  out.sort((a, b) => a.above_tokens - b.above_tokens);
+  return out.length ? out : null;
+}
+
+/**
+ * Compare each TokenWatch offering's input/output price with the models.dev
+ * listing for the SAME provider + model (the index is per provider, so a
+ * cheaper host for the same model never counts as drift).
+ *
+ * Classes:
+ *   match              — input and output agree within 1%
+ *   promo_explained    — OpenRouter discount > 0 and the undiscounted price
+ *                        (price / (1 - discount)) agrees with models.dev
+ *   promo_unexplained  — discounted row that still disagrees after undoing the promo
+ *   tier_explained     — the row's price equals one of the md context tiers
+ *   mismatch           — no known explanation (exact or :batch-free match)
+ *   fuzzy_mismatch     — differs, but the md record was a fuzzy (base id →
+ *                        suffixed SKU) match, so it may be a different SKU
+ *
+ * Skipped: `:batch` rows (batch discounts are not listed by models.dev),
+ * batch-base borrowed matches, rows without a md base price, and md listings
+ * priced at zero. Read-only: never changes any row.
+ *
+ * @param {object[]} models
+ * @param {Map} providerIndex
+ * @param {{ sourceOf?: (m: object) => string|null }} [options]
+ */
+export function modelsDevPriceDrift(models, providerIndex, { sourceOf = () => null } = {}) {
+  const counts = { match: 0, promo_explained: 0, promo_unexplained: 0, tier_explained: 0, mismatch: 0, fuzzy_mismatch: 0 };
+  const rows = [];
+  for (const m of models) {
+    if (typeof m?.id !== 'string' || m.id.endsWith(':batch')) continue;
+    const hit = findEnrichment(m.provider, m.id, providerIndex);
+    if (!hit || hit.match === 'batch-base' || hit.ambiguous) continue;
+    const tw = { input: m.pricing?.input, output: m.pricing?.output };
+    const md = { input: hit.cost_input, output: hit.cost_output };
+    if (![tw.input, tw.output, md.input, md.output].every(Number.isFinite)) continue;
+    if (md.input <= 0 && md.output <= 0) continue;
+    const discount = Number.isFinite(m.discount) && m.discount > 0 && m.discount < 1 ? m.discount : 0;
+    let cls;
+    if (priceClose(tw.input, md.input) && priceClose(tw.output, md.output)) cls = 'match';
+    else if (discount > 0) {
+      const list = { input: tw.input / (1 - discount), output: tw.output / (1 - discount) };
+      cls = priceClose(list.input, md.input) && priceClose(list.output, md.output) ? 'promo_explained' : 'promo_unexplained';
+    } else if ((hit.context_tiers || []).some((t) => priceClose(tw.input, t.input) && priceClose(tw.output, t.output))) {
+      cls = 'tier_explained';
+    } else cls = hit.match === 'fuzzy' ? 'fuzzy_mismatch' : 'mismatch';
+    counts[cls]++;
+    if (cls === 'match') continue;
+    // tw/md per side; a zero on one side yields 0 or Infinity (largest gap).
+    const ratios = [[tw.input, md.input], [tw.output, md.output]]
+      .filter(([a, b]) => a > 0 || b > 0)
+      .map(([a, b]) => (b === 0 ? Infinity : a / b));
+    const worst = ratios.reduce((w, r) => (Math.abs(Math.log(r)) > Math.abs(Math.log(w)) ? r : w), 1);
+    rows.push({
+      provider: m.provider,
+      id: m.id,
+      source: sourceOf(m),
+      match: hit.match,
+      discount,
+      tw,
+      md,
+      ratio: worst,
+      class: cls,
+    });
+  }
+  rows.sort((a, b) => Math.abs(Math.log(b.ratio)) - Math.abs(Math.log(a.ratio)));
+  return { checked: Object.values(counts).reduce((a, b) => a + b, 0), counts, rows };
+}
