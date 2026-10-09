@@ -44,6 +44,8 @@ Every offering also carries two top-level fields, matched by provider and model 
 | `lifecycle_status` | `'deprecated'`, `'beta'`, `'alpha'` or `null` | models.dev `status` from an exact match or a `:batch` row's base model. A fuzzy (base id → suffixed SKU) match never sets it. The recommender never ranks a `deprecated` offering and adds a pre-release warning for `beta`/`alpha`. |
 | `context_price_tiers` | array or `null` | `[{ above_tokens, input, output, cache_read, cache_write }]`, ascending, $/M for single requests above `above_tokens`. Attached only when the offering's own input and output equal the models.dev base tariff (within 1%), so promo, `:batch` and differently priced rows never inherit tiers. Cost math still uses `pricing`; the recommender adds a long-context price warning. |
 
+Rows billed at the write tariff (`pricing.input_billing: 'cache_write'`, e.g. CoralBricks) never take `cache_read`/`cache_write` from models.dev: an unknown tariff stays unknown.
+
 The `modelsdev` and `modelsdev_model` blocks also carry `reasoning_options` (models.dev `reasoning_options`, sanitized; `[]` means none listed) and `interleaved_reasoning` (`true` or `null`). `providers_meta` entries may carry `setup_env` (every env var the provider needs per models.dev — unordered, shell-safe names only) and `ai_sdk_package`, filled from models.dev only when absent.
 
 ## API and benchmark surfaces

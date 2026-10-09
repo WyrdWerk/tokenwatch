@@ -230,3 +230,13 @@ test('context tiers are never attached through a fuzzy SKU match', () => {
   assert.equal(models[0].modelsdev.confidence, 'medium');
   assert.equal(models[0].context_price_tiers, undefined);
 });
+
+test('cache-write-billed rows never borrow a cache tariff from models.dev', () => {
+  const idx = new Map([['coralbricks', new Map([['new-sku', { cost_input: 1, cost_output: 2, cache_read: 0.1, cache_write: 1.5, max_output: 4096 }]])]]);
+  const models = [{ id: 'new-sku', provider: 'coralbricks', pricing: { input: 1, output: 2, cache_read: null, cache_write: null, input_billing: 'cache_write' } }];
+  applyEnrichment(models, idx, []);
+  assert.equal(models[0].pricing.cache_write, null, 'unknown write tariff stays unknown (fresh input stays unpriceable)');
+  assert.equal(models[0].pricing.cache_read, null);
+  assert.equal(models[0].max_completion_tokens, 4096, 'non-price metadata is still filled');
+  assert.equal(models[0].modelsdev.confidence, 'high');
+});

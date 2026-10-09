@@ -327,6 +327,10 @@ export function applyEnrichment(models, providerIndex, log = []) {
       ]) {
         const mdVal = hit[mdField];
         if (mdVal === null || mdVal === undefined) continue;
+        // Rows billed at the write tariff (input_billing: 'cache_write', e.g.
+        // CoralBricks) keep an unknown tariff unknown — a borrowed write or
+        // read price would make an unpriceable workload look priced.
+        if (m.pricing.input_billing === 'cache_write' && (m.pricing[twField] === null || m.pricing[twField] === undefined)) continue;
         if (m.pricing[twField] === null || m.pricing[twField] === undefined) {
           m.pricing[twField] = mdVal;
         } else if (m.pricing[twField] !== mdVal) {
