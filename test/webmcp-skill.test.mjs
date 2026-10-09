@@ -59,3 +59,22 @@ test('about_tokenwatch brief is sliced from SKILL.md and public/skill.md matches
   assert.equal(payload.brief, brief);
   assert.equal(payload.skillUrl, '/skill.md');
 });
+
+test('webmcp-skill-brief runs as a script from a path that needs URL-encoding', async () => {
+  const { mkdtemp, mkdir, copyFile, rm, stat } = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const { execFileSync } = await import('node:child_process');
+  const base = await mkdtemp(join(tmpdir(), 'tw skill '));
+  try {
+    await mkdir(join(base, 'scripts'));
+    await mkdir(join(base, 'public'));
+    await mkdir(dirname(join(base, '.agents', 'skills', 'operating-tokenwatch-webmcp', 'SKILL.md')), { recursive: true });
+    await copyFile(join(ROOT, 'scripts', 'webmcp-skill-brief.mjs'), join(base, 'scripts', 'webmcp-skill-brief.mjs'));
+    await copyFile(SKILL, join(base, '.agents', 'skills', 'operating-tokenwatch-webmcp', 'SKILL.md'));
+    execFileSync(process.execPath, [join(base, 'scripts', 'webmcp-skill-brief.mjs')], { stdio: 'pipe' });
+    await stat(join(base, 'public', 'skill.md'));
+    await stat(join(base, 'public', 'webmcp-about.json'));
+  } finally {
+    await rm(base, { recursive: true, force: true });
+  }
+});

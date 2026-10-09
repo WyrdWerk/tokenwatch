@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export const ABOUT_BRIEF_START = '<!-- about-brief:start -->';
 export const ABOUT_BRIEF_END = '<!-- about-brief:end -->';
@@ -32,7 +32,7 @@ export async function writeWebmcpSkillArtifacts({
   return payload;
 }
 
-const isMain = process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {
   writeWebmcpSkillArtifacts().then((payload) => {
     console.log(`webmcp-skill-brief: wrote public/skill.md and public/webmcp-about.json (${payload.brief.length} brief chars)`);
