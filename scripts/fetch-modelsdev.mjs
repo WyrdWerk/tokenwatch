@@ -168,8 +168,3 @@ export async function fetchModelsDevIndexes() {
     };
   }
 }
-
-/** Backwards-compatible enrichment-only accessor. */
-export async function fetchModelsDevEnrichment() {
-  return (await fetchModelsDevIndexes()).enrichmentIndex;
-}

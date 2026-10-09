@@ -24,7 +24,6 @@ import { blendedRate } from '../../../shared/cost.mjs';
 import { PRIORITY_PROVIDER_WEIGHTS, USE_CASES } from '../../../shared/use-cases.mjs';
 import { isOpenWeightModel, rankProviders, shortlistModels } from '../../../shared/recommend.mjs';
 import {
-  DEFAULT_MIX,
   MAX_HISTORY_DAYS,
   buildHistorySeries,
   capHistoryDays,

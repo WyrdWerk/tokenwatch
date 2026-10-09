@@ -406,7 +406,6 @@ select:focus, input:focus { border-color: var(--accent-text); }
 }
 .token-field input[type="number"]:focus { border-color: var(--accent-text); }
 .token-field small { font-size: 0.75rem; color: var(--text-dim); }
-.hint { font-size: 0.75rem; color: var(--text-dim); }
 
 .presets { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.25rem 0 0.5rem; }
 .preset-label { font-size: 0.8rem; color: var(--text-dim); }
@@ -1696,13 +1695,6 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
 .model-summary details > summary::before { content: '▸ '; font-size: 0.7rem; }
 .model-summary details[open] > summary::before { content: '▾ '; }
 .model-summary-distribution { margin-top: 0.6rem; }
-.model-summary-table { font-size: 0.82rem; }
-.model-summary-table caption {
-  text-align: left;
-  color: var(--muted);
-  font-size: 0.78rem;
-  padding: 0.25rem 0;
-}
 .model-summary-bar-row {
   display: grid;
   grid-template-columns: minmax(7rem, 12rem) 1fr auto;
@@ -1762,20 +1754,6 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
   margin: 0.75rem 0 0;
   font-size: 0.78rem;
   color: var(--muted);
-}
-.quant-badge {
-  display: inline-block;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 0.1rem 0.3rem;
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--muted) 20%, transparent);
-  color: var(--muted);
-  border: 1px solid color-mix(in srgb, var(--muted) 40%, transparent);
-  margin-left: 0.3rem;
-  vertical-align: middle;
 }
 @media (max-width: 640px) {
   .model-summary { padding: 0.75rem; }

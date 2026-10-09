@@ -23,14 +23,14 @@
  * zero-priced model as free.
  */
 
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { readFile } from 'node:fs/promises';
 import {
   parseZroPricingHtml,
   validateZroSnapshot,
   zroSnapshotFresh,
   zroRowsFromSnapshot,
   ZRO_PRICING_URL,
+  writeJsonAtomic,
 } from './lib.mjs';
 
 export const ZRO_SNAPSHOT_PATH = 'data/zro-pricing.json';
@@ -60,8 +60,7 @@ export async function readZroSnapshot(path = ZRO_SNAPSHOT_PATH) {
  */
 export async function writeZroSnapshot(snapshot, path = ZRO_SNAPSHOT_PATH) {
   validateZroSnapshot(snapshot, { previous: null });
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, `${JSON.stringify(snapshot, null, 2)}\n`);
+  await writeJsonAtomic(path, snapshot);
 }
 
 /**

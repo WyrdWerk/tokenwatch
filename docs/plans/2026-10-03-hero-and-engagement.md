@@ -1,7 +1,6 @@
 # Hero + engagement batch (Battleships-inspired) — design & plan
 
-Status: hero **built as a reviewable prototype on the branch, awaiting approval** (copy, dismissible, pages). Items 2–8 approved 2026-10-03 and built.
-Branch: `feat/engagement-batch-1-2`. No push/deploy without explicit approval.
+Status: **shipped**. The hero (`scripts/hero.mjs`, `tw-hero` marker) and items 2–8 are on `main` and pinned by `test/engagement.test.mjs`. Kept as the design record.
 
 Inspiration: battleships.dev (`ariana-dot-dev/battleships/site`) — an austere data
 tool given personality by one build-time-rendered, compositor-only animated scene.

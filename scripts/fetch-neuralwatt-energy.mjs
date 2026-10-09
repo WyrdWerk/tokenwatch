@@ -112,24 +112,12 @@ export function parseNeuralwattEnergyHtml(html) {
   });
   if (!tableHtml) return result; // no band table = nothing to parse
 
-  // Parse headers — first <th> is "Model", the rest are band keys
-  const theadMatch = tableHtml.match(/<thead[\s\S]*?<\/thead>/i);
-  if (!theadMatch) return result;
-  const headers = [];
-  const thRe = /<th[\s\S]*?<\/th>/gi;
-  let m;
-  while ((m = thRe.exec(theadMatch[0]))) {
-    const inner = m[0].replace(/<[^>]+>/g, ' ');
-    headers.push(decodeEntities(inner).trim());
-  }
-  // Skip first header (model name column), keep the rest as band keys
-  const bandHeaders = headers.slice(1);
-
-  // Parse body rows
+  // Parse body rows — band columns are positional (BAND_KEYS), header text is not read
   const tbodyMatch = tableHtml.match(/<tbody[\s\S]*?<\/tbody>/i);
   if (!tbodyMatch) return result;
 
   const trRe = /<tr[\s\S]*?<\/tr>/gi;
+  let m;
   while ((m = trRe.exec(tbodyMatch[0]))) {
     const trHtml = m[0];
 

@@ -23,7 +23,7 @@
  *   fetchFalImageModels() and fetchFalVideoModels() are called.
  */
 
-import { falCanonicalId, FAL_ORG_MAP } from './lib.mjs';
+import { falCanonicalId, FAL_ORG_MAP, writeJsonAtomic } from './lib.mjs';
 
 const FAL_MODELS_URL = 'https://api.fal.ai/v1/models';
 const FAL_PRICING_URL = 'https://api.fal.ai/v1/models/pricing';
@@ -232,14 +232,6 @@ async function readCache(path) {
   }
 }
 
-/** Write a cache file atomically (write to .tmp then rename). */
-async function writeCache(path, data) {
-  const { writeFile, rename } = await import('node:fs/promises');
-  const tmp = path + '.tmp';
-  await writeFile(tmp, JSON.stringify(data, null, 2));
-  await rename(tmp, path);
-}
-
 /** Public: fetch fal image models. Returns [] on failure.
  *  When FAL_CACHE_ONLY=1, reads from /tmp/fal-image.json (never live-fetches). */
 export async function fetchFalImageModels() {
@@ -299,7 +291,7 @@ if (isMain) {
     console.error(`✗ fal.ai prefetch failed: ${err.message}`);
     console.error('  Writing empty cache files — image/video pipelines will continue without fal data.');
   }
-  await writeCache(FAL_IMAGE_CACHE, imageModels);
-  await writeCache(FAL_VIDEO_CACHE, videoModels);
+  await writeJsonAtomic(FAL_IMAGE_CACHE, imageModels);
+  await writeJsonAtomic(FAL_VIDEO_CACHE, videoModels);
   console.log(`  wrote ${FAL_IMAGE_CACHE} (${imageModels.length}) + ${FAL_VIDEO_CACHE} (${videoModels.length})`);
 }

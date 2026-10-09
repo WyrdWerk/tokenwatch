@@ -22,7 +22,6 @@ import {
   homeFaqItems,
   imageFaqItems,
   videoFaqItems,
-  renderFaqSection,
   renderFaqPointerSection,
   renderBenchmarksSeoSection,
   buildLlmsTxt,
