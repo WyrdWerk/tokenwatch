@@ -52,6 +52,8 @@
   --green: #1f6b45;
   --yellow: #7d5800;
   --blue: #315a7a;
+  /* Same hue as the error text used by .tw-spark below. */
+  --red: #b04432;
   --radius: 14px;
   --radius-sm: 8px;
   /* Chart categorical slots (validated: dataviz validate_palette, light on #FFF). */
@@ -79,6 +81,7 @@
   --green: #63bd86;
   --yellow: #D4A843;
   --blue: #82aed2;
+  --red: #e08070;
   --radius: 14px;
   --radius-sm: 8px;
   /* Same hues stepped for the dark surface (validated on #242020). */
@@ -675,6 +678,9 @@ tbody tr:hover { background: var(--surface-2); }
 .promo-badge { display: inline-block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 0.1rem 0.3rem; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--yellow) 20%, transparent); color: var(--yellow); border: 1px solid color-mix(in srgb, var(--yellow) 40%, transparent); margin-left: 0.3rem; vertical-align: middle; }
 .zdr-badge { display: inline-block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 0.1rem 0.3rem; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); border: 1px solid color-mix(in srgb, var(--green) 40%, transparent); margin-left: 0.3rem; vertical-align: middle; }
 .subscription-badge { display: inline-block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 0.1rem 0.3rem; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--blue) 20%, transparent); color: var(--blue); border: 1px solid color-mix(in srgb, var(--blue) 40%, transparent); margin-left: 0.3rem; vertical-align: middle; }
+.lifecycle-badge { display: inline-block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 0.1rem 0.3rem; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--text-dim) 20%, transparent); color: var(--text-dim); border: 1px solid color-mix(in srgb, var(--text-dim) 40%, transparent); margin-left: 0.3rem; vertical-align: middle; }
+.lifecycle-badge.lifecycle-deprecated { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); border-color: color-mix(in srgb, var(--red) 40%, transparent); }
+.tier-badge { display: inline-block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 0.1rem 0.3rem; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--accent-text) 20%, transparent); color: var(--accent-text); border: 1px dashed color-mix(in srgb, var(--accent-text) 50%, transparent); margin-left: 0.3rem; vertical-align: middle; white-space: nowrap; }
 .perf-pill { display: inline-block; font-size: 0.68rem; font-weight: 600; padding: 0.05rem 0.4rem; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--text-dim) 12%, transparent); color: color-mix(in srgb, var(--text) 70%, var(--text-dim)); border: 1px solid color-mix(in srgb, var(--text-dim) 25%, transparent); margin-left: 0.4rem; vertical-align: middle; cursor: help; }
 
 /* Group-by control */
@@ -1265,6 +1271,13 @@ footer {
 .detail-modalality-line { font-size: 0.85rem; margin-top: 0.5rem; color: var(--text-dim, #888); }
 .detail-description { font-size: 0.88rem; line-height: 1.5; margin-top: 0.5rem; }
 .detail-provenance { font-size: 0.78rem; color: var(--text-dim, #888); margin-top: 0.5rem; }
+.detail-lifecycle .lifecycle-badge { margin-left: 0.1rem; }
+.detail-tiers-title { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim, #888); margin-top: 0.8rem; }
+.detail-tiers-wrap { overflow-x: auto; }
+.detail-tiers-table { width: 100%; border-collapse: collapse; margin-top: 0.3rem; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.detail-tiers-table th, .detail-tiers-table td { padding: 0.25rem 0.4rem; text-align: right; border-bottom: 1px solid var(--border, #e5e5e5); }
+.detail-tiers-table th:first-child, .detail-tiers-table td:first-child { text-align: left; }
+.detail-tiers-table th { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim, #888); font-weight: 600; }
 .detail-actions {
   display: flex; gap: 0.5rem; margin-top: 1.5rem; flex-wrap: wrap;
 }
@@ -1710,7 +1723,9 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
   gap: 0.6rem;
   font-size: 0.82rem;
 }
-.model-summary-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.model-summary-bar-label { display: flex; align-items: center; min-width: 0; white-space: nowrap; }
+.model-summary-bar-name { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.model-summary-bar-label > .promo-badge, .model-summary-bar-label > .lifecycle-badge, .model-summary-bar-label > .tier-badge { flex: none; }
 .model-summary-bar-track {
   display: block;
   position: relative;
