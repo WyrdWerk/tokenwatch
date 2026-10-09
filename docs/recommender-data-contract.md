@@ -30,15 +30,26 @@ OpenRouter `/endpoints` offerings expose these top-level values:
 | `supported_parameters` | string array or `null` | Endpoint `supported_parameters` |
 | `supports_tool_choice` | boolean or `null` | Endpoint flag; when OpenRouter reports per-choice booleans, true means at least one choice is supported, false means all reported choices are false |
 | `supports_implicit_caching` | boolean or `null` | Endpoint flag |
-| `max_prompt_tokens` | integer or `null` | Endpoint limit |
+| `max_prompt_tokens` | integer or `null` | Endpoint limit; when null, filled from the same provider's models.dev `limit.input` |
 | `uptime_1d` | number or `null` | Endpoint `uptime_last_1d` |
 
 Direct-provider offerings use `null` for these endpoint-specific fields unless the provider API supplies an equivalent. Unknown is not false.
 
+## models.dev offering facts
+
+Every offering also carries two top-level fields, matched by provider and model (never borrowed from another host):
+
+| Field | Type | Rule |
+|---|---|---|
+| `lifecycle_status` | `'deprecated'`, `'beta'`, `'alpha'` or `null` | models.dev `status` from an exact match or a `:batch` row's base model. A fuzzy (base id → suffixed SKU) match never sets it. The recommender never ranks a `deprecated` offering and adds a pre-release warning for `beta`/`alpha`. |
+| `context_price_tiers` | array or `null` | `[{ above_tokens, input, output, cache_read, cache_write }]`, ascending, $/M for single requests above `above_tokens`. Attached only when the offering's own input and output equal the models.dev base tariff (within 1%), so promo, `:batch` and differently priced rows never inherit tiers. Cost math still uses `pricing`; the recommender adds a long-context price warning. |
+
+The `modelsdev` and `modelsdev_model` blocks also carry `reasoning_options` (models.dev `reasoning_options`, sanitized; `[]` means none listed) and `interleaved_reasoning` (`true` or `null`). `providers_meta` entries may carry `setup_env` (every env var the provider needs per models.dev — unordered, shell-safe names only) and `ai_sdk_package`, filled from models.dev only when absent.
+
 ## API and benchmark surfaces
 
 - `GET /api/v1/models?open_weights=true` and `?open_weights=false` filter by resolved boolean status; unknown values are excluded from either filter.
-- `GET /api/v1/models/:canonicalId/providers` includes the resolved open-weight fields, `license`, and endpoint capability fields on each provider offering.
+- `GET /api/v1/models/:canonicalId/providers` includes the resolved open-weight fields, `license`, endpoint capability fields, `lifecycle_status`, and `context_price_tiers` on each provider offering.
 - `public/benchmarks.json` includes `open_weights` and `license` at model level. Each offering carries `quantization`, `zdr`, `context_length`, `uptime_30m`, `open_weights`, `tool_call`, `throughput_p50`, and `latency_p50`. `tool_call` uses OpenRouter `supported_parameters` first (`tools` means true; an available array without it means false), then models.dev. Performance values join from `performance.json` by `canonicalModelId|provider`; unavailable values stay `null`.
 
 ## Coverage guardrails
