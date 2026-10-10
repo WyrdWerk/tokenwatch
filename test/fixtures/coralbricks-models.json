@@ -1,12 +1,13 @@
 {
   "models": [
     {
-      "slug": "glm-5.3-fp4",
+      "slug": "glm-5.3-fast",
       "name": "GLM 5.3",
       "contextWindow": "1M",
       "precision": "NVFP4",
       "inputPerM": 1.12,
       "outputPerM": 4.4,
+      "cacheWritePerM": 0.56,
       "kvBytesPerToken": 47616,
       "docsUrl": "https://huggingface.co/RadixArk/GLM-5.3-NVFP4",
       "openRouter": {
@@ -16,35 +17,29 @@
         "cacheWritePerM": 0,
         "outputPerM": 4.4
       },
-      "products": { "tokenApi": true, "privateEndpoint": true },
-      "privateEndpoint": { "hardware": ["8xb300", "8xb200"] }
-    },
-    {
-      "slug": "glm-5.3-flash-fp4",
-      "name": "GLM 5.3 Flash",
-      "contextWindow": "1M",
-      "precision": "NVFP4",
-      "inputPerM": 0.15,
-      "outputPerM": 0.5,
-      "kvBytesPerToken": 7200,
-      "docsUrl": "https://huggingface.co/nvidia/GLM-5.3-Flash-NVFP4",
-      "openRouter": {
-        "source": "Fireworks",
-        "inputPerM": 0.15,
-        "cachedPerM": 0.03,
-        "cacheWritePerM": 0,
-        "outputPerM": 0.5
+      "products": {
+        "tokenApi": true,
+        "privateEndpoint": true
       },
-      "products": { "tokenApi": true, "privateEndpoint": true },
-      "privateEndpoint": { "hardware": ["8xb300", "8xb200"] }
+      "privateEndpoint": {
+        "hardware": [
+          "8xb300",
+          "8xb200"
+        ]
+      },
+      "deprecatedSlugs": [
+        "glm-5.3-fp4",
+        "glm-5.3"
+      ]
     },
     {
-      "slug": "deepseek-v4.1-flash-fast-fp4",
+      "slug": "deepseek-v4.1-flash-fast",
       "name": "DeepSeek V4.1 Flash",
       "contextWindow": "1M",
-      "precision": "MXFP4",
-      "inputPerM": 0.3,
+      "precision": "Native MXFP4",
+      "inputPerM": 0.01,
       "outputPerM": 1.2,
+      "cacheWritePerM": 0.08,
       "kvBytesPerToken": 3328,
       "docsUrl": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
       "openRouter": {
@@ -54,8 +49,20 @@
         "cacheWritePerM": 0,
         "outputPerM": 1.2
       },
-      "products": { "tokenApi": true, "privateEndpoint": true },
-      "privateEndpoint": { "hardware": ["8xb300", "8xb200"] }
+      "products": {
+        "tokenApi": true,
+        "privateEndpoint": true
+      },
+      "privateEndpoint": {
+        "hardware": [
+          "8xb300",
+          "8xb200"
+        ]
+      },
+      "deprecatedSlugs": [
+        "deepseek-v4.1-flash-fast-fp4",
+        "deepseek-v4.1-flash"
+      ]
     }
   ],
   "source": "dynamodb"

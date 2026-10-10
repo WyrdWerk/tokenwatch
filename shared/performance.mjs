@@ -11,7 +11,8 @@ import { canonicalId } from './normalize.mjs';
 export function parseCoralbricksPerformance(catalog) {
   const result = {};
   for (const model of catalog?.data || []) {
-    if (!model?.id) continue;
+    // Retired slugs (`alias_target`) mirror their current SKU's metrics; key only the SKU.
+    if (!model?.id || model.alias_target?.slug) continue;
     const measurement = (field, max = Infinity) => {
       for (const window of ['30m', '1d']) {
         const value = model[`${field}_last_${window}`];

@@ -215,37 +215,53 @@ function orgFromBareModelId(id) {
   return null;
 }
 
-// Reviewed public fallback rates, confirmed against /v1/models on 2026-10-02.
-// /api/public/models omits these; authenticated explicit tariffs take precedence.
-// Keep the fallback bounded to reviewed SKUs rather than guessing for new ones.
-const CORALBRICKS_CACHE_WRITE_MULTIPLIERS = {
-  'glm-5.3-fp4': 1.5,
-  'glm-5.3-flash-fp4': 0.23 / 0.15,
-  'deepseek-v4.1-flash-fast-fp4': 0.3,
-};
+// CoralBricks bills each new input token at the input price PLUS the cache write
+// ("Cache write per 1M, + input", https://www.coralbricks.ai/pricing, rates since
+// 2026-10-08). Both /v1/models `cache_write_per_m` and public `cacheWritePerM`
+// publish that add-on, so the stored `cache_write` is the full per-token write
+// tariff (input + add-on) and `cache_write_addon` keeps the published raw value.
+function coralbricksWriteTariff(input, addon) {
+  if (input === null || addon === null || !(input >= 0) || !(addon >= 0)) return null;
+  return Number((input + addon).toFixed(12));
+}
+
+/** Retired slug → current slug, from /v1/models `alias_target` or public `deprecatedSlugs`. */
+function coralbricksAliasTarget(m, authenticated) {
+  const target = authenticated ? m.alias_target?.slug : null;
+  return typeof target === 'string' && target ? target : null;
+}
 
 /** Authenticated CoralBricks tariffs, or its public catalog when no key is available. */
 export function parseCoralbricks(data) {
   const authenticated = Array.isArray(data?.data);
   const models = authenticated ? data.data : Array.isArray(data?.models) ? data.models : [];
-  return models.flatMap((m) => {
+  const currentIds = new Set(models.flatMap((m) => {
     const id = authenticated ? m?.id : m?.slug;
+    return typeof id === 'string' && id && !coralbricksAliasTarget(m, authenticated) ? [id] : [];
+  }));
+  const seen = new Set();
+  return models.flatMap((m) => {
+    let id = authenticated ? m?.id : m?.slug;
     if (!m || typeof id !== 'string' || !id) return [];
+    // Retired slugs alias a current SKU: one row per SKU, under the current slug.
+    const target = coralbricksAliasTarget(m, authenticated);
+    if (target) {
+      if (currentIds.has(target)) return [];
+      id = target;
+    }
+    if (seen.has(id)) return [];
     if (authenticated ? m.supports_chat !== true : m.products?.tokenApi !== true) return [];
     const input = passthrough(authenticated ? m.pricing?.input_per_m : m.inputPerM);
     const output = passthrough(authenticated ? m.pricing?.output_per_m : m.outputPerM);
     if ((input ?? 0) < 0 || (output ?? 0) < 0 || !((input ?? 0) > 0 || (output ?? 0) > 0)) return [];
-    const multiplier = m.cacheWriteMultiplier > 0
-      ? passthrough(m.cacheWriteMultiplier)
-      : CORALBRICKS_CACHE_WRITE_MULTIPLIERS[id];
-    const write = authenticated ? passthrough(m.pricing?.cache_write_per_m)
-      : input !== null && multiplier != null ? Number((input * multiplier).toFixed(12)) : null;
+    const addon = passthrough(authenticated ? m.pricing?.cache_write_per_m : m.cacheWritePerM);
     const context = typeof m.contextWindow === 'string'
       ? m.contextWindow.match(/^(\d+(?:\.\d+)?)([KM])?$/i)
       : null;
+    seen.add(id);
     return [{
       id,
-      name: m.name || id,
+      name: (target ? m.alias_target?.name : null) || m.name || id,
       org: orgFromBareModelId(id),
       provider: 'coralbricks',
       quantization: m.precision?.toLowerCase().replace(/^native\s+/, '') ?? null,
@@ -262,8 +278,9 @@ export function parseCoralbricks(data) {
         input,
         output,
         cache_read: authenticated ? passthrough(m.pricing?.cached_input_per_m) : 0,
-        cache_write: write !== null && write >= 0 ? write : null,
-        input_billing: 'cache_write', // Default retention bills novel input at this tariff, even when lower than input
+        cache_write: coralbricksWriteTariff(input, addon),
+        cache_write_addon: addon !== null && addon >= 0 ? addon : null,
+        input_billing: 'cache_write', // Default retention bills novel input at input + cache-write add-on
       },
     }];
   });
@@ -292,8 +309,17 @@ export async function fetchCoralbricksCatalog(apiKey, load = fetchJson) {
     return authenticated;
   }
   if (!authenticated) return publicCatalog;
-  const metadata = new Map((publicCatalog.models || []).map(m => [m.slug, m]));
-  return {...authenticated, data: authenticated.data.map(m => ({...metadata.get(m.id), ...m}))};
+  const publicModels = publicCatalog.models || [];
+  const metadata = new Map(publicModels.map(m => [m.slug, m]));
+  // Public `deprecatedSlugs` backfill `alias_target` for retired slugs the API leaves unmarked.
+  const retired = new Map(publicModels.flatMap(m => (Array.isArray(m.deprecatedSlugs) ? m.deprecatedSlugs : [])
+    .filter(slug => typeof slug === 'string' && slug !== m.slug)
+    .map(slug => [slug, {slug: m.slug, name: m.name}])));
+  return {...authenticated, data: authenticated.data.map((m) => {
+    const alias = m?.alias_target ?? retired.get(m?.id);
+    const meta = metadata.get(alias?.slug ?? m?.id);
+    return {...meta, ...m, ...(alias ? {alias_target: alias} : {})};
+  })};
 }
 
 function singularityChatCapability(m) {

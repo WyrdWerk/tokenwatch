@@ -2,47 +2,112 @@
   "object": "list",
   "data": [
     {
+      "id": "deepseek-v4.1-flash-fast",
+      "object": "model",
+      "owned_by": "coralbricks",
+      "context_length": 1048576,
+      "created": 1789000000,
+      "pricing": {
+        "cache_write_per_m": 0.08,
+        "cached_input_per_m": 0,
+        "input_per_m": 0.01,
+        "output_per_m": 1.2
+      },
+      "reasoning": {
+        "default_effort": "none",
+        "disable": {
+          "reasoning_effort": "none"
+        },
+        "mandatory": false,
+        "supported_efforts": [
+          "low",
+          "high",
+          "max"
+        ]
+      },
+      "supports_chat": true,
+      "supports_image_input": true,
+      "supports_reasoning": true,
+      "supports_tools": true,
+      "latency_last_30m": 1.37,
+      "decode_speed_last_30m": 178.3,
+      "cache_hit_rate_last_30m": 90.5,
+      "cache_hit_rate_last_1d": 91.5,
+      "decode_speed_last_1d": 269.9,
+      "latency_last_1d": 1.1
+    },
+    {
       "id": "deepseek-v4.1-flash-fast-fp4",
       "object": "model",
       "owned_by": "coralbricks",
       "context_length": 1048576,
       "created": 1789000000,
       "pricing": {
-        "cache_write_multiple": 0.3,
-        "cache_write_per_m": 0.09,
+        "cache_write_per_m": 0.08,
         "cached_input_per_m": 0,
-        "input_per_m": 0.3,
+        "input_per_m": 0.01,
         "output_per_m": 1.2
+      },
+      "reasoning": {
+        "default_effort": "none",
+        "disable": {
+          "reasoning_effort": "none"
+        },
+        "mandatory": false,
+        "supported_efforts": [
+          "low",
+          "high",
+          "max"
+        ]
       },
       "supports_chat": true,
       "supports_image_input": true,
+      "supports_reasoning": true,
       "supports_tools": true,
-      "decode_speed_last_1d": 453.4,
-      "cache_hit_rate_last_1d": 97.9,
-      "latency_last_30m": 0.57,
-      "decode_speed_last_30m": 529.5,
-      "cache_hit_rate_last_30m": 94.6,
-      "latency_last_1d": 0.71
+      "latency_last_30m": 1.37,
+      "decode_speed_last_30m": 178.3,
+      "cache_hit_rate_last_30m": 90.5,
+      "cache_hit_rate_last_1d": 91.5,
+      "decode_speed_last_1d": 269.9,
+      "latency_last_1d": 1.1,
+      "alias_target": {
+        "slug": "deepseek-v4.1-flash-fast",
+        "name": "DeepSeek V4.1 Flash"
+      },
+      "expiration_date": null
     },
     {
-      "id": "glm-5.3-flash-fp4",
+      "id": "glm-5.3-fast",
       "object": "model",
       "owned_by": "coralbricks",
       "context_length": 1048576,
-      "created": 1787700000,
+      "created": 1787000000,
       "pricing": {
-        "cache_write_multiple": 1.5333333333333334,
-        "cache_write_per_m": 0.23,
+        "cache_write_per_m": 0.56,
         "cached_input_per_m": 0,
-        "input_per_m": 0.15,
-        "output_per_m": 0.5
+        "input_per_m": 1.12,
+        "output_per_m": 4.4
+      },
+      "reasoning": {
+        "default_effort": "max",
+        "disable": null,
+        "mandatory": true,
+        "supported_efforts": [
+          "low",
+          "high",
+          "max"
+        ]
       },
       "supports_chat": true,
-      "supports_image_input": true,
+      "supports_image_input": false,
+      "supports_reasoning": true,
       "supports_tools": true,
-      "decode_speed_last_1d": 291.7,
-      "cache_hit_rate_last_1d": 96,
-      "latency_last_1d": 0.35
+      "cache_hit_rate_last_30m": 99.4,
+      "decode_speed_last_1d": 256.7,
+      "cache_hit_rate_last_1d": 98.7,
+      "latency_last_1d": 0.54,
+      "decode_speed_last_30m": 304.5,
+      "latency_last_30m": 0.35
     },
     {
       "id": "glm-5.3-fp4",
@@ -51,21 +116,36 @@
       "context_length": 1048576,
       "created": 1787000000,
       "pricing": {
-        "cache_write_multiple": 1.5,
-        "cache_write_per_m": 1.68,
+        "cache_write_per_m": 0.56,
         "cached_input_per_m": 0,
         "input_per_m": 1.12,
         "output_per_m": 4.4
       },
+      "reasoning": {
+        "default_effort": "max",
+        "disable": null,
+        "mandatory": true,
+        "supported_efforts": [
+          "low",
+          "high",
+          "max"
+        ]
+      },
       "supports_chat": true,
       "supports_image_input": false,
+      "supports_reasoning": true,
       "supports_tools": true,
-      "latency_last_1d": 0.27,
-      "cache_hit_rate_last_30m": 97.9,
-      "latency_last_30m": 0.45,
-      "decode_speed_last_1d": 320.9,
-      "decode_speed_last_30m": 317.5,
-      "cache_hit_rate_last_1d": 98.8
+      "cache_hit_rate_last_30m": 99.4,
+      "decode_speed_last_1d": 256.7,
+      "cache_hit_rate_last_1d": 98.7,
+      "latency_last_1d": 0.54,
+      "decode_speed_last_30m": 304.5,
+      "latency_last_30m": 0.35,
+      "alias_target": {
+        "slug": "glm-5.3-fast",
+        "name": "GLM 5.3"
+      },
+      "expiration_date": null
     }
   ]
 }

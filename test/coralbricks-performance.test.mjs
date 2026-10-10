@@ -7,18 +7,27 @@ const fixture = JSON.parse(await readFile(new URL('./fixtures/coralbricks-auth-m
 
 test('CoralBricks performance uses 30m measurements, seconds-to-ms TTFT, and reported speed rather than p50', () => {
   const data = performance.parseCoralbricksPerformance(fixture);
-  const deepseek = data['deepseek-v4.1-flash-fast-fp4|coralbricks'];
+  const deepseek = data['deepseek-v4.1-flash-fast|coralbricks'];
   assert.equal(deepseek.source, 'coralbricks');
-  assert.deepEqual(deepseek.throughput, {reported: 529.5, window: '30m'});
-  assert.deepEqual(deepseek.latency, {p50: 570, window: '30m'});
-  assert.deepEqual(deepseek.cache_hit_rate, {percent: 94.6, window: '30m'});
+  assert.deepEqual(deepseek.throughput, {reported: 178.3, window: '30m'});
+  assert.deepEqual(deepseek.latency, {p50: 1370, window: '30m'});
+  assert.deepEqual(deepseek.cache_hit_rate, {percent: 90.5, window: '30m'});
   assert.equal(deepseek.throughput.p50, undefined);
-  assert.equal(data['glm-5.3-fp4|coralbricks'].throughput.reported, 317.5);
-  assert.equal(data['glm-5.3-fp4|coralbricks'].latency.p50, 450);
+  assert.equal(data['glm-5.3-fast|coralbricks'].throughput.reported, 304.5);
+  assert.equal(data['glm-5.3-fast|coralbricks'].latency.p50, 350);
+});
+
+test('CoralBricks performance keys retired alias slugs only under their current SKU', () => {
+  const data = performance.parseCoralbricksPerformance(fixture);
+  assert.deepEqual(Object.keys(data).sort(), ['deepseek-v4.1-flash-fast|coralbricks', 'glm-5.3-fast|coralbricks']);
+  assert.equal(data['glm-5.3-fp4|coralbricks'], undefined);
+  assert.equal(data['deepseek-v4.1-flash-fast-fp4|coralbricks'], undefined);
 });
 
 test('CoralBricks performance keeps one-day fallback labelled and never borrows another SKU', () => {
-  const data = performance.parseCoralbricksPerformance(fixture);
+  const data = performance.parseCoralbricksPerformance({data: [{
+    id: 'glm-5.3-flash-fp4', decode_speed_last_1d: 291.7, cache_hit_rate_last_1d: 96, latency_last_1d: 0.35,
+  }]});
   const flash = data['glm-5.3-flash-fp4|coralbricks'];
   assert.deepEqual(flash.throughput, {reported: 291.7, window: '1d'});
   assert.deepEqual(flash.latency, {p50: 350, window: '1d'});

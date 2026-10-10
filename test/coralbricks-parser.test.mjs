@@ -13,33 +13,36 @@ const AUTH_FIXTURE = JSON.parse(
 
 test('parseCoralbricks uses its own USD/M prices, not the OpenRouter comparison', () => {
   const rows = parseCoralbricks(FIXTURE);
-  assert.equal(rows.length, 3);
+  assert.deepEqual(rows.map(m => m.id), ['glm-5.3-fast', 'deepseek-v4.1-flash-fast']);
   assert.ok(rows.every((m) => m.provider === 'coralbricks'));
-  const glm = rows.find((m) => m.id === 'glm-5.3-fp4');
+  const glm = rows.find((m) => m.id === 'glm-5.3-fast');
   assert.equal(glm.name, 'GLM 5.3');
   assert.equal(glm.org, 'z-ai');
   assert.equal(glm.quantization, 'nvfp4');
   assert.equal(glm.context_length, 1000000);
   assert.equal(glm.max_completion_tokens, null);
-  assert.deepEqual(glm.pricing, { input: 1.12, output: 4.4, cache_read: 0, cache_write: 1.68, input_billing: 'cache_write' });
-  assert.equal(rows.find((m) => m.id === 'glm-5.3-flash-fp4').pricing.cache_write, 0.23);
+  assert.deepEqual(glm.pricing, {
+    input: 1.12, output: 4.4, cache_read: 0, cache_write: 1.68, cache_write_addon: 0.56, input_billing: 'cache_write',
+  });
 
-  const flash = rows.find((m) => m.id === 'deepseek-v4.1-flash-fast-fp4');
+  const flash = rows.find((m) => m.id === 'deepseek-v4.1-flash-fast');
   assert.equal(flash.org, 'deepseek');
   assert.equal(flash.quantization, 'mxfp4');
-  assert.deepEqual(flash.pricing, { input: 0.3, output: 1.2, cache_read: 0, cache_write: 0.09, input_billing: 'cache_write' });
+  assert.deepEqual(flash.pricing, {
+    input: 0.01, output: 1.2, cache_read: 0, cache_write: 0.09, cache_write_addon: 0.08, input_billing: 'cache_write',
+  });
   assert.equal(flash.discount, 0);
 });
 
-test('parseCoralbricks prefers the live cache-write multiplier over published defaults', () => {
-  const rows = parseCoralbricks({ models: [{
-    ...FIXTURE.models[0], inputPerM: 0.41, cacheWriteMultiplier: 2.5, contextWindow: '128K',
-  }] });
-  assert.equal(rows[0].pricing.cache_write, 1.025);
-  assert.equal(rows[0].context_length, 128000);
+test('CoralBricks cache write is charged on top of input, matching its published one-shot price', () => {
+  // coralbricks.ai/pricing: GLM 5.3 one-shot (0% cached, 6.7% output as a share of input) = $1.851/M.
+  const {pricing} = parseCoralbricks(FIXTURE).find(m => m.id === 'glm-5.3-fast');
+  const inputShare = 1 / 1.067;
+  const blended = pricing.cache_write * inputShare + pricing.output * (1 - inputShare);
+  assert.equal(Number(blended.toFixed(3)), 1.851);
 });
 
-test('parseCoralbricks leaves unpublished limits and new-model cache writes unknown', () => {
+test('parseCoralbricks leaves unpublished limits and cache-write add-ons unknown', () => {
   const rows = parseCoralbricks({ models: [{
     slug: 'qwen-new-fp4', inputPerM: 0.21, outputPerM: 0.67, products: { tokenApi: true },
   }] });
@@ -50,6 +53,7 @@ test('parseCoralbricks leaves unpublished limits and new-model cache writes unkn
   assert.equal(rows[0].max_completion_tokens, null);
   assert.equal(rows[0].pricing.cache_read, 0);
   assert.equal(rows[0].pricing.cache_write, null);
+  assert.equal(rows[0].pricing.cache_write_addon, null);
 });
 
 test('parseCoralbricks excludes private-only, free, unpriced and malformed entries', () => {
@@ -71,31 +75,47 @@ test('CoralBricks provider aliases deduplicate without stripping native quant/SK
   const direct = parseCoralbricks(FIXTURE);
   const router = { ...direct[0], provider: 'Coral Bricks', pricing: { input: 9, output: 9 } };
   const rows = dedupModels([...direct, router]);
-  assert.equal(rows.length, 3);
+  assert.equal(rows.length, 2);
   assert.equal(rows[0].pricing.input, 1.12);
-  assert.equal(rows[2].id, 'deepseek-v4.1-flash-fast-fp4');
+  assert.equal(rows[1].id, 'deepseek-v4.1-flash-fast');
 });
 
 test('authenticated CoralBricks prices, context and capability flags are authoritative', () => {
   const rows = parseCoralbricks(AUTH_FIXTURE);
-  assert.equal(rows.length, 3);
-  const flash = rows.find(m => m.id === 'glm-5.3-flash-fp4');
-  assert.equal(flash.context_length, 1048576);
-  assert.deepEqual(flash.pricing, {input: 0.15, output: 0.5, cache_read: 0, cache_write: 0.23, input_billing: 'cache_write'});
-  assert.deepEqual(flash.capabilities, {chat: true, image_input: true, tool_call: true});
-  assert.equal(rows.find(m => m.id === 'glm-5.3-fp4').capabilities.image_input, false);
-  assert.equal(rows.find(m => m.id === 'deepseek-v4.1-flash-fast-fp4').pricing.cache_write, 0.09);
+  const glm = rows.find(m => m.id === 'glm-5.3-fast');
+  assert.equal(glm.context_length, 1048576);
+  assert.deepEqual(glm.pricing, {
+    input: 1.12, output: 4.4, cache_read: 0, cache_write: 1.68, cache_write_addon: 0.56, input_billing: 'cache_write',
+  });
+  assert.deepEqual(glm.capabilities, {chat: true, image_input: false, tool_call: true});
+  const flash = rows.find(m => m.id === 'deepseek-v4.1-flash-fast');
+  assert.equal(flash.pricing.cache_write, 0.09);
+  assert.equal(flash.capabilities.image_input, true);
   assert.ok(rows.every(m => m.max_completion_tokens === null));
 });
 
-test('authenticated tariffs do not derive explicit write prices or invent missing cache rates', () => {
-  const model = AUTH_FIXTURE.data[1];
+test('retired CoralBricks alias slugs collapse into their current SKU instead of duplicating it', () => {
+  const rows = parseCoralbricks(AUTH_FIXTURE);
+  assert.equal(AUTH_FIXTURE.data.length, 4);
+  assert.deepEqual(rows.map(m => m.id).sort(), ['deepseek-v4.1-flash-fast', 'glm-5.3-fast']);
+
+  // An alias whose target is absent is listed once under the current slug and name.
+  const alias = AUTH_FIXTURE.data.find(m => m.id === 'glm-5.3-fp4');
+  const [renamed, ...rest] = parseCoralbricks({data: [alias, {...alias}]});
+  assert.equal(rest.length, 0);
+  assert.equal(renamed.id, 'glm-5.3-fast');
+  assert.equal(renamed.name, 'GLM 5.3');
+});
+
+test('authenticated CoralBricks write add-ons are never derived or invented', () => {
+  const model = AUTH_FIXTURE.data.find(m => m.id === 'glm-5.3-fast');
   const parsePricing = pricing => parseCoralbricks({data: [{...model, pricing} ]})[0].pricing;
-  assert.equal(parsePricing({...model.pricing, cache_write_per_m: 0.217, cache_write_multiple: 8}).cache_write, 0.217);
-  assert.equal(parsePricing({...model.pricing, cache_write_per_m: 0}).cache_write, 0);
+  assert.equal(parsePricing({...model.pricing, cache_write_per_m: 0.217, cache_write_multiple: 8}).cache_write, 1.337);
+  assert.equal(parsePricing({...model.pricing, cache_write_per_m: 0}).cache_write, 1.12);
   assert.equal(parsePricing({...model.pricing, cache_write_per_m: undefined}).cache_write, null);
   assert.equal(parsePricing({...model.pricing, cached_input_per_m: undefined}).cache_read, null);
   assert.equal(parsePricing({...model.pricing, cache_write_per_m: -1}).cache_write, null);
+  assert.equal(parsePricing({...model.pricing, input_per_m: undefined}).cache_write, null);
   assert.deepEqual(parseCoralbricks({data: [{...model, supports_chat: false}, {...model, pricing: {input_per_m: -1, output_per_m: 1}}, null]}), []);
 });
 
@@ -110,11 +130,19 @@ test('CoralBricks fetch uses auth tariffs and public metadata without forwarding
   assert.equal(calls[1].url, 'https://www.coralbricks.ai/api/public/models');
   assert.equal(calls[1].opts?.apiKey, undefined);
   const rows = parseCoralbricks(data);
-  const glm = rows.find(m => m.id === 'glm-5.3-fp4');
+  assert.equal(rows.length, 2);
+  const glm = rows.find(m => m.id === 'glm-5.3-fast');
   assert.equal(glm.name, 'GLM 5.3');
   assert.equal(glm.quantization, 'nvfp4');
   assert.equal(glm.context_length, 1048576);
-  assert.equal(rows.find(m => m.id === 'glm-5.3-flash-fp4').pricing.cache_write, 0.23);
+  assert.equal(glm.pricing.cache_write, 1.68);
+});
+
+test('public deprecatedSlugs collapse retired slugs the authenticated API leaves unmarked', async () => {
+  const unmarked = {...AUTH_FIXTURE, data: AUTH_FIXTURE.data.map(({alias_target, ...m}) => m)};
+  const data = await providerLib.fetchCoralbricksCatalog('test-key', async url =>
+    url.includes('inference.') ? unmarked : FIXTURE);
+  assert.deepEqual(parseCoralbricks(data).map(m => m.id).sort(), ['deepseek-v4.1-flash-fast', 'glm-5.3-fast']);
 });
 
 test('CoralBricks fetch falls back publicly for missing keys, auth outages or empty catalogs', async (t) => {
@@ -141,8 +169,9 @@ test('CoralBricks public metadata outage does not discard authenticated prices',
     if (url.includes('inference.')) return AUTH_FIXTURE;
     throw new Error('HTTP 503');
   });
-  assert.equal(parseCoralbricks(data).length, 3);
-  assert.equal(parseCoralbricks(data)[1].pricing.cache_write, 0.23);
+  const rows = parseCoralbricks(data);
+  assert.deepEqual(rows.map(m => m.id).sort(), ['deepseek-v4.1-flash-fast', 'glm-5.3-fast']);
+  assert.equal(rows.find(m => m.id === 'glm-5.3-fast').pricing.cache_write, 1.68);
 });
 
 test('fetch-pricing wires CoralBricks auth with a public fallback and conservative policy metadata', async () => {
