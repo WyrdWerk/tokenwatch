@@ -133,14 +133,17 @@ test('every model has at least one numeric score', () => {
   }
 });
 
-test('score scales are sane (indices 0-100, Elo 800-2500)', () => {
+test('score scales are sane (indices 0-100, Elo 700-2500)', () => {
+  // The Elo bounds are a scale sanity check (catch 7.99 / 79.9 / 79900), not a
+  // leaderboard minimum: real Design Arena values legitimately sit below 800
+  // (nova-pro-v1 hit 799 on 2026-10-13 and broke every refresh run's tests).
   for (const m of bench.models) {
     for (const [k, v] of Object.entries(m.scores)) {
       if (k === 'design_arena_category' || typeof v !== 'number') continue;
       if (k.startsWith('aa_') || k.startsWith('livebench_')) {
         assert.ok(v >= 0 && v <= 100, `${m.id}.${k}=${v} outside 0-100`);
       } else if (k.includes('elo')) {
-        assert.ok(v >= 800 && v <= 2500, `${m.id}.${k}=${v} outside Elo range`);
+        assert.ok(v >= 700 && v <= 2500, `${m.id}.${k}=${v} outside Elo range`);
       }
     }
   }
