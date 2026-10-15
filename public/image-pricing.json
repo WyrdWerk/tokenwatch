@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-15T14:33:09.240Z",
+  "generated_at": "2026-10-15T19:34:05.961Z",
   "models": [
     {
       "id": "flux-schnell",
@@ -2720,6 +2720,90 @@
       ]
     },
     {
+      "id": "black-forest-labs/flux-3-image-klein",
+      "name": "Black Forest Labs: FLUX 3 Image Klein",
+      "org": "black-forest-labs",
+      "provider": "black-forest-labs",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": {
+        "resolution": {
+          "type": "enum",
+          "values": [
+            "768",
+            "1K",
+            "1.5K",
+            "2K",
+            "4K"
+          ]
+        },
+        "aspect_ratio": {
+          "type": "enum",
+          "values": [
+            "21:9",
+            "2:1",
+            "16:9",
+            "3:2",
+            "7:5",
+            "4:3",
+            "5:4",
+            "1:1",
+            "4:5",
+            "3:4",
+            "5:7",
+            "2:3",
+            "9:16",
+            "1:2",
+            "9:21",
+            "auto"
+          ]
+        },
+        "n": {
+          "type": "range",
+          "min": 1,
+          "max": 1
+        },
+        "input_references": {
+          "type": "range",
+          "min": 0,
+          "max": 10
+        }
+      },
+      "pricing": [
+        {
+          "unit": "image",
+          "variant": "768",
+          "cost_per_unit": 0.008,
+          "cost_per_million": null
+        },
+        {
+          "unit": "image",
+          "variant": "1k",
+          "cost_per_unit": 0.009,
+          "cost_per_million": null
+        },
+        {
+          "unit": "image",
+          "variant": "1.5k",
+          "cost_per_unit": 0.011,
+          "cost_per_million": null
+        },
+        {
+          "unit": "image",
+          "variant": "2k",
+          "cost_per_unit": 0.014,
+          "cost_per_million": null
+        },
+        {
+          "unit": "image",
+          "variant": "4k",
+          "cost_per_unit": 0.036,
+          "cost_per_million": null
+        }
+      ]
+    },
+    {
       "id": "google/gemini-nano-banana-2.1",
       "name": "Google: Nano Banana 2.1",
       "org": "google",
@@ -4103,8 +4187,8 @@
         {
           "unit": "token",
           "variant": null,
-          "cost_per_unit": 0.00006,
-          "cost_per_million": 60
+          "cost_per_unit": 0.000066,
+          "cost_per_million": 66
         }
       ]
     },
