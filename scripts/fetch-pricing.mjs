@@ -42,7 +42,7 @@
 
 import { appendFile, readFile } from 'node:fs/promises';
 import {
-  perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseBatchrate, openRouterEndpointSlug, parseNeuralwatt, parseMerius, parseAster,
+  perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseBatchrate, openRouterEndpointSlug, selectOpenRouterEndpoints, parseNeuralwatt, parseMerius, parseAster,
   parseCoralbricks, fetchCoralbricksCatalog, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
   parseOpenCodeGoDocs,
   NON_TEXT_ID, isTextModel,
@@ -340,6 +340,7 @@ const MANUAL_PROVIDER_META = {
     retains_prompts: true,   // Privacy "Retention": input files deleted 7 days after the batch ends; outputs after 30 days
     may_train: false,        // Privacy + Terms: content is used only to run the job and not used to train models
     retention_days: 30,      // Longest default window (outputs); docs output_expires_after can shorten it to 1h
+    retention_note: 'Input files deleted 7 days after the batch ends; output files after 30 days (can be shortened to 1 hour).',
   },
   coralbricks: {
     privacy_policy_url: 'https://www.coralbricks.ai/privacy',
@@ -573,9 +574,9 @@ async function fetchModelEndpoints(model) {
   const modelId = data.data?.model_id || model.id;
   const modelName = data.data?.model_name || model.name || model.id;
 
-  return endpoints.map((ep) => ({
-    id: modelId,
-    name: modelName,
+  return selectOpenRouterEndpoints(endpoints, modelId).map(({ endpoint: ep, id, tier }) => ({
+    id,
+    name: tier ? `${modelName} (${tier})` : modelName,
     provider: normalizeProvider(ep.provider_name),
     provider_display: ep.provider_name,
     quantization: ep.quantization || null,

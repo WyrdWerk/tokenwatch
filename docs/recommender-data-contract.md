@@ -17,7 +17,7 @@ Every offering in `public/pricing.json` has these top-level fields:
 3. Known-closed creator-org prior: `anthropic`, `xai`, `amazon`, and `perplexity` resolve false. There are no positive org priors; unknown or mixed orgs remain unknown.
 4. `null` when no source resolves the value.
 
-For lookup only, terminal `:batch`, `-turbo`, and `-fast` suffixes are stripped; the offering ID itself is not changed. Model-level license strings are fetched from `https://models.dev/models.json`; provider-level data and open-weight votes come from `https://models.dev/api.json`.
+For lookup only, terminal delivery variants (`:batch` and the `:flex`/`:priority`/`:fast`/`:ultrafast`/`:turbo`/`:highspeed` service tiers) and `-turbo`/`-fast` suffixes are stripped; the offering ID itself is not changed. Model-level license strings are fetched from `https://models.dev/models.json`; provider-level data and open-weight votes come from `https://models.dev/api.json`.
 
 The status describes model weight availability, not the license's permissions. Preserve license text as a separate field; do not infer `open_weights` from a license name.
 
@@ -57,3 +57,9 @@ The `modelsdev` and `modelsdev_model` blocks also carry `reasoning_options` (mod
 ## Coverage guardrails
 
 `test/parity.test.mjs` enforces at least 55% non-null open-weight coverage across canonical IDs and at least 80% populated `supported_parameters` coverage across OpenRouter endpoint offerings after a live catalog refresh. The default committed-snapshot test run skips generated-data mix floors unless `TW_PARITY_LIVE=1` is set.
+
+## Delivery variants (batch and service tiers)
+
+OpenRouter lists several endpoints per provider: service tiers (`flex`, `priority`, `fast`, `ultrafast`, `turbo`, `highspeed`), regions and precisions. `selectOpenRouterEndpoints()` publishes one standard row per provider (base id; cheapest standard region/precision by input, then output) and one row per tier with a `:<tier>` id suffix. A provider with no standard endpoint keeps its cheapest non-flex tier as the main row (name shows the tier); flex-only listings stay tier rows. `:batch` ids are never split. Delivery variants (`DELIVERY_VARIANT_RE` in `shared/normalize.mjs`) are hidden by default in the calculator, excluded from model pages, and excluded from recommendations except `high-volume-cheap` / `includeBatch`. Tier rows do not inherit endpoint-level ZDR or performance (they stay `null`/provider-level).
+
+Before 2026-10-16 the first-listed (cheapest) endpoint per provider was published, so some standard rows carried flex prices; price history shows a one-time step up for those offerings when this was corrected. It is a data correction, not a provider price change.

@@ -275,6 +275,13 @@ test('batch variants are excluded by default and enabled only by option or high-
   assert.equal(included.ranked[0].provider, 'batch-provider');
   assert.ok(included.ranked[0].reasons.some((reason) => /asynchronous batch endpoint/i.test(reason)));
   assert.equal(rankProviders('high-volume-cheap', 'model-a:batch', batchOnly, {}).ranked[0].provider, 'batch-provider');
+  // Service tiers (flex, priority, …) follow the same rule as batch: a cheap
+  // flex row must not displace the standard offering in default recommendations.
+  const withFlex = [mixOffering('open/model-a', 'std-provider', 90, 2), mixOffering('open/model-a:flex', 'std-provider', 90, 1)];
+  assert.deepEqual(rankProviders('agentic-coding', 'model-a', withFlex, {}).ranked.map((r) => r.offering.id), ['open/model-a']);
+  assert.equal(shortlistModels('agentic-coding', [withFlex[1]]).bestQuality, null);
+  const flexIncluded = rankProviders('agentic-coding', 'model-a:flex', withFlex, {}, { includeBatch: true });
+  assert.ok(flexIncluded.ranked[0].reasons.some((reason) => /flex service-tier endpoint/i.test(reason)));
 });
 
 test('shortlist loads thin LiveBench fields and falls back to models.dev only when the direct field is absent', () => {

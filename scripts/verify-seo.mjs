@@ -192,7 +192,7 @@ export async function main() {
       requireMatch(html, /<section class="seo-models"[\s\S]*?<tbody>[\s\S]*?<tr>/, `model page ${entry.name} provider rows`);
     }
     requireMatch(html, /href="\/#model=/, `model page ${entry.name} calculator deep link`);
-    if (entry.name.includes(':batch')) throw new Error(`verify-seo: model page ${entry.name} must not be a :batch variant`);
+    if (/:(batch|flex|priority|fast|ultrafast|turbo|highspeed)$/i.test(entry.name)) throw new Error(`verify-seo: model page ${entry.name} must not be a :batch or service-tier variant`);
 
     assertModelHistory(html, `model page ${entry.name}`);
 

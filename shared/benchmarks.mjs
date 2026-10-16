@@ -12,7 +12,7 @@
  *   - test/benchmarks.test.mjs (unit tests)
  */
 
-import { canonicalId, modelSpellingKey } from './normalize.mjs';
+import { canonicalId, modelSpellingKey, stripDeliveryVariant } from './normalize.mjs';
 
 // Trailing quantization suffixes (MUST be last token to strip).
 // Sourced from AGENTS.md canonical-model-ID convention.
@@ -41,7 +41,8 @@ const VARIANT_SUFFIXES = ['instruct', 'thinking', 'base', 'chat', 'reasoning'];
  *          'qwen/qwen3-30b-a3b' → 'qwen3-30b-a3b' (unchanged — no trailing quant/SKU)
  */
 export function conservativeBase(modelId) {
-  let c = canonicalId(modelId);
+  // Delivery variants (:batch, :flex, …) are the same model — share its scores.
+  let c = stripDeliveryVariant(canonicalId(modelId));
   // Strip one trailing quant suffix if present (only the LAST token)
   for (const suffix of QUANT_SUFFIXES) {
     const re = new RegExp('-' + suffix + '$');

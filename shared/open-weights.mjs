@@ -5,7 +5,7 @@
  * override map; this module performs no filesystem, network, or Node imports.
  */
 
-import { canonicalId as normalizeCanonicalId } from './normalize.mjs';
+import { canonicalId as normalizeCanonicalId, stripDeliveryVariant } from './normalize.mjs';
 
 const ORG_PRIORS = new Map([
   ['anthropic', false],
@@ -16,7 +16,7 @@ const ORG_PRIORS = new Map([
 
 /** Normalize only the lookup key; offering IDs remain unchanged. */
 export function openWeightLookupId(id) {
-  return normalizeCanonicalId(id).replace(/(:batch|-turbo|-fast)$/i, '');
+  return stripDeliveryVariant(normalizeCanonicalId(id)).replace(/(-turbo|-fast)$/i, '');
 }
 
 function licenseFromRecords(records) {

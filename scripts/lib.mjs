@@ -83,6 +83,53 @@ export function openRouterEndpointSlug(model) {
   if (/:[a-z0-9-]+$/i.test(id)) return id;
   return model?.canonical_slug || null;
 }
+/** OpenRouter endpoint tag → service tier ('openai/flex' → 'flex',
+ *  'google-vertex/global/flex' → 'flex', 'deepinfra/fp8' → null). */
+export function openRouterServiceTier(tag) {
+  const tokens = String(tag || '').toLowerCase().split('/').slice(1);
+  return tokens.find((t) => SERVICE_TIERS.includes(t)) || null;
+}
+
+/**
+ * Pick one OpenRouter endpoint per (provider, service tier) for a model.
+ * OpenRouter lists several endpoints per provider (flex/priority/fast tiers,
+ * regions, precisions) cheapest-first; keeping the first silently published
+ * discounted flex prices as the standard price. Now:
+ *   - standard endpoints (no tier token) → the provider's main row (base id),
+ *     cheapest standard region/precision by input, then output price;
+ *   - each tier → its own row with a `:<tier>` id suffix (hidden by default);
+ *   - ids that already carry a delivery variant (`:batch`) are not split.
+ * Returns [{ endpoint, id, tier }].
+ */
+export function selectOpenRouterEndpoints(endpoints, modelId) {
+  const price = (v) => { const n = num(v); return n === null ? Infinity : n; };
+  const variantId = deliveryVariant(modelId) !== null;
+  const best = new Map();
+  for (const ep of endpoints || []) {
+    const tier = variantId ? null : openRouterServiceTier(ep?.tag);
+    const key = `${normalizeProvider(ep?.provider_name)}|${tier || ''}`;
+    const cur = best.get(key);
+    const cheaper = !cur
+      || price(ep?.pricing?.prompt) < price(cur.endpoint?.pricing?.prompt)
+      || (price(ep?.pricing?.prompt) === price(cur.endpoint?.pricing?.prompt)
+        && price(ep?.pricing?.completion) < price(cur.endpoint?.pricing?.completion));
+    if (cheaper) best.set(key, { endpoint: ep, id: tier ? `${modelId}:${tier}` : modelId, tier });
+  }
+  // A provider with no standard endpoint (e.g. DeepInfra's only Llama 3.3 70B
+  // listing is tagged `turbo`) sells that tier as its normal product: promote
+  // its cheapest non-flex tier to the main row so it stays visible by default.
+  // Flex-only listings stay hidden — flex is a discounted, slower variant.
+  const providers = new Set([...best.keys()].map((k) => k.split('|')[0]));
+  for (const provider of providers) {
+    if (best.has(`${provider}|`)) continue;
+    const promote = [...best.entries()]
+      .filter(([k, v]) => k.startsWith(`${provider}|`) && v.tier !== 'flex')
+      .sort(([, a], [, b]) => price(a.endpoint?.pricing?.prompt) - price(b.endpoint?.pricing?.prompt))[0];
+    if (promote) best.set(promote[0], { ...promote[1], id: modelId, promoted: true });
+  }
+  return [...best.values()];
+}
+
 /** Avian https://api.avian.io/v1/models → model records (prices already $/M). */
 export function parseAvian(data) {
   return (data.data || [])
@@ -1078,7 +1125,7 @@ export function orgFromName(name) {
 // Pages Function can import the same source of truth without pulling in
 // node:fs (which this file imports below for checkCoverageDrop).
 export { canonicalId, orgLookupKey, quantFromId } from '../shared/normalize.mjs';
-import { canonicalId, orgLookupKey, quantFromId } from '../shared/normalize.mjs';
+import { canonicalId, orgLookupKey, quantFromId, SERVICE_TIERS, deliveryVariant } from '../shared/normalize.mjs';
 
 // models.dev reconciliation helpers live in shared/modelsdev.mjs (pure, no
 // node: imports) so they could in principle be bundled into the Worker too.

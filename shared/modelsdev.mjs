@@ -10,7 +10,7 @@
  *   - scripts/fetch-modelsdev.mjs (builds the enrichment index)
  */
 
-import { canonicalId } from './normalize.mjs';
+import { canonicalId, deliveryVariant, stripDeliveryVariant } from './normalize.mjs';
 
 /**
  * TW provider slug → models.dev provider_id.
@@ -222,9 +222,9 @@ function boundedFuzzyMatch(needle, haystack) {
   return candidates.length === 1 ? candidates[0] : null;
 }
 
-/** Lowercased last path segment without `:batch` — the id as a provider spells it. */
+/** Lowercased last path segment without `:batch`/`:<tier>` — the id as a provider spells it. */
 function idTail(id) {
-  return String(id || '').toLowerCase().replace(/:batch$/, '').split('/').pop();
+  return stripDeliveryVariant(String(id || '').toLowerCase()).split('/').pop();
 }
 
 /** Fields that must agree across collapsed md ids before SKU-specific facts are trusted. */
@@ -270,8 +270,8 @@ export function findEnrichment(twProvider, twModelId, providerIndex) {
   // Metadata-only fallback: ':batch' billing variants (azure/openai/google/…)
   // share the base model's metadata. Row identity and dedup are untouched —
   // twModelId/canonicalId keep ':batch'; only enrichment borrows the base record.
-  if (twModelId.endsWith(':batch')) {
-    const batchNorm = normalizeForMatch(twProvider, twModelId.slice(0, -':batch'.length));
+  if (deliveryVariant(twModelId) !== null) {
+    const batchNorm = normalizeForMatch(twProvider, stripDeliveryVariant(twModelId));
     if (providerMap.has(batchNorm)) {
       // 'medium' (⚠ pill) — variant match: batch SKU borrows base model metadata.
       return { ...resolveAlternate(providerMap.get(batchNorm), twModelId), confidence: 'medium', match: 'batch-base' };
@@ -481,7 +481,7 @@ export function modelsDevPriceDrift(models, providerIndex, { sourceOf = () => nu
   const counts = { match: 0, promo_explained: 0, promo_unexplained: 0, tier_explained: 0, mismatch: 0, fuzzy_mismatch: 0 };
   const rows = [];
   for (const m of models) {
-    if (typeof m?.id !== 'string' || m.id.endsWith(':batch')) continue;
+    if (typeof m?.id !== 'string' || deliveryVariant(m.id) !== null) continue;
     const hit = findEnrichment(m.provider, m.id, providerIndex);
     if (!hit || hit.match === 'batch-base' || hit.ambiguous) continue;
     const tw = { input: m.pricing?.input, output: m.pricing?.output };
