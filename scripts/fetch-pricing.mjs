@@ -1071,7 +1071,12 @@ async function main() {
   // ── Coverage-drop check: compare against last pricing.json ──
   // checkCoverageDrop returns prevCount (null if no previous file) so the
   // dry-run summary below can print the delta.
-  const prevCount = await checkCoverageDrop('public/pricing.json', out.models.length);
+  // ALLOW_COVERAGE_DROP=1 (manual refresh input only) raises the limit from 15%
+  // to 30% for one run — for planned cleanups that remove known-bad rows. It
+  // never disables the guard, so a real outage on that run still aborts.
+  const allowDrop = process.env.ALLOW_COVERAGE_DROP === '1';
+  if (allowDrop) console.warn('⚠ ALLOW_COVERAGE_DROP=1 — coverage-drop limit raised to 30% for this run');
+  const prevCount = await checkCoverageDrop('public/pricing.json', out.models.length, allowDrop ? 0.30 : 0.15);
 
   // ── Quantization fill ──
   // Direct/CSV/hardcoded parsers set quantization: null even when the quant is
