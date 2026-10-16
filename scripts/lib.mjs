@@ -94,6 +94,35 @@ export function parseAvian(data) {
       };
     });
 }
+/**
+ * Batchrate https://batchrate.ai/pricing.json → model records. Public, no key.
+ * Batch-only (24h window), so ids carry `:batch`. Prices are micro-USD per 1M
+ * tokens (÷1e6 → $/M). Non-token SKUs (Whisper, billed per audio minute) are
+ * dropped. No cache tariff is published — cache fields stay null.
+ */
+export function parseBatchrate(data) {
+  const models = Array.isArray(data?.models) ? data.models : [];
+  const microToPerM = (v) => { const n = num(v); return n === null ? null : n / 1e6; };
+  return models.flatMap((m) => {
+    if (!m || typeof m.id !== 'string' || !m.id || m.unit !== 'tokens') return [];
+    const id = `${m.id.replace(/:batch$/i, '')}:batch`;
+    return [{
+      id,
+      name: `${m.model || m.id} (batch)`,
+      org: orgFromBareModelId(m.id),
+      provider: 'batchrate',
+      quantization: null,
+      discount: 0,
+      context_length: num(m.context_tokens),
+      pricing: {
+        input: microToPerM(m.input_per_million_microusd),
+        output: microToPerM(m.output_per_million_microusd),
+        cache_read: null,
+        cache_write: null,
+      },
+    }];
+  });
+}
 /** Neuralwatt https://api.neuralwatt.com/v1/models → model records (prices already $/M). */
 export function parseNeuralwatt(data) {
   return (data.data || [])
@@ -1109,6 +1138,7 @@ export const PROVIDER_NAME_MAP = {
   'aster': 'aster',
   'aster labs': 'aster',
   'avian': 'avian',
+  'batchrate': 'batchrate',
   'singularity': 'singularity',
   'singularityapi': 'singularity',
   'singularity api': 'singularity',

@@ -42,7 +42,7 @@
 
 import { appendFile, readFile } from 'node:fs/promises';
 import {
-  perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseNeuralwatt, parseMerius, parseAster,
+  perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseBatchrate, parseNeuralwatt, parseMerius, parseAster,
   parseCoralbricks, fetchCoralbricksCatalog, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
   parseOpenCodeGoDocs,
   NON_TEXT_ID, isTextModel,
@@ -145,6 +145,12 @@ const DIRECT_PROVIDERS = [
     name: 'Avian',
     url: 'https://api.avian.io/v1/models',
     parse: parseAvian,
+  },
+  {
+    key: 'batchrate',
+    name: 'Batchrate',
+    url: 'https://batchrate.ai/pricing.json', // public; api.batchrate.ai/v1/models needs a key
+    parse: parseBatchrate,
   },
   {
     key: 'coralbricks',
@@ -323,6 +329,17 @@ const MANUAL_PROVIDER_META = {
     retains_prompts: false,  // Privacy §2.3/§4: prompts/completions not logged, stored, or retained — processed in memory, not persisted after delivery
     may_train: false,         // Privacy §4: explicit — prompts/completions/API inputs/outputs never used to train, fine-tune, or improve models
     retention_days: 0,       // Privacy §6: prompt/completion content never retained; only request metadata (timestamps, model, token counts) for billing, periodically purged
+  },
+  batchrate: {
+    // Lounge Fleet, LLC d/b/a Batchrate. Policies reviewed 2026-10-16 (privacy last updated 2026-10-11).
+    privacy_policy_url: 'https://batchrate.ai/privacy',
+    terms_of_service_url: 'https://batchrate.ai/terms',
+    status_page_url: null,   // None published
+    headquarters: null,      // No address or jurisdiction published
+    datacenters: null,       // Privacy: prompts run on unnamed third-party compute; Cloudflare hosts site/storage
+    retains_prompts: true,   // Privacy "Retention": input files deleted 7 days after the batch ends; outputs after 30 days
+    may_train: false,        // Privacy + Terms: content is used only to run the job and not used to train models
+    retention_days: 30,      // Longest default window (outputs); docs output_expires_after can shorten it to 1h
   },
   coralbricks: {
     privacy_policy_url: 'https://www.coralbricks.ai/privacy',
