@@ -378,7 +378,7 @@ const TEXT_TOOL_DEFS = JSON.parse(`
         },
         "hideBatch": {
           "type": "boolean",
-          "description": "If true (the default), hide :batch and :free SKUs. Set false to include them."
+          "description": "If true (the default), hide :batch, :free and service-tier (:flex, :priority, …) SKUs. Set false to include them."
         },
         "cacheOnly": {
           "type": "boolean",

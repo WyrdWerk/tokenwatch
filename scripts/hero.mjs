@@ -1,7 +1,7 @@
 // Build-time homepage hero: "same model, different bill". Pure — takes the
 // pricing catalog, returns markup. Injected by generate-seo via replaceSection.
 import { blendedRate, AGENTIC_MIX } from '../shared/cost.mjs';
-import { modelFamilyId } from '../shared/normalize.mjs';
+import { modelFamilyId, DELIVERY_VARIANT_RE } from '../shared/normalize.mjs';
 import { esc, fmtPrice } from './seo-pages.mjs';
 import { USE_CASE_CHOICES } from '../shared/choose-page.mjs';
 
@@ -9,7 +9,7 @@ export const HERO_LANES = 5;
 const MIN_PROVIDERS = 3;
 
 function isBatchOrFree(id) {
-  return /:batch$|:free$/i.test(String(id));
+  return DELIVERY_VARIANT_RE.test(String(id)) || /:free$/i.test(String(id));
 }
 
 /** Friendly model name: prefer an "Org: Name" display name, else the canonical id. */

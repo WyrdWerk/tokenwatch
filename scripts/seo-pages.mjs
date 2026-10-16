@@ -1,5 +1,5 @@
 import { blendedRate, AGENTIC_MIX } from '../shared/cost.mjs';
-import { canonicalId } from '../shared/normalize.mjs';
+import { canonicalId, DELIVERY_VARIANT_RE } from '../shared/normalize.mjs';
 import { API_ENDPOINTS } from '../shared/api-meta.mjs';
 import { PRIORITY_PROVIDER_WEIGHTS, USE_CASES } from '../shared/use-cases.mjs';
 import { MIN_BENCHMARK_COVERAGE } from '../shared/recommend.mjs';
@@ -743,13 +743,13 @@ export function modelPageSlug(canonical) {
 export function collectModelPages({ pricing }, { minProviders = MODEL_MIN_PROVIDERS, excludeBatch = true, publishedModels = null } = {}) {
   const groups = new Map();
   for (const canonical of publishedModels || []) {
-    if (!excludeBatch || !/:batch$/i.test(canonical)) groups.set(canonical, []);
+    if (!excludeBatch || !DELIVERY_VARIANT_RE.test(canonical)) groups.set(canonical, []);
   }
   for (const model of pricing.models || []) {
     if (!model.provider || !hasTextPrice(model)) continue;
     const canonical = canonicalId(model.id);
     if (!canonical) continue;
-    if (excludeBatch && /:batch$/i.test(canonical)) continue;
+    if (excludeBatch && DELIVERY_VARIANT_RE.test(canonical)) continue;
     if (publishedModels && !publishedModels.has(canonical)) continue;
     if (!groups.has(canonical)) groups.set(canonical, []);
     groups.get(canonical).push(model);

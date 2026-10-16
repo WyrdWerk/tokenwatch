@@ -1849,7 +1849,7 @@ function secondaryFilterChecks() {
   if (minAgentic) add('agentic', `Agentic ≥ ${minAgentic}`, (m) => m.benchmarks?.agentic_index != null && m.benchmarks.agentic_index >= minAgentic, () => { els.minAgentic.value = DEFAULTS.minAgentic; });
   if (els.benchmarkedOnly?.checked) add('benchmarked', 'Benchmarked only', (m) => !!m.benchmarks, () => { els.benchmarkedOnly.checked = DEFAULTS.benchmarked; });
   const hideBatch = els.hideBatch ? els.hideBatch.checked : DEFAULTS.hideBatch;
-  if (hideBatch) add('batch', 'Batch & :free hidden (default)', (m) => !isBatchOrFreeId(m.id), () => { if (els.hideBatch) els.hideBatch.checked = false; }, false);
+  if (hideBatch) add('batch', 'Batch, tiers & :free hidden (default)', (m) => !isBatchOrFreeId(m.id), () => { if (els.hideBatch) els.hideBatch.checked = false; }, false);
   if (els.cacheOnly?.checked) add('cache', 'Cache pricing only', (m) => m.pricing?.cache_read != null, () => { els.cacheOnly.checked = DEFAULTS.cacheOnly; });
   const maxBlended = parseFloat(els.maxBlended?.value);
   if (Number.isFinite(maxBlended) && maxBlended > 0) {
@@ -2325,9 +2325,11 @@ function speedFor(r) {
   return throughput?.p50 ?? throughput?.reported ?? null;
 }
 
+/** Batch, :free and service-tier (:flex, :priority, …) rows — hidden by default. */
 function isBatchOrFreeId(id) {
   const s = String(id || '').toLowerCase();
-  return s.includes(':batch') || s.includes(':free') || s.endsWith('-batch');
+  return s.includes(':batch') || s.includes(':free') || s.endsWith('-batch')
+    || /:(flex|priority|fast|ultrafast|turbo|highspeed)$/.test(s);
 }
 
 function providerHq(providerKey) {
