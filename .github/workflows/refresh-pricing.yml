@@ -16,6 +16,10 @@ on:
         type: boolean
         default: false
         description: 'Deploy even when nothing changed (recovery lever after a failed deploy)'
+      allow_coverage_drop:
+        type: boolean
+        default: false
+        description: 'Allow a text-model coverage drop up to 30% (instead of 15%) for this run — planned cleanups only'
   push:
     branches:
       - main
@@ -79,6 +83,7 @@ jobs:
           RUNINFRA_API_KEY: ${{ secrets.RUNINFRA_API_KEY }}
           LLMGATEWAY_API_KEY: ${{ secrets.LLMGATEWAY_API_KEY }}
           CORAL_API_KEY: ${{ secrets.CORAL_API_KEY }}
+          ALLOW_COVERAGE_DROP: ${{ github.event_name == 'workflow_dispatch' && inputs.allow_coverage_drop && '1' || '' }}
         run: node scripts/fetch-pricing.mjs
 
       - name: Prefetch fal.ai catalog (shared by image + video pipelines)
