@@ -1,0 +1,77 @@
+name: Add or update an inference provider
+description: Ask TokenWatch to list a provider (or fix one). We write and maintain the fetcher.
+title: "Provider: <name>"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! TokenWatch reads prices **directly from a public, machine-readable source** and writes the integration itself, so please don't send a pull request with prices or a CSV row — just tell us where the data lives. Every claim is checked against the linked source before it is published.
+  - type: input
+    id: name
+    attributes:
+      label: Provider name
+      placeholder: Batchrate
+    validations:
+      required: true
+  - type: input
+    id: base_url
+    attributes:
+      label: API base URL (OpenAI-compatible or otherwise)
+      placeholder: https://api.example.com/v1
+    validations:
+      required: true
+  - type: input
+    id: pricing_source
+    attributes:
+      label: Machine-readable pricing source
+      description: A public URL returning current prices per model (JSON preferred, e.g. /v1/models with pricing, or a pricing.json). Say if it needs an API key.
+      placeholder: https://example.com/pricing.json
+    validations:
+      required: true
+  - type: input
+    id: pricing_page
+    attributes:
+      label: Human-readable pricing page
+      placeholder: https://example.com/pricing
+    validations:
+      required: true
+  - type: textarea
+    id: pricing_details
+    attributes:
+      label: Pricing details we should know
+      description: Units (per 1M tokens? per token? cents?), cache read/write tariffs, batch-only or service tiers (flex/priority), promotions and their end dates, subscriptions vs pay-as-you-go.
+    validations:
+      required: true
+  - type: input
+    id: privacy
+    attributes:
+      label: Privacy policy URL
+    validations:
+      required: true
+  - type: input
+    id: terms
+    attributes:
+      label: Terms of service URL
+    validations:
+      required: true
+  - type: textarea
+    id: retention
+    attributes:
+      label: Data retention and training
+      description: How long prompts and outputs are kept, whether they are used for training, and where that is stated (section links). We only show what the policy itself says.
+    validations:
+      required: true
+  - type: input
+    id: hq
+    attributes:
+      label: Headquarters country and datacenter regions (optional)
+  - type: input
+    id: status
+    attributes:
+      label: Status page URL (optional)
+  - type: input
+    id: contact
+    attributes:
+      label: Are you from this provider? Contact email (optional)
+      description: Lets us reach someone if the pricing source changes or goes offline.

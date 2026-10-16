@@ -973,7 +973,7 @@ function activeSecondaryFilters() {
   if (els.zdrOnly?.checked) push('ZDR only');
   if (els.subscriptionOnly?.checked) push('Subscription only');
   if (els.promoOnly?.checked) push('Promos only');
-  if (els.hideBatch && !els.hideBatch.checked) push('Including batch');
+  if (els.hideBatch && !els.hideBatch.checked) push('Including batch & tiers');
   if (els.cacheOnly?.checked) push('Cache pricing only');
   const maxBlended = parseFloat(els.maxBlended?.value);
   if (Number.isFinite(maxBlended) && maxBlended > 0) push(`Blended ≤ $${maxBlended}/M`);
@@ -1849,7 +1849,7 @@ function secondaryFilterChecks() {
   if (minAgentic) add('agentic', `Agentic ≥ ${minAgentic}`, (m) => m.benchmarks?.agentic_index != null && m.benchmarks.agentic_index >= minAgentic, () => { els.minAgentic.value = DEFAULTS.minAgentic; });
   if (els.benchmarkedOnly?.checked) add('benchmarked', 'Benchmarked only', (m) => !!m.benchmarks, () => { els.benchmarkedOnly.checked = DEFAULTS.benchmarked; });
   const hideBatch = els.hideBatch ? els.hideBatch.checked : DEFAULTS.hideBatch;
-  if (hideBatch) add('batch', 'Batch, tiers & :free hidden (default)', (m) => !isBatchOrFreeId(m.id), () => { if (els.hideBatch) els.hideBatch.checked = false; }, false);
+  if (hideBatch) add('batch', 'Standard delivery only (default)', (m) => !isBatchOrFreeId(m.id), () => { if (els.hideBatch) els.hideBatch.checked = false; }, false);
   if (els.cacheOnly?.checked) add('cache', 'Cache pricing only', (m) => m.pricing?.cache_read != null, () => { els.cacheOnly.checked = DEFAULTS.cacheOnly; });
   const maxBlended = parseFloat(els.maxBlended?.value);
   if (Number.isFinite(maxBlended) && maxBlended > 0) {
@@ -2040,7 +2040,7 @@ function computeAndRender() {
   if (minCoding) title += ` (coding ≥ ${minCoding})`;
   if (minAgentic) title += ` (agentic ≥ ${minAgentic})`;
   if (els.benchmarkedOnly?.checked) title += ' (benchmarked)';
-  if (els.hideBatch && !els.hideBatch.checked) title += ' (incl. batch)';
+  if (els.hideBatch && !els.hideBatch.checked) title += ' (incl. batch & tiers)';
   if (els.cacheOnly?.checked) title += ' (cache pricing)';
   const maxBlendedTitle = parseFloat(els.maxBlended?.value);
   if (Number.isFinite(maxBlendedTitle) && maxBlendedTitle > 0) title += ` (blended ≤ $${maxBlendedTitle}/M)`;
@@ -2274,6 +2274,43 @@ function reasoningChipLabels(meta) {
 }
 
 /** Context-tier badge: price rises above the first threshold. Nothing when no tiers. */
+// Same model + provider sold through another delivery variant (batch or a
+// service tier). Indexed once per catalog from the full model list, because
+// these rows are hidden from the default results.
+const DELIVERY_SUFFIX_RE = /:(batch|flex|priority|fast|ultrafast|turbo|highspeed)$/i;
+let deliveryIndexData = null;
+let deliveryIndex = new Map();
+function deliveryVariantsFor(model) {
+  if (deliveryIndexData !== state.data) {
+    deliveryIndex = new Map();
+    for (const m of state.data?.models || []) {
+      const match = String(m.id).match(DELIVERY_SUFFIX_RE);
+      if (!match) continue;
+      const key = `${String(m.id).replace(DELIVERY_SUFFIX_RE, '')}|${m.provider}`;
+      if (!deliveryIndex.has(key)) deliveryIndex.set(key, []);
+      deliveryIndex.get(key).push({ variant: match[1].toLowerCase(), model: m });
+    }
+    deliveryIndexData = state.data;
+  }
+  return deliveryIndex.get(`${model.id}|${model.provider}`) || [];
+}
+
+/** "Batch $0.105/M (−50%) · Flex $0.105/M (−50%)" on a standard row while
+ *  batch/tier rows are hidden: cheaper ways to buy the same model from the same
+ *  provider, at the visitor's mix. Rankings stay standard-only. */
+function deliveryHintHtml(r) {
+  if (!els.hideBatch?.checked || DELIVERY_SUFFIX_RE.test(String(r.model.id)) || !(r.blended > 0)) return '';
+  const tokens = getTokens();
+  const cheaper = deliveryVariantsFor(r.model)
+    .map((v) => ({ ...v, blended: blendedCostFor(v.model.pricing, tokens) }))
+    .filter((v) => v.blended != null && v.blended < r.blended)
+    .sort((a, b) => a.blended - b.blended);
+  if (!cheaper.length) return '';
+  const label = (v) => `${v.variant[0].toUpperCase()}${v.variant.slice(1)} ${fmtPlain(fmtPrice(v.blended))}/M (−${Math.round((1 - v.blended / r.blended) * 100)}%)`;
+  const tip = 'Blended price at your mix for the same model from the same provider. Batch is asynchronous (results can take hours); flex is discounted but may queue or run slower. Untick "Delivery: standard only" to list them.';
+  return `<span class="delivery-hint" tabindex="0" data-tip="${esc(tip)}">${esc(cheaper.map(label).join(' · '))}</span>`;
+}
+
 function tierBadgeHtml(model) {
   const tiers = model.context_price_tiers;
   if (!Array.isArray(tiers) || !tiers.length) return '';
@@ -2300,7 +2337,9 @@ function providerMetaHtml(providerKey) {
     }
   }
   if (meta.privacy_policy_url) {
-    html += `<a href="${esc(meta.privacy_policy_url)}" target="_blank" rel="noopener" class="meta-link" title="Privacy Policy">🔒</a>`;
+    // A reviewed retention note (e.g. "inputs 7 days, outputs 30 days") rides on the privacy link.
+    const privacyTitle = meta.retention_note ? `Privacy Policy — Retention: ${meta.retention_note}` : 'Privacy Policy';
+    html += `<a href="${esc(meta.privacy_policy_url)}" target="_blank" rel="noopener" class="meta-link" title="${esc(privacyTitle)}">🔒</a>`;
   }
   if (meta.terms_of_service_url) {
     html += `<a href="${esc(meta.terms_of_service_url)}" target="_blank" rel="noopener" class="meta-link" title="Terms of Service">📋</a>`;
@@ -2417,7 +2456,7 @@ function renderModelRow(r, rank, groupKey, cheapest) {
     <td class="rank" data-label="#">${checkbox} ${rank}${cheapest ? ' 🏆' : ''}</td>
     <td data-label="Org"><span class="org-badge">${esc(orgDisplay(r.model.org))}</span></td>
     <td data-label="Provider">${renderProviderCell(r)}</td>
-    <td data-label="Model">${esc(modelDisplay)}${promo}${lifecycleBadgeHtml(r.model)}${tierBadgeHtml(r.model)}</td>
+    <td data-label="Model">${esc(modelDisplay)}${promo}${lifecycleBadgeHtml(r.model)}${tierBadgeHtml(r.model)}${deliveryHintHtml(r)}</td>
     <td data-label="Quantization">${r.model.quantization ? esc(String(r.model.quantization)) : '<span class="missing">Unknown</span>'}</td>
     <td class="num" data-label="Input $/M">${fmtPrice(p.input)}</td>
     <td class="num" data-label="Output $/M">${fmtPrice(p.output)}</td>

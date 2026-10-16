@@ -596,6 +596,11 @@ test('provider snippet: concrete title and description computed from the rendere
   const longTitle = providerPageTitle(long, 'Oct 2026');
   assert.ok(longTitle.length <= 65, longTitle);
   assert.match(longTitle, /^An Extremely Long Inference Provider Name API Pricing/);
+
+  // A reviewed retention note is shown verbatim; without one, nothing is invented.
+  assert.doesNotMatch(html, /Retention:/);
+  const noted = renderProviderPage({ ...provider, meta: { retains_prompts: true, retention_note: 'Inputs 7 days; outputs 30 days.' } }, { text: '2026-10-04' });
+  assert.match(noted, /Retention: Inputs 7 days; outputs 30 days\./);
 });
 
 test('model snippet: provider count, cheapest input, month, and readable model name', () => {

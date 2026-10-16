@@ -294,6 +294,10 @@ Safety checks:
 - Aborts if model count drops >15% vs previous run
 - Tests must pass before deploy (`needs: test`)
 
+## Contributing
+
+Want a provider listed or corrected? Open a [provider request](https://github.com/WyrdWerk/tokenwatch/issues/new?template=provider-request.yml) with its machine-readable pricing source and policy links — we write and maintain the fetcher, so please don't send prices as a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for how requests are handled and for other contributions.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).

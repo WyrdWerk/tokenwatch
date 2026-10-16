@@ -185,6 +185,7 @@ The pipeline includes unattended-operation safeguards:
 | `public/widget/embed.js` | Embeddable widget — Shadow DOM, auto-detects [data-tw-model], fetches API, renders pricing card |
 | `public/widget/demo.html` | Widget demo page |
 | `.github/workflows/refresh-pricing.yml` | Main pipeline: `test` (push, runs `node --test`), `refresh` (every 2h cron: test→fetch all pipelines→fetch-performance→commit 4 JSONs→generate-seo→SEO integrity guard→bust-cache→minify-json→deploy→/h/* smoke; post-commit steps gated on `changed`/`inputs.force`), `deploy` (push: generate-seo→guard→bust-cache→minify→deploy→smoke). Performance data (latency/throughput) sourced from OR (primary, requires key) + Lilac/Umans (direct). SEO artifacts regenerate every deploy (committed index.html may be stale; `npm run seo` regenerates from committed pricing.json). Cache-busted HTML + `/h/` copies are never committed. |
+| `CONTRIBUTING.md` / `.github/ISSUE_TEMPLATE/provider-request.yml` | How outside provider requests arrive (issue form, not price PRs) and how maintainers turn them into fetchers. |
 | `data/manual-pricing.csv` | Static pricing for CSV-sourced providers (Makora, Xiaomimimo) |
 | `data/zro-pricing.json` | Committed last-good Zro API-pricing snapshot (`source_url`, `fetched_at`, per-model current/original prices + promotion metadata). Refreshed at most daily via a 24h TTL; also the fallback when the live page fails. Committed by `refresh-pricing.yml`. |
 | `scripts/fetch-zro.mjs` | Zro Tier-3 ingestion: fetch → parse (`parseZroPricingHtml`) → fail-closed validate (`validateZroSnapshot`) → snapshot TTL reuse/fallback. Exposes `getZroCatalogRows()` which always returns ordinary catalog rows (provider `zro`) or last-good rows — never a partial slice, never zero-priced models as free. |
@@ -317,6 +318,12 @@ All three JSON files (`pricing.json`, `image-pricing.json`, `video-pricing.json`
 
 ### Historical plans (SHIPPED)
 Design plans under `docs/superpowers/plans/` and `docs/superpowers/specs/` (2026-07-09) for fal.ai, quality benchmarks, and models.dev enrichment are **complete** — treat as historical artifacts, not pending work. Also shipped: Hyper Tier-1 direct migration, Blended $/M column, Export CSV, Speed row in compare modal.
+
+## Provider requests and outside contributions
+
+- **External contributors and their agents:** do not open pull requests that add or change provider prices, CSV rows or hardcoded tables. Open the [provider request issue form](.github/ISSUE_TEMPLATE/provider-request.yml) with the machine-readable pricing source, pricing page, privacy/terms URLs and retention/training statement. Maintainers write the integration.
+- **Maintainers/agents handling a request:** follow [CONTRIBUTING.md](CONTRIBUTING.md) §How a request is handled — source preference (public endpoint → authenticated endpoint → own-page scrape; CSV/hardcoded only with a written reason), cite a primary URL for every price/retention/training value, `null` for unknowns (never copy input into cache, never zero-as-free), `:batch`/`:<tier>` for delivery variants, `MANUAL_PROVIDER_META` incl. optional `retention_note`, a parser test on a saved real response, then refresh and check the live site before closing the issue.
+- A provider-submitted PR is reviewed as a source of URLs, not data: rebuild it as a fetcher from the cited source (example: #44 → #45 Batchrate).
 
 ## Amp environment: global skills
 
