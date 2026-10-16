@@ -572,7 +572,7 @@ function canonicalModelId(id) {
 /** Mirror of modelSpellingKey() in shared/normalize.mjs (parity-tested):
  *  canonical id with separator/version spelling unified, SKU suffixes kept. */
 function modelSpellingKey(id) {
-  const tidy = (v) => canonicalModelId(String(v).replace(/:(batch|nitro|floor|exacto|online)$/i, ''))
+  const tidy = (v) => canonicalModelId(String(v).replace(/:(batch|flex|priority|fast|ultrafast|turbo|highspeed)$/i, '').replace(/:(nitro|floor|exacto|online)$/i, ''))
     .replace(/[()[\]]/g, '')
     .replace(/[\s_]+/g, '-')
     .replace(/-+/g, '-')
