@@ -42,7 +42,7 @@
 
 import { appendFile, readFile } from 'node:fs/promises';
 import {
-  perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseBatchrate, parseNeuralwatt, parseMerius, parseAster,
+  perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseBatchrate, openRouterEndpointSlug, parseNeuralwatt, parseMerius, parseAster,
   parseCoralbricks, fetchCoralbricksCatalog, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
   parseOpenCodeGoDocs,
   NON_TEXT_ID, isTextModel,
@@ -564,7 +564,7 @@ function parseSambaNova(data) {
 
 /** Fetch /endpoints for a single model, return per-backend rows. */
 async function fetchModelEndpoints(model) {
-  const slug = model.canonical_slug;
+  const slug = openRouterEndpointSlug(model);
   if (!slug) return [];
   // CRITICAL: do NOT encode the slug — the / is a literal path separator
   const url = `${OPENROUTER_ENDPOINT_BASE}/${slug}/endpoints`;

@@ -72,6 +72,17 @@ export function parseSference(data) {
       },
     }));
 }
+/**
+ * Slug for OpenRouter's per-model /endpoints call. Variant ids such as
+ * `anthropic/claude-haiku-5.5:batch` share the base model's `canonical_slug`,
+ * which returns real-time endpoints — so variants must be fetched by their own
+ * id to get variant (e.g. batch) pricing and providers.
+ */
+export function openRouterEndpointSlug(model) {
+  const id = typeof model?.id === 'string' ? model.id : '';
+  if (/:[a-z0-9-]+$/i.test(id)) return id;
+  return model?.canonical_slug || null;
+}
 /** Avian https://api.avian.io/v1/models → model records (prices already $/M). */
 export function parseAvian(data) {
   return (data.data || [])
