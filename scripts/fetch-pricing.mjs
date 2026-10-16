@@ -727,11 +727,13 @@ async function fetchProviderMeta() {
 const CSV_PROVIDER_SECTIONS = {
   'https://inference.makora.com/v1': 'makora',
   'https://api.xiaomimimo.com/v1': 'xiaomimimo',
+  'https://api.batchrate.ai/v1': 'batchrate',
 };
 
 const CSV_PROVIDER_NAMES = {
   makora: 'Makora',
   xiaomimimo: 'Xiaomimimo',
+  batchrate: 'Batchrate',
 };
 
 
