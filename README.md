@@ -183,6 +183,7 @@ Presets: Agentic (2.5/97/0.5), Balanced (30/50/20), Heavy output (10/0/90), No c
 | Makora, Xiaomimimo | 3 | CSV (`data/manual-pricing.csv`) |
 | OpenCode Go | 3 | Hardcoded |
 | Umans | 3 | Manually maintained `UMANS_MODELS` / `parseUmansHardcoded()` |
+| Refuseless | 3 | Public [pricing page](https://refuseless.com/pricing) scrape (`parseRefuselessPricingHtml`), hardcoded `REFUSELESS_MODELS` fallback; keyless `/v1/models` flags unpriced models |
 
 Arilo's public catalog supplies `cost.input`, `cost.output`, and `cost.cache_read` in USD per million tokens, plus `max_context_tokens`. Prices refresh from that API without credentials; other models and the `-alt` SKU are excluded. The provider's [October 5 clarification](https://github.com/WyrdWerk/tokenwatch/issues/22#issuecomment-5992990470) confirms MXFP4, a 60,000-token output limit, no separate cache-write charge, and that the original $10/1.111B subscription quote is stale. The coding-plan badge indicates availability, not a discount to PAYG rates. Hong Kong and Ireland are provider-reported datacenter locations; headquarters remains unknown. ZDR remains unconfirmed: the provider says diagnostic logging is non-persistent and upstream hosts use ZDR, but its [privacy policy §2](https://arilo.id/privacy) still permits brief diagnostic content logging and image-description caching. Training is opt-in through the Research Program (§3); the 30-day request-log period (§8) is not a prompt-retention limit.
 

@@ -685,6 +685,71 @@ export function parseOpenCodeGoDocs(html) {
   return rows;
 }
 
+// ── Refuseless (Tier 3, official public pricing page) ────────────────────────
+//
+// Refuseless publishes per-token prices only on its server-rendered pricing
+// page: one `pt-table` per lineup group (abliterated / non-abliterated). The
+// public /v1/models catalog carries ids and context but no prices. Each row
+// exposes the exact API id in its copy button and labels cells via
+// `data-label`, so the parser never depends on column order or display names.
+
+export const REFUSELESS_PRICING_URL = 'https://refuseless.com/pricing';
+
+function refuselessCellText(html) {
+  return html.replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+}
+
+/** "$0.35" → 0.35 ($/M); anything without a dollar amount → null. */
+export function parseRefuselessPrice(text) {
+  const m = String(text || '').match(/\$\s*(\d+(?:\.\d+)?)/);
+  return m ? Number.parseFloat(m[1]) : null;
+}
+
+/** "1M" → 1048576, "256K" → 262144 (binary units, matching /v1/models). */
+export function parseRefuselessContext(text) {
+  const m = String(text || '').trim().match(/^(\d+(?:\.\d+)?)\s*([KM])?$/i);
+  if (!m) return null;
+  const unit = { K: 1024, M: 1024 * 1024 }[(m[2] || '').toUpperCase()] || 1;
+  return Math.round(Number.parseFloat(m[1]) * unit);
+}
+
+/**
+ * Scrape the Refuseless pricing tables into price rows.
+ * Pure function over the HTML string.
+ * @param {string} html pricing page HTML
+ * @returns {Array<{id: string, name: string, input: number, output: number,
+ *   cache_read: number|null, context_length: number|null}>}
+ */
+export function parseRefuselessPricingHtml(html) {
+  if (typeof html !== 'string' || !html) return [];
+  const rows = [];
+  const seen = new Set();
+  const trs = html.match(/<tr\b[^>]*class="[^"]*\bpt-row\b[^"]*"[\s\S]*?<\/tr>/gi) || [];
+  for (const tr of trs) {
+    const id = tr.match(/class="[^"]*\bpt-id\b[^"]*"[^>]*>\s*<span>([^<]+)<\/span>/i)?.[1]?.trim();
+    if (!id || seen.has(id)) continue;
+    const cell = (label) => {
+      const m = tr.match(new RegExp(`<td\\b[^>]*data-label="${label}"[^>]*>([\\s\\S]*?)<\\/td>`, 'i'));
+      return m ? refuselessCellText(m[1]) : '';
+    };
+    const input = parseRefuselessPrice(cell('Input'));
+    const output = parseRefuselessPrice(cell('Output'));
+    // Zero/negative or missing prices → skip (data-filter convention)
+    if (!input || !output) continue;
+    seen.add(id);
+    const nameHtml = tr.match(/class="[^"]*\bpt-name\b[^"]*"[^>]*>([\s\S]*?)<\/a>/i)?.[1] || '';
+    rows.push({
+      id,
+      name: refuselessCellText(nameHtml) || id,
+      input,
+      output,
+      cache_read: parseRefuselessPrice(cell('Cached')),
+      context_length: parseRefuselessContext(cell('Context')),
+    });
+  }
+  return rows;
+}
+
 // ── Zro (Tier 3, official public pricing page) ───────────────────────────────
 //
 // Zro publishes pay-as-you-go API pricing only on its server-rendered marketing
