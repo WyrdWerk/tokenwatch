@@ -17,6 +17,8 @@
  *          (each backend like Fireworks, Together, Novita becomes its own row)
  * Tier 3 — CSV-sourced: Makora, Xiaomimimo (manual-pricing.csv)
  *          OpenCode Go (hardcoded)
+ *          Refuseless (public pricing page scrape, hardcoded fallback;
+ *          keyless /v1/models used only to flag unpriced models)
  *          Zro (official public pricing page https://zro.moonmath.ai/pricing,
  *          daily with a committed last-good snapshot; ingested before
  *          OpenRouter so Zro's own tariff wins over an OpenRouter backend)
@@ -45,6 +47,7 @@ import {
   perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseBatchrate, openRouterEndpointSlug, selectOpenRouterEndpoints, parseNeuralwatt, parseMerius, parseAster,
   parseCoralbricks, fetchCoralbricksCatalog, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
   parseOpenCodeGoDocs,
+  parseRefuselessPricingHtml, REFUSELESS_PRICING_URL,
   NON_TEXT_ID, isTextModel,
   ORG_ALIASES, PROVIDER_NAME_MAP,
   orgFromId, orgFromName,
@@ -391,6 +394,16 @@ const MANUAL_PROVIDER_META = {
     // requests" for its plans. That is a marketing-page claim, not a reviewed
     // policy verdict — leave retains_prompts unset rather than asserting ZDR.
     may_train: false,
+    retention_days: null,
+  },
+  refuseless: {
+    privacy_policy_url: 'https://refuseless.com/privacy',
+    terms_of_service_url: 'https://refuseless.com/terms',
+    status_page_url: null,
+    headquarters: null,
+    datacenters: null,
+    // "Zero prompt retention" is marketing-page copy, not a reviewed policy
+    // verdict — leave retains_prompts and may_train unset (same stance as Zro).
     retention_days: null,
   },
 };
@@ -920,6 +933,68 @@ async function fetchOpenCodeGoPricing() {
     }));
   }
 
+// ── Refuseless (pricing page scrape, hardcoded fallback) ─────────────────────
+// Fallback only — update from https://refuseless.com/pricing when the scrape
+// warns. Prices are USD per 1M tokens.
+const REFUSELESS_MODELS = [
+  { id: 'glm-5.3-abliterated',                   name: 'GLM 5.3 Abliterated',                   input: 2.00, output: 3.00, cache_read: 0.35,  context_length: 1048576 },
+  { id: 'glm-5.3-flash-abliterated',       name: 'GLM 5.3 Flash Abliterated',             input: 0.25, output: 0.80, cache_read: 0.15,  context_length: 1048576 },
+  { id: 'qwen3.8-flash-next-abliterated',  name: 'Qwen3.8 Flash Next Abliterated',        input: 0.18, output: 0.60, cache_read: 0.09,  context_length: 262144 },
+  { id: 'deepseek-v4.1-flash-abliterated', name: 'DeepSeek V4.1 Flash Abliterated',       input: 0.60, output: 1.60, cache_read: 0.15,  context_length: 1048576 },
+  { id: 'deepseek-v4.1-flash-fast',        name: 'DeepSeek V4.1 Flash 1017 (Safeguards)', input: 0.05, output: 0.15, cache_read: 0.004, context_length: 1048576 },
+];
+
+const REFUSELESS_MODELS_URL = 'https://api.refuseless.com/v1/models';
+
+/**
+ * Fetch Refuseless pricing by scraping its public pricing page (primary),
+ * with fallback to REFUSELESS_MODELS. The keyless /v1/models catalog has no
+ * prices; it only fills missing context and flags models the page lacks.
+ * @returns {Promise<{models: Array, source: 'scraped'|'manual'}>}
+ */
+async function fetchRefuselessPricing() {
+  let rows = null;
+  try {
+    const resp = await fetch(REFUSELESS_PRICING_URL, { redirect: 'follow', signal: AbortSignal.timeout(45_000) });
+    if (resp.ok) {
+      const parsed = parseRefuselessPricingHtml(await resp.text());
+      // Sanity floor: a half-parsed table is worse than the (stale) fallback.
+      if (parsed.length >= 4) rows = parsed;
+      else console.warn(`⚠ Refuseless pricing scrape found only ${parsed.length} priced rows — falling back to hardcoded pricing`);
+    } else {
+      console.warn(`⚠ Refuseless pricing fetch HTTP ${resp.status} — falling back to hardcoded pricing`);
+    }
+  } catch (err) {
+    console.warn(`⚠ Refuseless pricing fetch failed: ${err.message} — falling back to hardcoded pricing`);
+  }
+  const source = rows ? 'scraped' : 'manual';
+  if (!rows) rows = REFUSELESS_MODELS;
+
+  let catalog = null;
+  try {
+    const data = await fetchJson(REFUSELESS_MODELS_URL);
+    catalog = new Map((data?.data || []).map((m) => [m.id, m]));
+  } catch (err) {
+    console.warn(`⚠ Refuseless /v1/models check failed: ${err.message}`);
+  }
+  if (catalog) {
+    const priced = new Set(rows.map((r) => r.id));
+    const unpriced = [...catalog.keys()].filter((id) => !priced.has(id));
+    if (unpriced.length) console.warn(`⚠ Refuseless models without a price (skipped): ${unpriced.join(', ')}`);
+  }
+
+  const models = rows.map((m) => ({
+    id: m.id,
+    name: m.name,
+    provider: 'refuseless',
+    quantization: null,
+    discount: 0,
+    context_length: m.context_length || catalog?.get(m.id)?.context_length || null,
+    pricing: { input: m.input, output: m.output, cache_read: m.cache_read ?? null, cache_write: null },
+  }));
+  return { models, source };
+}
+
 // ── dedup / precedence ────────────────────────────────────────────────────────
 // (dedupKey, dedupModels — imported from ./lib.mjs)
 
@@ -1052,6 +1127,17 @@ async function main() {
   } catch (err) {
     out.providers.push({ key: 'umans', name: 'Umans AI', model_count: 0, status: `error: ${err.message}` });
     console.error(`✗ Umans AI: ${err.message}`);
+  }
+
+  try {
+    const { models: rlModels, source } = await fetchRefuselessPricing();
+    out.providers.push({ key: 'refuseless', name: 'Refuseless', model_count: rlModels.length, status: 'ok' });
+    stampSource(rlModels, source);
+    tieredModels.push(...rlModels);
+    console.log(`✓ Refuseless (${source}): ${rlModels.length} models`);
+  } catch (err) {
+    out.providers.push({ key: 'refuseless', name: 'Refuseless', model_count: 0, status: `error: ${err.message}` });
+    console.error(`✗ Refuseless: ${err.message}`);
   }
 
   // ── LLM Gateway differential-only guard ──
