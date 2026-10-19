@@ -47,6 +47,8 @@ jobs:
       - name: Run tests
         env:
           TW_PARITY_LIVE: '0'
+          # Upstream open-weights conflicts are reported to an issue, not blocking (PR CI stays strict).
+          TW_OPEN_WEIGHTS_COVERAGE: '0'
         run: node --test test/*.test.mjs
 
       - name: Fetch AA benchmarks (writes data/aa-benchmarks.json)

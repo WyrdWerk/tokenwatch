@@ -10,6 +10,7 @@ import {
   resolveOpenWeightsForOfferings,
 } from '../shared/open-weights.mjs';
 import { buildIndexFromApi } from '../scripts/fetch-modelsdev.mjs';
+import { ISSUE_MARKER, findUnreviewedConflicts, reportOpenWeightsConflicts } from '../scripts/report-open-weights-conflicts.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -272,7 +273,31 @@ test('models.dev models.json licenses remain available even without provider rec
   });
 });
 
-test('every conflicting canonical model has a source-cited reviewed override', async () => {
+// Refresh workflows set TW_OPEN_WEIGHTS_COVERAGE=0: new upstream conflicts are reported to an
+// issue there instead of blocking the fetch that could resolve them. PR CI stays strict.
+const OPEN_WEIGHTS_COVERAGE = process.env.TW_OPEN_WEIGHTS_COVERAGE !== '0';
+
+test('open-weights overrides are source-cited and reviewed', async () => {
+  const overrides = JSON.parse(await readFile(join(__dirname, '..', 'data', 'open-weights-overrides.json'), 'utf8'));
+  for (const [id, override] of Object.entries(overrides)) {
+    assert.equal(typeof override.open_weights, 'boolean', `${id} lacks a boolean override`);
+    assert.match(override.source_url || '', /^https:\/\//, `${id} lacks an HTTPS source citation`);
+    assert.ok(typeof override.source_note === 'string' && override.source_note.trim(), `${id} lacks a source note`);
+    assert.ok(typeof override.license === 'string' && override.license.trim(), `${id} lacks a cited license`);
+  }
+  assert.equal(overrides['gpt-oss-120b:batch'], undefined, 'batch variants should reuse the base override');
+  assert.equal(overrides['gpt-oss-20b:batch'], undefined, 'batch variants should reuse the base override');
+  assert.deepEqual(overrides['qwen3-vl-32b-instruct'], {
+    open_weights: true,
+    license: 'apache-2.0',
+    source_url: 'https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct',
+    source_note: 'Official Qwen model repository publishes the Apache-2.0-licensed Qwen3-VL-32B-Instruct weights.',
+  });
+});
+
+test('every conflicting canonical model has a reviewed override', {
+  skip: !OPEN_WEIGHTS_COVERAGE && 'TW_OPEN_WEIGHTS_COVERAGE=0 (refresh reports conflicts to an issue)',
+}, async () => {
   const [pricing, overrides] = await Promise.all([
     readFile(join(__dirname, '..', 'public', 'pricing.json'), 'utf8').then(JSON.parse),
     readFile(join(__dirname, '..', 'data', 'open-weights-overrides.json'), 'utf8').then(JSON.parse),
@@ -292,25 +317,68 @@ test('every conflicting canonical model has a source-cited reviewed override', a
     .map(([id]) => id);
   // Non-vacuity floor only: the count shrinks as models.dev resolves conflicts (21 → 19 on 2026-10-09).
   assert.ok(conflicts.length >= 10, `expected at least 10 current conflicts, found ${conflicts.length}`);
-  for (const [id, override] of Object.entries(overrides)) {
-    assert.equal(typeof override.open_weights, 'boolean', `${id} lacks a boolean override`);
-    assert.match(override.source_url || '', /^https:\/\//, `${id} lacks an HTTPS source citation`);
-    assert.ok(typeof override.source_note === 'string' && override.source_note.trim(), `${id} lacks a source note`);
-    assert.ok(typeof override.license === 'string' && override.license.trim(), `${id} lacks a cited license`);
+  assert.deepEqual(
+    findUnreviewedConflicts(pricing, overrides).map(({ id }) => id),
+    [],
+    'add reviewed entries to data/open-weights-overrides.json for these conflicting models',
+  );
+});
+
+test('conflict finder flags only unreviewed disagreements and reuses base overrides', () => {
+  const pricing = { models: [
+    { id: 'a-model', provider: 'p1', modelsdev: { open_weights: true } },
+    { id: 'a-model', provider: 'p2', modelsdev_model: { open_weights: false } },
+    { id: 'b-model', provider: 'p1', modelsdev: { open_weights: true } },
+    { id: 'b-model', provider: 'p2', modelsdev: { open_weights: true } },
+    { id: 'c-model:batch', provider: 'p1', modelsdev: { open_weights: true } },
+    { id: 'c-model:batch', provider: 'p2', modelsdev: { open_weights: false } },
+  ] };
+  const conflicts = findUnreviewedConflicts(pricing, { 'c-model': { open_weights: true } });
+  assert.deepEqual(conflicts.map(({ id }) => id), [canonicalId('a-model')]);
+  assert.deepEqual(conflicts[0].sources.map(s => [s.provider, s.open_weights]), [['p1', true], ['p2', false]]);
+});
+
+function conflictIssueDouble(issues) {
+  const calls = [];
+  const listForRepo = () => {};
+  const record = (action) => async (params) => { calls.push({ action, ...params }); return { data: {} }; };
+  return { calls, github: {
+    paginate: async (method) => { assert.equal(method, listForRepo); return issues; },
+    rest: { issues: { listForRepo, create: record('create'), update: record('update'), createComment: record('comment') } },
+  } };
+}
+const issueContext = { repo: { owner: 'WyrdWerk', repo: 'tokenwatch' }, serverUrl: 'https://github.com', runId: 1 };
+const sampleConflict = [{ id: 'a-model', sources: [{ provider: 'p1', open_weights: true }, { provider: 'p2', open_weights: false }] }];
+
+test('conflict report opens one issue, then edits it in place', async () => {
+  const fresh = conflictIssueDouble([]);
+  await reportOpenWeightsConflicts({ github: fresh.github, context: issueContext, conflicts: sampleConflict });
+  assert.deepEqual(fresh.calls.map(c => c.action), ['create']);
+  assert.match(fresh.calls[0].body, /`a-model` \| p1 `true`, p2 `false`/);
+
+  const existing = conflictIssueDouble([{ number: 9, body: ISSUE_MARKER, pull_request: {} }, { number: 12, body: ISSUE_MARKER }]);
+  await reportOpenWeightsConflicts({ github: existing.github, context: issueContext, conflicts: sampleConflict });
+  assert.deepEqual(existing.calls.map(c => [c.action, c.issue_number]), [['update', 12]]);
+});
+
+test('conflict report closes the tracking issue once every conflict is reviewed', async () => {
+  const resolved = conflictIssueDouble([{ number: 12, body: ISSUE_MARKER }]);
+  await reportOpenWeightsConflicts({ github: resolved.github, context: issueContext, conflicts: [] });
+  assert.deepEqual(resolved.calls.map(c => c.action), ['comment', 'update']);
+  assert.equal(resolved.calls[1].state, 'closed');
+
+  const none = conflictIssueDouble([]);
+  await reportOpenWeightsConflicts({ github: none.github, context: issueContext, conflicts: [] });
+  assert.equal(none.calls.length, 0);
+});
+
+test('refresh workflows report open-weights conflicts instead of blocking; PR CI stays strict', async () => {
+  const read = (f) => readFile(join(__dirname, '..', '.github', 'workflows', f), 'utf8');
+  for (const f of ['refresh-aa.yml', 'refresh-performance.yml', 'refresh-pricing.yml']) {
+    assert.match(await read(f), /TW_OPEN_WEIGHTS_COVERAGE: '0'/, `${f} should skip the coverage gate`);
   }
-  for (const id of conflicts) {
-    const lookupId = id.replace(/(:batch|-turbo|-fast)$/i, '');
-    const override = overrides[id] || overrides[lookupId];
-    assert.equal(typeof override?.open_weights, 'boolean', `${id} lacks a boolean override`);
-  }
-  assert.equal(overrides['gpt-oss-120b:batch'], undefined, 'batch variants should reuse the base override');
-  assert.equal(overrides['gpt-oss-20b:batch'], undefined, 'batch variants should reuse the base override');
-  assert.deepEqual(overrides['qwen3-vl-32b-instruct'], {
-    open_weights: true,
-    license: 'apache-2.0',
-    source_url: 'https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct',
-    source_note: 'Official Qwen model repository publishes the Apache-2.0-licensed Qwen3-VL-32B-Instruct weights.',
-  });
+  assert.doesNotMatch(await read('ci.yml'), /TW_OPEN_WEIGHTS_COVERAGE/);
+  assert.match(await read('refresh-pricing.yml'), /reportOpenWeightsConflicts/);
 });
 
 test('models.dev enrichment preserves explicit booleans, unknowns, and license', () => {
