@@ -75,6 +75,8 @@ jobs:
       - name: Run tests
         env:
           TW_PARITY_LIVE: '0'
+          # Upstream open-weights conflicts are reported to an issue, not blocking (PR CI stays strict).
+          TW_OPEN_WEIGHTS_COVERAGE: '0'
         run: node --test test/*.test.mjs
 
       - name: Fetch & normalize text pricing
@@ -145,6 +147,20 @@ jobs:
             const { reportHistoryFailure } = await import(`${process.cwd()}/scripts/report-history-failure.mjs`);
             const error = await readFile('.wrangler/history-update.log', 'utf8').catch(() => 'Snapshot step failed without a log; inspect the workflow run.');
             await reportHistoryFailure({ github, context, error, secrets: [process.env.CLOUDFLARE_D1_TOKEN] });
+
+      - name: Report open-weights conflicts
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { readFile } = await import('node:fs/promises');
+            const { findUnreviewedConflicts, reportOpenWeightsConflicts } = await import(`${process.cwd()}/scripts/report-open-weights-conflicts.mjs`);
+            const [pricing, overrides] = await Promise.all([
+              readFile('public/pricing.json', 'utf8').then(JSON.parse),
+              readFile('data/open-weights-overrides.json', 'utf8').then(JSON.parse),
+            ]);
+            await reportOpenWeightsConflicts({ github, context, conflicts: findUnreviewedConflicts(pricing, overrides) });
 
       - name: Commit pricing + performance data
         id: commit
