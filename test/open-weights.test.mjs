@@ -315,8 +315,19 @@ test('every conflicting canonical model has a reviewed override', {
   const conflicts = [...valuesByCanonical]
     .filter(([, values]) => values.size > 1)
     .map(([id]) => id);
-  // Non-vacuity floor only: the count shrinks as models.dev resolves conflicts (21 → 19 on 2026-10-09).
-  assert.ok(conflicts.length >= 10, `expected at least 10 current conflicts, found ${conflicts.length}`);
+  // Non-vacuity guard. The upstream count shrinks as models.dev resolves
+  // conflicts (21 → 19 on 2026-10-09, 0 by 2026-10-24 once every remaining
+  // disagreement had a reviewed override), so assert the detection still
+  // works rather than pinning how many conflicts upstream happens to have.
+  assert.ok(valuesByCanonical.size > 0, 'expected models.dev open-weights data to be present');
+  assert.deepEqual(
+    detectConflicts([
+      { id: 'floor-check', modelsdev: { open_weights: true } },
+      { id: 'floor-check', modelsdev_model: { open_weights: false } },
+    ]),
+    ['floor-check'],
+    'conflict detection must still flag a disagreement',
+  );
   assert.deepEqual(
     findUnreviewedConflicts(pricing, overrides).map(({ id }) => id),
     [],
