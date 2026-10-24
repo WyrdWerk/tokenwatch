@@ -46,6 +46,7 @@ import { appendFile, readFile } from 'node:fs/promises';
 import {
   perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseBatchrate, openRouterEndpointSlug, selectOpenRouterEndpoints, parseNeuralwatt, parseMerius, parseAster,
   parseCoralbricks, fetchCoralbricksCatalog, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
+  parseRunanywhere, parseEngy, parseOpenscale,
   parseOpenCodeGoDocs,
   parseRefuselessPricingHtml, REFUSELESS_PRICING_URL,
   NON_TEXT_ID, isTextModel,
@@ -182,7 +183,28 @@ const DIRECT_PROVIDERS = [
     parse: parseLlmgateway,
     apiKeyEnv: 'LLMGATEWAY_API_KEY',
   },
-  ];
+  {
+    // Wally Cloud. Public /models — no key required.
+    key: 'runanywhere',
+    name: 'Wally Cloud (RunAnywhere)',
+    url: 'https://inference.runanywhere.ai/v1/models',
+    parse: parseRunanywhere,
+  },
+  {
+    // Public /models — no key required.
+    key: 'engy',
+    name: 'engy',
+    url: 'https://api.engy.ai/v1/models',
+    parse: parseEngy,
+  },
+  {
+    // Public /models — no key required.
+    key: 'openscale',
+    name: 'OpenScale',
+    url: 'https://api.openscale.so/v1/models',
+    parse: parseOpenscale,
+  },
+];
 
 // ── OpenRouter config ──────────────────────────────────────────────────────────
 
