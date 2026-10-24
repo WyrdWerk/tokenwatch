@@ -295,15 +295,10 @@ test('open-weights overrides are source-cited and reviewed', async () => {
   });
 });
 
-test('every conflicting canonical model has a reviewed override', {
-  skip: !OPEN_WEIGHTS_COVERAGE && 'TW_OPEN_WEIGHTS_COVERAGE=0 (refresh reports conflicts to an issue)',
-}, async () => {
-  const [pricing, overrides] = await Promise.all([
-    readFile(join(__dirname, '..', 'public', 'pricing.json'), 'utf8').then(JSON.parse),
-    readFile(join(__dirname, '..', 'data', 'open-weights-overrides.json'), 'utf8').then(JSON.parse),
-  ]);
+/** Canonical ids whose models.dev sources disagree on open_weights. */
+function detectConflicts(models) {
   const valuesByCanonical = new Map();
-  for (const model of pricing.models) {
+  for (const model of models) {
     for (const source of [model.modelsdev, model.modelsdev_model]) {
       if (typeof source?.open_weights !== 'boolean') continue;
       const id = canonicalId(model.id);
@@ -311,12 +306,32 @@ test('every conflicting canonical model has a reviewed override', {
       valuesByCanonical.get(id).add(source.open_weights);
     }
   }
-
-  const conflicts = [...valuesByCanonical]
+  return [...valuesByCanonical]
     .filter(([, values]) => values.size > 1)
     .map(([id]) => id);
-  // Non-vacuity floor only: the count shrinks as models.dev resolves conflicts (21 → 19 on 2026-10-09).
-  assert.ok(conflicts.length >= 10, `expected at least 10 current conflicts, found ${conflicts.length}`);
+}
+
+test('every conflicting canonical model has a reviewed override', {
+  skip: !OPEN_WEIGHTS_COVERAGE && 'TW_OPEN_WEIGHTS_COVERAGE=0 (refresh reports conflicts to an issue)',
+}, async () => {
+  const [pricing, overrides] = await Promise.all([
+    readFile(join(__dirname, '..', 'public', 'pricing.json'), 'utf8').then(JSON.parse),
+    readFile(join(__dirname, '..', 'data', 'open-weights-overrides.json'), 'utf8').then(JSON.parse),
+  ]);
+  // Non-vacuity guard. The upstream count shrinks as models.dev resolves
+  // conflicts (21 → 19 on 2026-10-09, 0 by 2026-10-24 once every remaining
+  // disagreement had a reviewed override), so assert the detection still
+  // works rather than pinning how many conflicts upstream happens to have.
+  assert.ok(pricing.models.some((m) => typeof m.modelsdev?.open_weights === 'boolean' || typeof m.modelsdev_model?.open_weights === 'boolean'),
+    'expected models.dev open-weights data to be present');
+  assert.deepEqual(
+    detectConflicts([
+      { id: 'floor-check', modelsdev: { open_weights: true } },
+      { id: 'floor-check', modelsdev_model: { open_weights: false } },
+    ]),
+    ['floor-check'],
+    'conflict detection must still flag a disagreement',
+  );
   assert.deepEqual(
     findUnreviewedConflicts(pricing, overrides).map(({ id }) => id),
     [],

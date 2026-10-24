@@ -147,7 +147,13 @@ test('Arena favorite callout has a provider action and linked date/license attri
   assert.doesNotMatch(app, /does not yet reflect reader preference|does not yet reflect human preference/i);
   assert.match(methodology, /Arena preference ratings/);
   assert.match(methodology, /https:\/\/creativecommons\.org\/licenses\/by\/4\.0\//);
-  assert.match(methodology, /2026-10-02/);
+  // The rating date is live data (Arena's weekly publish date), so derive it
+  // from the snapshot the page was rendered from rather than pinning a literal
+  // that goes stale on every refresh.
+  const arena = JSON.parse(await readFile(new URL('../data/arena-benchmarks.json', import.meta.url), 'utf8'));
+  const published = arena._meta?.categories?.overall?.leaderboard_publish_date;
+  assert.match(published, /^\d{4}-\d{2}-\d{2}$/, 'Arena snapshot must publish a category date');
+  assert.ok(methodology.includes(`dated ${published}`), `methodology should cite the Arena publish date ${published}`);
 });
 
 test('provider list features the top three, or the close-call priority winners, and keeps a selection expanded', async () => {
