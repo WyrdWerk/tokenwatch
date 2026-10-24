@@ -307,6 +307,22 @@ test('provider pages require three distinct priced model identities across catal
   assert.equal((directory.match(/<h1\b/g) || []).length, 1);
 });
 
+test('provider directory renders a search filter with a per-row haystack', () => {
+  const pricing = {
+    providers: [], providers_meta: {},
+    models: textModels.map((model, index) => ({ ...model, id: `m-${index}@alpha`, provider: 'alpha' })),
+  };
+  const pages = collectProviderPages({ pricing, imagePricing: { models: [] }, videoPricing: { models: [] } });
+  const directory = renderProviderDirectoryPage(pages);
+  assert.match(directory, /<input type="search" id="directorySearch"/);
+  assert.match(directory, /<label for="directorySearch">/);
+  assert.match(directory, /id="directoryCount"/);
+  assert.match(directory, /id="directoryEmpty"/);
+  // Every row carries a lowercased haystack so the client never parses cell markup.
+  assert.match(directory, /<tr data-search="alpha alpha">/);
+  assert.equal((directory.match(/data-search="/g) || []).length, pages.length);
+});
+
 test('published provider URLs survive missing coverage without admitting new landing pages', () => {
   const pricing = {
     providers: [{ key: 'missing', name: 'Missing Provider' }], providers_meta: {},
