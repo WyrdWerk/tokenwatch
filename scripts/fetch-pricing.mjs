@@ -46,6 +46,7 @@ import { appendFile, readFile } from 'node:fs/promises';
 import {
   perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseBatchrate, openRouterEndpointSlug, selectOpenRouterEndpoints, parseNeuralwatt, parseMerius, parseAster,
   parseCoralbricks, fetchCoralbricksCatalog, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
+  parseRunanywhere, parseEngy, parseOpenscale,
   parseOpenCodeGoDocs,
   parseRefuselessPricingHtml, REFUSELESS_PRICING_URL,
   NON_TEXT_ID, isTextModel,
@@ -182,7 +183,28 @@ const DIRECT_PROVIDERS = [
     parse: parseLlmgateway,
     apiKeyEnv: 'LLMGATEWAY_API_KEY',
   },
-  ];
+  {
+    // Wally Cloud. Public /models — no key required.
+    key: 'runanywhere',
+    name: 'Wally Cloud (RunAnywhere)',
+    url: 'https://inference.runanywhere.ai/v1/models',
+    parse: parseRunanywhere,
+  },
+  {
+    // Public /models — no key required.
+    key: 'engy',
+    name: 'engy',
+    url: 'https://api.engy.ai/v1/models',
+    parse: parseEngy,
+  },
+  {
+    // Public /models — no key required.
+    key: 'openscale',
+    name: 'OpenScale',
+    url: 'https://api.openscale.so/v1/models',
+    parse: parseOpenscale,
+  },
+];
 
 // ── OpenRouter config ──────────────────────────────────────────────────────────
 
@@ -375,6 +397,46 @@ const MANUAL_PROVIDER_META = {
     retains_prompts: false,  // Privacy §X-A Model API: prompt content held in memory only for the request, then discarded
     may_train: false,         // Privacy §X-A: no train/fine-tune/distill/evaluate on prompts or completions
     retention_days: 1,        // Narrow exception: non-streaming Idempotency-Key replay cache up to 24h (privacy §X-A)
+  },
+  runanywhere: {
+    // RunAnywhere, Inc. Policies reviewed 2026-10-24 (privacy effective 2026-09-28,
+    // terms effective 2026-09-19). Wally Cloud is the hosted inference path;
+    // the local-SDK telemetry described on the same page does not apply to it.
+    privacy_policy_url: 'https://runanywhere.ai/legal/privacy',
+    terms_of_service_url: 'https://runanywhere.ai/legal/terms',
+    status_page_url: null,   // No public status page found
+    headquarters: 'US',      // RunAnywhere, Inc.; terms §9 defers governing law to its jurisdiction
+    datacenters: ['US'],     // /v1/models datacenters[].country_code = US on every hosted model
+    retains_prompts: false,  // Privacy "Wally: zero data retention": prompt/completion bodies are not stored
+    may_train: false,        // Privacy: Wally does not store the text sent or returned; no training claim made
+    retention_days: 0,       // Bodies never retained; usage records (tokens, timestamps, spend) for billing only
+  },
+  engy: {
+    // Policies reviewed 2026-10-24 (privacy effective 2026-10-21).
+    privacy_policy_url: 'https://engy.ai/privacy',
+    terms_of_service_url: 'https://engy.ai/terms',
+    status_page_url: null,   // Docs link a status page at /status; not verified as a status host
+    headquarters: null,      // No jurisdiction or entity address published on the legal pages
+    datacenters: null,       // Served by engy-operated or independent network GPU workers; not disclosed
+    // Gateway is ZDR for content on every model, but requests may land on a
+    // worker whose independent operator holds admin access. End-to-end ZDR
+    // requires the per-request/provider ZDR flag; we tag the default, unflagged path.
+    retains_prompts: false,  // Privacy: gateway never stores prompts/completions/tool calls/images
+    may_train: false,        // Privacy + Terms: no training unless the customer opts out of ZDR
+    retention_days: 0,       // Content: none. qwen3.6-35b-a3b integrity-audit token IDs purge within 30 days
+    retention_note: 'Gateway stores no request content. End-to-end ZDR requires the ZDR flag — unflagged requests may reach a worker run by an independent operator. Integrity audits (qwen3.6-35b-a3b only) keep response token IDs up to 30 days.',
+  },
+  openscale: {
+    // AFG Ventura Teknologi Pte Ltd. Policies reviewed 2026-10-24 (privacy last updated 2026-10-21).
+    privacy_policy_url: 'https://openscale.so/privacy',
+    terms_of_service_url: 'https://openscale.so/terms',
+    status_page_url: null,   // None published
+    headquarters: 'SG',      // AFG Ventura Teknologi Pte Ltd (Singapore); every model served from Singapore
+    datacenters: ['SG'],     // Privacy §5: every model served from Singapore; also /v1/models datacenters
+    retains_prompts: false,  // Privacy §5: Chat Completions and Messages bodies are never stored
+    may_train: false,        // Privacy §5: "we never use your prompts or model outputs to train models"
+    retention_days: 0,       // /v1/chat/completions default path stores nothing
+    retention_note: 'Chat Completions and Messages are never stored. Responses API stores responses for 30 days unless store:false or account ZDR is enabled; that is not the calculator default path.',
   },
   llmgateway: {
     privacy_policy_url: 'https://llmgateway.io/legal/privacy',
