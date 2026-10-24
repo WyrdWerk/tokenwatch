@@ -46,6 +46,27 @@ export function canonicalId(id) {
   return k;
 }
 
+/** OpenRouter service tiers (endpoint tag tokens such as `openai/flex`).
+ *  A tier endpoint becomes its own offering with a `:<tier>` id suffix. */
+export const SERVICE_TIERS = ['flex', 'priority', 'fast', 'ultrafast', 'turbo', 'highspeed'];
+
+/** Non-standard delivery variants: `:batch` plus the `:<tier>` service tiers.
+ *  These are alternative ways to buy the same model, hidden by default and
+ *  excluded from model pages and default recommendations. Colon form only —
+ *  `-turbo`/`-fast` in a model name are distinct models, not tiers. */
+export const DELIVERY_VARIANT_RE = new RegExp(`:(batch|${SERVICE_TIERS.join('|')})$`, 'i');
+
+/** 'openai/gpt-6.1-sol:flex' → 'flex'; plain ids → null. */
+export function deliveryVariant(id) {
+  const match = String(id || '').match(DELIVERY_VARIANT_RE);
+  return match ? match[1].toLowerCase() : null;
+}
+
+/** Drop a trailing delivery variant: 'x/y:batch' → 'x/y'. */
+export function stripDeliveryVariant(id) {
+  return String(id || '').replace(DELIVERY_VARIANT_RE, '');
+}
+
 /** Quantization/tier suffixes that may appear at the END of a canonical ID.
  *  Shared by orgLookupKey (strip for org resolution) and quantFromId (extract
  *  for the quantization field) — keep the list in ONE place to prevent drift. */
@@ -85,7 +106,7 @@ export const FAMILY_SUFFIX_RE = /-(fast|flex|speed|highspeed|off-peak|peak|batch
  * selection). Search-only; dedup keeps canonicalId.
  */
 export function modelSpellingKey(id) {
-  const tidy = (v) => canonicalId(String(v).replace(/:(batch|nitro|floor|exacto|online)$/i, ''))
+  const tidy = (v) => canonicalId(String(v).replace(DELIVERY_VARIANT_RE, '').replace(/:(nitro|floor|exacto|online)$/i, ''))
     .replace(/[()[\]]/g, '')                // "(off-peak)" → "off-peak"
     .replace(/[\s_]+/g, '-')
     .replace(/-+/g, '-')
