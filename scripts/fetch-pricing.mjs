@@ -46,6 +46,7 @@ import { appendFile, readFile } from 'node:fs/promises';
 import {
   perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseBatchrate, openRouterEndpointSlug, selectOpenRouterEndpoints, parseNeuralwatt, parseMerius, parseAster,
   parseCoralbricks, fetchCoralbricksCatalog, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
+  parseRunanywhere, parseEngy, parseOpenscale,
   parseOpenCodeGoDocs,
   parseRefuselessPricingHtml, REFUSELESS_PRICING_URL,
   NON_TEXT_ID, isTextModel,
