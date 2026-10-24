@@ -1559,3 +1559,152 @@ export function parseArgs(usage) {
   }
   return { dryRun: process.argv.includes('--dry-run'), help: false };
 }
+
+// -- Wally Cloud (RunAnywhere) / Engy / OpenScale --------------------------
+
+/**
+ * Opaque shipped aliases that are not the model's canonical id. Verified from
+ * each alias's Hugging Face model card: the GLM alias is GLM-5.3-Flash (z.ai
+ * blog link on the card) and the DeepSeek alias is DeepSeek-V4.1-Flash-1017
+ * (card title). Resolving them keeps these offerings on the same row family
+ * as the OpenRouter and manual rows. Dated snapshots keep their suffix.
+ */
+const ALIAS_MODEL_IDS = {
+  'zai-org/GLM-5.3-Flash': 'glm-5.3-flash',
+  'deepseek-ai/DeepSeek-V4.1-Flash-1017': 'deepseek-v4.1-flash-1017',
+};
+
+/** 'z-ai/glm-5.3-flash' -> 'glm-5.3-flash'; bare aliases resolved. */
+function resolveCatalogId(id) {
+  const full = String(id || '');
+  const bare = full.includes('/') ? full.split('/').slice(-1)[0] : full;
+  const dated = bare.match(/^(.*?)(-\d{2,4})$/);
+  if (dated && ALIAS_MODEL_IDS[dated[1]]) return `${ALIAS_MODEL_IDS[dated[1]]}${dated[2]}`;
+  return ALIAS_MODEL_IDS[bare] || bare;
+}
+
+/** Creator org from the raw id's slash prefix, else from the resolved id. */
+function orgForOffering(rawId, resolvedId) {
+  return orgFromId(rawId) || orgFromBareModelId(resolvedId);
+}
+
+/**
+ * Wally Cloud / RunAnywhere https://inference.runanywhere.ai/v1/models.
+ * Public, no key. OpenAI-shaped data[] with per-token string prices.
+ */
+export function parseRunanywhere(data) {
+  const models = Array.isArray(data?.data) ? data.data : [];
+  return models.flatMap((m) => {
+    if (!m || typeof m.id !== 'string' || !m.id) return [];
+    const outMods = Array.isArray(m.output_modalities) ? m.output_modalities : ['text'];
+    if (outMods.length !== 1 || outMods[0] !== 'text') return [];
+    const input = perTokToPerM(m.pricing?.prompt);
+    const output = perTokToPerM(m.pricing?.completion);
+    if (input === null && output === null) return [];
+    // "(Fast)" is a service tier, not a distinct model: publish it as ':fast'.
+    const fast = /\(Fast\)$/i.test(m.name || '');
+    const resolved = resolveCatalogId(m.id);
+    return [{
+      id: fast ? `${resolved}:fast` : resolved,
+      name: m.name || m.id,
+      org: orgForOffering(m.id, resolved),
+      provider: 'runanywhere',
+      quantization: m.quantization ? String(m.quantization).toLowerCase() : null,
+      discount: 0,
+      context_length: num(m.context_length),
+      max_completion_tokens: num(m.max_output_tokens),
+      input_modalities: Array.isArray(m.input_modalities) ? m.input_modalities : null,
+      pricing: {
+        input,
+        output,
+        cache_read: perTokToPerM(m.pricing?.input_cache_read),
+        cache_write: null, // not sold
+      },
+    }];
+  });
+}
+
+/**
+ * engy https://api.engy.ai/v1/models. Public, no key. Same OpenAI-shaped data[]
+ * as RunAnywhere. No output-token cap is published, so max_completion_tokens
+ * stays null; max_model_len is the context window. Documented reasoning effort
+ * tiers are priced identically, so they produce no variant rows.
+ */
+export function parseEngy(data) {
+  const models = Array.isArray(data?.data) ? data.data : [];
+  return models.flatMap((m) => {
+    if (!m || typeof m.id !== 'string' || !m.id) return [];
+    const outMods = Array.isArray(m.output_modalities) ? m.output_modalities : ['text'];
+    if (outMods.length !== 1 || outMods[0] !== 'text') return [];
+    const input = perTokToPerM(m.pricing?.prompt);
+    const output = perTokToPerM(m.pricing?.completion);
+    if (input === null && output === null) return [];
+    const resolved = resolveCatalogId(m.id);
+    return [{
+      id: resolved,
+      name: m.id,
+      org: orgForOffering(m.id, resolved),
+      provider: 'engy',
+      quantization: m.quantization ? String(m.quantization).toLowerCase() : null,
+      discount: 0,
+      context_length: num(m.context_length) ?? num(m.max_model_len),
+      max_completion_tokens: num(m.max_completion_tokens),
+      input_modalities: Array.isArray(m.input_modalities) ? m.input_modalities : null,
+      pricing: {
+        input,
+        output,
+        cache_read: perTokToPerM(m.pricing?.input_cache_read),
+        cache_write: null, // not sold
+      },
+    }];
+  });
+}
+
+/**
+ * OpenScale https://api.openscale.so/v1/models. Public, no key. Nested modality
+ * arrays: input_modalities[].pricing[] and output_modalities[].pricing[], each
+ * {type, unit: 'token', cost_usd}. Per-token prices; no cache-write tariff.
+ * ':fast' ids already carry the delivery-variant suffix.
+ */
+export function parseOpenscale(data) {
+  const models = Array.isArray(data?.data) ? data.data : [];
+  const priceOf = (mods, type) => {
+    for (const mod of Array.isArray(mods) ? mods : []) {
+      for (const p of Array.isArray(mod?.pricing) ? mod.pricing : []) {
+        if (p?.type === type) return perTokToPerM(p.cost_usd);
+      }
+    }
+    return null;
+  };
+  return models.flatMap((m) => {
+    if (!m || typeof m.id !== 'string' || !m.id) return [];
+    const outMods = Array.isArray(m.output_modalities) ? m.output_modalities : [];
+    if (outMods.some((o) => o?.type && o.type !== 'text')) return [];
+    const input = priceOf(m.input_modalities, 'prompt');
+    const output = priceOf(m.output_modalities, 'completion');
+    if (input === null && output === null) return [];
+    const textIn = (Array.isArray(m.input_modalities) ? m.input_modalities : [])
+      .find((i) => i?.supported_inputs?.max_context_length);
+    const textOut = outMods.find((o) => o?.max_length);
+    const resolved = resolveCatalogId(m.id);
+    return [{
+      id: resolved,
+      name: m.name || m.id,
+      org: orgForOffering(m.id, resolved),
+      provider: 'openscale',
+      quantization: m.quantization ? String(m.quantization).toLowerCase() : null,
+      discount: 0,
+      context_length: num(textIn?.supported_inputs?.max_context_length?.value),
+      max_completion_tokens: num(textOut?.max_length?.value),
+      input_modalities: Array.isArray(m.input_modalities)
+        ? m.input_modalities.map((i) => i?.type).filter(Boolean)
+        : null,
+      pricing: {
+        input,
+        output,
+        cache_read: priceOf(m.input_modalities, 'cached_prompt'),
+        cache_write: null, // not sold
+      },
+    }];
+  });
+}
