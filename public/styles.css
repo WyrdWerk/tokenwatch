@@ -1536,6 +1536,37 @@ tbody tr[data-idx]:hover { background: var(--surface-2, #f5f5f5); }
   font-size: 0.85rem;
   margin-top: 0.75rem;
 }
+.directory-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.directory-filter label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.directory-filter input {
+  flex: 1 1 16rem;
+  min-width: 0;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border, #e0dcd4);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  color: var(--text);
+  font: inherit;
+}
+.directory-filter input:focus-visible {
+  outline: 2px solid var(--accent-text, #8a5a00);
+  outline-offset: 1px;
+}
+.directory-count {
+  font-size: 0.85rem;
+  color: var(--text-dim, #666);
+  font-variant-numeric: tabular-nums;
+}
 .noscript-note {
   max-width: 1200px;
   margin: 1rem auto;
