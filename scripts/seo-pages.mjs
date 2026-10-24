@@ -659,9 +659,11 @@ ${providerVideoSection(provider, dates.video)}`;
 
 export function renderProviderDirectoryPage(providers, dates = {}) {
   const path = '/providers/';
-  const rows = providers.map((provider) => `<tr><td><a href="/providers/${esc(provider.slug)}/">${esc(provider.name)}</a></td><td class="num">${provider.text.length}</td><td class="num">${provider.image.length}</td><td class="num">${provider.video.length}</td><td class="num">${provider.modelCount}</td><td>${provider.meta.retains_prompts === false ? 'Reviewed ZDR' : 'Not confirmed provider-wide'}</td></tr>`).join('\n');
+  // data-search carries the lowercased haystack so the client filter never
+  // has to re-derive it from rendered cells (which the link markup would pollute).
+  const rows = providers.map((provider) => `<tr data-search="${esc(`${provider.name} ${provider.slug}`.toLowerCase())}"><td><a href="/providers/${esc(provider.slug)}/">${esc(provider.name)}</a></td><td class="num">${provider.text.length}</td><td class="num">${provider.image.length}</td><td class="num">${provider.video.length}</td><td class="num">${provider.modelCount}</td><td>${provider.meta.retains_prompts === false ? 'Reviewed ZDR' : 'Not confirmed provider-wide'}</td></tr>`).join('\n');
   const body = `    <section class="seo-prose"><h2>Browse inference providers</h2><p>This directory lists established provider pages. Pages remain available when coverage drops. Counts combine the text, image, and video catalogs without merging unlike pricing variants; zero records means unavailable catalog coverage, not free pricing.</p></section>
-    <section class="seo-models" id="provider-directory"><div class="table-wrap"><table><caption>TokenWatch provider directory</caption><thead><tr><th scope="col">Provider</th><th scope="col" class="num">Text records</th><th scope="col" class="num">Image records</th><th scope="col" class="num">Video records</th><th scope="col" class="num">Distinct models</th><th scope="col">Retention metadata</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+    <section class="seo-models" id="provider-directory"><div class="directory-filter"><label for="directorySearch">Filter providers</label><input type="search" id="directorySearch" placeholder="Type a provider name…" autocomplete="off" spellcheck="false" /><span class="directory-count" id="directoryCount" role="status" aria-live="polite"></span></div><div class="table-wrap"><table><caption>TokenWatch provider directory</caption><thead><tr><th scope="col">Provider</th><th scope="col" class="num">Text records</th><th scope="col" class="num">Image records</th><th scope="col" class="num">Video records</th><th scope="col" class="num">Distinct models</th><th scope="col">Retention metadata</th></tr></thead><tbody>${rows}</tbody></table></div><p class="seo-note" id="directoryEmpty" hidden>No providers match that filter.</p></section>`;
   const month = catalogMonth(dates.text);
   const reviewedZdr = providers.filter((provider) => provider.meta?.retains_prompts === false).length;
   const pricedCount = providers.filter((provider) => provider.modelCount > 0).length;
@@ -678,6 +680,7 @@ export function renderProviderDirectoryPage(providers, dates = {}) {
     subtitle: `${providers.length} established provider pages; catalog coverage can change`,
     breadcrumbs: [{ name: 'Text pricing', path: '/' }, { name: 'Providers', path }],
     body,
+    scripts: PROVIDER_DIRECTORY_FILTER_SCRIPT,
     structuredData: {
       '@context': 'https://schema.org',
       '@graph': [
