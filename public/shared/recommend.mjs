@@ -6,7 +6,7 @@
  */
 
 import { blendedRate } from './cost.mjs';
-import { canonicalId, quantFromId } from './normalize.mjs';
+import { canonicalId, quantFromId, deliveryVariant } from './normalize.mjs';
 import { getUseCase, resolveProviderWeights } from './use-cases.mjs';
 
 /** Share of a use case's benchmark weight a model needs observed to be quality-eligible. */
@@ -469,10 +469,10 @@ function candidateResult(group, useCase, {
   }
   if (costsMoreThanBestValue) reasons.push('Note: this cheapest-above-floor pick costs more than bestValue at the use-case mix.');
   if (group.quantFallback) reasons.push('Low-bit quantization is the only qualifying option for this workload.');
-  if (recommendedProvider && isBatchVariant(recommendedProvider.offering)) reasons.push('Asynchronous batch endpoint.');
+  if (recommendedProvider && isBatchVariant(recommendedProvider.offering)) reasons.push(deliveryReason(recommendedProvider.offering));
   if (cheapestProvider && isBatchVariant(cheapestProvider.offering)
       && cheapestProvider.provider !== recommendedProvider?.provider) {
-    reasons.push(`Cheapest provider ${providerLabel(cheapestProvider)} is an asynchronous batch endpoint.`);
+    reasons.push(`Cheapest provider ${providerLabel(cheapestProvider)} is ${deliveryVariant(cheapestProvider.offering.id) === 'batch' ? 'an asynchronous batch endpoint' : `a ${deliveryVariant(cheapestProvider.offering.id)} service-tier endpoint`}.`);
   }
   if (model?.subscription === true) reasons.push('Subscription plan, not pay-as-you-go.');
   if (cheapestProvider?.offering?.subscription === true && model?.subscription !== true) {
@@ -526,9 +526,16 @@ function addReasoningInformation(model, reasons, unknowns) {
   else unknowns.push('reasoning capability not disclosed (informational only; not a gate)');
 }
 
+/** True for non-standard delivery variants: `:batch` and `:<tier>` service
+ *  tiers (flex, priority, …). Excluded unless the use case allows them. */
 function isBatchVariant(modelOrId) {
   const id = typeof modelOrId === 'string' ? modelOrId : modelOrId?.id;
-  return typeof id === 'string' && canonicalId(id).endsWith(':batch');
+  return typeof id === 'string' && deliveryVariant(canonicalId(id)) !== null;
+}
+
+function deliveryReason(offering) {
+  const variant = deliveryVariant(offering?.id);
+  return variant === 'batch' ? 'Asynchronous batch endpoint.' : `${variant[0].toUpperCase()}${variant.slice(1)} service-tier endpoint.`;
 }
 
 function includeBatchVariants(useCase, options) {
@@ -1055,7 +1062,7 @@ export function rankProviders(useCaseId, canonicalModelId, offerings, perf = {},
     const reasons = [];
     const unknowns = [];
     if (model.subscription === true) reasons.push('Subscription plan, not pay-as-you-go.');
-    if (isBatchVariant(model)) reasons.push('Asynchronous batch endpoint.');
+    if (isBatchVariant(model)) reasons.push(deliveryReason(model));
     if (useCase.hardRequirements.needsToolCalling) reasons.push('Meets required tool-calling capability.');
     if (useCase.hardRequirements.needsStructuredOutput) reasons.push('Meets required structured-output capability.');
     if (useCase.id === 'reasoning-math') addReasoningInformation(model, reasons, unknowns);
