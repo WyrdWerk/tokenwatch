@@ -1559,3 +1559,159 @@ export function parseArgs(usage) {
   }
   return { dryRun: process.argv.includes('--dry-run'), help: false };
 }
+
+// ── Wally Cloud (RunAnywhere) / Engy / OpenScale ──────────────────────────────
+
+/**
+ * Provider catalog ids that are opaque shipped aliases rather than the model's
+ * canonical id. Verified against each alias's Hugging Face card:
+ * `zai-org/GLM-5.3-Flash` → GLM-5.3-Flash (z.ai blog), `deepseek-ai/DeepSeek-V4.1-Flash-1017` →
+ * DeepSeek-V4.1-Flash-1017 (DeepSeek README). Resolving them keeps these
+ * offerings on the same row family as the OpenRouter/Tier-3 rows instead of
+ * creating duplicate models. Date suffixes are preserved (distinct snapshots).
+ */
+const ALIAS_MODEL_IDS = {
+  zai-org/GLM-5.3-Flash: 'glm-5.3-flash',   // GLM-5.3 Flash
+  deepseek-ai/DeepSeek-V4.1-Flash-1017: 'deepseek-v4.1-flash-1017',
+};
+
+/** 'z-ai/glm-5.3-flash' → 'glm-5.3-flash'; bare aliases resolved. */
+function resolveCatalogId(id) {
+  const bare = String(id || '').includes('/') ? String(id).split('/').slice(-1)[0] : String(id || '');
+  const dated = bare.match(/^(.*?)(-\d{2,4})$/);
+  if (dated && ALIAS_MODEL_IDS[dated[1]]) return `${ALIAS_MODEL_IDS[dated[1]]}${dated[2]}`;
+  return ALIAS_MODEL_IDS[bare] || bare;
+}
+
+/** Creator org for a resolved offering id, falling back to the slash prefix. */
+function orgForOffering(rawId, resolvedId) {
+  return orgFromId(rawId) || orgFromBareModelId(resolvedId);
+}
+
+/**
+ * Wally Cloud / RunAnywhere https://inference.runanywhere.ai/v1/models.
+ * OpenAI-shaped `data[]` with per-token string prices. Public — no key.
+ * `pricing` is public and authoritative for hosted rates; the console mirrors it.
+ */
+export function parseRunanywhere(data) {
+  const models = Array.isArray(data?.data) ? data.data : [];
+  return models.flatMap((m) => {
+    if (!m || typeof m.id !== 'string' || !m.id) return [];
+    const outMods = Array.isArray(m.output_modalities) ? m.output_modalities : ['text'];
+    if (outMods.length !== 1 || outMods[0] !== 'text') return [];
+    const input = perTokToPerM(m.pricing?.prompt);
+    const output = perTokToPerM(m.pricing?.completion);
+    if (input === null && output === null) return [];
+    // '(Fast)' is a service tier → ':fast' (delivery variant), not a distinct model.
+    const fast = /\s*\(Fast\)$/i.test(m.name || '');
+    const resolved = resolveCatalogId(m.id);
+    return [{
+      id: fast ? `${resolved}:fast` : resolved,
+      name: m.name || rawName(m.id),
+      org: orgForOffering(m.id, resolved),
+      provider: 'runanywhere',
+      quantization: m.quantization ? String(m.quantization).toLowerCase() : null,
+      discount: 0,
+      context_length: num(m.context_length),
+      max_completion_tokens: num(m.max_output_tokens),
+      input_modalities: Array.isArray(m.input_modalities) ? m.input_modalities : null,
+      pricing: {
+        input,
+        output,
+        cache_read: perTokToPerM(m.pricing?.input_cache_read),
+        cache_write: null,
+      },
+    }];
+  });
+}
+
+/**
+ * engy https://api.engy.ai/v1/models — same OpenAI shape, public, no key.
+ * No output-token cap is published; `max_model_len` is the context window.
+ * Reasoning effort tiers are documented but priced identically — no tier rows.
+ */
+export function parseEngy(data) {
+  const models = Array.isArray(data?.data) ? data.data : [];
+  return models.flatMap((m) => {
+    if (!m || typeof m.id !== 'string' || !m.id) return [];
+    const outMods = Array.isArray(m.output_modalities) ? m.output_modalities : ['text'];
+    if (outMods.length !== 1 || outMods[0] !== 'text') return [];
+    const input = perTokToPerM(m.pricing?.prompt);
+    const output = perTokToPerM(m.pricing?.completion);
+    if (input === null && output === null) return [];
+    const resolved = resolveCatalogId(m.id);
+    return [{
+      id: resolved,
+      name: rawName(m.id),
+      org: orgForOffering(m.id, resolved),
+      provider: 'engy',
+      quantization: m.quantization ? String(m.quantization).toLowerCase() : null,
+      discount: 0,
+      context_length: num(m.context_length) ?? num(m.max_model_len),
+      max_completion_tokens: num(m.max_completion_tokens),
+      input_modalities: Array.isArray(m.input_modalities) ? m.input_modalities : null,
+      pricing: {
+        input,
+        output,
+        cache_read: perTokToPerM(m.pricing?.input_cache_read),
+        cache_write: null, // engy publishes no cache-write tariff
+      },
+    }];
+  });
+}
+
+/**
+ * OpenScale https://api.openscale.so/v1/models — nested modality arrays:
+ * `input_modalities[].pricing[]` and `output_modalities[].pricing[]`, each
+ * `{type, unit: 'token', cost_usd}`. Prices are per token; cache-write is not
+ * sold. `:fast` ids already carry the delivery-variant suffix.
+ */
+export function parseOpenscale(data) {
+  const models = Array.isArray(data?.data) ? data.data : [];
+  const priceOf = (mods, type) => {
+    for (const mod of Array.isArray(mods) ? mods : []) {
+      for (const p of Array.isArray(mod?.pricing) ? mod.pricing : []) {
+        if (p?.type === type) return perTokToPerM(p.cost_usd);
+      }
+    }
+    return null;
+  };
+  return models.flatMap((m) => {
+    if (!m || typeof m.id !== 'string' || !m.id) return [];
+    const outMods = Array.isArray(m.output_modalities) ? m.output_modalities : [];
+    if (outMods.some((o) => o?.type && o.type !== 'text')) return [];
+    const input = priceOf(m.input_modalities, 'prompt');
+    const output = priceOf(m.output_modalities, 'completion');
+    if (input === null && output === null) return [];
+    const ctx = Array.isArray(m.input_modalities)
+      ? num(m.input_modalities.find((i) => i?.supported_inputs?.max_context_length)?.supported_inputs?.max_context_length?.value)
+      : null;
+    const maxOut = num(m.output_modalities?.find?.((o) => o?.max_length)?.max_length?.value);
+    const resolved = resolveCatalogId(m.id);
+    // name keeps the vendor prefix ("DeepSeek: DeepSeek V4.1 Flash"), nameForPreview below
+    return [{
+      id: resolved,
+      name: m.name || rawName(m.id),
+      org: orgForOffering(m.id, resolved),
+      provider: 'openscale',
+      quantization: m.quantization ? String(m.quantization).toLowerCase() : null,
+      discount: 0,
+      context_length: ctx,
+      max_completion_tokens: maxOut,
+      input_modalities: Array.isArray(m.input_modalities)
+        ? m.input_modalities.map((i) => i?.type).filter(Boolean)
+        : null,
+      pricing: {
+        input,
+        output,
+        cache_read: priceOf(m.input_modalities, 'cached_prompt'),
+        cache_write: null, // OpenScale publishes no cache-write tariff
+      },
+    }];
+  });
+}
+
+/** Human label when a catalog publishes no display name (aliases stay as-is). */
+function rawName(id) {
+  return String(id);
+}
