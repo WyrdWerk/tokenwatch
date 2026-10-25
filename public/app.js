@@ -572,7 +572,7 @@ function canonicalModelId(id) {
 /** Mirror of modelSpellingKey() in shared/normalize.mjs (parity-tested):
  *  canonical id with separator/version spelling unified, SKU suffixes kept. */
 function modelSpellingKey(id) {
-  const tidy = (v) => canonicalModelId(String(v).replace(/:(batch|flex|priority|fast|ultrafast|turbo|highspeed)$/i, '').replace(/:(nitro|floor|exacto|online)$/i, ''))
+  const tidy = (v) => canonicalModelId(String(v).replace(/:(batch|off-peak|flex|priority|fast|ultrafast|turbo|highspeed)$/i, '').replace(/:(nitro|floor|exacto|online)$/i, ''))
     .replace(/[()[\]]/g, '')
     .replace(/[\s_]+/g, '-')
     .replace(/-+/g, '-')
@@ -2277,7 +2277,7 @@ function reasoningChipLabels(meta) {
 // Same model + provider sold through another delivery variant (batch or a
 // service tier). Indexed once per catalog from the full model list, because
 // these rows are hidden from the default results.
-const DELIVERY_SUFFIX_RE = /:(batch|flex|priority|fast|ultrafast|turbo|highspeed)$/i;
+const DELIVERY_SUFFIX_RE = /:(batch|off-peak|flex|priority|fast|ultrafast|turbo|highspeed)$/i;
 let deliveryIndexData = null;
 let deliveryIndex = new Map();
 function deliveryVariantsFor(model) {
@@ -2368,7 +2368,7 @@ function speedFor(r) {
 function isBatchOrFreeId(id) {
   const s = String(id || '').toLowerCase();
   return s.includes(':batch') || s.includes(':free') || s.endsWith('-batch')
-    || /:(flex|priority|fast|ultrafast|turbo|highspeed)$/.test(s);
+    || /:(off-peak|flex|priority|fast|ultrafast|turbo|highspeed)$/.test(s);
 }
 
 function providerHq(providerKey) {

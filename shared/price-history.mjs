@@ -122,7 +122,7 @@ export function toSnapshotRow(model, day, generatedAt) {
  * canonical id, which already carries these suffixes).
  */
 export function skuFromId(modelId) {
-  const match = String(modelId || '').match(/(:batch|:flex|:priority|:fast|:ultrafast|:turbo|:highspeed|:free|:thinking|-turbo|-fast|-highspeed|-offpeak|-off-peak)$/i);
+  const match = String(modelId || '').match(/(:batch|:off-peak|:flex|:priority|:fast|:ultrafast|:turbo|:highspeed|:free|:thinking|-turbo|-fast|-highspeed|-offpeak|-off-peak)$/i);
   return match ? match[1].toLowerCase() : '';
 }
 

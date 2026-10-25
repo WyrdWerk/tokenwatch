@@ -472,7 +472,7 @@ function candidateResult(group, useCase, {
   if (recommendedProvider && isBatchVariant(recommendedProvider.offering)) reasons.push(deliveryReason(recommendedProvider.offering));
   if (cheapestProvider && isBatchVariant(cheapestProvider.offering)
       && cheapestProvider.provider !== recommendedProvider?.provider) {
-    reasons.push(`Cheapest provider ${providerLabel(cheapestProvider)} is ${deliveryVariant(cheapestProvider.offering.id) === 'batch' ? 'an asynchronous batch endpoint' : `a ${deliveryVariant(cheapestProvider.offering.id)} service-tier endpoint`}.`);
+    reasons.push(`Cheapest provider ${providerLabel(cheapestProvider)} is ${variantPhrase(deliveryVariant(cheapestProvider.offering.id))}.`);
   }
   if (model?.subscription === true) reasons.push('Subscription plan, not pay-as-you-go.');
   if (cheapestProvider?.offering?.subscription === true && model?.subscription !== true) {
@@ -533,9 +533,15 @@ function isBatchVariant(modelOrId) {
   return typeof id === 'string' && deliveryVariant(canonicalId(id)) !== null;
 }
 
+function variantPhrase(variant) {
+  if (variant === 'batch') return 'an asynchronous batch endpoint';
+  if (variant === 'off-peak') return 'an off-peak (time-of-day discounted) endpoint';
+  return `a ${variant} service-tier endpoint`;
+}
+
 function deliveryReason(offering) {
-  const variant = deliveryVariant(offering?.id);
-  return variant === 'batch' ? 'Asynchronous batch endpoint.' : `${variant[0].toUpperCase()}${variant.slice(1)} service-tier endpoint.`;
+  const phrase = variantPhrase(deliveryVariant(offering?.id)).replace(/^an? /, '');
+  return `${phrase[0].toUpperCase()}${phrase.slice(1)}.`;
 }
 
 function includeBatchVariants(useCase, options) {
