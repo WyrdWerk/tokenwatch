@@ -50,11 +50,31 @@ export function canonicalId(id) {
  *  A tier endpoint becomes its own offering with a `:<tier>` id suffix. */
 export const SERVICE_TIERS = ['flex', 'priority', 'fast', 'ultrafast', 'turbo', 'highspeed'];
 
-/** Non-standard delivery variants: `:batch` plus the `:<tier>` service tiers.
- *  These are alternative ways to buy the same model, hidden by default and
- *  excluded from model pages and default recommendations. Colon form only —
- *  `-turbo`/`-fast` in a model name are distinct models, not tiers. */
-export const DELIVERY_VARIANT_RE = new RegExp(`:(batch|${SERVICE_TIERS.join('|')})$`, 'i');
+/** Non-standard delivery variants: `:batch`, `:off-peak` (time-of-day
+ *  discount) plus the `:<tier>` service tiers. These are alternative ways to
+ *  buy the same model, hidden by default and excluded from model pages and
+ *  default recommendations. Colon form only — `-turbo`/`-fast` in a model name
+ *  are distinct models, not tiers. */
+export const DELIVERY_VARIANTS = ['batch', 'off-peak', ...SERVICE_TIERS];
+export const DELIVERY_VARIANT_RE = new RegExp(`:(${DELIVERY_VARIANTS.join('|')})$`, 'i');
+
+// Provider-spelled variants that never denote a distinct model: Neuralwatt
+// `glm-5.3-flex`, Aster `zai-org/glm-5.2-batch`, OpenCode `x-(off-peak)`.
+// `-fast`/`-turbo` are deliberately absent (distinct models at many providers).
+const SPELLED_VARIANT_RE = /[-\s]\(?(batch|flex|off-?peak)\)?$/i;
+
+/** Rewrite a provider-spelled delivery variant into the canonical colon form
+ *  ('glm-5.3-flex' → 'glm-5.3:flex', 'x-(off-peak)' → 'x:off-peak') so every
+ *  source is hidden/filtered by the same DELIVERY_VARIANT_RE. Applied once to
+ *  every fetched row before dedup. Ids already in colon form are unchanged. */
+export function normalizeDeliveryVariant(id) {
+  const s = String(id || '');
+  if (DELIVERY_VARIANT_RE.test(s)) return s;
+  const match = s.match(SPELLED_VARIANT_RE);
+  if (!match || match.index === 0) return s;
+  const variant = match[1].toLowerCase().replace(/^off-?peak$/, 'off-peak');
+  return `${s.slice(0, match.index)}:${variant}`;
+}
 
 /** 'openai/gpt-6.1-sol:flex' → 'flex'; plain ids → null. */
 export function deliveryVariant(id) {

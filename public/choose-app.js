@@ -1,5 +1,6 @@
 import { MIN_BENCHMARK_COVERAGE, shortlistModels, rankProviders } from '/shared/recommend.mjs';
 import { USE_CASES } from '/shared/use-cases.mjs';
+import { deliveryVariant } from '/shared/normalize.mjs';
 import {
   DEFAULT_CHOOSE_STATE,
   buildCalculatorHref,
@@ -173,9 +174,10 @@ function coverageBadge(candidate) {
 }
 
 function batchBadge(candidate) {
-  const variant = (String(candidate.offering?.id || '').match(/:(batch|off-peak|flex|priority|fast|ultrafast|turbo|highspeed)$/i) || [])[1];
-  if (variant && variant.toLowerCase() !== 'batch') {
-    return `<span class="choose-badge choose-badge-batch">${variant[0].toUpperCase()}${variant.slice(1).toLowerCase()} tier</span>`;
+  const variant = deliveryVariant(candidate.offering?.id);
+  if (variant === 'off-peak') return '<span class="choose-badge choose-badge-batch">Off-peak</span>';
+  if (variant && variant !== 'batch') {
+    return `<span class="choose-badge choose-badge-batch">${variant[0].toUpperCase()}${variant.slice(1)} tier</span>`;
   }
   return variant || candidate.reasons?.some((reason) => /asynchronous batch/i.test(reason))
     ? '<span class="choose-badge choose-badge-batch">Batch endpoint</span>'
