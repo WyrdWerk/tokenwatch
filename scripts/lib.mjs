@@ -1193,8 +1193,8 @@ export function orgFromName(name) {
 // canonicalId and orgLookupKey live in shared/normalize.mjs so the Cloudflare
 // Pages Function can import the same source of truth without pulling in
 // node:fs (which this file imports below for checkCoverageDrop).
-export { canonicalId, orgLookupKey, quantFromId } from '../shared/normalize.mjs';
-import { canonicalId, orgLookupKey, quantFromId, SERVICE_TIERS, deliveryVariant } from '../shared/normalize.mjs';
+export { canonicalId, orgLookupKey, quantFromId, normalizeDeliveryVariant } from '../shared/normalize.mjs';
+import { canonicalId, orgLookupKey, quantFromId, SERVICE_TIERS, deliveryVariant, stripDeliveryVariant } from '../shared/normalize.mjs';
 
 // models.dev reconciliation helpers live in shared/modelsdev.mjs (pure, no
 // node: imports) so they could in principle be bundled into the Worker too.
@@ -1327,6 +1327,40 @@ export function normalizeProvider(displayName) {
 /** Build a dedup key: (canonical_model, normalized_provider). */
 export function dedupKey(m) {
   return `${canonicalId(m.id)}|${normalizeProvider(m.provider)}`;
+}
+
+/**
+ * Report-only delivery-variant audit, run after dedup. Flags rows whose display
+ * name says batch/flex/off-peak while the id is standard (a provider spelling
+ * normalizeDeliveryVariant does not know yet), and standard rows priced at or
+ * below their own same-provider batch/flex/off-peak variant (a mislabelled
+ * discount). Never edits rows.
+ */
+const DISCOUNT_VARIANTS = new Set(['batch', 'flex', 'off-peak']);
+export function deliveryVariantIssues(models) {
+  const issues = [];
+  const standard = new Map();
+  for (const m of models) {
+    if (deliveryVariant(m.id) === null) standard.set(`${m.id}|${m.provider}`, m);
+  }
+  for (const m of models) {
+    const variant = deliveryVariant(m.id);
+    if (variant === null) {
+      if (/\b(batch|flex|off-?peak)\b/i.test(String(m.name || ''))) {
+        issues.push(`${m.provider} ${m.id}: name "${m.name}" looks like a delivery variant but the id is standard`);
+      }
+      continue;
+    }
+    // Premium tiers (priority/fast/…) legitimately cost more; only discounts are checked.
+    if (!DISCOUNT_VARIANTS.has(variant)) continue;
+    const base = standard.get(`${stripDeliveryVariant(m.id)}|${m.provider}`);
+    const p = base?.pricing, v = m.pricing;
+    if (p && v && p.input != null && p.output != null && v.input != null && v.output != null
+        && p.input <= v.input && p.output <= v.output && (p.input < v.input || p.output < v.output)) {
+      issues.push(`${m.provider} ${base.id}: standard ${p.input}/${p.output} is cheaper than its :${variant} ${v.input}/${v.output}`);
+    }
+  }
+  return issues;
 }
 
 /** Apply precedence: first occurrence of a key wins (insertion order = authority). */

@@ -173,7 +173,7 @@ function coverageBadge(candidate) {
 }
 
 function batchBadge(candidate) {
-  const variant = (String(candidate.offering?.id || '').match(/:(batch|flex|priority|fast|ultrafast|turbo|highspeed)$/i) || [])[1];
+  const variant = (String(candidate.offering?.id || '').match(/:(batch|off-peak|flex|priority|fast|ultrafast|turbo|highspeed)$/i) || [])[1];
   if (variant && variant.toLowerCase() !== 'batch') {
     return `<span class="choose-badge choose-badge-batch">${variant[0].toUpperCase()}${variant.slice(1).toLowerCase()} tier</span>`;
   }

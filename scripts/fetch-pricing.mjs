@@ -52,7 +52,7 @@ import {
   NON_TEXT_ID, isTextModel,
   ORG_ALIASES, PROVIDER_NAME_MAP,
   orgFromId, orgFromName,
-  canonicalId, orgLookupKey, quantFromId,
+  canonicalId, orgLookupKey, quantFromId, normalizeDeliveryVariant, deliveryVariantIssues,
   normalizeProvider, dedupKey, dedupModels,
   fetchJson, fetchJsonWithRetry,
   checkCoverageDrop,
@@ -1212,10 +1212,33 @@ async function main() {
     console.log(`  Dropped ${beforeLlmgGuard - tieredModels.length} LLM Gateway rows for hosts already covered by another tier`);
   }
 
+  // ── Delivery variants: one colon spelling for every source ──
+  // Providers spell batch/flex/off-peak into the id (`glm-5.3-flex`,
+  // `x-(off-peak)`); rewrite to `:flex`/`:off-peak` so the calculator toggle,
+  // model pages and recommender treat them like OpenRouter/Batchrate variants.
+  let variantIds = 0;
+  for (const m of tieredModels) {
+    const id = normalizeDeliveryVariant(m.id);
+    if (id !== m.id) { m.id = id; variantIds++; }
+  }
+  if (variantIds > 0) console.log(`  Normalized ${variantIds} provider-spelled delivery-variant ids to colon form`);
+
   // ── Dedup with 3-tier precedence ──
   out.models = dedupModels(tieredModels);
   const deduped = tieredModels.length - out.models.length;
   if (deduped > 0) console.log(`  Deduped ${deduped} overlapping rows (direct > OpenRouter > CSV)`);
+
+  const variantIssues = deliveryVariantIssues(out.models);
+  if (variantIssues.length > 0) {
+    console.warn(`⚠ ${variantIssues.length} delivery-variant issue(s) (report-only):`);
+    for (const line of variantIssues.slice(0, 10)) console.warn(`    ${line}`);
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      const md = `\n### Delivery-variant issues (${variantIssues.length})\n\n${variantIssues.map((l) => `- ${l}`).join('\n')}\n`;
+      await appendFile(process.env.GITHUB_STEP_SUMMARY, md).catch((err) => {
+        console.warn(`⚠ Could not write delivery-variant step summary: ${err.message}`);
+      });
+    }
+  }
 
   // ── Coverage-drop check: compare against last pricing.json ──
   // checkCoverageDrop returns prevCount (null if no previous file) so the
