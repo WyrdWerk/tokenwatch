@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-10-26T22:05:42.701Z",
+  "generated_at": "2026-10-27T02:51:02.672Z",
   "mix": {
     "inputPct": 2.5,
     "cacheReadPct": 97,
     "outputPct": 0.5
   },
-  "model_count": 427,
+  "model_count": 430,
   "sources": {
     "artificial_analysis": {
       "name": "Artificial Analysis",
@@ -194,7 +194,7 @@
         "aa_intelligence": 57.6,
         "arena_text": 1508.1664796431178,
         "arena_creative_writing": 1519.076672822608,
-        "design_arena_elo": 1466,
+        "design_arena_elo": 1468,
         "design_arena_category": "3d"
       }
     },
@@ -231,7 +231,7 @@
         "aa_intelligence": 57.6,
         "arena_text": 1508.1664796431178,
         "arena_creative_writing": 1519.076672822608,
-        "design_arena_elo": 1466,
+        "design_arena_elo": 1468,
         "design_arena_category": "3d"
       }
     },
@@ -268,7 +268,7 @@
         "aa_intelligence": 57.6,
         "arena_text": 1508.1664796431178,
         "arena_creative_writing": 1519.076672822608,
-        "design_arena_elo": 1466,
+        "design_arena_elo": 1468,
         "design_arena_category": "3d"
       }
     },
@@ -369,7 +369,7 @@
         "aa_intelligence": 56,
         "arena_text": 1474.93871350729,
         "arena_creative_writing": 1465.0929307618035,
-        "design_arena_elo": 1415,
+        "design_arena_elo": 1414,
         "design_arena_category": "gamedev"
       }
     },
@@ -406,7 +406,7 @@
         "aa_intelligence": 56,
         "arena_text": 1474.93871350729,
         "arena_creative_writing": 1465.0929307618035,
-        "design_arena_elo": 1415,
+        "design_arena_elo": 1414,
         "design_arena_category": "gamedev"
       }
     },
@@ -457,7 +457,7 @@
       ],
       "scores": {
         "aa_intelligence": 55.1,
-        "design_arena_elo": 1468,
+        "design_arena_elo": 1448,
         "design_arena_category": "3d"
       }
     },
@@ -492,7 +492,7 @@
       ],
       "scores": {
         "aa_intelligence": 55.1,
-        "design_arena_elo": 1468,
+        "design_arena_elo": 1448,
         "design_arena_category": "3d"
       }
     },
@@ -534,7 +534,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1000000,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 51,
@@ -920,7 +920,7 @@
         "aa_intelligence": 52.6,
         "arena_text": 1523.9035861299108,
         "arena_creative_writing": 1515.5911597344439,
-        "design_arena_elo": 1435,
+        "design_arena_elo": 1438,
         "design_arena_category": "blender3d"
       }
     },
@@ -957,7 +957,7 @@
         "aa_intelligence": 52.6,
         "arena_text": 1523.9035861299108,
         "arena_creative_writing": 1515.5911597344439,
-        "design_arena_elo": 1435,
+        "design_arena_elo": 1438,
         "design_arena_category": "blender3d"
       }
     },
@@ -983,7 +983,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
@@ -994,7 +994,7 @@
         "aa_intelligence": 52.6,
         "arena_text": 1523.9035861299108,
         "arena_creative_writing": 1515.5911597344439,
-        "design_arena_elo": 1435,
+        "design_arena_elo": 1438,
         "design_arena_category": "blender3d"
       }
     },
@@ -1031,7 +1031,7 @@
         "aa_intelligence": 52.6,
         "arena_text": 1523.9035861299108,
         "arena_creative_writing": 1515.5911597344439,
-        "design_arena_elo": 1435,
+        "design_arena_elo": 1438,
         "design_arena_category": "blender3d"
       }
     },
@@ -1142,7 +1142,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1050000,
-          "uptime_30m": 0,
+          "uptime_30m": 66.66666666666666,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
@@ -1322,7 +1322,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1000000,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 60.5,
@@ -1615,6 +1615,138 @@
         "arena_creative_writing": 1501.3084222192924,
         "design_arena_elo": 1335,
         "design_arena_category": "gamedev"
+      }
+    },
+    {
+      "id": "gpt-6.1-terra:flex",
+      "name": "OpenAI: GPT-6.1 Terra (flex)",
+      "org": "openai",
+      "open_weights": false,
+      "license": null,
+      "providers": 1,
+      "from": {
+        "provider": "OpenAI",
+        "blended_per_m": 0.052
+      },
+      "offerings": [
+        {
+          "provider": "OpenAI",
+          "input": 0.5,
+          "cache_write": 0.625,
+          "input_billing": null,
+          "output": 2.5,
+          "cache_read": 0.024999999999999998,
+          "quantization": "unknown",
+          "zdr": false,
+          "context_length": 1050000,
+          "uptime_30m": 100,
+          "open_weights": false,
+          "tool_call": true,
+          "throughput_p50": null,
+          "latency_p50": null
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 48.1
+      }
+    },
+    {
+      "id": "gpt-6.1-terra",
+      "name": "OpenAI: GPT-6.1 Terra",
+      "org": "openai",
+      "open_weights": false,
+      "license": null,
+      "providers": 1,
+      "from": {
+        "provider": "OpenAI",
+        "blended_per_m": 0.105
+      },
+      "offerings": [
+        {
+          "provider": "OpenAI",
+          "input": 1,
+          "cache_write": 1.25,
+          "input_billing": null,
+          "output": 5,
+          "cache_read": 0.049999999999999996,
+          "quantization": "unknown",
+          "zdr": false,
+          "context_length": 1050000,
+          "uptime_30m": 100,
+          "open_weights": false,
+          "tool_call": true,
+          "throughput_p50": null,
+          "latency_p50": null
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 48.1
+      }
+    },
+    {
+      "id": "gpt-6.1-terra:fast",
+      "name": "OpenAI: GPT-6.1 Terra (fast)",
+      "org": "openai",
+      "open_weights": false,
+      "license": null,
+      "providers": 1,
+      "from": {
+        "provider": "OpenAI",
+        "blended_per_m": 0.21
+      },
+      "offerings": [
+        {
+          "provider": "OpenAI",
+          "input": 2,
+          "cache_write": 2.5,
+          "input_billing": null,
+          "output": 10,
+          "cache_read": 0.09999999999999999,
+          "quantization": "unknown",
+          "zdr": false,
+          "context_length": 1050000,
+          "uptime_30m": 100,
+          "open_weights": false,
+          "tool_call": true,
+          "throughput_p50": null,
+          "latency_p50": null
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 48.1
+      }
+    },
+    {
+      "id": "gpt-6.1-terra:batch",
+      "name": "OpenAI: GPT-6.1 Terra (batch)",
+      "org": "openai",
+      "open_weights": false,
+      "license": null,
+      "providers": 1,
+      "from": {
+        "provider": "OpenAI",
+        "blended_per_m": 0.052
+      },
+      "offerings": [
+        {
+          "provider": "OpenAI",
+          "input": 0.5,
+          "cache_write": 0.625,
+          "input_billing": null,
+          "output": 2.5,
+          "cache_read": 0.024999999999999998,
+          "quantization": "unknown",
+          "zdr": false,
+          "context_length": 1050000,
+          "uptime_30m": null,
+          "open_weights": false,
+          "tool_call": true,
+          "throughput_p50": null,
+          "latency_p50": null
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 48.1
       }
     },
     {
@@ -2004,7 +2136,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1050000,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
@@ -2105,7 +2237,7 @@
         "aa_intelligence": 46.4,
         "arena_text": 1443.9789336394695,
         "arena_creative_writing": 1423.757121376712,
-        "design_arena_elo": 1315,
+        "design_arena_elo": 1313,
         "design_arena_category": "gamedev"
       }
     },
@@ -2142,7 +2274,7 @@
         "aa_intelligence": 46.4,
         "arena_text": 1443.9789336394695,
         "arena_creative_writing": 1423.757121376712,
-        "design_arena_elo": 1315,
+        "design_arena_elo": 1313,
         "design_arena_category": "gamedev"
       }
     },
@@ -2492,7 +2624,7 @@
           "context_length": 1310720,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -2508,7 +2640,7 @@
           "context_length": 1048576,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": 119,
           "latency_p50": 291
         },
@@ -2556,7 +2688,7 @@
           "context_length": 1048576,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -2588,7 +2720,7 @@
           "context_length": 1048576,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -2604,7 +2736,7 @@
           "context_length": 1048573,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -2620,7 +2752,7 @@
           "context_length": 1048576,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -2636,7 +2768,7 @@
           "context_length": 1048576,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -2652,7 +2784,7 @@
           "context_length": 1048576,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -2668,7 +2800,7 @@
           "context_length": 1048576,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -2684,7 +2816,7 @@
           "context_length": 327680,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -2700,7 +2832,7 @@
           "context_length": 1000000,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -2746,7 +2878,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 73,
@@ -2762,7 +2894,7 @@
           "quantization": "fp4",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": 96.29629629629629,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 72,
@@ -2826,7 +2958,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 1044480,
-          "uptime_30m": 73.33333333333333,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 83,
@@ -2874,7 +3006,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 28.5,
@@ -2895,6 +3027,22 @@
           "tool_call": true,
           "throughput_p50": 36,
           "latency_p50": 4514
+        },
+        {
+          "provider": "Decart",
+          "input": 0.84,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 2.69,
+          "cache_read": 0.19,
+          "quantization": "fp4",
+          "zdr": true,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 126,
+          "latency_p50": 781
         },
         {
           "provider": "DigitalOcean",
@@ -2945,38 +3093,6 @@
           "latency_p50": 571
         },
         {
-          "provider": "Morph",
-          "input": 1.004,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 4.752000000000001,
-          "cache_read": 0.251,
-          "quantization": "fp8",
-          "zdr": true,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 36,
-          "latency_p50": 1094
-        },
-        {
-          "provider": "Decart",
-          "input": 1.01,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 3.2399999999999998,
-          "cache_read": 0.22999999999999998,
-          "quantization": "fp4",
-          "zdr": true,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 126,
-          "latency_p50": 781
-        },
-        {
           "provider": "Alibaba",
           "input": 1.19,
           "cache_write": null,
@@ -3018,7 +3134,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 80,
@@ -3249,6 +3365,22 @@
           "latency_p50": 1113
         },
         {
+          "provider": "Morph",
+          "input": 1.758,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 4.752000000000001,
+          "cache_read": 0.44,
+          "quantization": "fp8",
+          "zdr": true,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 36,
+          "latency_p50": 1094
+        },
+        {
           "provider": "ModelRun",
           "input": 2.0999999999999996,
           "cache_write": null,
@@ -3287,7 +3419,7 @@
         "aa_agentic": 53.1,
         "arena_text": 1478.538851947597,
         "arena_creative_writing": 1453.2037886202456,
-        "design_arena_elo": 1327,
+        "design_arena_elo": 1329,
         "design_arena_category": "3d"
       }
     },
@@ -3326,7 +3458,7 @@
         "aa_agentic": 53.1,
         "arena_text": 1478.538851947597,
         "arena_creative_writing": 1453.2037886202456,
-        "design_arena_elo": 1327,
+        "design_arena_elo": 1329,
         "design_arena_category": "3d"
       }
     },
@@ -3381,7 +3513,7 @@
         "aa_agentic": 53.1,
         "arena_text": 1478.538851947597,
         "arena_creative_writing": 1453.2037886202456,
-        "design_arena_elo": 1327,
+        "design_arena_elo": 1329,
         "design_arena_category": "3d"
       }
     },
@@ -3436,7 +3568,7 @@
         "aa_agentic": 53.1,
         "arena_text": 1478.538851947597,
         "arena_creative_writing": 1453.2037886202456,
-        "design_arena_elo": 1327,
+        "design_arena_elo": 1329,
         "design_arena_category": "3d"
       }
     },
@@ -3475,7 +3607,7 @@
         "aa_agentic": 53.1,
         "arena_text": 1478.538851947597,
         "arena_creative_writing": 1453.2037886202456,
-        "design_arena_elo": 1327,
+        "design_arena_elo": 1329,
         "design_arena_category": "3d"
       }
     },
@@ -3530,8 +3662,8 @@
         "aa_agentic": 53,
         "arena_text": 1454.4891469812887,
         "arena_creative_writing": 1441.9162652815512,
-        "design_arena_elo": 1296,
-        "design_arena_category": "gamedev"
+        "design_arena_elo": 1294,
+        "design_arena_category": "androidnative"
       }
     },
     {
@@ -3569,8 +3701,8 @@
         "aa_agentic": 53,
         "arena_text": 1454.4891469812887,
         "arena_creative_writing": 1441.9162652815512,
-        "design_arena_elo": 1296,
-        "design_arena_category": "gamedev"
+        "design_arena_elo": 1294,
+        "design_arena_category": "androidnative"
       }
     },
     {
@@ -3678,7 +3810,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 1000000,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 95.5,
@@ -3977,11 +4109,11 @@
         },
         {
           "provider": "Relace",
-          "input": 0.16049999999999998,
+          "input": 0.19,
           "cache_write": null,
           "input_billing": null,
-          "output": 9.7224,
-          "cache_read": 0.16,
+          "output": 10.5634,
+          "cache_read": 0.19,
           "quantization": "fp4",
           "zdr": true,
           "context_length": 1048576,
@@ -4033,27 +4165,11 @@
           "quantization": "fp4",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 80,
+          "uptime_30m": 83.33333333333334,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 19,
           "latency_p50": 2086
-        },
-        {
-          "provider": "Morph",
-          "input": 0.969,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 32.168,
-          "cache_read": 0.345,
-          "quantization": "fp8",
-          "zdr": true,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 55,
-          "latency_p50": 1805
         },
         {
           "provider": "AkashML",
@@ -4070,6 +4186,22 @@
           "tool_call": true,
           "throughput_p50": 39,
           "latency_p50": 770
+        },
+        {
+          "provider": "Morph",
+          "input": 1.521,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 28.125,
+          "cache_read": 0.541,
+          "quantization": "fp8",
+          "zdr": true,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 55,
+          "latency_p50": 1805
         },
         {
           "provider": "Decart",
@@ -4161,7 +4293,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 27,
@@ -4177,7 +4309,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 66.66666666666666,
+          "uptime_30m": 0,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 79,
@@ -4193,7 +4325,7 @@
           "quantization": "fp4",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 86.20689655172413,
+          "uptime_30m": 88.88888888888889,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 51,
@@ -4241,7 +4373,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 55,
@@ -4273,7 +4405,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 34,
@@ -4302,7 +4434,7 @@
         "aa_agentic": 50,
         "arena_text": 1487.071983223727,
         "arena_creative_writing": 1461.2721978865138,
-        "design_arena_elo": 1383,
+        "design_arena_elo": 1385,
         "design_arena_category": "3d"
       }
     },
@@ -4341,7 +4473,7 @@
         "aa_agentic": 50,
         "arena_text": 1487.071983223727,
         "arena_creative_writing": 1461.2721978865138,
-        "design_arena_elo": 1383,
+        "design_arena_elo": 1385,
         "design_arena_category": "3d"
       }
     },
@@ -4380,7 +4512,7 @@
         "aa_agentic": 50,
         "arena_text": 1487.071983223727,
         "arena_creative_writing": 1461.2721978865138,
-        "design_arena_elo": 1383,
+        "design_arena_elo": 1385,
         "design_arena_category": "3d"
       }
     },
@@ -4438,7 +4570,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": null,
@@ -4451,7 +4583,7 @@
         "aa_agentic": 50,
         "arena_text": 1487.071983223727,
         "arena_creative_writing": 1461.2721978865138,
-        "design_arena_elo": 1383,
+        "design_arena_elo": 1385,
         "design_arena_category": "3d"
       }
     },
@@ -4490,7 +4622,7 @@
         "aa_agentic": 50,
         "arena_text": 1487.071983223727,
         "arena_creative_writing": 1461.2721978865138,
-        "design_arena_elo": 1383,
+        "design_arena_elo": 1385,
         "design_arena_category": "3d"
       }
     },
@@ -4605,7 +4737,7 @@
       ],
       "scores": {
         "aa_intelligence": 43.4,
-        "design_arena_elo": 1342,
+        "design_arena_elo": 1344,
         "design_arena_category": "3d"
       }
     },
@@ -4640,7 +4772,7 @@
       ],
       "scores": {
         "aa_intelligence": 43.4,
-        "design_arena_elo": 1342,
+        "design_arena_elo": 1344,
         "design_arena_category": "3d"
       }
     },
@@ -4714,7 +4846,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": 0,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 65,
@@ -4730,7 +4862,7 @@
           "quantization": "fp4",
           "zdr": true,
           "context_length": 1000000,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 100,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 48,
@@ -4778,7 +4910,7 @@
           "quantization": "fp4",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 89.65517241379311,
+          "uptime_30m": 100,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 86,
@@ -5029,7 +5161,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1050000,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
@@ -5089,8 +5221,8 @@
       "license": null,
       "providers": 51,
       "from": {
-        "provider": "StreamLake",
-        "blended_per_m": 0.01
+        "provider": "OpenInference",
+        "blended_per_m": 0.008
       },
       "offerings": [
         {
@@ -5494,6 +5626,22 @@
           "latency_p50": 2331
         },
         {
+          "provider": "OpenInference",
+          "input": 0.10764699999999999,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.01,
+          "cache_read": 0.005303,
+          "quantization": "fp4",
+          "zdr": true,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 117,
+          "latency_p50": 733
+        },
+        {
           "provider": "CoreWeave",
           "input": 0.12,
           "cache_write": null,
@@ -5503,7 +5651,7 @@
           "quantization": "nvfp4",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 138,
@@ -5599,7 +5747,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 150,
@@ -5711,7 +5859,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": 96.66666666666667,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 47,
@@ -5834,8 +5982,8 @@
           "input": 0.15,
           "cache_write": null,
           "input_billing": null,
-          "output": 2.4,
-          "cache_read": 0.08,
+          "output": 1.2,
+          "cache_read": 0.03,
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1048576,
@@ -5844,22 +5992,6 @@
           "tool_call": true,
           "throughput_p50": 33,
           "latency_p50": 973
-        },
-        {
-          "provider": "OpenInference",
-          "input": 0.169146,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.01,
-          "cache_read": 0.015829,
-          "quantization": "fp4",
-          "zdr": true,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 117,
-          "latency_p50": 733
         },
         {
           "provider": "Inceptron",
@@ -5879,11 +6011,11 @@
         },
         {
           "provider": "Morph",
-          "input": 13.263,
+          "input": 0.28099999999999997,
           "cache_write": null,
           "input_billing": null,
           "output": 0.65,
-          "cache_read": 3.73,
+          "cache_read": 0.079,
           "quantization": "fp8",
           "zdr": true,
           "context_length": 1048576,
@@ -5916,7 +6048,7 @@
         "aa_agentic": 50.9,
         "arena_text": 1473.8381537025502,
         "arena_creative_writing": 1433.6567070428632,
-        "design_arena_elo": 1313,
+        "design_arena_elo": 1314,
         "design_arena_category": "3d"
       }
     },
@@ -5955,7 +6087,7 @@
         "aa_agentic": 50.9,
         "arena_text": 1473.8381537025502,
         "arena_creative_writing": 1433.6567070428632,
-        "design_arena_elo": 1313,
+        "design_arena_elo": 1314,
         "design_arena_category": "3d"
       }
     },
@@ -6010,7 +6142,7 @@
         "aa_agentic": 50.9,
         "arena_text": 1473.8381537025502,
         "arena_creative_writing": 1433.6567070428632,
-        "design_arena_elo": 1313,
+        "design_arena_elo": 1314,
         "design_arena_category": "3d"
       }
     },
@@ -6068,7 +6200,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1000000,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 74,
@@ -6273,7 +6405,7 @@
         "aa_agentic": 40.2,
         "arena_text": 1496.3802615912373,
         "arena_creative_writing": 1486.9392865970776,
-        "design_arena_elo": 1313,
+        "design_arena_elo": 1314,
         "design_arena_category": "uicomponent"
       }
     },
@@ -6312,7 +6444,7 @@
         "aa_agentic": 40.2,
         "arena_text": 1496.3802615912373,
         "arena_creative_writing": 1486.9392865970776,
-        "design_arena_elo": 1313,
+        "design_arena_elo": 1314,
         "design_arena_category": "uicomponent"
       }
     },
@@ -6351,7 +6483,7 @@
         "aa_agentic": 40.2,
         "arena_text": 1496.3802615912373,
         "arena_creative_writing": 1486.9392865970776,
-        "design_arena_elo": 1313,
+        "design_arena_elo": 1314,
         "design_arena_category": "uicomponent"
       }
     },
@@ -6390,7 +6522,7 @@
         "aa_agentic": 40.2,
         "arena_text": 1496.3802615912373,
         "arena_creative_writing": 1486.9392865970776,
-        "design_arena_elo": 1313,
+        "design_arena_elo": 1314,
         "design_arena_category": "uicomponent"
       }
     },
@@ -6480,7 +6612,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1000000,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 58,
@@ -6698,7 +6830,7 @@
         "aa_agentic": 35.2,
         "arena_text": 1487.5878753892953,
         "arena_creative_writing": 1490.973144146456,
-        "design_arena_elo": 1319,
+        "design_arena_elo": 1318,
         "design_arena_category": "gamedev"
       }
     },
@@ -6724,7 +6856,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": 66.66666666666666,
+          "uptime_30m": 56.666666666666664,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
@@ -6737,7 +6869,7 @@
         "aa_agentic": 35.2,
         "arena_text": 1487.5878753892953,
         "arena_creative_writing": 1490.973144146456,
-        "design_arena_elo": 1319,
+        "design_arena_elo": 1318,
         "design_arena_category": "gamedev"
       }
     },
@@ -6776,7 +6908,7 @@
         "aa_agentic": 35.2,
         "arena_text": 1487.5878753892953,
         "arena_creative_writing": 1490.973144146456,
-        "design_arena_elo": 1319,
+        "design_arena_elo": 1318,
         "design_arena_category": "gamedev"
       }
     },
@@ -6815,7 +6947,7 @@
         "aa_agentic": 35.2,
         "arena_text": 1487.5878753892953,
         "arena_creative_writing": 1490.973144146456,
-        "design_arena_elo": 1319,
+        "design_arena_elo": 1318,
         "design_arena_category": "gamedev"
       }
     },
@@ -6866,8 +6998,8 @@
       "license": "MIT",
       "providers": 41,
       "from": {
-        "provider": "openscale",
-        "blended_per_m": 0.006
+        "provider": "OpenInference",
+        "blended_per_m": 0.005
       },
       "offerings": [
         {
@@ -6898,7 +7030,7 @@
           "context_length": 1048576,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": 194,
           "latency_p50": 402
         },
@@ -6946,7 +7078,7 @@
           "context_length": 1048576,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -6962,7 +7094,7 @@
           "context_length": 1048576,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -6978,7 +7110,7 @@
           "context_length": 1056784,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -6994,7 +7126,7 @@
           "context_length": 1056784,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -7010,7 +7142,7 @@
           "context_length": 1056784,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -7026,7 +7158,7 @@
           "context_length": 1056784,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -7042,7 +7174,7 @@
           "context_length": 1048576,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -7058,7 +7190,7 @@
           "context_length": 1048576,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -7074,9 +7206,25 @@
           "context_length": 1048568,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
+        },
+        {
+          "provider": "OpenInference",
+          "input": 0.016841,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.01,
+          "cache_read": 0.00456,
+          "quantization": "fp4",
+          "zdr": true,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 96,
+          "latency_p50": 1030
         },
         {
           "provider": "Reka",
@@ -7088,7 +7236,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 88,
+          "uptime_30m": 96.66666666666667,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 135,
@@ -7111,22 +7259,6 @@
           "latency_p50": 983
         },
         {
-          "provider": "OpenInference",
-          "input": 0.076531,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.01,
-          "cache_read": 0.045571,
-          "quantization": "fp4",
-          "zdr": true,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 96,
-          "latency_p50": 1030
-        },
-        {
           "provider": "InferenceNet",
           "input": 0.08,
           "cache_write": null,
@@ -7141,6 +7273,22 @@
           "tool_call": true,
           "throughput_p50": 116,
           "latency_p50": 469
+        },
+        {
+          "provider": "Morph",
+          "input": 0.098,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.6,
+          "cache_read": 0.003,
+          "quantization": "fp8",
+          "zdr": true,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 103,
+          "latency_p50": 899
         },
         {
           "provider": "Cloudflare",
@@ -7207,22 +7355,6 @@
           "latency_p50": 406
         },
         {
-          "provider": "DeepSeek",
-          "input": 0.15,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.6,
-          "cache_read": 0.003,
-          "quantization": "unknown",
-          "zdr": false,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 47,
-          "latency_p50": 925
-        },
-        {
           "provider": "Makora",
           "input": 0.15,
           "cache_write": null,
@@ -7232,27 +7364,11 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": 96.66666666666667,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 149.5,
           "latency_p50": 1483
-        },
-        {
-          "provider": "Alibaba",
-          "input": 0.165,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.66,
-          "cache_read": 0.016499999999999997,
-          "quantization": "unknown",
-          "zdr": false,
-          "context_length": 1000000,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 91,
-          "latency_p50": 826
         },
         {
           "provider": "GMICloud",
@@ -7285,22 +7401,6 @@
           "tool_call": true,
           "throughput_p50": 92.5,
           "latency_p50": 1526
-        },
-        {
-          "provider": "Morph",
-          "input": 0.19999999999999998,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.7999999999999999,
-          "cache_read": 0.006,
-          "quantization": "fp8",
-          "zdr": true,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 103,
-          "latency_p50": 899
         },
         {
           "provider": "Fireworks",
@@ -7488,7 +7588,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": 96.66666666666667,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 226,
@@ -7525,11 +7625,43 @@
           "tool_call": true,
           "throughput_p50": 147,
           "latency_p50": 839
+        },
+        {
+          "provider": "DeepSeek",
+          "input": 0.3,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 1.2,
+          "cache_read": 0.006,
+          "quantization": "unknown",
+          "zdr": false,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 47,
+          "latency_p50": 925
+        },
+        {
+          "provider": "Alibaba",
+          "input": 0.33,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 1.32,
+          "cache_read": 0.032999999999999995,
+          "quantization": "unknown",
+          "zdr": false,
+          "context_length": 1000000,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 91,
+          "latency_p50": 826
         }
       ],
       "scores": {
         "aa_intelligence": 39.5,
-        "design_arena_elo": 1360,
+        "design_arena_elo": 1362,
         "design_arena_category": "3d"
       }
     },
@@ -7564,7 +7696,7 @@
       ],
       "scores": {
         "aa_intelligence": 39.5,
-        "design_arena_elo": 1360,
+        "design_arena_elo": 1362,
         "design_arena_category": "3d"
       }
     },
@@ -7599,7 +7731,7 @@
       ],
       "scores": {
         "aa_intelligence": 39.5,
-        "design_arena_elo": 1360,
+        "design_arena_elo": 1362,
         "design_arena_category": "3d"
       }
     },
@@ -7637,7 +7769,7 @@
         "aa_coding": 71.1,
         "arena_text": 1464.7413131497262,
         "arena_creative_writing": 1434.207884166262,
-        "design_arena_elo": 1239,
+        "design_arena_elo": 1237,
         "design_arena_category": "gamedev"
       }
     },
@@ -7707,7 +7839,7 @@
         "aa_coding": 71.1,
         "arena_text": 1464.7413131497262,
         "arena_creative_writing": 1434.207884166262,
-        "design_arena_elo": 1239,
+        "design_arena_elo": 1237,
         "design_arena_category": "gamedev"
       }
     },
@@ -7745,7 +7877,7 @@
         "aa_coding": 71.1,
         "arena_text": 1464.7413131497262,
         "arena_creative_writing": 1434.207884166262,
-        "design_arena_elo": 1239,
+        "design_arena_elo": 1237,
         "design_arena_category": "gamedev"
       }
     },
@@ -7783,7 +7915,7 @@
         "aa_coding": 71.1,
         "arena_text": 1464.7413131497262,
         "arena_creative_writing": 1434.207884166262,
-        "design_arena_elo": 1239,
+        "design_arena_elo": 1237,
         "design_arena_category": "gamedev"
       }
     },
@@ -7898,8 +8030,8 @@
       ],
       "scores": {
         "aa_intelligence": 38.9,
-        "design_arena_elo": 1304,
-        "design_arena_category": "website"
+        "design_arena_elo": 1338,
+        "design_arena_category": "uicomponent"
       }
     },
     {
@@ -7937,7 +8069,7 @@
         "aa_agentic": 41.2,
         "arena_text": 1465.7091491137166,
         "arena_creative_writing": 1451.7173845789487,
-        "design_arena_elo": 1280,
+        "design_arena_elo": 1279,
         "design_arena_category": "website"
       }
     },
@@ -7976,7 +8108,7 @@
         "aa_agentic": 41.2,
         "arena_text": 1465.7091491137166,
         "arena_creative_writing": 1451.7173845789487,
-        "design_arena_elo": 1280,
+        "design_arena_elo": 1279,
         "design_arena_category": "website"
       }
     },
@@ -8037,7 +8169,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1050000,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
@@ -8050,7 +8182,7 @@
         "aa_agentic": 36.4,
         "arena_text": 1476.6721977017742,
         "arena_creative_writing": 1448.1066993336644,
-        "design_arena_elo": 1293,
+        "design_arena_elo": 1291,
         "design_arena_category": "gamedev"
       }
     },
@@ -8121,7 +8253,7 @@
         "aa_agentic": 36.4,
         "arena_text": 1476.6721977017742,
         "arena_creative_writing": 1448.1066993336644,
-        "design_arena_elo": 1293,
+        "design_arena_elo": 1291,
         "design_arena_category": "gamedev",
         "livebench_math": 95.2,
         "livebench_coding": 80,
@@ -8154,7 +8286,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1050000,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
@@ -8167,7 +8299,7 @@
         "aa_agentic": 36.4,
         "arena_text": 1476.6721977017742,
         "arena_creative_writing": 1448.1066993336644,
-        "design_arena_elo": 1293,
+        "design_arena_elo": 1291,
         "design_arena_category": "gamedev"
       }
     },
@@ -8206,7 +8338,7 @@
         "aa_agentic": 36.4,
         "arena_text": 1476.6721977017742,
         "arena_creative_writing": 1448.1066993336644,
-        "design_arena_elo": 1293,
+        "design_arena_elo": 1291,
         "design_arena_category": "gamedev"
       }
     },
@@ -8325,7 +8457,7 @@
         "aa_agentic": 43.6,
         "arena_text": 1461.0744345634098,
         "arena_creative_writing": 1435.9673899026286,
-        "design_arena_elo": 1275,
+        "design_arena_elo": 1274,
         "design_arena_category": "codecategories"
       }
     },
@@ -8364,7 +8496,7 @@
         "aa_agentic": 43.6,
         "arena_text": 1461.0744345634098,
         "arena_creative_writing": 1435.9673899026286,
-        "design_arena_elo": 1275,
+        "design_arena_elo": 1274,
         "design_arena_category": "codecategories"
       }
     },
@@ -8489,7 +8621,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1050000,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 63.33333333333333,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
@@ -8642,7 +8774,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 1048320,
-          "uptime_30m": 100,
+          "uptime_30m": 93.10344827586206,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 50,
@@ -8658,7 +8790,7 @@
           "quantization": "fp4",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": 0,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 31.5,
@@ -8674,7 +8806,7 @@
           "quantization": "bf16",
           "zdr": false,
           "context_length": 1050000,
-          "uptime_30m": 93.10344827586206,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 25,
@@ -8738,7 +8870,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 24,
@@ -8770,7 +8902,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 1000000,
-          "uptime_30m": 0,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 13,
@@ -9033,10 +9165,10 @@
       "org": "deepseek",
       "open_weights": true,
       "license": "MIT",
-      "providers": 24,
+      "providers": 25,
       "from": {
-        "provider": "Baidu",
-        "blended_per_m": 0.009
+        "provider": "avian",
+        "blended_per_m": 0.041
       },
       "offerings": [
         {
@@ -9083,17 +9215,17 @@
           "context_length": 1000000,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
         {
           "provider": "Relace",
-          "input": 0.1188,
+          "input": 0.23120000000000002,
           "cache_write": null,
           "input_billing": null,
           "output": 8,
-          "cache_read": 0.12,
+          "cache_read": 0.22999999999999998,
           "quantization": "fp4",
           "zdr": true,
           "context_length": 1048576,
@@ -9102,22 +9234,6 @@
           "tool_call": true,
           "throughput_p50": 129,
           "latency_p50": 1067
-        },
-        {
-          "provider": "Baidu",
-          "input": 0.13199999999999998,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.396,
-          "cache_read": 0.004200000000000001,
-          "quantization": "fp8",
-          "zdr": false,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 47,
-          "latency_p50": 1193.5
         },
         {
           "provider": "Wafer",
@@ -9168,22 +9284,6 @@
           "latency_p50": 887
         },
         {
-          "provider": "Alibaba",
-          "input": 0.5808,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 1.7424,
-          "cache_read": 0.05808,
-          "quantization": "unknown",
-          "zdr": false,
-          "context_length": 1000000,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 65.5,
-          "latency_p50": 1436
-        },
-        {
           "provider": "StreamLake",
           "input": 0.66,
           "cache_write": null,
@@ -9198,38 +9298,6 @@
           "tool_call": true,
           "throughput_p50": 48,
           "latency_p50": 2303
-        },
-        {
-          "provider": "DeepSeek",
-          "input": 0.66,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 1.9800000000000002,
-          "cache_read": 0.022,
-          "quantization": "unknown",
-          "zdr": false,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 41,
-          "latency_p50": 930
-        },
-        {
-          "provider": "Phala",
-          "input": 0.9569999999999999,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 2.8776,
-          "cache_read": 0.099,
-          "quantization": "unknown",
-          "zdr": true,
-          "context_length": 1048576,
-          "uptime_30m": null,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 44,
-          "latency_p50": 3239
         },
         {
           "provider": "Novita",
@@ -9280,6 +9348,22 @@
           "latency_p50": 1123
         },
         {
+          "provider": "Alibaba",
+          "input": 1.122,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 3.366,
+          "cache_read": 0.1122,
+          "quantization": "unknown",
+          "zdr": false,
+          "context_length": 1000000,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 65.5,
+          "latency_p50": 1436
+        },
+        {
           "provider": "CoreWeave",
           "input": 1.31,
           "cache_write": null,
@@ -9289,7 +9373,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 142,
@@ -9321,11 +9405,43 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": 88.88888888888889,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 59,
           "latency_p50": 1190
+        },
+        {
+          "provider": "Nebius",
+          "input": 1.32,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 3.9600000000000004,
+          "cache_read": 0.04,
+          "quantization": "fp8",
+          "zdr": true,
+          "context_length": 979000,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": null,
+          "latency_p50": null
+        },
+        {
+          "provider": "Baidu",
+          "input": 1.32,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 3.9600000000000004,
+          "cache_read": 0.041999999999999996,
+          "quantization": "fp8",
+          "zdr": false,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 47,
+          "latency_p50": 1193.5
         },
         {
           "provider": "Parasail",
@@ -9385,7 +9501,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 55,
@@ -9406,6 +9522,38 @@
           "tool_call": true,
           "throughput_p50": 29,
           "latency_p50": 1815
+        },
+        {
+          "provider": "DeepSeek",
+          "input": 1.32,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 3.9600000000000004,
+          "cache_read": 0.044,
+          "quantization": "unknown",
+          "zdr": false,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 41,
+          "latency_p50": 930
+        },
+        {
+          "provider": "Phala",
+          "input": 1.4500000000000002,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 4.359999999999999,
+          "cache_read": 0.15,
+          "quantization": "unknown",
+          "zdr": true,
+          "context_length": 1048576,
+          "uptime_30m": null,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 44,
+          "latency_p50": 3239
         },
         {
           "provider": "Venice",
@@ -9505,8 +9653,8 @@
       "license": "MIT",
       "providers": 27,
       "from": {
-        "provider": "Baidu",
-        "blended_per_m": 0.003
+        "provider": "StreamLake",
+        "blended_per_m": 0.009
       },
       "offerings": [
         {
@@ -9607,10 +9755,10 @@
         },
         {
           "provider": "Relace",
-          "input": 0.0422,
+          "input": 0.0475,
           "cache_write": null,
           "input_billing": null,
-          "output": 0.1694,
+          "output": 0.1568,
           "cache_read": 0.028,
           "quantization": "fp4",
           "zdr": true,
@@ -9620,22 +9768,6 @@
           "tool_call": true,
           "throughput_p50": 88,
           "latency_p50": 390
-        },
-        {
-          "provider": "Baidu",
-          "input": 0.04444,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.13332,
-          "cache_read": 0.0014140000000000001,
-          "quantization": "fp8",
-          "zdr": false,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 79,
-          "latency_p50": 1234
         },
         {
           "provider": "Reka",
@@ -9668,22 +9800,6 @@
           "tool_call": true,
           "throughput_p50": 123,
           "latency_p50": 783
-        },
-        {
-          "provider": "Wafer",
-          "input": 0.13,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.22999999999999998,
-          "cache_read": 0.125,
-          "quantization": "nvfp4",
-          "zdr": true,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 193,
-          "latency_p50": 296
         },
         {
           "provider": "BaseTen",
@@ -9738,7 +9854,7 @@
           "input": 0.13,
           "cache_write": 0,
           "input_billing": null,
-          "output": 0.36660000000000004,
+          "output": 0.41250000000000003,
           "cache_read": 0.027,
           "quantization": "fp4",
           "zdr": true,
@@ -9766,6 +9882,22 @@
           "latency_p50": 2269
         },
         {
+          "provider": "Wafer",
+          "input": 0.14,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.22999999999999998,
+          "cache_read": 0.135,
+          "quantization": "nvfp4",
+          "zdr": true,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 193,
+          "latency_p50": 296
+        },
+        {
           "provider": "Cohere",
           "input": 0.14,
           "cache_write": null,
@@ -9775,7 +9907,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": 93.33333333333333,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 164,
@@ -9812,22 +9944,6 @@
           "tool_call": true,
           "throughput_p50": 30,
           "latency_p50": 740
-        },
-        {
-          "provider": "Alibaba",
-          "input": 0.176,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.5279999999999999,
-          "cache_read": 0.017599999999999998,
-          "quantization": "unknown",
-          "zdr": false,
-          "context_length": 1000000,
-          "uptime_30m": 85.71428571428571,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 65,
-          "latency_p50": 1611.5
         },
         {
           "provider": "Mancer 2",
@@ -9878,20 +9994,20 @@
           "latency_p50": 2031
         },
         {
-          "provider": "Phala",
-          "input": 0.308,
+          "provider": "Alibaba",
+          "input": 0.352,
           "cache_write": null,
           "input_billing": null,
-          "output": 0.9239999999999999,
-          "cache_read": 0.0196,
+          "output": 1.0559999999999998,
+          "cache_read": 0.035199999999999995,
           "quantization": "unknown",
-          "zdr": true,
-          "context_length": 1048576,
-          "uptime_30m": null,
+          "zdr": false,
+          "context_length": 1000000,
+          "uptime_30m": 64,
           "open_weights": true,
           "tool_call": true,
-          "throughput_p50": 50,
-          "latency_p50": 2353
+          "throughput_p50": 65,
+          "latency_p50": 1611.5
         },
         {
           "provider": "Novita",
@@ -9908,6 +10024,38 @@
           "tool_call": true,
           "throughput_p50": 53,
           "latency_p50": 1200.5
+        },
+        {
+          "provider": "Phala",
+          "input": 0.44,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 1.32,
+          "cache_read": 0.028,
+          "quantization": "unknown",
+          "zdr": true,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 50,
+          "latency_p50": 2353
+        },
+        {
+          "provider": "Baidu",
+          "input": 0.44,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 1.32,
+          "cache_read": 0.014,
+          "quantization": "fp8",
+          "zdr": false,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 79,
+          "latency_p50": 1234
         },
         {
           "provider": "AtlasCloud",
@@ -10087,7 +10235,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
@@ -10151,8 +10299,8 @@
       "license": null,
       "providers": 36,
       "from": {
-        "provider": "Baidu",
-        "blended_per_m": 0.042
+        "provider": "Relace",
+        "blended_per_m": 0.068
       },
       "offerings": [
         {
@@ -10364,22 +10512,6 @@
           "latency_p50": 1237
         },
         {
-          "provider": "Baidu",
-          "input": 0.189,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.5940000000000001,
-          "cache_read": 0.035100000000000006,
-          "quantization": "fp8",
-          "zdr": false,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 89,
-          "latency_p50": 799
-        },
-        {
           "provider": "Cloudflare",
           "input": 0.19,
           "cache_write": null,
@@ -10394,22 +10526,6 @@
           "tool_call": true,
           "throughput_p50": 92,
           "latency_p50": 743
-        },
-        {
-          "provider": "StreamLake",
-          "input": 0.56,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 1.76,
-          "cache_read": 0.10400000000000001,
-          "quantization": "fp8",
-          "zdr": false,
-          "context_length": 1024000,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 47,
-          "latency_p50": 1472
         },
         {
           "provider": "Ambient",
@@ -10428,6 +10544,22 @@
           "latency_p50": 1368.5
         },
         {
+          "provider": "StreamLake",
+          "input": 0.6130599999999999,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 1.92676,
+          "cache_read": 0.113854,
+          "quantization": "fp8",
+          "zdr": false,
+          "context_length": 1024000,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 47,
+          "latency_p50": 1472
+        },
+        {
           "provider": "CoreWeave",
           "input": 0.62,
           "cache_write": null,
@@ -10437,7 +10569,7 @@
           "quantization": "fp4",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 93.33333333333333,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 222,
@@ -10528,7 +10660,7 @@
           "input": 0.9900000000000001,
           "cache_write": 0,
           "input_billing": null,
-          "output": 1.782,
+          "output": 4.32,
           "cache_read": 0.16,
           "quantization": "fp4",
           "zdr": true,
@@ -10538,22 +10670,6 @@
           "tool_call": true,
           "throughput_p50": 135,
           "latency_p50": 250
-        },
-        {
-          "provider": "Morph",
-          "input": 1.004,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 4.752000000000001,
-          "cache_read": 0.251,
-          "quantization": "fp8",
-          "zdr": true,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 49,
-          "latency_p50": 744
         },
         {
           "provider": "Decart",
@@ -10581,7 +10697,7 @@
           "quantization": "fp4",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 193,
@@ -10634,6 +10750,22 @@
           "tool_call": true,
           "throughput_p50": 147,
           "latency_p50": 274
+        },
+        {
+          "provider": "Baidu",
+          "input": 1.4,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 4.4,
+          "cache_read": 0.26,
+          "quantization": "fp8",
+          "zdr": false,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 89,
+          "latency_p50": 799
         },
         {
           "provider": "Venice",
@@ -10714,6 +10846,22 @@
           "tool_call": true,
           "throughput_p50": 45,
           "latency_p50": 4042.5
+        },
+        {
+          "provider": "Morph",
+          "input": 1.758,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 4.752000000000001,
+          "cache_read": 0.44,
+          "quantization": "fp8",
+          "zdr": true,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 49,
+          "latency_p50": 744
         },
         {
           "provider": "opencode",
@@ -10858,22 +11006,6 @@
           "latency_p50": null
         },
         {
-          "provider": "Tenstorrent",
-          "input": 0.02,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.5,
-          "cache_read": 0.009,
-          "quantization": "fp4",
-          "zdr": true,
-          "context_length": 262144,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 17,
-          "latency_p50": 1563.5
-        },
-        {
           "provider": "Darkbloom",
           "input": 0.035,
           "cache_write": null,
@@ -10986,6 +11118,22 @@
           "latency_p50": 604
         },
         {
+          "provider": "Tenstorrent",
+          "input": 0.06,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.5,
+          "cache_read": 0.015,
+          "quantization": "fp4",
+          "zdr": true,
+          "context_length": 262144,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 17,
+          "latency_p50": 1563.5
+        },
+        {
           "provider": "Mancer 2",
           "input": 0.18,
           "cache_write": null,
@@ -10995,7 +11143,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 50.5,
@@ -11027,7 +11175,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1000000,
-          "uptime_30m": 100,
+          "uptime_30m": 96.66666666666667,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 69,
@@ -11107,7 +11255,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1000000,
-          "uptime_30m": 100,
+          "uptime_30m": 66.66666666666666,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 39,
@@ -11270,7 +11418,7 @@
           "context_length": 1000000,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         }
@@ -11371,26 +11519,10 @@
       "license": null,
       "providers": 3,
       "from": {
-        "provider": "Baidu",
-        "blended_per_m": 0.176
+        "provider": "BaseTen",
+        "blended_per_m": 0.289
       },
       "offerings": [
-        {
-          "provider": "Baidu",
-          "input": 0.61875,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 2.1670000000000003,
-          "cache_read": 0.154,
-          "quantization": "fp4",
-          "zdr": false,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": null,
-          "latency_p50": null
-        },
         {
           "provider": "BaseTen",
           "input": 2.0999999999999996,
@@ -11399,6 +11531,22 @@
           "output": 6.6000000000000005,
           "cache_read": 0.21,
           "quantization": "fp8",
+          "zdr": false,
+          "context_length": 1048576,
+          "uptime_30m": null,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": null,
+          "latency_p50": null
+        },
+        {
+          "provider": "Baidu",
+          "input": 2.25,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 7.880000000000001,
+          "cache_read": 0.56,
+          "quantization": "fp4",
           "zdr": false,
           "context_length": 1048576,
           "uptime_30m": 100,
@@ -11670,7 +11818,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
@@ -11744,7 +11892,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 400000,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 35,
@@ -12110,38 +12258,6 @@
           "latency_p50": null
         },
         {
-          "provider": "StreamLake",
-          "input": 0.718272,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 1.436544,
-          "cache_read": 0.059856000000000006,
-          "quantization": "fp8",
-          "zdr": false,
-          "context_length": 1024000,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 41,
-          "latency_p50": 1402
-        },
-        {
-          "provider": "Baidu",
-          "input": 0.71994,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 1.43988,
-          "cache_read": 0.05964,
-          "quantization": "fp8",
-          "zdr": false,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 44,
-          "latency_p50": 1067
-        },
-        {
           "provider": "Reka",
           "input": 0.7999999999999999,
           "cache_write": null,
@@ -12151,7 +12267,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 93.33333333333333,
+          "uptime_30m": 90,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 38,
@@ -12172,6 +12288,22 @@
           "tool_call": true,
           "throughput_p50": 80,
           "latency_p50": 814
+        },
+        {
+          "provider": "StreamLake",
+          "input": 0.9552599999999999,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 1.9105199999999998,
+          "cache_read": 0.07960500000000001,
+          "quantization": "fp8",
+          "zdr": false,
+          "context_length": 1024000,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 41,
+          "latency_p50": 1402
         },
         {
           "provider": "GMICloud",
@@ -12199,7 +12331,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 42,
@@ -12231,7 +12363,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 1000000,
-          "uptime_30m": 83.33333333333334,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 42,
@@ -12302,6 +12434,22 @@
           "latency_p50": 1357
         },
         {
+          "provider": "Baidu",
+          "input": 1.69,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 3.38,
+          "cache_read": 0.14,
+          "quantization": "fp8",
+          "zdr": false,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 44,
+          "latency_p50": 1067
+        },
+        {
           "provider": "Crusoe",
           "input": 1.74,
           "cache_write": null,
@@ -12356,7 +12504,7 @@
         "aa_agentic": 26.3,
         "arena_text": 1457.7921446281084,
         "arena_creative_writing": 1445.993829345811,
-        "design_arena_elo": 1249,
+        "design_arena_elo": 1251,
         "design_arena_category": "3d",
         "livebench_math": 90.7,
         "livebench_coding": 70,
@@ -12402,7 +12550,7 @@
         "aa_agentic": 26.3,
         "arena_text": 1457.7921446281084,
         "arena_creative_writing": 1445.993829345811,
-        "design_arena_elo": 1249,
+        "design_arena_elo": 1251,
         "design_arena_category": "3d"
       }
     },
@@ -12553,7 +12701,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 400000,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
@@ -12640,7 +12788,7 @@
         "aa_agentic": 26.3,
         "arena_text": 1457.7921446281084,
         "arena_creative_writing": 1445.993829345811,
-        "design_arena_elo": 1249,
+        "design_arena_elo": 1251,
         "design_arena_category": "3d"
       }
     },
@@ -12730,7 +12878,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1000000,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 45,
@@ -12856,7 +13004,7 @@
         "aa_agentic": 8.2,
         "arena_text": 1486.9094358879568,
         "arena_creative_writing": 1480.996930948638,
-        "design_arena_elo": 1285,
+        "design_arena_elo": 1281,
         "design_arena_category": "svg",
         "livebench_math": 91,
         "livebench_coding": 76.5,
@@ -12889,7 +13037,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": 0,
+          "uptime_30m": null,
           "open_weights": null,
           "tool_call": true,
           "throughput_p50": null,
@@ -12902,7 +13050,7 @@
         "aa_agentic": 8.2,
         "arena_text": 1486.9094358879568,
         "arena_creative_writing": 1480.996930948638,
-        "design_arena_elo": 1285,
+        "design_arena_elo": 1281,
         "design_arena_category": "svg"
       }
     },
@@ -12928,7 +13076,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": null,
           "tool_call": true,
           "throughput_p50": null,
@@ -12941,7 +13089,7 @@
         "aa_agentic": 8.2,
         "arena_text": 1486.9094358879568,
         "arena_creative_writing": 1480.996930948638,
-        "design_arena_elo": 1285,
+        "design_arena_elo": 1281,
         "design_arena_category": "svg"
       }
     },
@@ -12980,7 +13128,7 @@
         "aa_agentic": 8.2,
         "arena_text": 1486.9094358879568,
         "arena_creative_writing": 1480.996930948638,
-        "design_arena_elo": 1285,
+        "design_arena_elo": 1281,
         "design_arena_category": "svg"
       }
     },
@@ -13196,7 +13344,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": 85.18518518518519,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 43,
@@ -13260,7 +13408,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": 0,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 129,
@@ -13369,7 +13517,7 @@
         "aa_agentic": 29.5,
         "arena_text": 1441.3155955735351,
         "arena_creative_writing": 1405.4560855918369,
-        "design_arena_elo": 1256,
+        "design_arena_elo": 1255,
         "design_arena_category": "website",
         "livebench_math": 76.9,
         "livebench_coding": 68.2,
@@ -13402,7 +13550,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 524288,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": null,
@@ -13415,7 +13563,7 @@
         "aa_agentic": 29.5,
         "arena_text": 1441.3155955735351,
         "arena_creative_writing": 1405.4560855918369,
-        "design_arena_elo": 1256,
+        "design_arena_elo": 1255,
         "design_arena_category": "website"
       }
     },
@@ -13505,7 +13653,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 200000,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 42,
@@ -13637,7 +13785,7 @@
         "aa_agentic": 28.8,
         "arena_text": 1386.425816378497,
         "arena_creative_writing": 1309.258294936353,
-        "design_arena_elo": 1182,
+        "design_arena_elo": 1180,
         "design_arena_category": "codecategories"
       }
     },
@@ -13825,22 +13973,6 @@
           "latency_p50": null
         },
         {
-          "provider": "Baidu",
-          "input": 0.3895,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 1.64,
-          "cache_read": 0.0656,
-          "quantization": "fp4",
-          "zdr": false,
-          "context_length": 262144,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 67,
-          "latency_p50": 932
-        },
-        {
           "provider": "Chutes",
           "input": 0.39,
           "cache_write": null,
@@ -13858,11 +13990,11 @@
         },
         {
           "provider": "Inceptron",
-          "input": 0.5457000000000001,
+          "input": 0.546,
           "cache_write": 0,
           "input_billing": null,
           "output": 3.5,
-          "cache_read": 0.1569,
+          "cache_read": 0.117,
           "quantization": "int4",
           "zdr": true,
           "context_length": 262144,
@@ -13898,7 +14030,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 256000,
-          "uptime_30m": 100,
+          "uptime_30m": 0,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 43,
@@ -13914,7 +14046,7 @@
           "quantization": "fp4",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 105,
@@ -13946,7 +14078,7 @@
           "quantization": "int4",
           "zdr": true,
           "context_length": 256000,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 80,
@@ -14017,6 +14149,22 @@
           "latency_p50": null
         },
         {
+          "provider": "Baidu",
+          "input": 0.95,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 4,
+          "cache_read": 0.16,
+          "quantization": "fp4",
+          "zdr": false,
+          "context_length": 262144,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 67,
+          "latency_p50": 932
+        },
+        {
           "provider": "AtlasCloud",
           "input": 0.95,
           "cache_write": null,
@@ -14026,7 +14174,7 @@
           "quantization": "int4",
           "zdr": false,
           "context_length": 262144,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 65,
@@ -14132,7 +14280,7 @@
         "aa_coding": 54.5,
         "arena_text": 1443.05823916263,
         "arena_creative_writing": 1406.711907632708,
-        "design_arena_elo": 1242,
+        "design_arena_elo": 1241,
         "design_arena_category": "website",
         "livebench_math": 83.7,
         "livebench_coding": 78.2,
@@ -14147,7 +14295,7 @@
       "id": "glm-5",
       "name": "GLM-5",
       "org": "z-ai",
-      "open_weights": true,
+      "open_weights": false,
       "license": null,
       "providers": 10,
       "from": {
@@ -14166,7 +14314,7 @@
           "zdr": false,
           "context_length": 203000,
           "uptime_30m": null,
-          "open_weights": true,
+          "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
           "latency_p50": null
@@ -14182,7 +14330,7 @@
           "zdr": true,
           "context_length": 204800,
           "uptime_30m": null,
-          "open_weights": true,
+          "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
           "latency_p50": null
@@ -14198,7 +14346,7 @@
           "zdr": false,
           "context_length": 198000,
           "uptime_30m": 100,
-          "open_weights": true,
+          "open_weights": false,
           "tool_call": true,
           "throughput_p50": 57,
           "latency_p50": 2172
@@ -14214,7 +14362,7 @@
           "zdr": false,
           "context_length": 202752,
           "uptime_30m": 100,
-          "open_weights": true,
+          "open_weights": false,
           "tool_call": true,
           "throughput_p50": 60,
           "latency_p50": 2625
@@ -14230,7 +14378,7 @@
           "zdr": false,
           "context_length": 202752,
           "uptime_30m": 100,
-          "open_weights": true,
+          "open_weights": false,
           "tool_call": true,
           "throughput_p50": 53,
           "latency_p50": 974.5
@@ -14246,7 +14394,7 @@
           "zdr": true,
           "context_length": 204800,
           "uptime_30m": 100,
-          "open_weights": true,
+          "open_weights": false,
           "tool_call": true,
           "throughput_p50": 45,
           "latency_p50": 2834
@@ -14262,7 +14410,7 @@
           "zdr": true,
           "context_length": 202752,
           "uptime_30m": null,
-          "open_weights": true,
+          "open_weights": false,
           "tool_call": true,
           "throughput_p50": 117,
           "latency_p50": 844.5
@@ -14277,8 +14425,8 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 198000,
-          "uptime_30m": 100,
-          "open_weights": true,
+          "uptime_30m": null,
+          "open_weights": false,
           "tool_call": true,
           "throughput_p50": 24,
           "latency_p50": 9698
@@ -14293,8 +14441,8 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 202800,
-          "uptime_30m": null,
-          "open_weights": true,
+          "uptime_30m": 100,
+          "open_weights": false,
           "tool_call": true,
           "throughput_p50": 36,
           "latency_p50": 2201.5
@@ -14309,8 +14457,8 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 202752,
-          "uptime_30m": 93.33333333333333,
-          "open_weights": true,
+          "uptime_30m": 100,
+          "open_weights": false,
           "tool_call": true,
           "throughput_p50": 41,
           "latency_p50": 9243
@@ -14328,7 +14476,7 @@
       "id": "glm-5-turbo",
       "name": "Z.ai: GLM 5 Turbo",
       "org": "z-ai",
-      "open_weights": true,
+      "open_weights": false,
       "license": null,
       "providers": 1,
       "from": {
@@ -14347,7 +14495,7 @@
           "zdr": true,
           "context_length": 202752,
           "uptime_30m": 100,
-          "open_weights": true,
+          "open_weights": false,
           "tool_call": true,
           "throughput_p50": 23,
           "latency_p50": 6696.5
@@ -14365,7 +14513,7 @@
       "id": "glm-5:turbo",
       "name": "Z.ai: GLM 5 (turbo)",
       "org": "z-ai",
-      "open_weights": true,
+      "open_weights": false,
       "license": null,
       "providers": 1,
       "from": {
@@ -14384,7 +14532,7 @@
           "zdr": false,
           "context_length": 200000,
           "uptime_30m": null,
-          "open_weights": true,
+          "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
           "latency_p50": null
@@ -14429,7 +14577,7 @@
       ],
       "scores": {
         "aa_intelligence": 26.5,
-        "design_arena_elo": 1169,
+        "design_arena_elo": 1168,
         "design_arena_category": "website"
       }
     },
@@ -14439,7 +14587,7 @@
       "org": "nvidia",
       "open_weights": true,
       "license": "openmdw-1.1",
-      "providers": 8,
+      "providers": 9,
       "from": {
         "provider": "Darkbloom",
         "blended_per_m": 0.013
@@ -14455,7 +14603,7 @@
           "quantization": "nvfp4",
           "zdr": false,
           "context_length": 262144,
-          "uptime_30m": 80,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 28,
@@ -14471,7 +14619,7 @@
           "quantization": "bf16",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": 95.45454545454545,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 304,
@@ -14487,7 +14635,7 @@
           "quantization": "nvfp4",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": 100,
+          "uptime_30m": 91.66666666666666,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 83,
@@ -14572,11 +14720,27 @@
           "tool_call": true,
           "throughput_p50": 263,
           "latency_p50": 465
+        },
+        {
+          "provider": "Nebius",
+          "input": 0.3,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.8999999999999999,
+          "cache_read": 0.06,
+          "quantization": "bf16",
+          "zdr": true,
+          "context_length": 1048576,
+          "uptime_30m": 96.42857142857143,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": null,
+          "latency_p50": null
         }
       ],
       "scores": {
         "aa_intelligence": 26.5,
-        "design_arena_elo": 1169,
+        "design_arena_elo": 1168,
         "design_arena_category": "website"
       }
     },
@@ -14602,7 +14766,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": 62.5,
+          "uptime_30m": 70.83333333333334,
           "open_weights": null,
           "tool_call": true,
           "throughput_p50": null,
@@ -14613,7 +14777,7 @@
         "aa_intelligence": 26.3,
         "arena_text": 1472.7953716618217,
         "arena_creative_writing": 1456.8396177111256,
-        "design_arena_elo": 1196,
+        "design_arena_elo": 1194,
         "design_arena_category": "website"
       }
     },
@@ -14650,7 +14814,7 @@
         "aa_intelligence": 26.3,
         "arena_text": 1472.7953716618217,
         "arena_creative_writing": 1456.8396177111256,
-        "design_arena_elo": 1196,
+        "design_arena_elo": 1194,
         "design_arena_category": "website"
       }
     },
@@ -14687,7 +14851,7 @@
         "aa_intelligence": 26.3,
         "arena_text": 1472.7953716618217,
         "arena_creative_writing": 1456.8396177111256,
-        "design_arena_elo": 1196,
+        "design_arena_elo": 1194,
         "design_arena_category": "website"
       }
     },
@@ -14724,7 +14888,7 @@
         "aa_intelligence": 26.3,
         "arena_text": 1472.7953716618217,
         "arena_creative_writing": 1456.8396177111256,
-        "design_arena_elo": 1196,
+        "design_arena_elo": 1194,
         "design_arena_category": "website"
       }
     },
@@ -14830,7 +14994,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 202752,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 31.5,
@@ -14846,7 +15010,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 202752,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 64,
@@ -14862,7 +15026,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 202745,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 50,
@@ -15045,7 +15209,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 1024000,
-          "uptime_30m": 85.71428571428571,
+          "uptime_30m": 83.33333333333334,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 96,
@@ -15107,7 +15271,7 @@
         "arena_text": 1467.2561325712447,
         "arena_creative_writing": 1433.903257618414,
         "design_arena_elo": 1266,
-        "design_arena_category": "codecategories"
+        "design_arena_category": "website"
       }
     },
     {
@@ -15118,8 +15282,8 @@
       "license": null,
       "providers": 16,
       "from": {
-        "provider": "StreamLake",
-        "blended_per_m": 0.171
+        "provider": "CoreWeave",
+        "blended_per_m": 0.146
       },
       "offerings": [
         {
@@ -15134,7 +15298,7 @@
           "context_length": 262144,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -15166,7 +15330,7 @@
           "context_length": 262144,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
@@ -15182,16 +15346,16 @@
           "context_length": 262144,
           "uptime_30m": null,
           "open_weights": true,
-          "tool_call": true,
+          "tool_call": false,
           "throughput_p50": null,
           "latency_p50": null
         },
         {
           "provider": "Inceptron",
-          "input": 0.6712,
+          "input": 0.56,
           "cache_write": 0,
           "input_billing": null,
-          "output": 3.35,
+          "output": 3.1,
           "cache_read": 0.15,
           "quantization": "int4",
           "zdr": true,
@@ -15204,11 +15368,11 @@
         },
         {
           "provider": "CoreWeave",
-          "input": 0.71,
+          "input": 0.6,
           "cache_write": null,
           "input_billing": null,
-          "output": 3.5,
-          "cache_read": 0.15,
+          "output": 3,
+          "cache_read": 0.12,
           "quantization": "int4",
           "zdr": true,
           "context_length": 262144,
@@ -15244,7 +15408,7 @@
           "quantization": "int4",
           "zdr": true,
           "context_length": 256000,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 61,
@@ -15260,7 +15424,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 35,
@@ -15276,7 +15440,7 @@
           "quantization": "int4",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 35.5,
@@ -15383,7 +15547,7 @@
         "aa_intelligence": 25.8,
         "aa_coding": 60.8,
         "aa_agentic": 21,
-        "design_arena_elo": 1263,
+        "design_arena_elo": 1262,
         "design_arena_category": "website",
         "livebench_math": 79.6,
         "livebench_coding": 74,
@@ -15427,7 +15591,7 @@
         "aa_intelligence": 25.8,
         "aa_coding": 60.8,
         "aa_agentic": 21,
-        "design_arena_elo": 1263,
+        "design_arena_elo": 1262,
         "design_arena_category": "website"
       }
     },
@@ -15547,16 +15711,16 @@
       "providers": 6,
       "from": {
         "provider": "Tencent",
-        "blended_per_m": 0.024
+        "blended_per_m": 0.038
       },
       "offerings": [
         {
           "provider": "Tencent",
-          "input": 0.0825,
+          "input": 0.13199999999999998,
           "cache_write": 0,
           "input_billing": null,
-          "output": 0.33,
-          "cache_read": 0.020625,
+          "output": 0.5279999999999999,
+          "cache_read": 0.032999999999999995,
           "quantization": "fp8",
           "zdr": true,
           "context_length": 262144,
@@ -15722,7 +15886,7 @@
         "aa_agentic": 17.5,
         "arena_text": 1455.682715060256,
         "arena_creative_writing": 1431.499455939465,
-        "design_arena_elo": 1278,
+        "design_arena_elo": 1279,
         "design_arena_category": "dataviz"
       }
     },
@@ -15761,7 +15925,7 @@
         "aa_agentic": 17.5,
         "arena_text": 1455.682715060256,
         "arena_creative_writing": 1431.499455939465,
-        "design_arena_elo": 1278,
+        "design_arena_elo": 1279,
         "design_arena_category": "dataviz"
       }
     },
@@ -15816,7 +15980,7 @@
         "aa_agentic": 22.5,
         "arena_text": 1440.8717396141749,
         "arena_creative_writing": 1380.9974874241316,
-        "design_arena_elo": 1224,
+        "design_arena_elo": 1223,
         "design_arena_category": "website"
       }
     },
@@ -15842,7 +16006,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1000000,
-          "uptime_30m": 100,
+          "uptime_30m": 60,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 72,
@@ -15855,7 +16019,7 @@
         "aa_agentic": 15.5,
         "arena_text": 1441.7179508681295,
         "arena_creative_writing": 1422.2034026938807,
-        "design_arena_elo": 1195,
+        "design_arena_elo": 1194,
         "design_arena_category": "website",
         "livebench_math": 84.3,
         "livebench_coding": 69.9,
@@ -15901,7 +16065,7 @@
         "aa_agentic": 15.5,
         "arena_text": 1441.7179508681295,
         "arena_creative_writing": 1422.2034026938807,
-        "design_arena_elo": 1195,
+        "design_arena_elo": 1194,
         "design_arena_category": "website"
       }
     },
@@ -15940,7 +16104,7 @@
         "aa_agentic": 15.5,
         "arena_text": 1441.7179508681295,
         "arena_creative_writing": 1422.2034026938807,
-        "design_arena_elo": 1195,
+        "design_arena_elo": 1194,
         "design_arena_category": "website"
       }
     },
@@ -15952,8 +16116,8 @@
       "license": "MIT",
       "providers": 51,
       "from": {
-        "provider": "Baidu",
-        "blended_per_m": 0.003
+        "provider": "openscale",
+        "blended_per_m": 0.006
       },
       "offerings": [
         {
@@ -16013,7 +16177,7 @@
           "cache_read": 0.03,
           "quantization": null,
           "zdr": true,
-          "context_length": 1000000,
+          "context_length": 1048576,
           "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
@@ -16277,28 +16441,12 @@
           "latency_p50": null
         },
         {
-          "provider": "Baidu",
-          "input": 0.0477,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.1908,
-          "cache_read": 0.000954,
-          "quantization": "fp8",
-          "zdr": false,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 100,
-          "latency_p50": 884
-        },
-        {
           "provider": "OpenInference",
-          "input": 0.055986,
+          "input": 0.027246000000000003,
           "cache_write": null,
           "input_billing": null,
-          "output": 0.01,
-          "cache_read": 0.040962,
+          "output": 0.013000000000000001,
+          "cache_read": 0.025939,
           "quantization": "fp4",
           "zdr": true,
           "context_length": 1048576,
@@ -16357,6 +16505,22 @@
           "latency_p50": 297
         },
         {
+          "provider": "Morph",
+          "input": 0.098,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.6,
+          "cache_read": 0.003,
+          "quantization": "fp8",
+          "zdr": true,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 130,
+          "latency_p50": 617
+        },
+        {
           "provider": "InferenceNet",
           "input": 0.103,
           "cache_write": null,
@@ -16389,6 +16553,22 @@
           "latency_p50": 315
         },
         {
+          "provider": "CoreWeave",
+          "input": 0.13,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.65,
+          "cache_read": 0.002,
+          "quantization": "fp8",
+          "zdr": true,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 149,
+          "latency_p50": 610
+        },
+        {
           "provider": "AtlasCloud",
           "input": 0.135,
           "cache_write": null,
@@ -16419,38 +16599,6 @@
           "tool_call": true,
           "throughput_p50": 49,
           "latency_p50": 1580
-        },
-        {
-          "provider": "CoreWeave",
-          "input": 0.15,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.65,
-          "cache_read": 0.002,
-          "quantization": "fp8",
-          "zdr": true,
-          "context_length": 1048576,
-          "uptime_30m": 96.66666666666667,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 149,
-          "latency_p50": 610
-        },
-        {
-          "provider": "Alibaba",
-          "input": 0.165,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.66,
-          "cache_read": 0.016499999999999997,
-          "quantization": "unknown",
-          "zdr": false,
-          "context_length": 1000000,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 61,
-          "latency_p50": 1048
         },
         {
           "provider": "ModelRun",
@@ -16501,22 +16649,6 @@
           "latency_p50": 1030
         },
         {
-          "provider": "Morph",
-          "input": 0.19999999999999998,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.7999999999999999,
-          "cache_read": 0.006,
-          "quantization": "fp8",
-          "zdr": true,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 130,
-          "latency_p50": 617
-        },
-        {
           "provider": "Mancer 2",
           "input": 0.19999999999999998,
           "cache_write": null,
@@ -16526,7 +16658,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": 0,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 40,
@@ -16677,6 +16809,22 @@
           "latency_p50": 372
         },
         {
+          "provider": "Baidu",
+          "input": 0.3,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 1.2,
+          "cache_read": 0.006,
+          "quantization": "fp8",
+          "zdr": false,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 100,
+          "latency_p50": 884
+        },
+        {
           "provider": "BaseTen",
           "input": 0.3,
           "cache_write": null,
@@ -16734,7 +16882,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 93,
@@ -16771,6 +16919,22 @@
           "tool_call": true,
           "throughput_p50": 212,
           "latency_p50": 329
+        },
+        {
+          "provider": "Alibaba",
+          "input": 0.33,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 1.32,
+          "cache_read": 0.032999999999999995,
+          "quantization": "unknown",
+          "zdr": false,
+          "context_length": 1000000,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 61,
+          "latency_p50": 1048
         }
       ],
       "scores": {
@@ -16935,7 +17099,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": 90,
+          "uptime_30m": 0,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": null,
@@ -17056,7 +17220,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 400000,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
@@ -17462,11 +17626,11 @@
         },
         {
           "provider": "Relace",
-          "input": 0.044899999999999995,
+          "input": 0.049999999999999996,
           "cache_write": null,
           "input_billing": null,
           "output": 0.44999999999999996,
-          "cache_read": 0.044899999999999995,
+          "cache_read": 0.049999999999999996,
           "quantization": "fp4",
           "zdr": true,
           "context_length": 1048576,
@@ -17477,28 +17641,12 @@
           "latency_p50": 661
         },
         {
-          "provider": "Baidu",
-          "input": 0.04732,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.09464,
-          "cache_read": 0.009464,
-          "quantization": "fp8",
-          "zdr": false,
-          "context_length": 1048576,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 91.5,
-          "latency_p50": 1051.5
-        },
-        {
           "provider": "StreamLake",
-          "input": 0.07,
+          "input": 0.08259999999999999,
           "cache_write": null,
           "input_billing": null,
-          "output": 0.14,
-          "cache_read": 0.014,
+          "output": 0.16519999999999999,
+          "cache_read": 0.01652,
           "quantization": "fp8",
           "zdr": false,
           "context_length": 1024000,
@@ -17566,7 +17714,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 73.33333333333333,
+          "uptime_30m": 79.3103448275862,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 85,
@@ -17603,6 +17751,22 @@
           "tool_call": true,
           "throughput_p50": 57,
           "latency_p50": 632
+        },
+        {
+          "provider": "Baidu",
+          "input": 0.14,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.28,
+          "cache_read": 0.028,
+          "quantization": "fp8",
+          "zdr": false,
+          "context_length": 1048576,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 91.5,
+          "latency_p50": 1051.5
         },
         {
           "provider": "AtlasCloud",
@@ -17678,7 +17842,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1048576,
-          "uptime_30m": 100,
+          "uptime_30m": 44.44444444444444,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 69,
@@ -17820,7 +17984,7 @@
       ],
       "scores": {
         "aa_intelligence": 24.1,
-        "design_arena_elo": 1152,
+        "design_arena_elo": 1154,
         "design_arena_category": "website"
       }
     },
@@ -18285,45 +18449,6 @@
       }
     },
     {
-      "id": "nvidia-nemotron-3-ultra-550b-a55b",
-      "name": "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B",
-      "org": "nvidia",
-      "open_weights": true,
-      "license": null,
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.121
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.5,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 2.2,
-          "cache_read": 0.1,
-          "quantization": null,
-          "zdr": false,
-          "context_length": 262144,
-          "uptime_30m": null,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": null,
-          "latency_p50": null
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 22.9,
-        "aa_coding": 49.3,
-        "aa_agentic": 20.1,
-        "arena_text": 1426.020838970455,
-        "arena_creative_writing": 1381.8887162114006,
-        "design_arena_elo": 1146,
-        "design_arena_category": "codecategories"
-      }
-    },
-    {
       "id": "qwen3.5-27b",
       "name": "Qwen/Qwen3.5-27B",
       "org": "qwen",
@@ -18361,7 +18486,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 262144,
-          "uptime_30m": 93.33333333333333,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 74,
@@ -18409,7 +18534,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": 25,
@@ -18439,6 +18564,45 @@
       }
     },
     {
+      "id": "nvidia-nemotron-3-ultra-550b-a55b",
+      "name": "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B",
+      "org": "nvidia",
+      "open_weights": true,
+      "license": null,
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.121
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.5,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 2.2,
+          "cache_read": 0.1,
+          "quantization": null,
+          "zdr": false,
+          "context_length": 262144,
+          "uptime_30m": null,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": null,
+          "latency_p50": null
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 22.9,
+        "aa_coding": 49.3,
+        "aa_agentic": 20.1,
+        "arena_text": 1426.020838970455,
+        "arena_creative_writing": 1381.8887162114006,
+        "design_arena_elo": 1145,
+        "design_arena_category": "codecategories"
+      }
+    },
+    {
       "id": "nemotron-3-ultra-550b-a55b:flex",
       "name": "NVIDIA: Nemotron 3 Ultra (flex)",
       "org": "nvidia",
@@ -18460,7 +18624,7 @@
           "quantization": "fp4",
           "zdr": false,
           "context_length": 262144,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": null,
@@ -18471,7 +18635,7 @@
         "aa_intelligence": 22.9,
         "aa_coding": 49.3,
         "aa_agentic": 20.1,
-        "design_arena_elo": 1146,
+        "design_arena_elo": 1145,
         "design_arena_category": "codecategories"
       }
     },
@@ -18540,7 +18704,7 @@
         "aa_intelligence": 22.9,
         "aa_coding": 49.3,
         "aa_agentic": 20.1,
-        "design_arena_elo": 1146,
+        "design_arena_elo": 1145,
         "design_arena_category": "codecategories"
       }
     },
@@ -18707,7 +18871,7 @@
         "aa_agentic": 15.3,
         "arena_text": 1415.0035341569967,
         "arena_creative_writing": 1363.9436635426205,
-        "design_arena_elo": 1242,
+        "design_arena_elo": 1241,
         "design_arena_category": "website"
       }
     },
@@ -18845,7 +19009,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 204800,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 19,
@@ -18911,7 +19075,7 @@
         "aa_agentic": 15.3,
         "arena_text": 1415.0035341569967,
         "arena_creative_writing": 1363.9436635426205,
-        "design_arena_elo": 1242,
+        "design_arena_elo": 1241,
         "design_arena_category": "website"
       }
     },
@@ -18937,7 +19101,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 204800,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": null,
@@ -19172,7 +19336,7 @@
           "quantization": "fp4",
           "zdr": true,
           "context_length": 131072,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": 19,
@@ -19439,7 +19603,7 @@
         "aa_intelligence": 22,
         "arena_text": 1430.0979685766106,
         "arena_creative_writing": 1391.2119431696153,
-        "design_arena_elo": 1113,
+        "design_arena_elo": 1111,
         "design_arena_category": "website"
       }
     },
@@ -19474,7 +19638,7 @@
       ],
       "scores": {
         "aa_intelligence": 22,
-        "design_arena_elo": 1113,
+        "design_arena_elo": 1111,
         "design_arena_category": "website"
       }
     },
@@ -19533,7 +19697,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 1050000,
-          "uptime_30m": 17.857142857142858,
+          "uptime_30m": 42.857142857142854,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": null,
@@ -19549,7 +19713,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 1000000,
-          "uptime_30m": 73.33333333333333,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 11,
@@ -19764,7 +19928,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 131072,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": null,
@@ -19812,7 +19976,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 163840,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 19,
@@ -19898,7 +20062,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": 87.5,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 58,
@@ -19914,7 +20078,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 262144,
-          "uptime_30m": 0,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 22,
@@ -19930,7 +20094,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 35,
@@ -19962,7 +20126,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 256000,
-          "uptime_30m": 89.65517241379311,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 47,
@@ -20068,7 +20232,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 131072,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 85,
@@ -20084,7 +20248,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": 100,
+          "uptime_30m": 90,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 51,
@@ -20100,7 +20264,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 262144,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 42,
@@ -20116,7 +20280,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 256000,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": 30.5,
@@ -20132,7 +20296,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 262144,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 50,
@@ -20164,7 +20328,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 128000,
-          "uptime_30m": 100,
+          "uptime_30m": 75,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 51,
@@ -20420,7 +20584,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 200000,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
@@ -20468,7 +20632,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1000000,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 32,
@@ -20675,7 +20839,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 400000,
-          "uptime_30m": 50,
+          "uptime_30m": 100,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 39.5,
@@ -20935,7 +21099,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 256000,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 153.5,
@@ -20951,7 +21115,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 262144,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 115,
@@ -20967,7 +21131,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 262144,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 36,
@@ -21069,7 +21233,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 204800,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 25,
@@ -21317,22 +21481,6 @@
           "latency_p50": 662
         },
         {
-          "provider": "Parasail",
-          "input": 0.09999999999999999,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.8999999999999999,
-          "cache_read": 0.03,
-          "quantization": "fp8",
-          "zdr": true,
-          "context_length": 262144,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": 77,
-          "latency_p50": 710
-        },
-        {
           "provider": "CoreWeave",
           "input": 0.09999999999999999,
           "cache_write": null,
@@ -21347,6 +21495,22 @@
           "tool_call": false,
           "throughput_p50": 128,
           "latency_p50": 723.5
+        },
+        {
+          "provider": "Parasail",
+          "input": 0.09999999999999999,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.95,
+          "cache_read": 0.049999999999999996,
+          "quantization": "fp8",
+          "zdr": true,
+          "context_length": 262144,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": 77,
+          "latency_p50": 710
         },
         {
           "provider": "DekaLLM",
@@ -21492,7 +21656,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": 80,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": 38,
@@ -21593,7 +21757,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 131072,
-          "uptime_30m": 0,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 91,
@@ -21604,7 +21768,7 @@
         "aa_intelligence": 17.5,
         "aa_coding": 49,
         "aa_agentic": 8.5,
-        "design_arena_elo": 1148,
+        "design_arena_elo": 1153,
         "design_arena_category": "website"
       }
     },
@@ -21771,7 +21935,7 @@
       "org": "google",
       "open_weights": true,
       "license": "apache-2.0",
-      "providers": 14,
+      "providers": 15,
       "from": {
         "provider": "Darkbloom",
         "blended_per_m": 0.023
@@ -21890,6 +22054,22 @@
           "latency_p50": 451
         },
         {
+          "provider": "PrimeIntellect",
+          "input": 0.09999999999999999,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.3,
+          "cache_read": null,
+          "quantization": "bf16",
+          "zdr": true,
+          "context_length": 262144,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": null,
+          "latency_p50": null
+        },
+        {
           "provider": "CoreWeave",
           "input": 0.09999999999999999,
           "cache_write": null,
@@ -21979,7 +22159,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": 100,
+          "uptime_30m": 93.33333333333333,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": 29,
@@ -21995,7 +22175,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": 63.33333333333333,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 59,
@@ -22329,7 +22509,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": 53.84615384615385,
+          "uptime_30m": 61.111111111111114,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
@@ -22368,7 +22548,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 1048576,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": null,
@@ -22694,7 +22874,7 @@
           "quantization": "bf16",
           "zdr": true,
           "context_length": 200000,
-          "uptime_30m": 30,
+          "uptime_30m": 0,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 51,
@@ -22762,41 +22942,6 @@
         "arena_creative_writing": 1404.1051785530278,
         "design_arena_elo": 1185,
         "design_arena_category": "website"
-      }
-    },
-    {
-      "id": "gemma-4-31b-it-turbo",
-      "name": "google/gemma-4-31B-it-turbo",
-      "org": "google",
-      "open_weights": true,
-      "license": "apache-2.0",
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.052
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.09,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.33999999999999997,
-          "cache_read": 0.050000000399999994,
-          "quantization": null,
-          "zdr": false,
-          "context_length": 262144,
-          "uptime_30m": null,
-          "open_weights": true,
-          "tool_call": null,
-          "throughput_p50": null,
-          "latency_p50": null
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 14.7,
-        "aa_coding": 43.4,
-        "aa_agentic": 4.2
       }
     },
     {
@@ -23059,6 +23204,41 @@
       }
     },
     {
+      "id": "gemma-4-31b-it-turbo",
+      "name": "google/gemma-4-31B-it-turbo",
+      "org": "google",
+      "open_weights": true,
+      "license": "apache-2.0",
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.052
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.09,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.33999999999999997,
+          "cache_read": 0.050000000399999994,
+          "quantization": null,
+          "zdr": false,
+          "context_length": 262144,
+          "uptime_30m": null,
+          "open_weights": true,
+          "tool_call": null,
+          "throughput_p50": null,
+          "latency_p50": null
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 14.7,
+        "aa_coding": 43.4,
+        "aa_agentic": 4.2
+      }
+    },
+    {
       "id": "gemma-4-31b-it:turbo",
       "name": "Google: Gemma 4 31B (turbo)",
       "org": "google",
@@ -23080,7 +23260,7 @@
           "quantization": "fp4",
           "zdr": false,
           "context_length": 262144,
-          "uptime_30m": 100,
+          "uptime_30m": 96.66666666666667,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": null,
@@ -23115,7 +23295,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 262144,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": null,
@@ -23150,7 +23330,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 262144,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": null,
@@ -23271,7 +23451,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 163840,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 20,
@@ -23303,7 +23483,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 131072,
-          "uptime_30m": 0,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": null,
@@ -23341,16 +23521,16 @@
       "providers": 1,
       "from": {
         "provider": "Amazon Bedrock",
-        "blended_per_m": 0.093
+        "blended_per_m": 0.118
       },
       "offerings": [
         {
           "provider": "Amazon Bedrock",
           "input": 0.3,
-          "cache_write": 0.3,
+          "cache_write": 0.396,
           "input_billing": null,
           "output": 2.5,
-          "cache_read": 0.075,
+          "cache_read": 0.099,
           "quantization": "unknown",
           "zdr": true,
           "context_length": 1000000,
@@ -23427,8 +23607,24 @@
           "latency_p50": 11353.5
         },
         {
-          "provider": "PrimeIntellect",
+          "provider": "Parasail",
           "input": 0.09999999999999999,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.25,
+          "cache_read": null,
+          "quantization": "bf16",
+          "zdr": true,
+          "context_length": 262144,
+          "uptime_30m": 96.55172413793103,
+          "open_weights": true,
+          "tool_call": false,
+          "throughput_p50": 85,
+          "latency_p50": 968
+        },
+        {
+          "provider": "PrimeIntellect",
+          "input": 0.16999999999999998,
           "cache_write": null,
           "input_billing": null,
           "output": 0.25,
@@ -23441,22 +23637,6 @@
           "tool_call": true,
           "throughput_p50": 74,
           "latency_p50": 1523
-        },
-        {
-          "provider": "Parasail",
-          "input": 0.09999999999999999,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.25,
-          "cache_read": null,
-          "quantization": "bf16",
-          "zdr": true,
-          "context_length": 262144,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": false,
-          "throughput_p50": 85,
-          "latency_p50": 968
         },
         {
           "provider": "Together",
@@ -23572,46 +23752,11 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 192000,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 128.5,
           "latency_p50": 203.5
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 13.1,
-        "aa_coding": 27.8,
-        "aa_agentic": 1
-      }
-    },
-    {
-      "id": "command-a",
-      "name": "Cohere: Command A",
-      "org": "cohere",
-      "open_weights": true,
-      "license": null,
-      "providers": 1,
-      "from": {
-        "provider": "Cohere",
-        "blended_per_m": 2.537
-      },
-      "offerings": [
-        {
-          "provider": "Cohere",
-          "input": 2.5,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 10,
-          "cache_read": null,
-          "quantization": "unknown",
-          "zdr": false,
-          "context_length": 256000,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": false,
-          "throughput_p50": 23.5,
-          "latency_p50": 461
         }
       ],
       "scores": {
@@ -24480,7 +24625,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": 0,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": null,
@@ -24496,7 +24641,7 @@
           "quantization": "fp4",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": 92.5925925925926,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 53,
@@ -24512,7 +24657,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 256000,
-          "uptime_30m": 73.68421052631578,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 27,
@@ -24791,7 +24936,7 @@
           "quantization": "fp4",
           "zdr": true,
           "context_length": 131072,
-          "uptime_30m": 100,
+          "uptime_30m": 90.9090909090909,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 114,
@@ -24919,7 +25064,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 131072,
-          "uptime_30m": 3.3333333333333335,
+          "uptime_30m": 11.11111111111111,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": 66,
@@ -24999,7 +25144,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 131072,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": 43,
@@ -25279,7 +25424,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": 0,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": null,
@@ -25402,7 +25547,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 262144,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": null,
@@ -25438,7 +25583,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 262144,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": null,
@@ -25662,7 +25807,7 @@
         "aa_agentic": 1.6,
         "arena_text": 1343.069006624283,
         "arena_creative_writing": 1292.9676067744206,
-        "design_arena_elo": 1035,
+        "design_arena_elo": 1034,
         "design_arena_category": "website"
       }
     },
@@ -25815,7 +25960,7 @@
         "aa_coding": 20.2,
         "arena_text": 1382.848314009792,
         "arena_creative_writing": 1348.79015179905,
-        "design_arena_elo": 1071,
+        "design_arena_elo": 1069,
         "design_arena_category": "gamedev"
       }
     },
@@ -25853,7 +25998,7 @@
         "aa_coding": 20.2,
         "arena_text": 1382.848314009792,
         "arena_creative_writing": 1348.79015179905,
-        "design_arena_elo": 1071,
+        "design_arena_elo": 1069,
         "design_arena_category": "gamedev"
       }
     },
@@ -25943,7 +26088,7 @@
           "quantization": "bf16",
           "zdr": true,
           "context_length": 131072,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 45,
@@ -25991,7 +26136,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 131072,
-          "uptime_30m": 83.33333333333334,
+          "uptime_30m": 86.66666666666667,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": 44,
@@ -26007,7 +26152,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 131072,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 343,
@@ -26149,7 +26294,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 128000,
-          "uptime_30m": 100,
+          "uptime_30m": 50,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 48,
@@ -26513,7 +26658,7 @@
         "aa_intelligence": 9.3,
         "aa_coding": 16.3,
         "aa_agentic": 0.6,
-        "design_arena_elo": 896,
+        "design_arena_elo": 898,
         "design_arena_category": "3d"
       }
     },
@@ -26671,7 +26816,7 @@
       ],
       "scores": {
         "aa_intelligence": 9,
-        "design_arena_elo": 1079,
+        "design_arena_elo": 1081,
         "design_arena_category": "3d"
       }
     },
@@ -27004,7 +27149,7 @@
         "arena_text": 1322.2743527841192,
         "arena_creative_writing": 1306.9705540174928,
         "design_arena_elo": 971,
-        "design_arena_category": "gamedev"
+        "design_arena_category": "website"
       }
     },
     {
@@ -27042,7 +27187,42 @@
         "arena_text": 1322.2743527841192,
         "arena_creative_writing": 1306.9705540174928,
         "design_arena_elo": 971,
-        "design_arena_category": "gamedev"
+        "design_arena_category": "website"
+      }
+    },
+    {
+      "id": "qwen2.5-72b-instruct",
+      "name": "Qwen/Qwen2.5-72B-Instruct",
+      "org": "qwen",
+      "open_weights": true,
+      "license": null,
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.36
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.36,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.4,
+          "cache_read": null,
+          "quantization": null,
+          "zdr": false,
+          "context_length": 32768,
+          "uptime_30m": null,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": null,
+          "latency_p50": null
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 7.7,
+        "arena_text": 1302.8538323153166,
+        "arena_creative_writing": 1254.1391200604678
       }
     },
     {
@@ -27079,41 +27259,6 @@
         "aa_coding": 11.9,
         "arena_text": 1318.0654473917496,
         "arena_creative_writing": 1285.365717788876
-      }
-    },
-    {
-      "id": "qwen2.5-72b-instruct",
-      "name": "Qwen/Qwen2.5-72B-Instruct",
-      "org": "qwen",
-      "open_weights": true,
-      "license": null,
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.36
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.36,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.4,
-          "cache_read": null,
-          "quantization": null,
-          "zdr": false,
-          "context_length": 32768,
-          "uptime_30m": null,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": null,
-          "latency_p50": null
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 7.7,
-        "arena_text": 1302.8538323153166,
-        "arena_creative_writing": 1254.1391200604678
       }
     },
     {
@@ -27457,7 +27602,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 65536,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 48,
@@ -27473,7 +27618,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 65536,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 39,
@@ -27724,7 +27869,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 131072,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 27,
@@ -27771,6 +27916,39 @@
       }
     },
     {
+      "id": "command-a",
+      "name": "Cohere: Command A",
+      "org": "cohere",
+      "open_weights": true,
+      "license": null,
+      "providers": 1,
+      "from": {
+        "provider": "Cohere",
+        "blended_per_m": 2.537
+      },
+      "offerings": [
+        {
+          "provider": "Cohere",
+          "input": 2.5,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 10,
+          "cache_read": null,
+          "quantization": "unknown",
+          "zdr": false,
+          "context_length": 256000,
+          "uptime_30m": null,
+          "open_weights": true,
+          "tool_call": false,
+          "throughput_p50": 23.5,
+          "latency_p50": 461
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 7
+      }
+    },
+    {
       "id": "nova-pro-v1",
       "name": "Amazon: Nova Pro 1.0",
       "org": "amazon",
@@ -27792,7 +27970,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 300000,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 144,
@@ -27801,7 +27979,7 @@
       ],
       "scores": {
         "aa_intelligence": 7,
-        "design_arena_elo": 796,
+        "design_arena_elo": 794,
         "design_arena_category": "website"
       }
     },
@@ -28066,6 +28244,41 @@
       }
     },
     {
+      "id": "mistral-small-24b-instruct-2501",
+      "name": "mistralai/Mistral-Small-24B-Instruct-2501",
+      "org": "mistral",
+      "open_weights": true,
+      "license": null,
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.05
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.05,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.08,
+          "cache_read": null,
+          "quantization": null,
+          "zdr": true,
+          "context_length": 32768,
+          "uptime_30m": null,
+          "open_weights": true,
+          "tool_call": false,
+          "throughput_p50": 71,
+          "latency_p50": 374
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 6.7,
+        "arena_text": 1274.4008385707102,
+        "arena_creative_writing": 1226.673238147182
+      }
+    },
+    {
       "id": "qwen3-14b",
       "name": "Qwen/Qwen3-14B",
       "org": "qwen",
@@ -28131,41 +28344,6 @@
       }
     },
     {
-      "id": "mistral-small-24b-instruct-2501",
-      "name": "mistralai/Mistral-Small-24B-Instruct-2501",
-      "org": "mistral",
-      "open_weights": true,
-      "license": null,
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.05
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.05,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.08,
-          "cache_read": null,
-          "quantization": null,
-          "zdr": true,
-          "context_length": 32768,
-          "uptime_30m": null,
-          "open_weights": true,
-          "tool_call": false,
-          "throughput_p50": 71,
-          "latency_p50": 374
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 6.7,
-        "arena_text": 1274.4008385707102,
-        "arena_creative_writing": 1226.673238147182
-      }
-    },
-    {
       "id": "nova-lite-v1",
       "name": "Amazon: Nova Lite 1.0",
       "org": "amazon",
@@ -28220,44 +28398,11 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 32768,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": 32,
           "latency_p50": 1891
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 6.7
-      }
-    },
-    {
-      "id": "hermes-3-llama-3.1-70b",
-      "name": "Nous: Hermes 3 70B Instruct",
-      "org": "nous",
-      "open_weights": true,
-      "license": null,
-      "providers": 1,
-      "from": {
-        "provider": "DeepInfra",
-        "blended_per_m": 0.7
-      },
-      "offerings": [
-        {
-          "provider": "DeepInfra",
-          "input": 0.7,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.7,
-          "cache_read": null,
-          "quantization": "fp8",
-          "zdr": true,
-          "context_length": 131072,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": false,
-          "throughput_p50": 31,
-          "latency_p50": 646.5
         }
       ],
       "scores": {
@@ -28497,7 +28642,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 327680,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": 25,
@@ -28550,7 +28695,7 @@
           "quantization": "fp8",
           "zdr": false,
           "context_length": 327680,
-          "uptime_30m": 73.33333333333333,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": null,
@@ -28587,7 +28732,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 32768,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 73,
@@ -28653,7 +28798,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 262144,
-          "uptime_30m": 100,
+          "uptime_30m": 96.55172413793103,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 63.5,
@@ -28666,6 +28811,39 @@
         "aa_agentic": 1.1,
         "design_arena_elo": 1081,
         "design_arena_category": "website"
+      }
+    },
+    {
+      "id": "hermes-3-llama-3.1-70b",
+      "name": "Nous: Hermes 3 70B Instruct",
+      "org": "nous",
+      "open_weights": true,
+      "license": null,
+      "providers": 1,
+      "from": {
+        "provider": "DeepInfra",
+        "blended_per_m": 0.7
+      },
+      "offerings": [
+        {
+          "provider": "DeepInfra",
+          "input": 0.7,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.7,
+          "cache_read": null,
+          "quantization": "fp8",
+          "zdr": true,
+          "context_length": 131072,
+          "uptime_30m": 100,
+          "open_weights": true,
+          "tool_call": false,
+          "throughput_p50": 31,
+          "latency_p50": 646.5
+        }
+      ],
+      "scores": {
+        "aa_intelligence": 6
       }
     },
     {
@@ -28760,7 +28938,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 128000,
-          "uptime_30m": 100,
+          "uptime_30m": 90,
           "open_weights": false,
           "tool_call": true,
           "throughput_p50": 207,
@@ -28877,7 +29055,7 @@
           "quantization": "unknown",
           "zdr": true,
           "context_length": 65536,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 124,
@@ -28926,39 +29104,6 @@
       }
     },
     {
-      "id": "granite-4.0-h-micro",
-      "name": "IBM: Granite 4.0 Micro",
-      "org": "ibm",
-      "open_weights": true,
-      "license": null,
-      "providers": 1,
-      "from": {
-        "provider": "Cloudflare",
-        "blended_per_m": 0.017
-      },
-      "offerings": [
-        {
-          "provider": "Cloudflare",
-          "input": 0.017,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.112,
-          "cache_read": null,
-          "quantization": "unknown",
-          "zdr": true,
-          "context_length": 131000,
-          "uptime_30m": 100,
-          "open_weights": true,
-          "tool_call": false,
-          "throughput_p50": 34,
-          "latency_p50": 412.5
-        }
-      ],
-      "scores": {
-        "aa_intelligence": 5.1
-      }
-    },
-    {
       "id": "gemma-3-27b-it",
       "name": "google/gemma-3-27b-it",
       "org": "google",
@@ -28996,7 +29141,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 131072,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": 36,
@@ -29028,7 +29173,7 @@
           "quantization": "fp8",
           "zdr": true,
           "context_length": 110000,
-          "uptime_30m": 90,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": 52,
@@ -29044,7 +29189,7 @@
           "quantization": "bf16",
           "zdr": true,
           "context_length": 98304,
-          "uptime_30m": 96.66666666666667,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": 35,
@@ -29258,7 +29403,7 @@
           "quantization": "bf16",
           "zdr": false,
           "context_length": 131072,
-          "uptime_30m": null,
+          "uptime_30m": 0,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": null,
@@ -29295,7 +29440,7 @@
           "quantization": "bf16",
           "zdr": false,
           "context_length": 131072,
-          "uptime_30m": 100,
+          "uptime_30m": 22.22222222222222,
           "open_weights": true,
           "tool_call": false,
           "throughput_p50": null,
@@ -29311,27 +29456,27 @@
       }
     },
     {
-      "id": "claude-opus-4-8",
-      "name": "anthropic/claude-opus-4-8",
+      "id": "claude-haiku-4-5",
+      "name": "anthropic/claude-haiku-4-5",
       "org": "anthropic",
       "open_weights": false,
       "license": null,
       "providers": 1,
       "from": {
         "provider": "deepinfra",
-        "blended_per_m": 5.1
+        "blended_per_m": 1.02
       },
       "offerings": [
         {
           "provider": "deepinfra",
-          "input": 5,
+          "input": 1,
           "cache_write": null,
           "input_billing": null,
-          "output": 25,
+          "output": 5,
           "cache_read": null,
           "quantization": null,
           "zdr": false,
-          "context_length": 1000000,
+          "context_length": 200000,
           "uptime_30m": null,
           "open_weights": false,
           "tool_call": true,
@@ -29340,8 +29485,42 @@
         }
       ],
       "scores": {
-        "arena_text": 1474.3188347223909,
-        "arena_creative_writing": 1462.8968823288687
+        "arena_text": 1414.264434778655,
+        "arena_creative_writing": 1387.6018446360315
+      }
+    },
+    {
+      "id": "llama-4-scout-17b-16e-instruct",
+      "name": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+      "org": "meta",
+      "open_weights": true,
+      "license": null,
+      "providers": 1,
+      "from": {
+        "provider": "deepinfra",
+        "blended_per_m": 0.101
+      },
+      "offerings": [
+        {
+          "provider": "deepinfra",
+          "input": 0.1,
+          "cache_write": null,
+          "input_billing": null,
+          "output": 0.3,
+          "cache_read": null,
+          "quantization": null,
+          "zdr": false,
+          "context_length": 327680,
+          "uptime_30m": null,
+          "open_weights": true,
+          "tool_call": true,
+          "throughput_p50": null,
+          "latency_p50": null
+        }
+      ],
+      "scores": {
+        "arena_text": 1321.500615383975,
+        "arena_creative_writing": 1288.7981083268853
       }
     },
     {
@@ -29429,61 +29608,27 @@
       }
     },
     {
-      "id": "llama-4-scout-17b-16e-instruct",
-      "name": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
-      "org": "meta",
-      "open_weights": true,
-      "license": null,
-      "providers": 1,
-      "from": {
-        "provider": "deepinfra",
-        "blended_per_m": 0.101
-      },
-      "offerings": [
-        {
-          "provider": "deepinfra",
-          "input": 0.1,
-          "cache_write": null,
-          "input_billing": null,
-          "output": 0.3,
-          "cache_read": null,
-          "quantization": null,
-          "zdr": false,
-          "context_length": 327680,
-          "uptime_30m": null,
-          "open_weights": true,
-          "tool_call": true,
-          "throughput_p50": null,
-          "latency_p50": null
-        }
-      ],
-      "scores": {
-        "arena_text": 1321.500615383975,
-        "arena_creative_writing": 1288.7981083268853
-      }
-    },
-    {
-      "id": "claude-haiku-4-5",
-      "name": "anthropic/claude-haiku-4-5",
+      "id": "claude-opus-4-8",
+      "name": "anthropic/claude-opus-4-8",
       "org": "anthropic",
       "open_weights": false,
       "license": null,
       "providers": 1,
       "from": {
         "provider": "deepinfra",
-        "blended_per_m": 1.02
+        "blended_per_m": 5.1
       },
       "offerings": [
         {
           "provider": "deepinfra",
-          "input": 1,
+          "input": 5,
           "cache_write": null,
           "input_billing": null,
-          "output": 5,
+          "output": 25,
           "cache_read": null,
           "quantization": null,
           "zdr": false,
-          "context_length": 200000,
+          "context_length": 1000000,
           "uptime_30m": null,
           "open_weights": false,
           "tool_call": true,
@@ -29492,8 +29637,8 @@
         }
       ],
       "scores": {
-        "arena_text": 1414.264434778655,
-        "arena_creative_writing": 1387.6018446360315
+        "arena_text": 1474.3188347223909,
+        "arena_creative_writing": 1462.8968823288687
       }
     },
     {
@@ -29708,7 +29853,7 @@
         }
       ],
       "scores": {
-        "design_arena_elo": 1229,
+        "design_arena_elo": 1226,
         "design_arena_category": "website"
       }
     },
@@ -30124,7 +30269,7 @@
           "quantization": "fp4",
           "zdr": false,
           "context_length": 163840,
-          "uptime_30m": 100,
+          "uptime_30m": null,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": null,
@@ -30174,7 +30319,7 @@
           "quantization": "fp4",
           "zdr": true,
           "context_length": 163840,
-          "uptime_30m": 100,
+          "uptime_30m": 96.66666666666667,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 28,
@@ -30242,7 +30387,7 @@
           "quantization": "unknown",
           "zdr": false,
           "context_length": 128000,
-          "uptime_30m": null,
+          "uptime_30m": 100,
           "open_weights": true,
           "tool_call": true,
           "throughput_p50": 17.5,
