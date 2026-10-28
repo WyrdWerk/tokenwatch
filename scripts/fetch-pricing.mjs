@@ -7,7 +7,7 @@
  *
  * Tier 1 — Direct providers: DeepInfra, EmberCloud, Wafer, Synthetic,
  *          SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs,
- *          Arilo.id, Avian, CoralBricks (authenticated, public fallback), SingularityAPI, RunInfra,
+ *          Arilo.id, Avian, CoralBricks (public catalog), SingularityAPI, RunInfra,
  *          LLM Gateway (differential hosts only)
  *          (authoritative source for their own offerings; Singularity + RunInfra
  *          are auth-gated via SINGULARITY_API_KEY / RUNINFRA_API_KEY;
@@ -45,7 +45,7 @@
 import { appendFile, readFile } from 'node:fs/promises';
 import {
   perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseBatchrate, openRouterEndpointSlug, selectOpenRouterEndpoints, parseNeuralwatt, parseMerius, parseAster,
-  parseCoralbricks, fetchCoralbricksCatalog, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
+  parseCoralbricks, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
   parseRunanywhere, parseEngy, parseOpenscale,
   parseOpenCodeGoDocs,
   parseRefuselessPricingHtml, REFUSELESS_PRICING_URL,
@@ -159,7 +159,7 @@ const DIRECT_PROVIDERS = [
   {
     key: 'coralbricks',
     name: 'CoralBricks',
-    fetch: () => fetchCoralbricksCatalog(process.env.CORAL_API_KEY),
+    url: 'https://www.coralbricks.ai/api/public/models', // public; backs coralbricks.ai/models
     parse: parseCoralbricks,
   },
   {

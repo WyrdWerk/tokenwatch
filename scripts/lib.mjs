@@ -307,110 +307,54 @@ function orgFromBareModelId(id) {
 }
 
 // CoralBricks bills each new input token at the input price PLUS the cache write
-// ("Cache write per 1M, + input", https://www.coralbricks.ai/pricing, rates since
-// 2026-10-08). Both /v1/models `cache_write_per_m` and public `cacheWritePerM`
-// publish that add-on, so the stored `cache_write` is the full per-token write
-// tariff (input + add-on) and `cache_write_addon` keeps the published raw value.
+// ("Cache writes pay input plus the listed surcharge", https://www.coralbricks.ai/pricing).
+// Public `cacheWritePerM` publishes that surcharge, so the stored `cache_write` is the
+// full per-token write tariff (input + add-on) and `cache_write_addon` keeps the raw value.
 function coralbricksWriteTariff(input, addon) {
   if (input === null || addon === null || !(input >= 0) || !(addon >= 0)) return null;
   return Number((input + addon).toFixed(12));
 }
 
-/** Retired slug → current slug, from /v1/models `alias_target` or public `deprecatedSlugs`. */
-function coralbricksAliasTarget(m, authenticated) {
-  const target = authenticated ? m.alias_target?.slug : null;
-  return typeof target === 'string' && target ? target : null;
-}
-
-/** Authenticated CoralBricks tariffs, or its public catalog when no key is available. */
+/**
+ * CoralBricks public catalog (https://www.coralbricks.ai/api/public/models), the
+ * source of https://www.coralbricks.ai/models. Only current SKUs are listed;
+ * `deprecatedSlugs` name retired aliases and never become rows.
+ */
 export function parseCoralbricks(data) {
-  const authenticated = Array.isArray(data?.data);
-  const models = authenticated ? data.data : Array.isArray(data?.models) ? data.models : [];
-  const currentIds = new Set(models.flatMap((m) => {
-    const id = authenticated ? m?.id : m?.slug;
-    return typeof id === 'string' && id && !coralbricksAliasTarget(m, authenticated) ? [id] : [];
-  }));
+  const models = Array.isArray(data?.models) ? data.models : [];
   const seen = new Set();
   return models.flatMap((m) => {
-    let id = authenticated ? m?.id : m?.slug;
-    if (!m || typeof id !== 'string' || !id) return [];
-    // Retired slugs alias a current SKU: one row per SKU, under the current slug.
-    const target = coralbricksAliasTarget(m, authenticated);
-    if (target) {
-      if (currentIds.has(target)) return [];
-      id = target;
-    }
-    if (seen.has(id)) return [];
-    if (authenticated ? m.supports_chat !== true : m.products?.tokenApi !== true) return [];
-    const input = passthrough(authenticated ? m.pricing?.input_per_m : m.inputPerM);
-    const output = passthrough(authenticated ? m.pricing?.output_per_m : m.outputPerM);
+    const id = m?.slug;
+    if (!m || typeof id !== 'string' || !id || seen.has(id)) return [];
+    if (m.products?.tokenApi !== true) return [];
+    const input = passthrough(m.inputPerM);
+    const output = passthrough(m.outputPerM);
     if ((input ?? 0) < 0 || (output ?? 0) < 0 || !((input ?? 0) > 0 || (output ?? 0) > 0)) return [];
-    const addon = passthrough(authenticated ? m.pricing?.cache_write_per_m : m.cacheWritePerM);
+    const addon = passthrough(m.cacheWritePerM);
+    const cacheRead = passthrough(m.cacheReadPerM);
     const context = typeof m.contextWindow === 'string'
       ? m.contextWindow.match(/^(\d+(?:\.\d+)?)([KM])?$/i)
       : null;
     seen.add(id);
     return [{
       id,
-      name: (target ? m.alias_target?.name : null) || m.name || id,
+      name: m.name || id,
       org: orgFromBareModelId(id),
       provider: 'coralbricks',
       quantization: m.precision?.toLowerCase().replace(/^native\s+/, '') ?? null,
       discount: 0,
-      context_length: authenticated ? passthrough(m.context_length)
-        : context ? Number(context[1]) * ({ K: 1e3, M: 1e6 }[context[2]?.toUpperCase()] ?? 1) : null,
+      context_length: context ? Number(context[1]) * ({ K: 1e3, M: 1e6 }[context[2]?.toUpperCase()] ?? 1) : null,
       max_completion_tokens: null,
-      ...(authenticated ? {capabilities: {
-        chat: m.supports_chat,
-        image_input: typeof m.supports_image_input === 'boolean' ? m.supports_image_input : null,
-        tool_call: typeof m.supports_tools === 'boolean' ? m.supports_tools : null,
-      }} : {}),
       pricing: {
         input,
         output,
-        cache_read: authenticated ? passthrough(m.pricing?.cached_input_per_m) : 0,
+        cache_read: cacheRead !== null && cacheRead >= 0 ? cacheRead : null,
         cache_write: coralbricksWriteTariff(input, addon),
         cache_write_addon: addon !== null && addon >= 0 ? addon : null,
         input_billing: 'cache_write', // Default retention bills novel input at input + cache-write add-on
       },
     }];
   });
-}
-
-/** Public names/precision enrich authenticated rows; they never replace API tariffs. */
-export async function fetchCoralbricksCatalog(apiKey, load = fetchJson) {
-  let authenticated = null;
-  if (apiKey) {
-    try {
-      authenticated = await load('https://inference.coralbricks.ai/v1/models', {apiKey});
-      if (!Array.isArray(authenticated?.data) || !authenticated.data.length) {
-        throw new Error('Empty authenticated catalog');
-      }
-    } catch {
-      authenticated = null;
-      console.warn('⚠ CoralBricks authenticated catalog unavailable — using public pricing fallback');
-    }
-  }
-  let publicCatalog;
-  try {
-    publicCatalog = await load('https://www.coralbricks.ai/api/public/models');
-  } catch (err) {
-    if (!authenticated) throw err;
-    console.warn('⚠ CoralBricks public metadata unavailable — keeping authenticated tariffs');
-    return authenticated;
-  }
-  if (!authenticated) return publicCatalog;
-  const publicModels = publicCatalog.models || [];
-  const metadata = new Map(publicModels.map(m => [m.slug, m]));
-  // Public `deprecatedSlugs` backfill `alias_target` for retired slugs the API leaves unmarked.
-  const retired = new Map(publicModels.flatMap(m => (Array.isArray(m.deprecatedSlugs) ? m.deprecatedSlugs : [])
-    .filter(slug => typeof slug === 'string' && slug !== m.slug)
-    .map(slug => [slug, {slug: m.slug, name: m.name}])));
-  return {...authenticated, data: authenticated.data.map((m) => {
-    const alias = m?.alias_target ?? retired.get(m?.id);
-    const meta = metadata.get(alias?.slug ?? m?.id);
-    return {...meta, ...m, ...(alias ? {alias_target: alias} : {})};
-  })};
 }
 
 function singularityChatCapability(m) {

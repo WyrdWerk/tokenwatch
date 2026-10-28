@@ -1,47 +1,14 @@
 {
   "models": [
     {
-      "slug": "glm-5.3-fast",
-      "name": "GLM 5.3",
-      "contextWindow": "1M",
-      "precision": "NVFP4",
-      "inputPerM": 1.12,
-      "outputPerM": 4.4,
-      "cacheWritePerM": 0.56,
-      "kvBytesPerToken": 47616,
-      "docsUrl": "https://huggingface.co/RadixArk/GLM-5.3-NVFP4",
-      "openRouter": {
-        "source": "Fireworks",
-        "inputPerM": 1.4,
-        "cachedPerM": 0.26,
-        "cacheWritePerM": 0,
-        "outputPerM": 4.4
-      },
-      "products": {
-        "tokenApi": true,
-        "privateEndpoint": true
-      },
-      "privateEndpoint": {
-        "hardware": [
-          "8xb300",
-          "8xb200"
-        ]
-      },
-      "deprecatedSlugs": [
-        "glm-5.3-fp4",
-        "glm-5.3"
-      ]
-    },
-    {
       "slug": "deepseek-v4.1-flash-fast",
-      "name": "DeepSeek V4.1 Flash",
+      "name": "DeepSeek V4.1 Flash Fast",
       "contextWindow": "1M",
-      "precision": "Native MXFP4",
-      "inputPerM": 0.01,
-      "outputPerM": 1.2,
-      "cacheWritePerM": 0.08,
+      "inputPerM": 0.45,
+      "outputPerM": 1.8,
+      "cacheWritePerM": 0,
       "kvBytesPerToken": 3328,
-      "docsUrl": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
+      "docsUrl": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017",
       "openRouter": {
         "source": "Fireworks",
         "inputPerM": 0.3,
@@ -60,8 +27,39 @@
         ]
       },
       "deprecatedSlugs": [
-        "deepseek-v4.1-flash-fast-fp4",
-        "deepseek-v4.1-flash"
+        "deepseek-v4.1-flash-fast-fp4"
+      ],
+      "cacheReadPerM": 0.009
+    },
+    {
+      "slug": "deepseek-v4.1-flash",
+      "name": "DeepSeek V4.1 Flash Standard",
+      "contextWindow": "1M",
+      "inputPerM": 0.19,
+      "outputPerM": 0.6,
+      "cacheWritePerM": 0,
+      "cacheReadPerM": 0.008,
+      "kvBytesPerToken": 3328,
+      "docsUrl": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "openRouter": {
+        "source": "Fireworks",
+        "inputPerM": 0.3,
+        "cachedPerM": 0.006,
+        "cacheWritePerM": 0,
+        "outputPerM": 1.2
+      },
+      "products": {
+        "tokenApi": true,
+        "privateEndpoint": true
+      },
+      "privateEndpoint": {
+        "hardware": [
+          "8xb300",
+          "8xb200"
+        ]
+      },
+      "deprecatedSlugs": [
+        "deepseek-v4.1-flash-standard"
       ]
     }
   ],

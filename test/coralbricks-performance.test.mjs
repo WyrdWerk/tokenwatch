@@ -74,16 +74,17 @@ test('frontend displays reported speed and its window without relabelling it as 
   assert.equal(run(null).speed, null);
 });
 
-test('all pricing and performance refresh steps receive CORAL_API_KEY', async () => {
-  for (const [file, step] of [
-    ['refresh-pricing.yml', 'Fetch & normalize text pricing'],
-    ['refresh-pricing.yml', 'Fetch performance data (latency/tput every 2h)'],
-    ['refresh-aa.yml', 'Re-fetch pricing with updated benchmark caches'],
-    ['refresh-performance.yml', 'Fetch performance data'],
+test('only performance refresh steps receive CORAL_API_KEY; pricing uses the public catalog', async () => {
+  for (const [file, step, keyed] of [
+    ['refresh-pricing.yml', 'Fetch & normalize text pricing', false],
+    ['refresh-pricing.yml', 'Fetch performance data (latency/tput every 2h)', true],
+    ['refresh-aa.yml', 'Re-fetch pricing with updated benchmark caches', false],
+    ['refresh-performance.yml', 'Fetch performance data', true],
   ]) {
     const src = await readFile(new URL(`../.github/workflows/${file}`, import.meta.url), 'utf8');
     const block = src.split(`- name: ${step}\n`)[1]?.split('\n      - ')[0];
     assert.ok(block, `${file}: ${step} exists`);
-    assert.match(block, /CORAL_API_KEY: \$\{\{ secrets.CORAL_API_KEY \}\}/, `${file}: ${step} injects the GitHub secret`);
+    if (keyed) assert.match(block, /CORAL_API_KEY: \$\{\{ secrets.CORAL_API_KEY \}\}/, `${file}: ${step} injects the GitHub secret`);
+    else assert.doesNotMatch(block, /CORAL_API_KEY/, `${file}: ${step} needs no CoralBricks key`);
   }
 });

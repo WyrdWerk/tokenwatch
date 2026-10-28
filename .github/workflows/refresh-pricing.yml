@@ -84,7 +84,6 @@ jobs:
           SINGULARITY_API_KEY: ${{ secrets.SINGULARITY_API_KEY }}
           RUNINFRA_API_KEY: ${{ secrets.RUNINFRA_API_KEY }}
           LLMGATEWAY_API_KEY: ${{ secrets.LLMGATEWAY_API_KEY }}
-          CORAL_API_KEY: ${{ secrets.CORAL_API_KEY }}
           ALLOW_COVERAGE_DROP: ${{ github.event_name == 'workflow_dispatch' && inputs.allow_coverage_drop && '1' || '' }}
         run: node scripts/fetch-pricing.mjs
 
