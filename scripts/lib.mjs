@@ -637,24 +637,86 @@ export function parseOpenCodeGoDocs(html) {
 //
 // Refuseless publishes per-token prices only on its server-rendered pricing
 // page: one `pt-table` per lineup group (abliterated / non-abliterated). The
-// public /v1/models catalog carries ids and context but no prices. Each row
-// exposes the exact API id in its copy button and labels cells via
+// public /v1/models catalog carries ids and context but no prices, and answers
+// 401 without a key. Since 2026-10 the pricing page itself sits behind a
+// Cloudflare browser challenge for non-browser clients (HTTP 403 to plain
+// fetch/curl from CI and from a developer box alike), so REFUSELESS_MODELS is
+// the normal source of prices and `fetch-pricing.mjs` reports the provider as
+// `ok (fallback)` whenever the scrape does not land.
+//
+// Each row exposes the exact API id in its copy button and labels cells via
 // `data-label`, so the parser never depends on column order or display names.
+// A discounted row renders the struck-through list price beside the current
+// price: the current (last) amount wins, the list amount is kept as
+// `original_*`, and the fraction off is derived into `discount` — the same
+// promo representation `parseZroPricingHtml()` produces.
 
 export const REFUSELESS_PRICING_URL = 'https://refuseless.com/pricing';
+
+/**
+ * Hand-maintained mirror of https://refuseless.com/pricing, USD per 1M tokens
+ * (verified 2026-10-31). Update whenever the refresh log says the scrape fell
+ * back. `original_*` is the list price the page shows struck through and
+ * `discount` the fraction off, so a live promotion survives a fallback.
+ */
+export const REFUSELESS_MODELS = [
+  { id: 'glm-5.3-abliterated',             name: 'GLM 5.3 Abliterated',            input: 1.00, output: 2.00, cache_read: 0.15,  context_length: 1048576 },
+  // 25% off: cached input $0.03 (list $0.04); the $0.16 input list price is what
+  // the badge implies from the current $0.12. Output list price not published.
+  { id: 'glm-5.3-flash-abliterated',       name: 'GLM 5.3 Flash Abliterated',      input: 0.12, output: 0.50, cache_read: 0.03,  context_length: 1048576,
+    original_input: 0.16, original_cache_read: 0.04, discount: 0.25 },
+  // 36% off: list $0.22 / $0.75 / $0.045.
+  { id: 'deepseek-v4.1-flash-abliterated', name: 'DeepSeek V4.1 Flash Abliterated', input: 0.14, output: 0.50, cache_read: 0.035, context_length: 1048576,
+    original_input: 0.22, original_output: 0.75, original_cache_read: 0.045, discount: 0.363636 },
+  { id: 'deepseek-v4.1-flash-fast',        name: 'DeepSeek V4.1 Flash 1017',       input: 0.01, output: 0.08, cache_read: 0.002, context_length: 1048576 },
+  { id: 'minimax-m3.1-flash',              name: 'MiniMax M3.1 Flash',             input: 0.02, output: 0.08, cache_read: 0.002, context_length: 1048576, org: 'minimax' },
+];
 
 function refuselessCellText(html) {
   return html.replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
 }
 
-/** "$0.35" → 0.35 ($/M); anything without a dollar amount → null. */
-export function parseRefuselessPrice(text) {
-  const m = String(text || '').match(/\$\s*(\d+(?:\.\d+)?)/);
-  return m ? Number.parseFloat(m[1]) : null;
+/** Every "$X" amount in a cell, in rendered order. */
+function refuselessAmounts(text) {
+  return [...String(text || '').matchAll(/\$\s*(\d+(?:\.\d+)?)/g)].map((m) => Number.parseFloat(m[1]));
 }
 
-/** "1M" → 1048576, "256K" → 262144 (binary units, matching /v1/models). */
-export function parseRefuselessContext(text) {
+/**
+ * Current price from a cell, in $/M. A discounted cell renders the
+ * struck-through list price first and the current price last, so the last
+ * amount is authoritative; anything without a dollar amount → null.
+ */
+export function parseRefuselessPrice(text) {
+  const prices = refuselessAmounts(text);
+  return prices.length ? prices[prices.length - 1] : null;
+}
+
+/** Current price plus the struck-through list price a discounted cell renders. */
+function parseRefuselessPriceCell(text) {
+  const prices = refuselessAmounts(text);
+  if (prices.length < 2) return { current: prices[0] ?? null, original: null };
+  return { current: prices[prices.length - 1], original: prices[0] };
+}
+
+/**
+ * Compare published Refuseless rows with the authenticated `/v1/models`
+ * catalog, which lists ids and context but no prices. `unpriced` is what the
+ * catalog offers and TokenWatch cannot price; `stale` is what TokenWatch prices
+ * and the catalog no longer lists — the signal that the mirror or the scrape
+ * has drifted from the live lineup.
+ * @param {Array<{id: string}>} rows published or fallback rows
+ * @param {Array<{id: string}>} catalog entries from `/v1/models`
+ */
+export function refuselessCatalogIssues(rows, catalog) {
+  const catalogIds = new Set((catalog || []).map((m) => m?.id).filter(Boolean));
+  const priced = new Set((rows || []).map((r) => r.id));
+  return {
+    unpriced: [...catalogIds].filter((id) => !priced.has(id)),
+    stale: [...priced].filter((id) => !catalogIds.has(id)),
+  };
+}
+
+/** "1M" → 1048576, "256K" → 262144 (binary units, matching /v1/models). */export function parseRefuselessContext(text) {
   const m = String(text || '').trim().match(/^(\d+(?:\.\d+)?)\s*([KM])?$/i);
   if (!m) return null;
   const unit = { K: 1024, M: 1024 * 1024 }[(m[2] || '').toUpperCase()] || 1;
@@ -666,7 +728,9 @@ export function parseRefuselessContext(text) {
  * Pure function over the HTML string.
  * @param {string} html pricing page HTML
  * @returns {Array<{id: string, name: string, input: number, output: number,
- *   cache_read: number|null, context_length: number|null}>}
+ *   cache_read: number|null, context_length: number|null,
+ *   original_input: number|null, original_output: number|null,
+ *   original_cache_read: number|null, discount: number}>}
  */
 export function parseRefuselessPricingHtml(html) {
   if (typeof html !== 'string' || !html) return [];
@@ -680,19 +744,38 @@ export function parseRefuselessPricingHtml(html) {
       const m = tr.match(new RegExp(`<td\\b[^>]*data-label="${label}"[^>]*>([\\s\\S]*?)<\\/td>`, 'i'));
       return m ? refuselessCellText(m[1]) : '';
     };
-    const input = parseRefuselessPrice(cell('Input'));
-    const output = parseRefuselessPrice(cell('Output'));
+    const input = parseRefuselessPriceCell(cell('Input'));
+    const output = parseRefuselessPriceCell(cell('Output'));
     // Zero/negative or missing prices → skip (data-filter convention)
-    if (!input || !output) continue;
+    if (!input.current || !output.current) continue;
     seen.add(id);
+    // Badges ("Best at cyber", "25% off") sit beside the name link, sometimes
+    // inside it — never part of the model name.
     const nameHtml = tr.match(/class="[^"]*\bpt-name\b[^"]*"[^>]*>([\s\S]*?)<\/a>/i)?.[1] || '';
+    const name = refuselessCellText(nameHtml.replace(/<span\b[^>]*class="[^"]*\bpt-tag\b[^"]*"[^>]*>[\s\S]*?<\/span>/gi, ' ')) || id;
+
+    // Promo: the struck-through list price is authoritative when present,
+    // otherwise the row's own "25% off" badge supplies the fraction.
+    const badgePct = Number.parseInt(tr.match(/(\d+)%\s*off/i)?.[1] ?? '', 10);
+    let discount = 0;
+    if (input.original != null && input.original > input.current && input.original > 0) {
+      discount = Math.round((1 - input.current / input.original) * 1e6) / 1e6;
+    } else if (Number.isFinite(badgePct) && badgePct > 0 && badgePct < 100) {
+      discount = badgePct / 100;
+    }
+
+    const cacheRead = parseRefuselessPriceCell(cell('Cached'));
     rows.push({
       id,
-      name: refuselessCellText(nameHtml) || id,
-      input,
-      output,
-      cache_read: parseRefuselessPrice(cell('Cached')),
+      name,
+      input: input.current,
+      output: output.current,
+      cache_read: cacheRead.current,
       context_length: parseRefuselessContext(cell('Context')),
+      original_input: input.original,
+      original_output: output.original,
+      original_cache_read: cacheRead.original,
+      discount,
     });
   }
   return rows;
