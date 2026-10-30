@@ -19,8 +19,8 @@
  *          OpenCode Go (hardcoded)
  *          Refuseless (public pricing page scrape, hand-maintained
  *          REFUSELESS_MODELS fallback because the page sits behind a
- *          Cloudflare browser challenge; /v1/models is key-gated and used
- *          only to fill context / flag unpriced models when it answers)
+ *          Cloudflare browser challenge; the key-gated /v1/models catalog is
+ *          an optional cross-check that fills context and flags drift)
  *          Zro (official public pricing page https://zro.moonmath.ai/pricing,
  *          daily with a committed last-good snapshot; ingested before
  *          OpenRouter so Zro's own tariff wins over an OpenRouter backend)
@@ -50,7 +50,7 @@ import {
   parseCoralbricks, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
   parseRunanywhere, parseEngy, parseOpenscale,
   parseOpenCodeGoDocs,
-  parseRefuselessPricingHtml, REFUSELESS_MODELS, REFUSELESS_PRICING_URL,
+  parseRefuselessPricingHtml, refuselessCatalogIssues, REFUSELESS_MODELS, REFUSELESS_PRICING_URL,
   NON_TEXT_ID, isTextModel,
   ORG_ALIASES, PROVIDER_NAME_MAP,
   orgFromId, orgFromName,
@@ -1002,15 +1002,15 @@ async function fetchOpenCodeGoPricing() {
 // so REFUSELESS_MODELS (scripts/lib.mjs) is the normal source of prices; it
 // mirrors https://refuseless.com/pricing and carries the same promo fields a
 // scrape produces. Provider status says `ok (fallback)` whenever the scrape
-// does not land, so a stale mirror is never silent.
+// does not land, so a stale mirror is never silent. REFUSELESS_API_KEY is
+// optional: it unlocks the catalog cross-check below, never a price.
 
 const REFUSELESS_MODELS_URL = 'https://api.refuseless.com/v1/models';
 
 /**
  * Fetch Refuseless pricing by scraping its public pricing page (primary),
- * with fallback to REFUSELESS_MODELS. The keyless /v1/models catalog has no
- * prices and now answers 401, so it only fills missing context and flags
- * models the page lacks when it happens to answer.
+ * with fallback to REFUSELESS_MODELS. Without REFUSELESS_API_KEY the catalog
+ * answers 401 and its cross-check is skipped.
  * @returns {Promise<{models: Array, source: 'scraped'|'manual'}>}
  */
 async function fetchRefuselessPricing() {
@@ -1031,24 +1031,29 @@ async function fetchRefuselessPricing() {
   const source = rows ? 'scraped' : 'manual';
   if (!rows) rows = REFUSELESS_MODELS;
 
+  // The authenticated catalog lists ids, capabilities, and context — no prices
+  // — so it is a cross-check only: it fills missing context, names offerings we
+  // cannot price, and names priced ids it no longer lists (a drifted mirror).
+  const apiKey = process.env.REFUSELESS_API_KEY;
   let catalog = null;
   try {
-    const data = await fetchJson(REFUSELESS_MODELS_URL);
-    catalog = new Map((data?.data || []).map((m) => [m.id, m]));
+    const data = await fetchJson(REFUSELESS_MODELS_URL, apiKey ? { apiKey } : {});
+    catalog = Array.isArray(data?.data) ? data.data : [];
   } catch (err) {
-    // An auth wall on the catalog is not a pricing failure: the page rows are
-    // authoritative either way, so this never downgrades the provider status.
+    // Sourcing the catalog is not a pricing failure: the page and mirror rows
+    // stand on their own, so this never downgrades the provider status.
     const status = Number(String(err.message).match(/HTTP (\d+)/)?.[1]);
     if (status === 401 || status === 403) {
-      console.log(`  Refuseless /v1/models requires a key (HTTP ${status}) — skipping catalog cross-check`);
+      console.log(`  Refuseless /v1/models unavailable (HTTP ${status}, ${apiKey ? 'key rejected' : 'no key'}) — skipping catalog cross-check`);
     } else {
       console.warn(`⚠ Refuseless /v1/models check failed: ${err.message}`);
     }
   }
+  const catalogById = new Map((catalog || []).map((m) => [m?.id, m]));
   if (catalog) {
-    const priced = new Set(rows.map((r) => r.id));
-    const unpriced = [...catalog.keys()].filter((id) => !priced.has(id));
+    const { unpriced, stale } = refuselessCatalogIssues(rows, catalog);
     if (unpriced.length) console.warn(`⚠ Refuseless models without a price (skipped): ${unpriced.join(', ')}`);
+    if (stale.length) console.warn(`⚠ Refuseless priced rows missing from the catalog (mirror may be stale): ${stale.join(', ')}`);
   }
 
   const models = rows.map((m) => ({
@@ -1058,7 +1063,7 @@ async function fetchRefuselessPricing() {
     quantization: null,
     ...(m.org ? { org: m.org } : {}),
     discount: Number.isFinite(m.discount) && m.discount > 0 ? m.discount : 0,
-    context_length: m.context_length || catalog?.get(m.id)?.context_length || null,
+    context_length: m.context_length || catalogById.get(m.id)?.context_length || null,
     pricing: { input: m.input, output: m.output, cache_read: m.cache_read ?? null, cache_write: null },
   }));
   return { models, source };

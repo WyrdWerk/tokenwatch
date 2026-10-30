@@ -698,8 +698,25 @@ function parseRefuselessPriceCell(text) {
   return { current: prices[prices.length - 1], original: prices[0] };
 }
 
-/** "1M" → 1048576, "256K" → 262144 (binary units, matching /v1/models). */
-export function parseRefuselessContext(text) {
+/**
+ * Compare published Refuseless rows with the authenticated `/v1/models`
+ * catalog, which lists ids and context but no prices. `unpriced` is what the
+ * catalog offers and TokenWatch cannot price; `stale` is what TokenWatch prices
+ * and the catalog no longer lists — the signal that the mirror or the scrape
+ * has drifted from the live lineup.
+ * @param {Array<{id: string}>} rows published or fallback rows
+ * @param {Array<{id: string}>} catalog entries from `/v1/models`
+ */
+export function refuselessCatalogIssues(rows, catalog) {
+  const catalogIds = new Set((catalog || []).map((m) => m?.id).filter(Boolean));
+  const priced = new Set((rows || []).map((r) => r.id));
+  return {
+    unpriced: [...catalogIds].filter((id) => !priced.has(id)),
+    stale: [...priced].filter((id) => !catalogIds.has(id)),
+  };
+}
+
+/** "1M" → 1048576, "256K" → 262144 (binary units, matching /v1/models). */export function parseRefuselessContext(text) {
   const m = String(text || '').trim().match(/^(\d+(?:\.\d+)?)\s*([KM])?$/i);
   if (!m) return null;
   const unit = { K: 1024, M: 1024 * 1024 }[(m[2] || '').toUpperCase()] || 1;

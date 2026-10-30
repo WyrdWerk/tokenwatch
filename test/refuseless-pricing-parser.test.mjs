@@ -7,11 +7,14 @@ import {
   parseRefuselessPricingHtml,
   parseRefuselessPrice,
   parseRefuselessContext,
+  refuselessCatalogIssues,
   REFUSELESS_MODELS,
 } from '../scripts/lib.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixture = await readFile(join(__dirname, 'fixtures', 'refuseless-pricing.html'), 'utf8');
+// Authenticated /v1/models (2026-10-31): ids, capabilities and context, no prices.
+const catalog = JSON.parse(await readFile(join(__dirname, 'fixtures', 'refuseless-models.json'), 'utf8'));
 
 test('parseRefuselessPrice reads $/M amounts, preferring the current price over a struck-through list price', () => {
   assert.equal(parseRefuselessPrice('$2.00'), 2);
@@ -130,4 +133,34 @@ test('REFUSELESS_MODELS mirrors the live page, promos included', () => {
     assert.ok(model.input > 0 && model.output > 0, `${model.id}: positive prices`);
     assert.equal(model.context_length, 1048576);
   }
+});
+
+test('refuselessCatalogIssues matches the mirror against the authenticated catalog', () => {
+  // The key-gated catalog is the lineup of record: no price fields, context only.
+  assert.equal(catalog.object, 'list');
+  assert.deepEqual(catalog.data.map((m) => m.id).sort(), REFUSELESS_MODELS.map((m) => m.id).sort());
+  for (const entry of catalog.data) {
+    assert.equal(entry.owned_by, 'refuseless');
+    assert.equal(entry.context_length, 1048576);
+    assert.equal('pricing' in entry, false, 'catalog carries no prices');
+    assert.equal('price' in entry, false, 'catalog carries no prices');
+  }
+
+  assert.deepEqual(refuselessCatalogIssues(REFUSELESS_MODELS, catalog.data), { unpriced: [], stale: [] });
+});
+
+test('refuselessCatalogIssues reports a stale priced row and an unpriced catalog id', () => {
+  const retired = [...REFUSELESS_MODELS, { id: 'qwen3.8-flash-next-abliterated', name: 'Qwen3.8 Flash Next Abliterated', input: 0.18, output: 0.6 }];
+  assert.deepEqual(refuselessCatalogIssues(retired, catalog.data).stale, ['qwen3.8-flash-next-abliterated']);
+
+  const added = [...catalog.data, { id: 'glm-5.4-air', object: 'model', owned_by: 'refuseless', context_length: 1048576 }];
+  assert.deepEqual(refuselessCatalogIssues(REFUSELESS_MODELS, added).unpriced, ['glm-5.4-air']);
+
+  const dropped = catalog.data.filter((m) => m.id !== 'minimax-m3.1-flash');
+  assert.deepEqual(refuselessCatalogIssues(REFUSELESS_MODELS, dropped).stale, ['minimax-m3.1-flash']);
+
+  // A scrape that renames an id shows up as drift in both directions.
+  const issues = refuselessCatalogIssues([{ id: 'glm-5.3-abliterated-v2' }], catalog.data);
+  assert.deepEqual(issues.stale, ['glm-5.3-abliterated-v2']);
+  assert.equal(issues.unpriced.length, catalog.data.length);
 });
