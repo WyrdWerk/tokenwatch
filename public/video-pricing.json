@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-29T20:44:37.684Z",
+  "generated_at": "2026-10-30T01:26:26.389Z",
   "models": [
     {
       "id": "kling-video-v3-pro",
@@ -1423,6 +1423,32 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.08
+        }
+      ]
+    },
+    {
+      "id": "tbc/mischief-1",
+      "name": "TBC: Mischief 1",
+      "org": "tbc",
+      "provider": "tbc",
+      "supported_durations": [
+        3,
+        5
+      ],
+      "supported_resolutions": [
+        "480p",
+        "720p"
+      ],
+      "pricing": [
+        {
+          "resolution": "480p",
+          "audio": null,
+          "cost_per_second": 0.005
+        },
+        {
+          "resolution": "720p",
+          "audio": null,
+          "cost_per_second": 0.01
         }
       ]
     },
