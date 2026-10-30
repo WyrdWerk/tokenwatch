@@ -17,8 +17,10 @@
  *          (each backend like Fireworks, Together, Novita becomes its own row)
  * Tier 3 — CSV-sourced: Makora, Xiaomimimo (manual-pricing.csv)
  *          OpenCode Go (hardcoded)
- *          Refuseless (public pricing page scrape, hardcoded fallback;
- *          keyless /v1/models used only to flag unpriced models)
+ *          Refuseless (public pricing page scrape, hand-maintained
+ *          REFUSELESS_MODELS fallback because the page sits behind a
+ *          Cloudflare browser challenge; /v1/models is key-gated and used
+ *          only to fill context / flag unpriced models when it answers)
  *          Zro (official public pricing page https://zro.moonmath.ai/pricing,
  *          daily with a committed last-good snapshot; ingested before
  *          OpenRouter so Zro's own tariff wins over an OpenRouter backend)
@@ -48,7 +50,7 @@ import {
   parseCoralbricks, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
   parseRunanywhere, parseEngy, parseOpenscale,
   parseOpenCodeGoDocs,
-  parseRefuselessPricingHtml, REFUSELESS_PRICING_URL,
+  parseRefuselessPricingHtml, REFUSELESS_MODELS, REFUSELESS_PRICING_URL,
   NON_TEXT_ID, isTextModel,
   ORG_ALIASES, PROVIDER_NAME_MAP,
   orgFromId, orgFromName,
@@ -995,23 +997,20 @@ async function fetchOpenCodeGoPricing() {
     }));
   }
 
-// ── Refuseless (pricing page scrape, hardcoded fallback) ─────────────────────
-// Fallback only — update from https://refuseless.com/pricing when the scrape
-// warns. Prices are USD per 1M tokens.
-const REFUSELESS_MODELS = [
-  { id: 'glm-5.3-abliterated',                   name: 'GLM 5.3 Abliterated',                   input: 2.00, output: 3.00, cache_read: 0.35,  context_length: 1048576 },
-  { id: 'glm-5.3-flash-abliterated',       name: 'GLM 5.3 Flash Abliterated',             input: 0.25, output: 0.80, cache_read: 0.15,  context_length: 1048576 },
-  { id: 'qwen3.8-flash-next-abliterated',  name: 'Qwen3.8 Flash Next Abliterated',        input: 0.18, output: 0.60, cache_read: 0.09,  context_length: 262144 },
-  { id: 'deepseek-v4.1-flash-abliterated', name: 'DeepSeek V4.1 Flash Abliterated',       input: 0.60, output: 1.60, cache_read: 0.15,  context_length: 1048576 },
-  { id: 'deepseek-v4.1-flash-fast',        name: 'DeepSeek V4.1 Flash 1017 (Safeguards)', input: 0.05, output: 0.15, cache_read: 0.004, context_length: 1048576 },
-];
+// ── Refuseless (pricing page scrape, documented fallback) ────────────────────
+// The page sits behind a Cloudflare browser challenge for non-browser clients,
+// so REFUSELESS_MODELS (scripts/lib.mjs) is the normal source of prices; it
+// mirrors https://refuseless.com/pricing and carries the same promo fields a
+// scrape produces. Provider status says `ok (fallback)` whenever the scrape
+// does not land, so a stale mirror is never silent.
 
 const REFUSELESS_MODELS_URL = 'https://api.refuseless.com/v1/models';
 
 /**
  * Fetch Refuseless pricing by scraping its public pricing page (primary),
  * with fallback to REFUSELESS_MODELS. The keyless /v1/models catalog has no
- * prices; it only fills missing context and flags models the page lacks.
+ * prices and now answers 401, so it only fills missing context and flags
+ * models the page lacks when it happens to answer.
  * @returns {Promise<{models: Array, source: 'scraped'|'manual'}>}
  */
 async function fetchRefuselessPricing() {
@@ -1022,12 +1021,12 @@ async function fetchRefuselessPricing() {
       const parsed = parseRefuselessPricingHtml(await resp.text());
       // Sanity floor: a half-parsed table is worse than the (stale) fallback.
       if (parsed.length >= 4) rows = parsed;
-      else console.warn(`⚠ Refuseless pricing scrape found only ${parsed.length} priced rows — falling back to hardcoded pricing`);
+      else console.warn(`⚠ Refuseless pricing scrape found only ${parsed.length} priced rows — using REFUSELESS_MODELS (hand-maintained mirror)`);
     } else {
-      console.warn(`⚠ Refuseless pricing fetch HTTP ${resp.status} — falling back to hardcoded pricing`);
+      console.warn(`⚠ Refuseless pricing fetch HTTP ${resp.status} — using REFUSELESS_MODELS (hand-maintained mirror)`);
     }
   } catch (err) {
-    console.warn(`⚠ Refuseless pricing fetch failed: ${err.message} — falling back to hardcoded pricing`);
+    console.warn(`⚠ Refuseless pricing fetch failed: ${err.message} — using REFUSELESS_MODELS (hand-maintained mirror)`);
   }
   const source = rows ? 'scraped' : 'manual';
   if (!rows) rows = REFUSELESS_MODELS;
@@ -1037,7 +1036,14 @@ async function fetchRefuselessPricing() {
     const data = await fetchJson(REFUSELESS_MODELS_URL);
     catalog = new Map((data?.data || []).map((m) => [m.id, m]));
   } catch (err) {
-    console.warn(`⚠ Refuseless /v1/models check failed: ${err.message}`);
+    // An auth wall on the catalog is not a pricing failure: the page rows are
+    // authoritative either way, so this never downgrades the provider status.
+    const status = Number(String(err.message).match(/HTTP (\d+)/)?.[1]);
+    if (status === 401 || status === 403) {
+      console.log(`  Refuseless /v1/models requires a key (HTTP ${status}) — skipping catalog cross-check`);
+    } else {
+      console.warn(`⚠ Refuseless /v1/models check failed: ${err.message}`);
+    }
   }
   if (catalog) {
     const priced = new Set(rows.map((r) => r.id));
@@ -1050,7 +1056,8 @@ async function fetchRefuselessPricing() {
     name: m.name,
     provider: 'refuseless',
     quantization: null,
-    discount: 0,
+    ...(m.org ? { org: m.org } : {}),
+    discount: Number.isFinite(m.discount) && m.discount > 0 ? m.discount : 0,
     context_length: m.context_length || catalog?.get(m.id)?.context_length || null,
     pricing: { input: m.input, output: m.output, cache_read: m.cache_read ?? null, cache_write: null },
   }));
@@ -1193,7 +1200,9 @@ async function main() {
 
   try {
     const { models: rlModels, source } = await fetchRefuselessPricing();
-    out.providers.push({ key: 'refuseless', name: 'Refuseless', model_count: rlModels.length, status: 'ok' });
+    // `manual` rows come from the hand-maintained fallback, never a live parse:
+    // say so, the way Zro reports `ok (snapshot)`.
+    out.providers.push({ key: 'refuseless', name: 'Refuseless', model_count: rlModels.length, status: source === 'scraped' ? 'ok' : 'ok (fallback)' });
     stampSource(rlModels, source);
     tieredModels.push(...rlModels);
     console.log(`✓ Refuseless (${source}): ${rlModels.length} models`);
