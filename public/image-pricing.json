@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-30T14:41:38.741Z",
+  "generated_at": "2026-10-31T01:14:06.746Z",
   "models": [
     {
       "id": "flux-schnell",
@@ -2919,6 +2919,13 @@
             "auto"
           ]
         },
+        "output_format": {
+          "type": "enum",
+          "values": [
+            "jpeg",
+            "png"
+          ]
+        },
         "n": {
           "type": "range",
           "min": 1,
@@ -2928,6 +2935,9 @@
           "type": "range",
           "min": 0,
           "max": 10
+        },
+        "seed": {
+          "type": "boolean"
         }
       },
       "pricing": [
