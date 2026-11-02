@@ -1,0 +1,2953 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "slug": "claude-opus-5-5",
+      "aliases": [
+        "claude-opus5.5",
+        "opus-5.5",
+        "opus5.5",
+        "opus-5-5",
+        "claude-5-5-opus"
+      ],
+      "name": "Claude Opus 5.5",
+      "author": {
+        "slug": "anthropic",
+        "display_name": "Anthropic"
+      },
+      "max_input_tokens": 1000000,
+      "max_tokens": 128000,
+      "providers": {
+        "anthropic": {
+          "provider_slug": "anthropic",
+          "pricing": [
+            {
+              "condition": {
+                "service_tier": "fast"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 8
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 40
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.4
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "ephemeral_5m_input_tokens": {
+                      "price": {
+                        "USD": 10
+                      },
+                      "units": 1000000
+                    },
+                    "ephemeral_1h_input_tokens": {
+                      "price": {
+                        "USD": 16
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 4
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 20
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.2
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "ephemeral_5m_input_tokens": {
+                      "price": {
+                        "USD": 5
+                      },
+                      "units": 1000000
+                    },
+                    "ephemeral_1h_input_tokens": {
+                      "price": {
+                        "USD": 8
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            }
+          ],
+          "context_window": 1000000,
+          "max_output_tokens": 128000,
+          "zdr": {
+            "policy_url": "https://platform.claude.com/docs/en/build-with-claude/zero-data-retention",
+            "certificate_url": "https://concentrate.ai/legal/anthropic-zdr-certificate-2026-03-03.pdf"
+          }
+        },
+        "azure": {
+          "provider_slug": "azure",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 4
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 20
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.2
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "ephemeral_5m_input_tokens": {
+                      "price": {
+                        "USD": 5
+                      },
+                      "units": 1000000
+                    },
+                    "ephemeral_1h_input_tokens": {
+                      "price": {
+                        "USD": 8
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            }
+          ],
+          "context_window": 1000000,
+          "max_output_tokens": 128000,
+          "zdr": {
+            "policy_url": "https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/openai/data-privacy"
+          }
+        },
+        "bedrock": {
+          "provider_slug": "bedrock",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 4
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 20
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.2
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "ephemeral_5m_input_tokens": {
+                      "price": {
+                        "USD": 5
+                      },
+                      "units": 1000000
+                    },
+                    "ephemeral_1h_input_tokens": {
+                      "price": {
+                        "USD": 8
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1000000,
+          "max_output_tokens": 128000,
+          "zdr": {
+            "policy_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/data-retention.html"
+          }
+        },
+        "vertex": {
+          "provider_slug": "vertex",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 4
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 20
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.2
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "ephemeral_5m_input_tokens": {
+                      "price": {
+                        "USD": 5
+                      },
+                      "units": 1000000
+                    },
+                    "ephemeral_1h_input_tokens": {
+                      "price": {
+                        "USD": 8
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            }
+          ],
+          "context_window": 1000000,
+          "max_output_tokens": 128000,
+          "zdr": false
+        }
+      }
+    },
+    {
+      "slug": "claude-sonnet-4-5",
+      "aliases": [
+        "claude-sonnet-4.5",
+        "sonnet-4.5",
+        "sonnet-4-5",
+        "claude-4.5-sonnet",
+        "claude-sonnet-4-5-20250929"
+      ],
+      "name": "Claude Sonnet 4.5",
+      "author": {
+        "slug": "anthropic",
+        "display_name": "Anthropic"
+      },
+      "max_input_tokens": 200000,
+      "max_tokens": 64000,
+      "providers": {
+        "anthropic": {
+          "provider_slug": "anthropic",
+          "pricing": [
+            {
+              "condition": {
+                "input_gte": 200000
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 6
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 22.5
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.6
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "ephemeral_5m_input_tokens": {
+                      "price": {
+                        "USD": 7.5
+                      },
+                      "units": 1000000
+                    },
+                    "ephemeral_1h_input_tokens": {
+                      "price": {
+                        "USD": 12
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 3
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 15
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.3
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "ephemeral_5m_input_tokens": {
+                      "price": {
+                        "USD": 3.75
+                      },
+                      "units": 1000000
+                    },
+                    "ephemeral_1h_input_tokens": {
+                      "price": {
+                        "USD": 6
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            }
+          ],
+          "context_window": 200000,
+          "max_output_tokens": 64000,
+          "zdr": {
+            "policy_url": "https://platform.claude.com/docs/en/build-with-claude/zero-data-retention",
+            "certificate_url": "https://concentrate.ai/legal/anthropic-zdr-certificate-2026-03-03.pdf"
+          }
+        },
+        "azure": {
+          "provider_slug": "azure",
+          "pricing": [
+            {
+              "condition": {
+                "input_gte": 200000
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 6
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 22.5
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.6
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "ephemeral_5m_input_tokens": {
+                      "price": {
+                        "USD": 7.5
+                      },
+                      "units": 1000000
+                    },
+                    "ephemeral_1h_input_tokens": {
+                      "price": {
+                        "USD": 12
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 3
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 15
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.3
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "ephemeral_5m_input_tokens": {
+                      "price": {
+                        "USD": 3.75
+                      },
+                      "units": 1000000
+                    },
+                    "ephemeral_1h_input_tokens": {
+                      "price": {
+                        "USD": 6
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            }
+          ],
+          "context_window": 200000,
+          "max_output_tokens": 64000,
+          "zdr": {
+            "policy_url": "https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/openai/data-privacy"
+          }
+        },
+        "bedrock": {
+          "provider_slug": "bedrock",
+          "pricing": [
+            {
+              "condition": {
+                "input_gte": 200000
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 6
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 22.5
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.6
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "ephemeral_5m_input_tokens": {
+                      "price": {
+                        "USD": 7.5
+                      },
+                      "units": 1000000
+                    },
+                    "ephemeral_1h_input_tokens": {
+                      "price": {
+                        "USD": 12
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 3
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 15
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.3
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "ephemeral_5m_input_tokens": {
+                      "price": {
+                        "USD": 3.75
+                      },
+                      "units": 1000000
+                    },
+                    "ephemeral_1h_input_tokens": {
+                      "price": {
+                        "USD": 6
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 200000,
+          "max_output_tokens": 64000,
+          "zdr": {
+            "policy_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/data-retention.html"
+          }
+        }
+      }
+    },
+    {
+      "slug": "gpt-6-astra",
+      "aliases": [
+        "gpt-6",
+        "gpt6-astra",
+        "chatgpt-6-astra",
+        "astra"
+      ],
+      "name": "GPT-6 Astra",
+      "author": {
+        "slug": "openai",
+        "display_name": "OpenAI"
+      },
+      "max_input_tokens": 1050000,
+      "max_tokens": 128000,
+      "providers": {
+        "azure": {
+          "provider_slug": "azure",
+          "pricing": [
+            {
+              "condition": {
+                "input_gte": 272000
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 20
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 75
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 2
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "cache_write_tokens": {
+                      "price": {
+                        "USD": 25
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 14
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 50
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 1
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "cache_write_tokens": {
+                      "price": {
+                        "USD": 12.5
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 14
+                  },
+                  "units": 1000
+                }
+              }
+            }
+          ],
+          "context_window": 1050000,
+          "max_output_tokens": 128000,
+          "zdr": {
+            "policy_url": "https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/openai/data-privacy"
+          }
+        },
+        "bedrock": {
+          "provider_slug": "bedrock",
+          "pricing": [
+            {
+              "condition": {
+                "input_gte": 272000
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 20
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 75
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 2
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "cache_write_tokens": {
+                      "price": {
+                        "USD": 25
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 50
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 1
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "cache_write_tokens": {
+                      "price": {
+                        "USD": 12.5
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1050000,
+          "max_output_tokens": 128000,
+          "zdr": false
+        },
+        "openai": {
+          "provider_slug": "openai",
+          "pricing": [
+            {
+              "condition": {
+                "input_gte": 272000,
+                "service_tier": "flex"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 37.5
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 1
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "cache_write_tokens": {
+                      "price": {
+                        "USD": 12.5
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "condition": {
+                "service_tier": "flex"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 5
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 25
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.5
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "cache_write_tokens": {
+                      "price": {
+                        "USD": 6.25
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "condition": {
+                "input_gte": 272000,
+                "service_tier": "priority"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 40
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 150
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 4
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "cache_write_tokens": {
+                      "price": {
+                        "USD": 50
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "condition": {
+                "service_tier": "priority"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 20
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 100
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 2
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "cache_write_tokens": {
+                      "price": {
+                        "USD": 25
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "condition": {
+                "input_gte": 272000,
+                "service_tier": "fast"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 40
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 150
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 4
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "cache_write_tokens": {
+                      "price": {
+                        "USD": 50
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "condition": {
+                "service_tier": "fast"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 20
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 100
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 2
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "cache_write_tokens": {
+                      "price": {
+                        "USD": 25
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "condition": {
+                "input_gte": 272000
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 20
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 75
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 2
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "cache_write_tokens": {
+                      "price": {
+                        "USD": 25
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 50
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 1
+                    },
+                    "units": 1000000
+                  },
+                  "write": {
+                    "cache_write_tokens": {
+                      "price": {
+                        "USD": 12.5
+                      },
+                      "units": 1000000
+                    }
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000
+                }
+              }
+            }
+          ],
+          "context_window": 1050000,
+          "max_output_tokens": 128000,
+          "zdr": {
+            "policy_url": "https://developers.openai.com/api/docs/guides/your-data"
+          }
+        }
+      }
+    },
+    {
+      "slug": "gemini-4-argon",
+      "aliases": [
+        "google-gemini-4-argon",
+        "gemini-argon-4",
+        "google-gemini-argon-4"
+      ],
+      "name": "Gemini 4 Argon",
+      "author": {
+        "slug": "google",
+        "display_name": "Google"
+      },
+      "max_input_tokens": 1048576,
+      "max_tokens": 65536,
+      "providers": {
+        "ai-studio": {
+          "provider_slug": "ai-studio",
+          "pricing": [
+            {
+              "condition": {
+                "description": "Post-promotional list rate effective 2026-12-01",
+                "date_gte": 1796083200000,
+                "service_tier": "priority"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 7.2
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 36
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.36
+                    },
+                    "units": 1000000
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 14
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "condition": {
+                "description": "Post-promotional list rate effective 2026-12-01",
+                "date_gte": 1796083200000,
+                "service_tier": "flex"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 2
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.1
+                    },
+                    "units": 1000000
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 14
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "condition": {
+                "description": "Post-promotional list rate effective 2026-12-01",
+                "date_gte": 1796083200000
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 4
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 20
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.2
+                    },
+                    "units": 1000000
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 14
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "condition": {
+                "service_tier": "priority"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 3.6
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 18
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.18
+                    },
+                    "units": 1000000
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 14
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "condition": {
+                "service_tier": "flex"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 1
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 5
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.05
+                    },
+                    "units": 1000000
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 14
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 2
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.1
+                    },
+                    "units": 1000000
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 14
+                  },
+                  "units": 1000
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 65536,
+          "zdr": false
+        },
+        "vertex": {
+          "provider_slug": "vertex",
+          "pricing": [
+            {
+              "condition": {
+                "description": "Post-promotional list rate effective 2026-12-01",
+                "date_gte": 1796083200000,
+                "service_tier": "priority"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 7.2
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 36
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.36
+                    },
+                    "units": 1000000
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 14
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "condition": {
+                "description": "Post-promotional list rate effective 2026-12-01",
+                "date_gte": 1796083200000,
+                "service_tier": "flex"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 2
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.1
+                    },
+                    "units": 1000000
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 14
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "condition": {
+                "description": "Post-promotional list rate effective 2026-12-01",
+                "date_gte": 1796083200000
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 4
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 20
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.2
+                    },
+                    "units": 1000000
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 14
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "condition": {
+                "service_tier": "priority"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 3.6
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 18
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.18
+                    },
+                    "units": 1000000
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 14
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "condition": {
+                "service_tier": "flex"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 1
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 5
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.05
+                    },
+                    "units": 1000000
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 14
+                  },
+                  "units": 1000
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 2
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 10
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.1
+                    },
+                    "units": 1000000
+                  }
+                }
+              },
+              "tool_calls": {
+                "web_search": {
+                  "price": {
+                    "USD": 14
+                  },
+                  "units": 1000
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 65536,
+          "zdr": {
+            "policy_url": "https://ai.google.dev/gemini-api/docs/zdr"
+          }
+        }
+      }
+    },
+    {
+      "slug": "deepseek-v4-1-flash-1017",
+      "aliases": [
+        "deepseek-flash",
+        "deepseek-v4.1-flash-1017",
+        "ds-v4-1-flash-1017",
+        "ds-v4.1-flash-1017"
+      ],
+      "name": "DeepSeek V4.1 Flash 1017",
+      "author": {
+        "slug": "deepseek",
+        "display_name": "DeepSeek"
+      },
+      "max_input_tokens": 1048576,
+      "max_tokens": 1048576,
+      "providers": {
+        "azure-fw": {
+          "provider_slug": "azure-fw",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.375
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.5
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.008
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 131072,
+          "zdr": {
+            "policy_url": "https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/openai/data-privacy"
+          }
+        },
+        "baseten": {
+          "provider_slug": "baseten",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.3
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.2
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.007
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 262144,
+          "zdr": {
+            "policy_url": "https://docs.baseten.co/observability/security"
+          }
+        },
+        "deepinfra": {
+          "provider_slug": "deepinfra",
+          "pricing": [
+            {
+              "condition": {
+                "service_tier": "priority"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.147
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.441
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.00441
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            },
+            {
+              "condition": {
+                "service_tier": "flex"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.0784
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.2352
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.002352
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.098
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.294
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.00294
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 131072,
+          "zdr": {
+            "policy_url": "https://docs.deepinfra.com/account/data-privacy#data-privacy"
+          }
+        },
+        "deepseek": {
+          "provider_slug": "deepseek",
+          "pricing": [
+            {
+              "condition": {
+                "description": "DeepSeek peak: 01:00-04:00 & 06:00-10:00 UTC, Mon-Fri, excl. Chinese public holidays; judged at request start",
+                "schedule": {
+                  "utc_hours": [
+                    [
+                      1,
+                      4
+                    ],
+                    [
+                      6,
+                      10
+                    ]
+                  ],
+                  "weekdays": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "exclude_dates": "cn_holidays"
+                }
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.3
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.2
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.006
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.15
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.6
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.003
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 393216,
+          "zdr": false
+        },
+        "fireworks": {
+          "provider_slug": "fireworks",
+          "pricing": [
+            {
+              "condition": {
+                "service_tier": "priority"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.375
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.5
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.0075
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.3
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.2
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.006
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 131072,
+          "zdr": {
+            "policy_url": "https://docs.fireworks.ai/guides/security_compliance/data_handling"
+          }
+        },
+        "novita": {
+          "provider_slug": "novita",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.3
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.2
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.006
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 393216,
+          "zdr": {
+            "policy_url": "https://novita.ai/legal/privacy-policy"
+          }
+        },
+        "relace": {
+          "provider_slug": "relace",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.2
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.6
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.008
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 1048576,
+          "zdr": {
+            "policy_url": "https://relace.ai/legal/zero-data-retention-policy"
+          }
+        }
+      }
+    },
+    {
+      "slug": "deepseek-v4-1-flash",
+      "aliases": [
+        "deepseek-v4.1-flash",
+        "ds-v4-1-flash",
+        "ds-v4.1-flash"
+      ],
+      "name": "DeepSeek V4.1 Flash",
+      "author": {
+        "slug": "deepseek",
+        "display_name": "DeepSeek"
+      },
+      "max_input_tokens": 1048576,
+      "max_tokens": 1048576,
+      "providers": {
+        "alibaba": {
+          "provider_slug": "alibaba",
+          "pricing": [
+            {
+              "condition": {
+                "description": "Alibaba peak: 00:00-14:00 UTC (08:00-22:00 UTC+8) daily; judged at request start",
+                "schedule": {
+                  "utc_hours": [
+                    [
+                      0,
+                      14
+                    ]
+                  ]
+                }
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.283
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.131
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.0283
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.141
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.565
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.0141
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1000000,
+          "max_output_tokens": 393216,
+          "zdr": false
+        },
+        "azure": {
+          "provider_slug": "azure",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.3
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.2
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.006
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1000000,
+          "max_output_tokens": 128000,
+          "zdr": {
+            "policy_url": "https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/openai/data-privacy"
+          }
+        },
+        "azure-fw": {
+          "provider_slug": "azure-fw",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.375
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.5
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.008
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 131072,
+          "zdr": {
+            "policy_url": "https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/openai/data-privacy"
+          }
+        },
+        "baseten": {
+          "provider_slug": "baseten",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.3
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.2
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.007
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 32768,
+          "zdr": {
+            "policy_url": "https://docs.baseten.co/observability/security"
+          }
+        },
+        "deepinfra": {
+          "provider_slug": "deepinfra",
+          "pricing": [
+            {
+              "condition": {
+                "service_tier": "priority"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.21
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.63
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.0063
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            },
+            {
+              "condition": {
+                "service_tier": "flex"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.112
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.336
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.00336
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.14
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.42
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.0042
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 131072,
+          "zdr": {
+            "policy_url": "https://docs.deepinfra.com/account/data-privacy#data-privacy"
+          }
+        },
+        "fireworks": {
+          "provider_slug": "fireworks",
+          "pricing": [
+            {
+              "condition": {
+                "service_tier": "priority"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.375
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.5
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.0075
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.3
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.2
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.006
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 131072,
+          "zdr": {
+            "policy_url": "https://docs.fireworks.ai/guides/security_compliance/data_handling"
+          }
+        },
+        "modal": {
+          "provider_slug": "modal",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.3
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.2
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.03
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 393216,
+          "zdr": {
+            "policy_url": "https://modal.com/docs/guide/security"
+          }
+        },
+        "nebius": {
+          "provider_slug": "nebius",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.3
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.2
+                  },
+                  "units": 1000000
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 393216,
+          "zdr": {
+            "policy_url": "https://docs.tokenfactory.nebius.com/legal/legal-quick-guide"
+          }
+        },
+        "novita": {
+          "provider_slug": "novita",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.3
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.2
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.006
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 393216,
+          "zdr": {
+            "policy_url": "https://novita.ai/legal/privacy-policy"
+          }
+        },
+        "relace": {
+          "provider_slug": "relace",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.2
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.6
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.008
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 1048576,
+          "zdr": {
+            "policy_url": "https://relace.ai/legal/zero-data-retention-policy"
+          }
+        },
+        "runware": {
+          "provider_slug": "runware",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.15
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.6
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.01
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 393216,
+          "zdr": {
+            "policy_url": "https://runware.ai/llm-api"
+          }
+        },
+        "vertex": {
+          "provider_slug": "vertex",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.3
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.2
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.03
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 131072,
+          "zdr": false
+        },
+        "wafer": {
+          "provider_slug": "wafer",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.19
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.65
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.006
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 1048576,
+          "max_output_tokens": 393216,
+          "zdr": {
+            "policy_url": "https://docs.wafer.ai/serverless/zero-data-retention"
+          }
+        }
+      }
+    },
+    {
+      "slug": "redact-v1",
+      "aliases": [
+        "redact",
+        "concentrate-redact"
+      ],
+      "name": "Redact v1",
+      "author": {
+        "slug": "concentrate",
+        "display_name": "Concentrate"
+      },
+      "max_input_tokens": 256000,
+      "max_tokens": 64000,
+      "providers": {
+        "concentrate": {
+          "provider_slug": "concentrate",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.25
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0
+                  },
+                  "units": 1000000
+                }
+              }
+            }
+          ],
+          "context_window": 256000,
+          "max_output_tokens": 64000,
+          "zdr": false
+        }
+      }
+    },
+    {
+      "slug": "jev-1.13.0",
+      "aliases": [
+        "jev-latest",
+        "jev",
+        "jev-1.13"
+      ],
+      "name": "Jev 1.13",
+      "author": {
+        "slug": "typesafe",
+        "display_name": "TypeSafe AI"
+      },
+      "max_input_tokens": 64000,
+      "max_tokens": 64000,
+      "providers": {
+        "typesafe": {
+          "provider_slug": "typesafe",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.042
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0
+                  },
+                  "units": 1000000
+                }
+              }
+            }
+          ],
+          "context_window": 64000,
+          "max_output_tokens": 64000,
+          "zdr": false
+        }
+      }
+    },
+    {
+      "slug": "gpt-oss-120b",
+      "aliases": [
+        "gpt-oss",
+        "openai-gpt-oss-120b"
+      ],
+      "name": "OpenAI gpt-oss 120B",
+      "author": {
+        "slug": "openai",
+        "display_name": "OpenAI"
+      },
+      "max_input_tokens": 131072,
+      "max_tokens": 65536,
+      "providers": {
+        "azure": {
+          "provider_slug": "azure",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.15
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.6
+                  },
+                  "units": 1000000
+                }
+              }
+            }
+          ],
+          "context_window": 131072,
+          "max_output_tokens": 32768,
+          "zdr": {
+            "policy_url": "https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/openai/data-privacy"
+          }
+        },
+        "bedrock": {
+          "provider_slug": "bedrock",
+          "pricing": [
+            {
+              "condition": {
+                "service_tier": "priority"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.2625
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 1.05
+                  },
+                  "units": 1000000
+                }
+              }
+            },
+            {
+              "condition": {
+                "service_tier": "flex"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.075
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.3
+                  },
+                  "units": 1000000
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.15
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.6
+                  },
+                  "units": 1000000
+                }
+              }
+            }
+          ],
+          "context_window": 131072,
+          "max_output_tokens": 16384,
+          "zdr": {
+            "policy_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/data-retention.html"
+          }
+        },
+        "bluelobster": {
+          "provider_slug": "bluelobster",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0
+                  },
+                  "units": 1000000
+                }
+              }
+            }
+          ],
+          "context_window": 131072,
+          "max_output_tokens": 65536,
+          "zdr": false
+        },
+        "cloudflare": {
+          "provider_slug": "cloudflare",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.35
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.75
+                  },
+                  "units": 1000000
+                }
+              }
+            }
+          ],
+          "context_window": 128000,
+          "max_output_tokens": 32000,
+          "zdr": {
+            "policy_url": "https://developers.cloudflare.com/workers-ai/platform/data-usage/"
+          }
+        },
+        "crusoe": {
+          "provider_slug": "crusoe",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.05
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.25
+                  },
+                  "units": 1000000
+                }
+              }
+            }
+          ],
+          "context_window": 131072,
+          "max_output_tokens": 32768,
+          "zdr": {
+            "policy_url": "https://legal.crusoe.ai/#service-specific-terms"
+          }
+        },
+        "deepinfra": {
+          "provider_slug": "deepinfra",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.037
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.17
+                  },
+                  "units": 1000000
+                }
+              }
+            }
+          ],
+          "context_window": 131072,
+          "max_output_tokens": 32768,
+          "zdr": {
+            "policy_url": "https://docs.deepinfra.com/account/data-privacy#data-privacy"
+          }
+        },
+        "fireworks": {
+          "provider_slug": "fireworks",
+          "pricing": [
+            {
+              "condition": {
+                "service_tier": "priority"
+              },
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.18
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.72
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.018
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            },
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.15
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.6
+                  },
+                  "units": 1000000
+                },
+                "cache": {
+                  "read": {
+                    "price": {
+                      "USD": 0.015
+                    },
+                    "units": 1000000
+                  }
+                }
+              }
+            }
+          ],
+          "context_window": 131072,
+          "max_output_tokens": 32768,
+          "zdr": {
+            "policy_url": "https://docs.fireworks.ai/guides/security_compliance/data_handling"
+          }
+        },
+        "nebius": {
+          "provider_slug": "nebius",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.15
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.6
+                  },
+                  "units": 1000000
+                }
+              }
+            }
+          ],
+          "context_window": 131072,
+          "max_output_tokens": 32768,
+          "zdr": {
+            "policy_url": "https://docs.tokenfactory.nebius.com/legal/legal-quick-guide"
+          }
+        },
+        "novita": {
+          "provider_slug": "novita",
+          "pricing": [
+            {
+              "tokens": {
+                "input": {
+                  "price": {
+                    "USD": 0.05
+                  },
+                  "units": 1000000
+                },
+                "output": {
+                  "price": {
+                    "USD": 0.25
+                  },
+                  "units": 1000000
+                }
+              }
+            }
+          ],
+          "context_window": 131072,
+          "max_output_tokens": 32768,
+          "zdr": {
+            "policy_url": "https://novita.ai/legal/privacy-policy"
+          }
+        }
+      }
+    }
+  ]
+}
