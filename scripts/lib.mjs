@@ -1824,6 +1824,29 @@ const CONCENTRATE_SKIP_PROVIDER = 'concentrate';
 /** Relative price difference above which a shared pair counts as a drift. */
 export const CONCENTRATE_PRICE_TOLERANCE = 0.01;
 
+/**
+ * Curated models TokenWatch does not carry, picked by Yash on 2026-11-02.
+ * A slug named here is ingested from Concentrate's own model data (author,
+ * display name, context) even when no other tier prices it; every unmatched
+ * model NOT named here still stays out of the catalog. The allow-list does not
+ * bypass a guard: an allow-listed model that matches a carried row is treated
+ * exactly like any other model, and its provider entries face the stricter
+ * zero-output guard in `parseConcentrate` (a $0 output tariff is a missing
+ * price, not a free one).
+ */
+export const CONCENTRATE_CURATED_SLUGS = new Set([
+  'jev-1.13.0',
+  'jev-1.14.0',
+  'clef',
+  'clef-flash',
+  'mercury-decide',
+  'elephant-1',
+  'mammoth-1',
+  'kimi-k3-1-pro-highspeed',
+  'nemotron-lightning-3.5-30b',
+  'deepseek-v4-1-fast',
+]);
+
 /** `{price:{USD}, units}` → $/M. Missing or non-positive → null (never free). */
 function concentratePrice(node) {
   const usd = num(node?.price?.USD);
@@ -1858,6 +1881,15 @@ function concentrateBaseEntry(host) {
 function concentrateBasePrices(host) {
   const prices = concentrateTokenPrices(concentrateBaseEntry(host)?.tokens);
   return { input: prices.input, output: prices.output };
+}
+
+/** A host that prices input but lists output at $0 has published no output
+ *  tariff (Concentrate's live entries for jev, clef, mercury-decide, elephant-1
+ *  and mammoth-1), so the pair cannot be priced at all. */
+function concentrateZeroOutput(entry) {
+  const tokens = entry?.tokens || {};
+  const input = num(tokens.input?.price?.USD);
+  return num(tokens.output?.price?.USD) === 0 && input !== null && input > 0;
 }
 
 function concentrateGap(a, b) {
@@ -1944,6 +1976,7 @@ export function parseConcentrate(data) {
       });
 
       const base = makeOffering(baseEntry, null);
+      const priced = [{ offering: base, entry: baseEntry }];
       const tiers = new Map();
       for (const entry of entries) {
         if (entry === baseEntry) continue;
@@ -1968,7 +2001,9 @@ export function parseConcentrate(data) {
           skipped.push({ slug, provider, reason: 'duplicate-tier', detail: tier });
           continue;
         }
-        tiers.set(tier, makeOffering(entry, tier));
+        const offering = makeOffering(entry, tier);
+        tiers.set(tier, offering);
+        priced.push({ offering, entry });
       }
 
       const tierRows = new Map([[null, []]]);
@@ -1988,15 +2023,25 @@ export function parseConcentrate(data) {
         targetRows.push({ above_tokens: Math.max(0, Math.round(num(condition.input_gte)) - 1), ...prices });
       }
 
-      for (const offering of [base, ...tiers.values()]) {
+      for (const { offering, entry } of priced) {
         const rows = tierRows.get(offering.variant).sort((a, b) => a.above_tokens - b.above_tokens);
         offering.context_price_tiers = rows.length ? rows : null;
+        const variantDetail = offering.variant ? `:${offering.variant}` : '';
+        if (CONCENTRATE_CURATED_SLUGS.has(slug) && concentrateZeroOutput(entry)) {
+          skipped.push({
+            slug,
+            provider,
+            reason: 'zero-output',
+            detail: `output $0 against input $${offering.pricing.input}${variantDetail ? ` (${variantDetail})` : ''}`,
+          });
+          continue;
+        }
         if ((offering.pricing.input ?? 0) <= 0 && (offering.pricing.output ?? 0) <= 0) {
           skipped.push({
             slug,
             provider,
             reason: 'no-price',
-            ...(offering.variant ? { detail: `:${offering.variant}` } : {}),
+            ...(variantDetail ? { detail: variantDetail } : {}),
           });
           continue;
         }
@@ -2018,20 +2063,45 @@ function concentrateIdScore(entry, provider) {
   return (entry.row.id.includes('/') ? 2 : 0) + (entry.provider === provider ? 1 : 0);
 }
 
+/** The house row shape for a new Concentrate row. */
+function concentrateRow(id, name, org, offering) {
+  return {
+    id,
+    name,
+    org: org || null,
+    provider: offering.provider,
+    ...(CONCENTRATE_PROVIDER_DISPLAY[offering.provider]
+      ? { provider_display: CONCENTRATE_PROVIDER_DISPLAY[offering.provider] }
+      : {}),
+    quantization: null,
+    discount: 0,
+    context_length: offering.context_length ?? null,
+    max_completion_tokens: offering.max_completion_tokens ?? null,
+    max_prompt_tokens: offering.max_prompt_tokens ?? null,
+    pricing: { ...offering.pricing },
+    context_price_tiers: offering.context_price_tiers ?? null,
+    ...(offering.zdr === true ? { zdr: true } : {}),
+  };
+}
+
 /**
  * Map Concentrate offerings onto the rows the other tiers already collected.
  * Emits a row only for a (model, provider) pair no other tier prices, and only
  * when the model resolves to a quant-free canonical id with no quantized or
- * quant-suffixed sibling at that provider. Covered pairs come back in `shared`
- * for the fill-only join and drift report.
+ * quant-suffixed sibling at that provider. A model no tier carries is still
+ * ingested when its slug is on the curated allow-list (CONCENTRATE_CURATED_SLUGS),
+ * built from Concentrate's own author, display name and context. Covered pairs
+ * come back in `shared` for the fill-only join and drift report.
  * @returns {{rows: Array<object>, shared: Array<{row: object, offering: object}>,
- *   skipped: Array<object>, unmatchedModels: Array<object>}}
+ *   skipped: Array<object>, unmatchedModels: Array<object>,
+ *   curated: Array<{slug: string, provider: string, id: string, pricing: object}>}}
  */
 export function reconcileConcentrate(offerings, existingRows) {
   const rows = [];
   const shared = [];
   const skipped = [];
   const unmatchedModels = [];
+  const curated = [];
   const existing = Array.isArray(existingRows) ? existingRows.filter((r) => r && typeof r.id === 'string') : [];
   const index = existing.map((row) => {
     const quantFree = orgLookupKey(row.id);
@@ -2068,7 +2138,30 @@ export function reconcileConcentrate(offerings, existingRows) {
       continue;
     }
     if (resolved.length === 0) {
-      unmatchedModels.push({ slug, name: first.name, author: first.authorSlug });
+      if (!CONCENTRATE_CURATED_SLUGS.has(slug)) {
+        unmatchedModels.push({ slug, name: first.name, author: first.authorSlug });
+        continue;
+      }
+      // Curated model: no carried row owns an id for it, so the id comes from
+      // Concentrate's own author and slug, and the pair still faces the
+      // dedup-key guards below.
+      const baseId = first.authorSlug ? `${first.authorSlug}/${slug}` : slug;
+      for (const offering of modelOfferings) {
+        const id = offering.variant ? `${baseId}:${offering.variant}` : baseId;
+        const key = dedupKey({ id, provider: offering.provider });
+        const covered = byDedupKey.get(key);
+        if (covered) {
+          shared.push({ row: covered, offering });
+          continue;
+        }
+        if (emitted.has(key)) {
+          skipped.push({ slug, provider: offering.provider, reason: 'duplicate-row', detail: id });
+          continue;
+        }
+        emitted.add(key);
+        rows.push(concentrateRow(id, first.name, first.authorSlug, offering));
+        curated.push({ slug, provider: offering.provider, id, pricing: { ...offering.pricing } });
+      }
       continue;
     }
     const canonical = resolved[0];
@@ -2113,26 +2206,55 @@ export function reconcileConcentrate(offerings, existingRows) {
         continue;
       }
       emitted.add(key);
-      rows.push({
-        id,
-        name: source.row.name || offering.name,
-        org: source.row.org || offering.authorSlug || null,
-        provider: offering.provider,
-        ...(CONCENTRATE_PROVIDER_DISPLAY[offering.provider]
-          ? { provider_display: CONCENTRATE_PROVIDER_DISPLAY[offering.provider] }
-          : {}),
-        quantization: null,
-        discount: 0,
-        context_length: offering.context_length ?? null,
-        max_completion_tokens: offering.max_completion_tokens ?? null,
-        max_prompt_tokens: offering.max_prompt_tokens ?? null,
-        pricing: { ...offering.pricing },
-        context_price_tiers: offering.context_price_tiers ?? null,
-        ...(offering.zdr === true ? { zdr: true } : {}),
-      });
+      rows.push(concentrateRow(id, source.row.name || offering.name, source.row.org || offering.authorSlug, offering));
     }
   }
-  return { rows, shared, skipped, unmatchedModels };
+  return { rows, shared, skipped, unmatchedModels, curated };
+}
+
+/**
+ * Step-summary section for the curated picks (Yash, 2026-11-02): one line per
+ * pick stating the row it created, the pairs the zero-output guard held back,
+ * or why it produced no row at all.
+ * @param {{landed?: Array<{slug: string, provider: string, id: string, pricing: object}>,
+ *   skipped?: Array<{slug: string, provider: string|null, reason: string, detail?: string}>,
+ *   catalogSlugs?: Set<string>}} params
+ * @returns {string[]} markdown lines (empty when no curated pick is in play)
+ */
+export function concentrateCuratedSection({ landed = [], skipped = [], catalogSlugs = new Set() } = {}) {
+  const landedBySlug = new Map();
+  for (const pick of landed) {
+    if (!landedBySlug.has(pick.slug)) landedBySlug.set(pick.slug, []);
+    landedBySlug.get(pick.slug).push(pick);
+  }
+  const skipsBySlug = new Map();
+  for (const skip of skipped) {
+    if (!CONCENTRATE_CURATED_SLUGS.has(skip.slug)) continue;
+    if (!skipsBySlug.has(skip.slug)) skipsBySlug.set(skip.slug, []);
+    skipsBySlug.get(skip.slug).push(skip);
+  }
+  if (!landedBySlug.size && !skipsBySlug.size) return [];
+  const money = (v) => (Number.isFinite(v) ? `$${Number(v.toPrecision(4))}` : '—');
+  const landedRows = landed.length;
+  const lines = [
+    `**Curated picks (Yash, 2026-11-02):** ${landedBySlug.size} of ${CONCENTRATE_CURATED_SLUGS.size} landed as new rows `
+      + `(${landedRows} row${landedRows === 1 ? '' : 's'}).`,
+    '',
+  ];
+  for (const slug of CONCENTRATE_CURATED_SLUGS) {
+    const picks = landedBySlug.get(slug) || [];
+    if (picks.length) {
+      lines.push(`- \`${slug}\` → ${picks.map((p) => `\`${p.id}\` @${p.provider} (${money(p.pricing.input)} / ${money(p.pricing.output)})`).join(', ')}`);
+      continue;
+    }
+    const held = skipsBySlug.get(slug) || [];
+    if (held.length) {
+      lines.push(`- \`${slug}\` — no row: ${held.map((s) => `${s.provider} (${s.reason}${s.detail ? `: ${s.detail}` : ''})`).join('; ')}`);
+      continue;
+    }
+    lines.push(`- \`${slug}\` — ${catalogSlugs.has(slug) ? 'already priced by another tier' : 'not in the catalog'}`);
+  }
+  return lines;
 }
 
 /**

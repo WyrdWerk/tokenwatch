@@ -52,7 +52,8 @@ import {
   perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseBatchrate, openRouterEndpointSlug, selectOpenRouterEndpoints, parseNeuralwatt, parseMerius, parseAster,
   parseCoralbricks, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
   parseRunanywhere, parseEngy, parseOpenscale,
-  parseConcentrate, reconcileConcentrate, concentrateJoin, CONCENTRATE_MODELS_URL, CONCENTRATE_PRICE_TOLERANCE,
+  parseConcentrate, reconcileConcentrate, concentrateJoin, concentrateCuratedSection,
+  CONCENTRATE_MODELS_URL, CONCENTRATE_PRICE_TOLERANCE, CONCENTRATE_CURATED_SLUGS,
   parseOpenCodeGoDocs,
   parseRefuselessPricingHtml, refuselessCatalogIssues, REFUSELESS_MODELS, REFUSELESS_PRICING_URL,
   NON_TEXT_ID, isTextModel,
@@ -1104,7 +1105,7 @@ const concentrateReasonText = (counts) => Object.entries(counts)
 const concentratePriceCell = (v) => (Number.isFinite(v) ? `$${Number(v.toPrecision(4))}` : '—');
 
 /** GitHub step summary for the Concentrate cross-check (report only). */
-function concentrateStepSummary({ rows, shared, skipped, unmatched, filled, drift, limit = 50 }) {
+function concentrateStepSummary({ rows, shared, skipped, unmatched, filled, drift, curated, catalogSlugs, limit = 50 }) {
   const esc = (v) => String(v ?? '').replace(/[|\r\n]/g, ' ');
   const tierRows = rows.filter((r) => deliveryVariant(r.id) !== null).length;
   const byReason = concentrateSkipCounts(skipped);
@@ -1122,6 +1123,10 @@ function concentrateStepSummary({ rows, shared, skipped, unmatched, filled, drif
     `| Unmatched models | ${unmatched.length} |`,
     `| Fields filled | context_length ${filled.context_length}, max_prompt_tokens ${filled.max_prompt_tokens}, max_completion_tokens ${filled.max_completion_tokens} |`,
     '',
+    ...(() => {
+      const section = concentrateCuratedSection({ landed: curated, skipped, catalogSlugs });
+      return section.length ? [...section, ''] : [];
+    })(),
     `**Price drift** (report only; promo rows excluded): ${drift.compared} compared — ${drift.agreeing} agreeing, `
       + `${drift.mismatch} mismatched (>${Math.round(CONCENTRATE_PRICE_TOLERANCE * 100)}%), ${drift.promo} promo.`,
     '',
@@ -1324,6 +1329,8 @@ async function main() {
   let concentrateShared = [];
   let concentrateSkipped = [];
   let concentrateUnmatched = [];
+  let concentrateCurated = [];
+  let concentrateCatalogSlugs = new Set();
   try {
     let data = null;
     try {
@@ -1342,10 +1349,21 @@ async function main() {
       concentrateShared = reconciled.shared;
       concentrateSkipped = [...parsed.skipped, ...reconciled.skipped];
       concentrateUnmatched = reconciled.unmatchedModels;
+      concentrateCurated = reconciled.curated;
+      concentrateCatalogSlugs = new Set((Array.isArray(data.data) ? data.data : [])
+        .map((m) => (typeof m?.slug === 'string' ? m.slug.trim() : '')).filter(Boolean));
       out.providers.push({ key: 'concentrate', name: 'Concentrate (catalog)', model_count: reconciled.rows.length, status: 'ok' });
       console.log(`✓ Concentrate: ${reconciled.rows.length} models (ok)`);
       console.log(`  Concentrate: ${reconciled.shared.length} shared pairs, ${concentrateSkipped.length} skipped `
         + `(${concentrateReasonText(concentrateSkipCounts(concentrateSkipped))}), ${concentrateUnmatched.length} unmatched models`);
+      for (const skip of concentrateSkipped) {
+        if (!CONCENTRATE_CURATED_SLUGS.has(skip.slug)) continue;
+        console.log(`  Concentrate: curated ${skip.slug} (${skip.provider ?? '—'}) no row — ${skip.reason}${skip.detail ? `: ${skip.detail}` : ''}`);
+      }
+      for (const pick of concentrateCurated) {
+        console.log(`  Concentrate: curated ${pick.slug} → ${pick.id} @${pick.provider} `
+          + `${concentratePriceCell(pick.pricing.input)}/${concentratePriceCell(pick.pricing.output)}`);
+      }
     }
   } catch (err) {
     out.providers.push({ key: 'concentrate', name: 'Concentrate (catalog)', model_count: 0, status: `error: parse failed: ${err.message}` });
@@ -1490,6 +1508,8 @@ async function main() {
         unmatched: concentrateUnmatched,
         filled,
         drift,
+        curated: concentrateCurated,
+        catalogSlugs: concentrateCatalogSlugs,
       });
       await appendFile(process.env.GITHUB_STEP_SUMMARY, `\n${md}\n`).catch((err) => {
         console.warn(`⚠ Could not write Concentrate step summary: ${err.message}`);
