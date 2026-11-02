@@ -5,8 +5,10 @@ import {
   parseConcentrate,
   reconcileConcentrate,
   concentrateJoin,
+  concentrateCuratedSection,
   CONCENTRATE_PROVIDER_MAP,
   CONCENTRATE_PROVIDER_DISPLAY,
+  CONCENTRATE_CURATED_SLUGS,
 } from '../scripts/lib.mjs';
 
 const FIXTURE = JSON.parse(
@@ -58,8 +60,16 @@ test('parseConcentrate converts every price to USD per 1M tokens', () => {
 
 test('parseConcentrate reads the trimmed live catalog: base rows, service tiers, hosts', () => {
   const { offerings, skipped } = parseConcentrate(FIXTURE);
-  assert.equal(offerings.length, 55);
-  assert.equal(skipped.length, 7);
+  // jev-1.13.0 is one of Yash's picks and prices output at $0 → held back
+  // (the fixture predates the curated guard, so this count moved 55 → 54).
+  assert.equal(offerings.length, 54);
+  assert.equal(skipped.length, 8);
+  assert.deepEqual(skipped.filter((s) => s.reason === 'zero-output'), [{
+    slug: 'jev-1.13.0',
+    provider: 'typesafe',
+    reason: 'zero-output',
+    detail: 'output $0 against input $0.042',
+  }]);
 
   const opus = offerings.filter((o) => o.slug === 'claude-opus-5-5');
   const anthropicBase = find(opus, 'anthropic');
@@ -230,7 +240,108 @@ test('unmatched models never emit rows', () => {
   ]);
   assert.equal(result.rows.length, 0);
   assert.equal(result.shared.length, 0);
+  assert.deepEqual(result.curated, []);
   assert.deepEqual(result.unmatchedModels, [{ slug: 'mystery-model', name: 'mystery-model', author: 'test-org' }]);
+});
+
+// ── curated picks (Yash, 2026-11-02) ────────────────────────────────────────
+
+test('an allow-listed model no tier carries is ingested from Concentrate data', () => {
+  const { offerings, skipped } = parseOne(modelOf('deepseek-v4-1-fast', {
+    baseten: hostOf([simple(0.6, 2.4)], { context_window: 1048576, max_output_tokens: 262144 }),
+  }, { name: 'DeepSeek V4.1 Flash 1017 Fast', author: { slug: 'deepseek' } }));
+  assert.equal(skipped.length, 0);
+  const result = reconcileConcentrate(offerings, []);
+  assert.equal(result.rows.length, 1);
+  const [row] = result.rows;
+  assert.equal(row.id, 'deepseek/deepseek-v4-1-fast');
+  assert.equal(row.name, 'DeepSeek V4.1 Flash 1017 Fast');
+  assert.equal(row.org, 'deepseek');
+  assert.equal(row.provider, 'baseten');
+  assert.equal(row.quantization, null);
+  assert.equal(row.discount, 0);
+  assert.equal(row.context_length, 1048576);
+  assert.equal(row.max_completion_tokens, 262144);
+  assert.equal(row.max_prompt_tokens, 128000);
+  assert.deepEqual(row.pricing, { input: 0.6, output: 2.4, cache_read: null, cache_write: null });
+  assert.deepEqual(result.unmatchedModels, []);
+  assert.deepEqual(result.curated, [{
+    slug: 'deepseek-v4-1-fast',
+    provider: 'baseten',
+    id: 'deepseek/deepseek-v4-1-fast',
+    pricing: { input: 0.6, output: 2.4, cache_read: null, cache_write: null },
+  }]);
+});
+
+test('a curated service-tier entry becomes its own :tier row', () => {
+  const { offerings } = parseOne(modelOf('nemotron-lightning-3.5-30b', {
+    fireworks: hostOf([simple(0.05, 0.2), simple(0.0625, 0.25, { service_tier: 'priority' })]),
+  }, { name: 'Nemotron Lightning 3.5 30B A3B', author: { slug: 'nvidia' } }));
+  const result = reconcileConcentrate(offerings, []);
+  assert.deepEqual(result.rows.map((r) => r.id).sort(), [
+    'nvidia/nemotron-lightning-3.5-30b',
+    'nvidia/nemotron-lightning-3.5-30b:priority',
+  ]);
+  assert.equal(result.curated.length, 2);
+});
+
+test('the zero-output guard holds back a curated pick and reports each host', () => {
+  const { offerings, skipped } = parseOne(modelOf('clef', {
+    cloudflare: hostOf([simple(0.24, 0)]),
+    deepinfra: hostOf([simple(0.192, 0)]),
+  }, { author: { slug: 'cloudflare' } }));
+  assert.equal(offerings.length, 0);
+  assert.deepEqual(skipped.map((s) => [s.slug, s.provider, s.reason]), [
+    ['clef', 'cloudflare', 'zero-output'],
+    ['clef', 'deepinfra', 'zero-output'],
+  ]);
+  assert.match(skipped[0].detail, /output \$0 against input \$0.24/);
+
+  const result = reconcileConcentrate(offerings, []);
+  assert.equal(result.rows.length, 0);
+  assert.deepEqual(result.curated, []);
+
+  const lines = concentrateCuratedSection({
+    landed: result.curated,
+    skipped,
+    catalogSlugs: new Set(['clef']),
+  });
+  assert.ok(lines.some((line) => /`clef`/.test(line) && /zero-output/.test(line) && /cloudflare/.test(line)));
+});
+
+test('the zero-output guard never touches a model outside the allow-list', () => {
+  const { offerings, skipped } = parseOne(modelOf('uncurated-model', {
+    hosta: hostOf([{ tokens: { input: usd(5), output: usd(0) } }]),
+  }));
+  assert.equal(offerings.length, 1);
+  assert.equal(offerings[0].pricing.output, null);
+  assert.equal(skipped.some((s) => s.reason === 'zero-output'), false);
+  // Nothing to hang a row on and not allow-listed: still never ingested.
+  const result = reconcileConcentrate(offerings, []);
+  assert.equal(result.rows.length, 0);
+  assert.equal(result.unmatchedModels[0].slug, 'uncurated-model');
+});
+
+test('an allow-listed model that a tier already carries stays on the shared path', () => {
+  const { offerings } = parseOne(modelOf('clef', { cloudflare: hostOf([simple(0.24, 2)]) }));
+  const result = reconcileConcentrate(offerings, [
+    { id: 'cloudflare/clef', provider: 'cloudflare', quantization: null, discount: 0, pricing: { input: 0.24, output: 2 } },
+  ]);
+  assert.equal(result.rows.length, 0);
+  assert.equal(result.shared.length, 1);
+  assert.deepEqual(result.curated, []);
+  assert.equal(result.unmatchedModels.length, 0);
+});
+
+test('every pick is accounted for in the curated summary', () => {
+  const landed = [{ slug: 'deepseek-v4-1-fast', provider: 'baseten', id: 'deepseek/deepseek-v4-1-fast', pricing: { input: 0.6, output: 2.4 } }];
+  const catalogSlugs = new Set([...CONCENTRATE_CURATED_SLUGS].filter((s) => s !== 'mammoth-1'));
+  const lines = concentrateCuratedSection({ landed, skipped: [], catalogSlugs });
+  assert.match(lines[0], /1 of 10 landed as new rows/);
+  assert.ok(lines.some((line) => /`deepseek-v4-1-fast` → `deepseek\/deepseek-v4-1-fast` @baseten \(\$0\.6 \/ \$2\.4\)/.test(line)));
+  assert.ok(lines.some((line) => /`kimi-k3-1-pro-highspeed` — already priced by another tier/.test(line)));
+  assert.ok(lines.some((line) => /`mammoth-1` — not in the catalog/.test(line)));
+  assert.equal(concentrateCuratedSection({ landed: [], skipped: [] }).length, 0);
 });
 
 test('a model matching two canonical ids is ambiguous and skipped', () => {
@@ -431,6 +542,9 @@ test('the pipeline wires Concentrate last and never needs an API key', async () 
   assert.match(pricing, /reconcileConcentrate\(parsed\.offerings, tieredModels\)/);
   assert.match(pricing, /concentrateJoin\(shared\)/);
   assert.match(pricing, /CONCENTRATE_MODELS_URL/);
+  assert.match(pricing, /CONCENTRATE_CURATED_SLUGS/);
+  assert.match(pricing, /concentrateCuratedSection\(/);
+  assert.match(lib, /CONCENTRATE_CURATED_SLUGS = new Set\(\[/);
   assert.equal(/CONCENTRATE_API_KEY/.test(pricing + lib), false);
   // The fetch happens after the Refuseless block, so every other tier wins.
   assert.ok(pricing.indexOf('Concentrate (aggregator catalog, last tier)') > pricing.indexOf("console.error(`✗ Refuseless: ${err.message}`)"));
