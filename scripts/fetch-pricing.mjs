@@ -24,6 +24,9 @@
  *          Zro (official public pricing page https://zro.moonmath.ai/pricing,
  *          daily with a committed last-good snapshot; ingested before
  *          OpenRouter so Zro's own tariff wins over an OpenRouter backend)
+ * Last —    Concentrate (public aggregator catalog
+ *          https://api.concentrate.ai/v1/models/, no key; emits only the
+ *          (model, provider) pairs no other tier prices)
  *
  * Precedence: (canonical_model, normalized_provider) — direct wins over
  * OpenRouter, which wins over CSV/hardcoded. Quantization IS part of the
@@ -49,12 +52,13 @@ import {
   perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseBatchrate, openRouterEndpointSlug, selectOpenRouterEndpoints, parseNeuralwatt, parseMerius, parseAster,
   parseCoralbricks, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
   parseRunanywhere, parseEngy, parseOpenscale,
+  parseConcentrate, reconcileConcentrate, concentrateJoin, CONCENTRATE_MODELS_URL, CONCENTRATE_PRICE_TOLERANCE,
   parseOpenCodeGoDocs,
   parseRefuselessPricingHtml, refuselessCatalogIssues, REFUSELESS_MODELS, REFUSELESS_PRICING_URL,
   NON_TEXT_ID, isTextModel,
   ORG_ALIASES, PROVIDER_NAME_MAP,
   orgFromId, orgFromName,
-  canonicalId, orgLookupKey, quantFromId, normalizeDeliveryVariant, deliveryVariantIssues,
+  canonicalId, orgLookupKey, quantFromId, normalizeDeliveryVariant, deliveryVariant, deliveryVariantIssues,
   normalizeProvider, dedupKey, dedupModels,
   fetchJson, fetchJsonWithRetry,
   checkCoverageDrop,
@@ -469,6 +473,17 @@ const MANUAL_PROVIDER_META = {
     // "Zero prompt retention" is marketing-page copy, not a reviewed policy
     // verdict — leave retains_prompts and may_train unset (same stance as Zro).
     retention_days: null,
+  },
+  concentrate: {
+    // concentrate.ai/privacy and /terms redirect to /auth/login (reviewed
+    // 2026-11-02): there is no public policy page to cite, so both stay null.
+    privacy_policy_url: null,
+    terms_of_service_url: null,
+    status_page_url: null,
+    headquarters: null,
+    datacenters: null,
+    // Aggregator — we emit its *upstream hosts* as provider slugs, never
+    // 'concentrate' itself (its own models are skipped).
   },
 };
 
@@ -1069,6 +1084,90 @@ async function fetchRefuselessPricing() {
   return { models, source };
 }
 
+// ── Concentrate (aggregator catalog, differential by model + provider) ───────
+// https://api.concentrate.ai/v1/models/ is public and keyless. It is ingested
+// last so every other tier wins; parseConcentrate/reconcileConcentrate only
+// emit a (model, provider) pair nothing else prices, and the rest is joined
+// back for fill-only metadata plus report-only price, context and ZDR drift.
+
+const concentrateSkipCounts = (skipped) => {
+  const counts = {};
+  for (const s of skipped) counts[s.reason] = (counts[s.reason] || 0) + 1;
+  return counts;
+};
+
+const concentrateReasonText = (counts) => Object.entries(counts)
+  .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+  .map(([reason, count]) => `${reason} ${count}`)
+  .join(', ') || 'none';
+
+const concentratePriceCell = (v) => (Number.isFinite(v) ? `$${Number(v.toPrecision(4))}` : '—');
+
+/** GitHub step summary for the Concentrate cross-check (report only). */
+function concentrateStepSummary({ rows, shared, skipped, unmatched, filled, drift, limit = 50 }) {
+  const esc = (v) => String(v ?? '').replace(/[|\r\n]/g, ' ');
+  const tierRows = rows.filter((r) => deliveryVariant(r.id) !== null).length;
+  const byReason = concentrateSkipCounts(skipped);
+  const promo = skipped.filter((s) => s.reason === 'promo-condition');
+  return [
+    '### Concentrate catalog cross-check',
+    '',
+    'Public aggregator catalog (`https://api.concentrate.ai/v1/models/`). Report only — it never overwrites a price or a ZDR tag.',
+    '',
+    '| Metric | Value |',
+    '|---|---|',
+    `| Rows emitted | ${rows.length} (${rows.length - tierRows} base, ${tierRows} tier) |`,
+    `| Shared pairs (another tier already prices them) | ${shared.length} |`,
+    `| Skipped | ${skipped.length} (${concentrateReasonText(byReason)}) |`,
+    `| Unmatched models | ${unmatched.length} |`,
+    `| Fields filled | context_length ${filled.context_length}, max_prompt_tokens ${filled.max_prompt_tokens}, max_completion_tokens ${filled.max_completion_tokens} |`,
+    '',
+    `**Price drift** (report only; promo rows excluded): ${drift.compared} compared — ${drift.agreeing} agreeing, `
+      + `${drift.mismatch} mismatched (>${Math.round(CONCENTRATE_PRICE_TOLERANCE * 100)}%), ${drift.promo} promo.`,
+    '',
+    ...(drift.rows.length ? [
+      '| Provider | Model | Field | TokenWatch | Concentrate | Gap |',
+      '|---|---|---|---|---|---|',
+      ...drift.rows.slice(0, 10).map((r) => `| ${esc(r.provider)} | ${esc(r.id)} | ${esc(r.field)} | `
+        + `${concentratePriceCell(r.tw.input)} / ${concentratePriceCell(r.tw.output)} | `
+        + `${concentratePriceCell(r.concentrate.input)} / ${concentratePriceCell(r.concentrate.output)} | ${(r.gap * 100).toFixed(1)}% |`),
+      ...(drift.rows.length > 10 ? ['', `Top 10 of ${drift.rows.length} mismatched pairs, largest gap first.`] : []),
+      '',
+    ] : []),
+    `**ZDR disagreement:** ${drift.zdr.twOnly.count} rows tagged ZDR here where Concentrate says false; `
+      + `${drift.zdr.concentrateOnly.count} where Concentrate says true and TokenWatch has no tag.`,
+    '',
+    ...(drift.zdr.twOnly.count ? [
+      ...drift.zdr.twOnly.examples.map((z) => `- ${esc(z.provider)}/${esc(z.id)}`),
+      '',
+    ] : []),
+    ...(drift.zdr.concentrateOnly.count ? [
+      ...drift.zdr.concentrateOnly.examples.map((z) => `- ${esc(z.provider)}/${esc(z.id)} (no TokenWatch ZDR tag)`),
+      '',
+    ] : []),
+    ...(drift.context_length.length ? [
+      `**Context-length disagreements:** ${drift.context_length.length} (TokenWatch value kept).`,
+      '',
+      ...drift.context_length.slice(0, limit).map((c) => `- ${esc(c.provider)}/${esc(c.id)}: TokenWatch ${c.tw}, Concentrate ${c.concentrate}`),
+      '',
+    ] : []),
+    ...(promo.length ? [
+      `**Skipped promo conditions (${promo.length})**`,
+      '',
+      ...promo.slice(0, limit).map((s) => `- ${esc(s.slug)}/${esc(s.provider)} — ${esc(s.detail)}`),
+      ...(promo.length > limit ? [`- … ${promo.length - limit} more`] : []),
+      '',
+    ] : []),
+    ...(unmatched.length ? [
+      `**Unmatched models (${unmatched.length}${unmatched.length > limit ? `, top ${limit}` : ''})**`,
+      '',
+      ...unmatched.slice(0, limit).map((m) => `- ${esc(m.slug)} — ${esc(m.name)} (${esc(m.author)})`),
+      ...(unmatched.length > limit ? [`- … ${unmatched.length - limit} more`] : []),
+      '',
+    ] : []),
+  ].join('\n');
+}
+
 // ── dedup / precedence ────────────────────────────────────────────────────────
 // (dedupKey, dedupModels — imported from ./lib.mjs)
 
@@ -1216,6 +1315,43 @@ async function main() {
     console.error(`✗ Refuseless: ${err.message}`);
   }
 
+  // ── Concentrate (aggregator catalog, last tier) ──
+  // Public and keyless. Fetched after every other tier so a direct, Zro,
+  // OpenRouter, CSV or scraped row always wins; it only fills (model, provider)
+  // pairs nothing else prices, and never beside a quantized row.
+  let concentrateRan = false;
+  let concentrateEmitted = [];
+  let concentrateShared = [];
+  let concentrateSkipped = [];
+  let concentrateUnmatched = [];
+  try {
+    let data = null;
+    try {
+      data = await fetchJson(CONCENTRATE_MODELS_URL);
+    } catch (err) {
+      out.providers.push({ key: 'concentrate', name: 'Concentrate (catalog)', model_count: 0, status: `error: fetch failed: ${err.message}` });
+      console.error(`✗ Concentrate: ${err.message}`);
+    }
+    if (data) {
+      const parsed = parseConcentrate(data);
+      const reconciled = reconcileConcentrate(parsed.offerings, tieredModels);
+      stampSource(reconciled.rows, 'concentrate');
+      tieredModels.push(...reconciled.rows);
+      concentrateRan = true;
+      concentrateEmitted = reconciled.rows;
+      concentrateShared = reconciled.shared;
+      concentrateSkipped = [...parsed.skipped, ...reconciled.skipped];
+      concentrateUnmatched = reconciled.unmatchedModels;
+      out.providers.push({ key: 'concentrate', name: 'Concentrate (catalog)', model_count: reconciled.rows.length, status: 'ok' });
+      console.log(`✓ Concentrate: ${reconciled.rows.length} models (ok)`);
+      console.log(`  Concentrate: ${reconciled.shared.length} shared pairs, ${concentrateSkipped.length} skipped `
+        + `(${concentrateReasonText(concentrateSkipCounts(concentrateSkipped))}), ${concentrateUnmatched.length} unmatched models`);
+    }
+  } catch (err) {
+    out.providers.push({ key: 'concentrate', name: 'Concentrate (catalog)', model_count: 0, status: `error: parse failed: ${err.message}` });
+    console.error(`✗ Concentrate: ${err.message}`);
+  }
+
   // ── LLM Gateway differential-only guard ──
   // Drop LLM Gateway rows for hosts another tier already fetched under a
   // different spelling (e.g. `inference-net` vs OpenRouter's `inferencenet`),
@@ -1323,6 +1459,44 @@ async function main() {
   }
   if (provZdrCount > 0) console.log(`  ZDR-tagged ${provZdrCount} more from provider-level dataPolicy`);
   if (zdrCount + provZdrCount > 0) console.log(`  Total ZDR: ${zdrCount + provZdrCount} of ${out.models.length} models`);
+
+  // ── Concentrate join (fill-only metadata + report-only drift) ──
+  // Runs after the ZDR fallback so "tagged here, Concentrate says false" is
+  // measured against the final tag. Fills only null context fields; never a
+  // price, never zdr.
+  if (concentrateRan) {
+    const surviving = new Set(out.models);
+    const shared = concentrateShared.filter((pair) => surviving.has(pair.row));
+    const { filled, drift } = concentrateJoin(shared);
+    console.log(`  Concentrate join: ${shared.length}/${concentrateShared.length} shared pairs survived dedup — filled `
+      + `${filled.context_length} context lengths, ${filled.max_prompt_tokens} max prompt tokens, ${filled.max_completion_tokens} max completion tokens`);
+    console.warn(`  Concentrate price drift (report only, promo rows excluded): ${drift.compared} compared — `
+      + `${drift.agreeing} agreeing, ${drift.mismatch} mismatched (>${Math.round(CONCENTRATE_PRICE_TOLERANCE * 100)}%), ${drift.promo} promo; `
+      + `${drift.context_length.length} context-length disagreements`);
+    for (const r of drift.rows.slice(0, 10)) {
+      console.warn(`    ${r.provider}/${r.id}: TokenWatch ${concentratePriceCell(r.tw.input)}/${concentratePriceCell(r.tw.output)} vs Concentrate `
+        + `${concentratePriceCell(r.concentrate.input)}/${concentratePriceCell(r.concentrate.output)} on ${r.field} (${(r.gap * 100).toFixed(1)}%)`);
+    }
+    if (drift.rows.length > 10) console.warn(`    ... ${drift.rows.length - 10} more`);
+    console.warn(`  Concentrate ZDR disagreement: ${drift.zdr.twOnly.count} rows tagged ZDR here where Concentrate says false; `
+      + `${drift.zdr.concentrateOnly.count} where Concentrate says true and TokenWatch has no tag`);
+    for (const z of drift.zdr.twOnly.examples.slice(0, 50)) console.warn(`    ${z.provider}/${z.id} — tagged ZDR here, Concentrate says false`);
+    if (drift.zdr.twOnly.count > 50) console.warn(`    ... ${drift.zdr.twOnly.count - 50} more`);
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      const md = concentrateStepSummary({
+        rows: concentrateEmitted,
+        shared,
+        skipped: concentrateSkipped,
+        unmatched: concentrateUnmatched,
+        filled,
+        drift,
+      });
+      await appendFile(process.env.GITHUB_STEP_SUMMARY, `\n${md}\n`).catch((err) => {
+        console.warn(`⚠ Could not write Concentrate step summary: ${err.message}`);
+      });
+    }
+  }
+
   // ── Subscription (coding plans) tagging — provider-level only ──
   let subCount = 0;
   for (const m of out.models) {

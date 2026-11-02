@@ -1220,7 +1220,7 @@ export function orgFromName(name) {
 // canonicalId and orgLookupKey live in shared/normalize.mjs so the Cloudflare
 // Pages Function can import the same source of truth without pulling in
 // node:fs (which this file imports below for checkCoverageDrop).
-export { canonicalId, orgLookupKey, quantFromId, normalizeDeliveryVariant } from '../shared/normalize.mjs';
+export { canonicalId, orgLookupKey, quantFromId, normalizeDeliveryVariant, deliveryVariant } from '../shared/normalize.mjs';
 import { canonicalId, orgLookupKey, quantFromId, SERVICE_TIERS, deliveryVariant, stripDeliveryVariant } from '../shared/normalize.mjs';
 
 // models.dev reconciliation helpers live in shared/modelsdev.mjs (pure, no
@@ -1787,4 +1787,436 @@ export function parseOpenscale(data) {
       },
     }];
   });
+}
+
+// ── Concentrate AI (aggregator catalog) ──────────────────────────────────────
+//
+// https://api.concentrate.ai/v1/models/ is public and keyless. Each model lists
+// per-host tariffs: one unconditional base entry, optional service-tier entries
+// (`priority`/`flex`/`fast`), and long-context entries (`input_gte`). Prices are
+// {price:{USD}, units}, converted to $/M here. TokenWatch never emits a row for
+// a (model, host) pair another tier already prices, never for a quantized row,
+// and never for a model it cannot resolve to a canonical catalog id.
+
+export const CONCENTRATE_MODELS_URL = 'https://api.concentrate.ai/v1/models/';
+
+/** Concentrate host slug → TokenWatch provider slug. Unknown slugs pass through. */
+export const CONCENTRATE_PROVIDER_MAP = {
+  bedrock: 'amazon',
+  vertex: 'google',
+  'ai-studio': 'google',
+  zai: 'z-ai',
+  'azure-fw': 'azure-fw',
+  typesafe: 'typesafe',
+  bluelobster: 'bluelobster',
+};
+
+/** Hosts TokenWatch has no other source for, so their rows need a display name. */
+export const CONCENTRATE_PROVIDER_DISPLAY = {
+  'azure-fw': 'Azure (Fireworks)',
+  typesafe: 'Typesafe',
+  bluelobster: 'Blue Lobster',
+};
+
+/** Concentrate's own hosted models are outside the pay-as-you-go host catalog. */
+const CONCENTRATE_SKIP_PROVIDER = 'concentrate';
+
+/** Relative price difference above which a shared pair counts as a drift. */
+export const CONCENTRATE_PRICE_TOLERANCE = 0.01;
+
+/** `{price:{USD}, units}` → $/M. Missing or non-positive → null (never free). */
+function concentratePrice(node) {
+  const usd = num(node?.price?.USD);
+  const units = num(node?.units);
+  if (usd === null || units === null || units <= 0 || usd <= 0) return null;
+  return Math.round((usd / units) * 1e6 * 1e6) / 1e6;
+}
+
+/** Token tariffs of one pricing entry. The 5-minute write matches TokenWatch's
+ *  Anthropic cache-write convention; the 1-hour write is deliberately ignored. */
+function concentrateTokenPrices(tokens) {
+  const t = tokens || {};
+  const write = t.cache?.write || {};
+  const writeNode = write.cache_write_tokens ?? write.ephemeral_5m_input_tokens;
+  return {
+    input: concentratePrice(t.input),
+    output: concentratePrice(t.output),
+    cache_read: concentratePrice(t.cache?.read),
+    cache_write: concentratePrice(writeNode),
+  };
+}
+
+function concentrateBaseEntry(host) {
+  const entries = Array.isArray(host?.pricing) ? host.pricing : [];
+  return entries.find((entry) => {
+    const c = entry?.condition || {};
+    return c.service_tier == null && c.input_gte == null && c.date_gte == null && c.schedule == null;
+  }) || null;
+}
+
+/** Base input/output of a host, for reporting duplicate-host price gaps. */
+function concentrateBasePrices(host) {
+  const prices = concentrateTokenPrices(concentrateBaseEntry(host)?.tokens);
+  return { input: prices.input, output: prices.output };
+}
+
+function concentrateGap(a, b) {
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+  if (a === b) return 0;
+  const scale = Math.max(Math.abs(a), Math.abs(b));
+  return scale === 0 ? 0 : Math.abs(a - b) / scale;
+}
+
+/** Anatomize a duplicate host spelling for the skip report. */
+function concentrateHostMismatch(kept, other) {
+  const k = concentrateBasePrices(kept.host);
+  const o = concentrateBasePrices(other.host);
+  const gaps = [concentrateGap(k.input, o.input), concentrateGap(k.output, o.output)]
+    .filter((gap) => gap !== null);
+  if (!gaps.length || Math.max(...gaps) <= CONCENTRATE_PRICE_TOLERANCE) return '';
+  const fmt = (v) => (v === null ? '—' : `$${v}`);
+  return `; base prices differ (${other.hostSlug} ${fmt(o.input)}/${fmt(o.output)} vs ${kept.hostSlug} ${fmt(k.input)}/${fmt(k.output)})`;
+}
+
+/**
+ * Concentrate `/v1/models/` → one offering per (model, host, service tier).
+ * Long-context entries become `context_price_tiers` on the base or matching
+ * tier offering; time-boxed promos, unknown tiers and unpriced pairs are
+ * reported in `skipped` instead of becoming rows.
+ * @returns {{offerings: Array<object>, skipped: Array<{slug: string,
+ *   provider: string|null, reason: string, detail?: string}>}}
+ */
+export function parseConcentrate(data) {
+  const models = Array.isArray(data?.data) ? data.data : [];
+  const offerings = [];
+  const skipped = [];
+  for (const m of models) {
+    const slug = typeof m?.slug === 'string' ? m.slug.trim() : '';
+    if (!slug) continue;
+    const name = typeof m.name === 'string' && m.name ? m.name : slug;
+    const aliases = Array.isArray(m.aliases) ? m.aliases.filter((a) => typeof a === 'string' && a) : [];
+    const authorSlug = typeof m.author?.slug === 'string' ? m.author.slug : null;
+    const maxPrompt = num(m.max_input_tokens) || null;
+    const providers = m.providers && typeof m.providers === 'object' ? m.providers : {};
+
+    // Two host spellings can map to one TokenWatch provider (vertex + ai-studio
+    // → google). Keep ai-studio, report the other as a duplicate host.
+    const grouped = new Map();
+    for (const [hostSlug, host] of Object.entries(providers)) {
+      if (!host || typeof host !== 'object' || hostSlug === CONCENTRATE_SKIP_PROVIDER) continue;
+      const provider = CONCENTRATE_PROVIDER_MAP[hostSlug] || hostSlug;
+      if (!grouped.has(provider)) grouped.set(provider, []);
+      grouped.get(provider).push({ hostSlug, host });
+    }
+
+    for (const [provider, hosts] of grouped) {
+      const chosen = hosts.find((h) => h.hostSlug === 'ai-studio') || hosts[0];
+      for (const other of hosts) {
+        if (other === chosen) continue;
+        skipped.push({
+          slug,
+          provider,
+          reason: 'duplicate-host',
+          detail: `${other.hostSlug} (kept ${chosen.hostSlug})${concentrateHostMismatch(chosen, other)}`,
+        });
+      }
+      const entries = Array.isArray(chosen.host.pricing) ? chosen.host.pricing : [];
+      const baseEntry = concentrateBaseEntry(chosen.host);
+      if (!baseEntry) {
+        skipped.push({ slug, provider, reason: 'no-base-price' });
+        continue;
+      }
+
+      const makeOffering = (entry, variant) => ({
+        slug,
+        aliases: aliases.slice(),
+        name,
+        authorSlug,
+        concentrateProvider: chosen.hostSlug,
+        provider,
+        variant,
+        pricing: concentrateTokenPrices(entry.tokens),
+        context_price_tiers: null,
+        context_length: num(chosen.host.context_window) || null,
+        max_prompt_tokens: maxPrompt,
+        max_completion_tokens: num(chosen.host.max_output_tokens) || null,
+        zdr: typeof chosen.host.zdr === 'boolean' ? chosen.host.zdr : null,
+      });
+
+      const base = makeOffering(baseEntry, null);
+      const tiers = new Map();
+      for (const entry of entries) {
+        if (entry === baseEntry) continue;
+        const condition = entry?.condition || {};
+        if (condition.date_gte != null || condition.schedule != null) {
+          skipped.push({
+            slug,
+            provider,
+            reason: 'promo-condition',
+            detail: condition.description || (condition.schedule ? 'scheduled rate' : 'dated rate'),
+          });
+          continue;
+        }
+        if (condition.input_gte != null) continue;
+        if (!condition.service_tier) continue;
+        const tier = String(condition.service_tier).toLowerCase();
+        if (!SERVICE_TIERS.includes(tier)) {
+          skipped.push({ slug, provider, reason: 'unknown-tier', detail: tier });
+          continue;
+        }
+        if (tiers.has(tier)) {
+          skipped.push({ slug, provider, reason: 'duplicate-tier', detail: tier });
+          continue;
+        }
+        tiers.set(tier, makeOffering(entry, tier));
+      }
+
+      const tierRows = new Map([[null, []]]);
+      for (const tier of tiers.keys()) tierRows.set(tier, []);
+      for (const entry of entries) {
+        const condition = entry?.condition || {};
+        if (condition.input_gte == null) continue;
+        if (condition.date_gte != null || condition.schedule != null) continue;
+        const variant = condition.service_tier ? String(condition.service_tier).toLowerCase() : null;
+        const targetRows = variant === null ? tierRows.get(null) : tierRows.get(variant);
+        if (!targetRows) {
+          skipped.push({ slug, provider, reason: 'orphan-context-tier', detail: condition.service_tier });
+          continue;
+        }
+        const prices = concentrateTokenPrices(entry.tokens);
+        if (prices.input === null && prices.output === null) continue;
+        targetRows.push({ above_tokens: Math.max(0, Math.round(num(condition.input_gte)) - 1), ...prices });
+      }
+
+      for (const offering of [base, ...tiers.values()]) {
+        const rows = tierRows.get(offering.variant).sort((a, b) => a.above_tokens - b.above_tokens);
+        offering.context_price_tiers = rows.length ? rows : null;
+        if ((offering.pricing.input ?? 0) <= 0 && (offering.pricing.output ?? 0) <= 0) {
+          skipped.push({
+            slug,
+            provider,
+            reason: 'no-price',
+            ...(offering.variant ? { detail: `:${offering.variant}` } : {}),
+          });
+          continue;
+        }
+        offerings.push(offering);
+      }
+    }
+  }
+  return { offerings, skipped };
+}
+
+/** Loose model key for cross-source matching: lowercase, '.' → '-'. */
+function concentrateLooseId(value) {
+  return canonicalId(String(value)).replace(/\./g, '-');
+}
+
+/** Higher is better: an id with a namespace beats a bare one, and a row of the
+ *  same provider beats another host's row. */
+function concentrateIdScore(entry, provider) {
+  return (entry.row.id.includes('/') ? 2 : 0) + (entry.provider === provider ? 1 : 0);
+}
+
+/**
+ * Map Concentrate offerings onto the rows the other tiers already collected.
+ * Emits a row only for a (model, provider) pair no other tier prices, and only
+ * when the model resolves to a quant-free canonical id with no quantized or
+ * quant-suffixed sibling at that provider. Covered pairs come back in `shared`
+ * for the fill-only join and drift report.
+ * @returns {{rows: Array<object>, shared: Array<{row: object, offering: object}>,
+ *   skipped: Array<object>, unmatchedModels: Array<object>}}
+ */
+export function reconcileConcentrate(offerings, existingRows) {
+  const rows = [];
+  const shared = [];
+  const skipped = [];
+  const unmatchedModels = [];
+  const existing = Array.isArray(existingRows) ? existingRows.filter((r) => r && typeof r.id === 'string') : [];
+  const index = existing.map((row) => {
+    const quantFree = orgLookupKey(row.id);
+    return {
+      row,
+      canonical: canonicalId(row.id),
+      quantFree,
+      loose: concentrateLooseId(quantFree),
+      provider: normalizeProvider(row.provider),
+    };
+  });
+  const byDedupKey = new Map();
+  for (const row of existing) {
+    const key = dedupKey(row);
+    if (!byDedupKey.has(key)) byDedupKey.set(key, row);
+  }
+
+  const models = new Map();
+  for (const offering of Array.isArray(offerings) ? offerings : []) {
+    if (!offering || typeof offering.slug !== 'string') continue;
+    if (!models.has(offering.slug)) models.set(offering.slug, []);
+    models.get(offering.slug).push(offering);
+  }
+
+  const emitted = new Set();
+  for (const [slug, modelOfferings] of models) {
+    const first = modelOfferings[0];
+    const candidateCanon = new Set([slug, ...(first.aliases || [])].map((c) => canonicalId(String(c))));
+    const candidateLoose = new Set([...candidateCanon].map((c) => concentrateLooseId(c)));
+    const matched = index.filter((e) => candidateCanon.has(e.quantFree) || candidateLoose.has(e.loose));
+    const resolved = [...new Set(matched.map((e) => e.quantFree))];
+    if (resolved.length > 1) {
+      skipped.push({ slug, provider: null, reason: 'ambiguous-model', detail: resolved.join(', ') });
+      continue;
+    }
+    if (resolved.length === 0) {
+      unmatchedModels.push({ slug, name: first.name, author: first.authorSlug });
+      continue;
+    }
+    const canonical = resolved[0];
+    const plainIds = matched.filter((e) => e.canonical === canonical && deliveryVariant(e.row.id) === null);
+    if (plainIds.length === 0) {
+      skipped.push({
+        slug,
+        provider: null,
+        reason: 'quant-only',
+        detail: [...new Set(matched.map((e) => e.row.id))].slice(0, 5).join(', '),
+      });
+      continue;
+    }
+
+    for (const offering of modelOfferings) {
+      const provider = normalizeProvider(offering.provider);
+      const guard = index.filter((e) => e.provider === provider && e.quantFree === canonical);
+      const quantRows = guard.filter((e) => (e.row.quantization != null && e.row.quantization !== 'unknown')
+        || e.canonical !== canonical);
+      if (quantRows.length) {
+        skipped.push({
+          slug,
+          provider: offering.provider,
+          reason: 'quant-variant',
+          detail: quantRows.map((e) => `${e.row.id}${e.row.quantization && e.row.quantization !== 'unknown' ? ` (${e.row.quantization})` : ''}`).join(', '),
+        });
+        continue;
+      }
+
+      const source = plainIds
+        .slice()
+        .sort((a, b) => concentrateIdScore(b, provider) - concentrateIdScore(a, provider))[0];
+      const id = offering.variant ? `${source.row.id}:${offering.variant}` : source.row.id;
+      const key = dedupKey({ id, provider: offering.provider });
+      const covered = byDedupKey.get(key);
+      if (covered) {
+        shared.push({ row: covered, offering });
+        continue;
+      }
+      if (emitted.has(key)) {
+        skipped.push({ slug, provider: offering.provider, reason: 'duplicate-row', detail: id });
+        continue;
+      }
+      emitted.add(key);
+      rows.push({
+        id,
+        name: source.row.name || offering.name,
+        org: source.row.org || offering.authorSlug || null,
+        provider: offering.provider,
+        ...(CONCENTRATE_PROVIDER_DISPLAY[offering.provider]
+          ? { provider_display: CONCENTRATE_PROVIDER_DISPLAY[offering.provider] }
+          : {}),
+        quantization: null,
+        discount: 0,
+        context_length: offering.context_length ?? null,
+        max_completion_tokens: offering.max_completion_tokens ?? null,
+        max_prompt_tokens: offering.max_prompt_tokens ?? null,
+        pricing: { ...offering.pricing },
+        context_price_tiers: offering.context_price_tiers ?? null,
+        ...(offering.zdr === true ? { zdr: true } : {}),
+      });
+    }
+  }
+  return { rows, shared, skipped, unmatchedModels };
+}
+
+/**
+ * Join the shared (model, provider) pairs back onto the rows another tier owns.
+ * Fills ONLY null context fields — never a price, never `zdr` — and reports the
+ * price, context-length and ZDR disagreements. Rows carrying a promo discount
+ * are excluded from the price comparison (counted as `promo`).
+ * @returns {{filled: {context_length: number, max_prompt_tokens: number,
+ *   max_completion_tokens: number}, drift: object}}
+ */
+export function concentrateJoin(shared) {
+  const filled = { context_length: 0, max_prompt_tokens: 0, max_completion_tokens: 0 };
+  const drift = {
+    total: 0,
+    compared: 0,
+    agreeing: 0,
+    mismatch: 0,
+    promo: 0,
+    rows: [],
+    context_length: [],
+    zdr: {
+      twOnly: { count: 0, examples: [] },
+      concentrateOnly: { count: 0, examples: [] },
+    },
+  };
+  for (const pair of Array.isArray(shared) ? shared : []) {
+    const row = pair?.row;
+    const offering = pair?.offering;
+    if (!row || !offering) continue;
+    drift.total++;
+    const twContext = row.context_length;
+    for (const field of ['context_length', 'max_prompt_tokens', 'max_completion_tokens']) {
+      if (row[field] == null && offering[field] != null) {
+        row[field] = offering[field];
+        filled[field]++;
+      }
+    }
+    if (twContext != null && offering.context_length != null && twContext !== offering.context_length) {
+      drift.context_length.push({ id: row.id, provider: row.provider, tw: twContext, concentrate: offering.context_length });
+    }
+    if (offering.zdr === true && row.zdr !== true) {
+      drift.zdr.concentrateOnly.count++;
+      drift.zdr.concentrateOnly.examples.push({ id: row.id, provider: row.provider });
+    }
+    if (row.zdr === true && offering.zdr === false) {
+      drift.zdr.twOnly.count++;
+      drift.zdr.twOnly.examples.push({ id: row.id, provider: row.provider });
+    }
+    if (Number.isFinite(row.discount) && row.discount > 0) {
+      drift.promo++;
+      continue;
+    }
+    const tw = row.pricing || {};
+    const concentrate = offering.pricing || {};
+    const fields = ['input', 'output'];
+    if (Number.isFinite(tw.cache_read) && Number.isFinite(concentrate.cache_read)) fields.push('cache_read');
+    const gaps = fields
+      .filter((f) => Number.isFinite(tw[f]) && Number.isFinite(concentrate[f]))
+      .map((f) => ({ field: f, gap: concentrateGap(tw[f], concentrate[f]) }))
+      .filter((g) => g.gap !== null);
+    if (!gaps.length) continue;
+    drift.compared++;
+    const worst = gaps.reduce((a, b) => (b.gap > a.gap ? b : a));
+    if (worst.gap <= CONCENTRATE_PRICE_TOLERANCE) {
+      drift.agreeing++;
+      continue;
+    }
+    drift.mismatch++;
+    drift.rows.push({
+      id: row.id,
+      provider: row.provider,
+      field: worst.field,
+      gap: worst.gap,
+      tw: { input: tw.input ?? null, output: tw.output ?? null, cache_read: tw.cache_read ?? null },
+      concentrate: {
+        input: concentrate.input ?? null,
+        output: concentrate.output ?? null,
+        cache_read: concentrate.cache_read ?? null,
+      },
+    });
+  }
+  drift.rows.sort((a, b) => {
+    if (a.gap !== b.gap) return a.gap > b.gap ? -1 : 1;
+    return String(a.id).localeCompare(String(b.id));
+  });
+  return { filled, drift };
 }
