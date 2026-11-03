@@ -90,18 +90,26 @@ export function makeCleanOrg(providerSlugs) {
 export function buildOrgIndex(groups, providerSlugs) {
   const clean = makeCleanOrg(providerSlugs);
 
-  // Pass 1: resolve orgs that have a clean creator; index by family key
+  // Pass 1: one creator per family key. A base id's org beats a variant's, since
+  // hosts label variants inconsistently (e.g. qwen3-32b → qwen, qwen3-32b:flex → alibaba).
   const familyOrg = new Map();
+  const fromBase = new Set();
   for (const [cid, offerings] of groups) {
     const org = clean(resolveOrg(offerings));
-    if (org && !familyOrg.has(familyKey(cid))) familyOrg.set(familyKey(cid), org);
+    if (!org) continue;
+    const fk = familyKey(cid);
+    const isBase = !VARIANT_SUFFIX_RE.test(cid);
+    if (!familyOrg.has(fk) || (isBase && !fromBase.has(fk))) {
+      familyOrg.set(fk, org);
+      if (isBase) fromBase.add(fk);
+    }
   }
 
-  // Pass 2: every canonical id gets its own org, else family inheritance,
-  // else leading-token map. Provider slugs can never surface as creators.
+  // Pass 2: every canonical id takes its family's creator, else the leading-token
+  // map. Provider slugs can never surface as creators.
   const orgByCid = new Map();
-  for (const [cid, offerings] of groups) {
-    orgByCid.set(cid, clean(resolveOrg(offerings)) ?? familyOrg.get(familyKey(cid)) ?? orgFromPrefix(cid));
+  for (const [cid] of groups) {
+    orgByCid.set(cid, familyOrg.get(familyKey(cid)) ?? orgFromPrefix(cid));
   }
   return orgByCid;
 }
