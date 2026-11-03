@@ -1304,6 +1304,8 @@ export const PROVIDER_NAME_MAP = {
   'engy': 'engy',
   'openscale': 'openscale',
   'open scale': 'openscale',
+  'alchemy': 'alchemy',
+  'alchemy inference': 'alchemy',
   'coralbricks': 'coralbricks',
   'coral bricks': 'coralbricks',
   'nanogpt': 'nanogpt',
@@ -1783,6 +1785,91 @@ export function parseOpenscale(data) {
         input,
         output,
         cache_read: priceOf(m.input_modalities, 'cached_prompt'),
+        cache_write: null, // not sold
+      },
+    }];
+  });
+}
+
+// ── Alchemy Inference ────────────────────────────────────────────────────────
+
+export const ALCHEMY_MODELS_DOC_URL = 'https://inference.alchemy.com/docs/models.md';
+export const ALCHEMY_MODELS_API_URL = 'https://api.inference.alchemy.com/v1/models';
+
+/**
+ * Alchemy Inference. Prices are published only in the "Serverless models"
+ * table of https://inference.alchemy.com/docs/models (raw Markdown at
+ * ALCHEMY_MODELS_DOC_URL), USD per 1M tokens; billing per
+ * https://inference.alchemy.com/docs/pricing charges cached input at the
+ * cached input price. GET /v1/models (Bearer ALCHEMY_INFERENCE_API_KEY) carries
+ * no prices, only id/max_context/max_output. When that catalog is supplied it
+ * decides which models are listed and their limits; models it lists that the
+ * docs do not price are dropped rather than emitted unpriced.
+ *
+ * Throws when the table or a required column is missing so a docs redesign
+ * surfaces as a parse failure, not an outage.
+ */
+export function parseAlchemy({ markdown, catalog = null } = {}) {
+  const lines = String(markdown || '').split('\n');
+  const start = lines.findIndex((l) => /^#+\s*Serverless models\s*$/i.test(l.trim()));
+  if (start < 0) throw new Error('Alchemy docs: "Serverless models" section not found');
+  const tableLines = [];
+  for (const l of lines.slice(start + 1)) {
+    if (/^#+\s/.test(l.trim())) break;
+    if (l.trim().startsWith('|')) tableLines.push(l.trim());
+    else if (tableLines.length) break;
+  }
+  const cells = (l) => l.replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+  if (tableLines.length < 3) throw new Error('Alchemy docs: serverless models table not found');
+  const header = cells(tableLines[0]).map((h) => h.toLowerCase());
+  const col = (name) => {
+    const i = header.indexOf(name);
+    if (i < 0) throw new Error(`Alchemy docs: column "${name}" missing`);
+    return i;
+  };
+  const iName = col('model');
+  const iId = col('id');
+  const iCtx = col('context');
+  const iMax = col('max output');
+  const iIn = col('input price');
+  const iCached = col('cached input price');
+  const iOut = col('output price');
+  const iMods = header.indexOf('input');
+  const price = (c) => {
+    const m = String(c || '').replace(/\\/g, '').match(/^\$\s*([\d.]+)$/);
+    return m ? cleanPerM(Number(m[1])) : null;
+  };
+  const int = (c) => num(String(c || '').replace(/,/g, ''));
+
+  const apiModels = Array.isArray(catalog?.data) ? catalog.data : null;
+  const apiById = apiModels ? new Map(apiModels.filter((m) => m?.id).map((m) => [m.id, m])) : null;
+
+  return tableLines.slice(2).flatMap((l) => {
+    const c = cells(l);
+    const rawId = (c[iId] || '').replace(/`/g, '').trim();
+    if (!rawId) return [];
+    const api = apiById ? apiById.get(rawId) : null;
+    if (apiById && !api) return []; // not callable per /v1/models
+    const input = price(c[iIn]);
+    const output = price(c[iOut]);
+    if (input === null && output === null) return [];
+    const resolved = resolveCatalogId(rawId);
+    return [{
+      id: resolved,
+      name: c[iName] || rawId,
+      org: orgForOffering(rawId, resolved),
+      provider: 'alchemy',
+      quantization: null,
+      discount: 0,
+      context_length: num(api?.max_context) ?? int(c[iCtx]),
+      max_completion_tokens: num(api?.max_output) ?? int(c[iMax]),
+      input_modalities: iMods >= 0 && c[iMods]
+        ? c[iMods].split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
+        : null,
+      pricing: {
+        input,
+        output,
+        cache_read: price(c[iCached]),
         cache_write: null, // not sold
       },
     }];
