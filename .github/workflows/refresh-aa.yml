@@ -76,12 +76,17 @@ jobs:
           TW_PARITY_LIVE: '1'
         run: node --test test/parity.test.mjs
 
+      # The methodology page cites the Arena publish date and is test-guarded, so it
+      # must be committed with the refreshed Arena cache or every later run fails tests.
+      - name: Regenerate methodology page
+        run: node scripts/generate-seo.mjs
+
       - name: Commit benchmark caches + refreshed catalogs
         id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/aa-benchmarks.json data/arena-benchmarks.json public/pricing.json public/benchmarks.json
+          git add data/aa-benchmarks.json data/arena-benchmarks.json public/pricing.json public/benchmarks.json public/docs/methodology/index.html
           if git diff --cached --quiet; then
             echo "No benchmark/catalog changes — skipping commit; recovery may still deploy."
           else

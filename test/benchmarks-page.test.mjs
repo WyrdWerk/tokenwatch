@@ -75,6 +75,17 @@ test('variant models inherit the base model creator', () => {
   assert.equal(index.get('grok-4.6'), 'x-ai');       // leading-token map fallback
 });
 
+test('a variant whose hosts report a different creator still takes the base creator', () => {
+  // Variant listed first so the result cannot depend on iteration order.
+  const index = buildOrgIndex(new Map([
+    ['qwen3-32b:flex', [{ org: 'alibaba', provider: 'amazon' }]],
+    ['qwen3-32b',      [{ org: 'qwen', provider: 'siliconflow' }]],
+  ]), ['amazon', 'siliconflow']);
+
+  assert.equal(index.get('qwen3-32b'), 'qwen');
+  assert.equal(index.get('qwen3-32b:flex'), 'qwen');
+});
+
 test('resolveOrg rejects an org that equals its own or any provider slug', () => {
   assert.equal(resolveOrg([
     { org: 'neuralwatt', provider: 'neuralwatt' },
