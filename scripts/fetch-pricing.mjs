@@ -8,7 +8,8 @@
  * Tier 1 — Direct providers: DeepInfra, EmberCloud, Wafer, Synthetic,
  *          SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs,
  *          Arilo.id, Avian, CoralBricks (public catalog), SingularityAPI, RunInfra,
- *          LLM Gateway (differential hosts only)
+ *          LLM Gateway (differential hosts only), Alchemy Inference (docs
+ *          price table; optional ALCHEMY_INFERENCE_API_KEY /v1/models narrows it)
  *          (authoritative source for their own offerings; Singularity + RunInfra
  *          are auth-gated via SINGULARITY_API_KEY / RUNINFRA_API_KEY;
  *          LLM Gateway via LLMGATEWAY_API_KEY emits only providers TokenWatch
@@ -52,6 +53,7 @@ import {
   perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseBatchrate, openRouterEndpointSlug, selectOpenRouterEndpoints, parseNeuralwatt, parseMerius, parseAster,
   parseCoralbricks, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
   parseRunanywhere, parseEngy, parseOpenscale,
+  parseAlchemy, ALCHEMY_MODELS_DOC_URL, ALCHEMY_MODELS_API_URL,
   parseConcentrate, reconcileConcentrate, concentrateJoin, concentrateCuratedSection,
   CONCENTRATE_MODELS_URL, CONCENTRATE_PRICE_TOLERANCE, CONCENTRATE_CURATED_SLUGS,
   parseOpenCodeGoDocs,
@@ -211,7 +213,38 @@ const DIRECT_PROVIDERS = [
     url: 'https://api.openscale.so/v1/models',
     parse: parseOpenscale,
   },
+  {
+    // Prices from the docs table; /v1/models (no prices) narrows the list and
+    // supplies limits when ALCHEMY_INFERENCE_API_KEY works. No apiKeyEnv: a
+    // missing key must not skip the docs-priced rows.
+    key: 'alchemy',
+    name: 'Alchemy Inference',
+    fetch: fetchAlchemy,
+    parse: parseAlchemy,
+  },
 ];
+
+async function fetchAlchemy() {
+  const res = await fetch(ALCHEMY_MODELS_DOC_URL, {
+    headers: { Accept: 'text/markdown, text/plain' },
+    signal: AbortSignal.timeout(45_000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${ALCHEMY_MODELS_DOC_URL}`);
+  const markdown = await res.text();
+  let catalog = null;
+  const apiKey = process.env.ALCHEMY_INFERENCE_API_KEY;
+  if (!apiKey) {
+    console.warn('⚠ Alchemy Inference: ALCHEMY_INFERENCE_API_KEY not set — using docs model list only');
+  } else {
+    try {
+      catalog = await fetchJson(ALCHEMY_MODELS_API_URL, { apiKey });
+    } catch (err) {
+      // e.g. 402 payment_required when the org has no credit.
+      console.warn(`⚠ Alchemy Inference: /v1/models failed (${err.message}) — using docs model list only`);
+    }
+  }
+  return { markdown, catalog };
+}
 
 // ── OpenRouter config ──────────────────────────────────────────────────────────
 
@@ -444,6 +477,16 @@ const MANUAL_PROVIDER_META = {
     may_train: false,        // Privacy §5: "we never use your prompts or model outputs to train models"
     retention_days: 0,       // /v1/chat/completions default path stores nothing
     retention_note: 'Chat Completions and Messages are never stored. Responses API stores responses for 30 days unless store:false or account ZDR is enabled; that is not the calculator default path.',
+  },
+  alchemy: {
+    // Both URLs are the footer links on https://inference.alchemy.com (reviewed
+    // 2026-11-03); they redirect to https://legal.alchemy.com. No inference-specific
+    // retention or training terms found, so ZDR fields stay unknown.
+    privacy_policy_url: 'https://www.alchemy.com/policies/privacy-policy',
+    terms_of_service_url: 'https://www.alchemy.com/policies/terms',
+    status_page_url: null,
+    headquarters: null,
+    datacenters: null,
   },
   llmgateway: {
     privacy_policy_url: 'https://llmgateway.io/legal/privacy',
