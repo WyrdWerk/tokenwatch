@@ -173,7 +173,7 @@ jobs:
             echo "No pricing changes — skipping commit; recovery may still deploy."
           else
             git commit -m "chore: refresh pricing data ($(date -u +%Y-%m-%dT%H:%M) UTC)"
-            git push
+            bash scripts/push-with-retry.sh
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
