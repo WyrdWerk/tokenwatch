@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -65,6 +65,41 @@ for (const { file, source, body } of workflows) {
     }
   });
 }
+
+test('push helper bounds retries and aborts a failed rebase', () => {
+  const root = mkdtempSync(join(tmpdir(), 'tw-push-retry-'));
+  try {
+    const log = join(root, 'commands');
+    writeFileSync(join(root, 'sleep'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    writeFileSync(join(root, 'git'), `#!/bin/sh
+echo "$*" >> "$COMMAND_LOG"
+case "$1 $2" in
+  "push ") exit 1 ;;
+  "rebase origin/main") [ "$FAIL_REBASE" != 1 ] ;;
+  *) exit 0 ;;
+esac
+`, { mode: 0o755 });
+    const run = failRebase => spawnSync('bash', [new URL('../scripts/push-with-retry.sh', import.meta.url).pathname], {
+      env: { ...process.env, PATH: `${root}:${process.env.PATH}`, COMMAND_LOG: log, FAIL_REBASE: String(failRebase) }, encoding: 'utf8',
+    });
+    const exhausted = run(0);
+    assert.notEqual(exhausted.status, 0);
+    assert.match(exhausted.stderr, /failed after 4 attempts/);
+    assert.deepEqual(readFileSync(log, 'utf8').trim().split('\n'), [
+      'push', 'fetch origin main', 'rebase origin/main', 'push', 'fetch origin main',
+      'rebase origin/main', 'push', 'fetch origin main', 'rebase origin/main', 'push',
+    ]);
+    writeFileSync(log, '');
+    const conflict = run(1);
+    assert.notEqual(conflict.status, 0);
+    assert.match(conflict.stderr, /Rebase failed/);
+    assert.deepEqual(readFileSync(log, 'utf8').trim().split('\n'), [
+      'push', 'fetch origin main', 'rebase origin/main', 'rebase --abort',
+    ]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test('PR CI tests and builds the production surface without fetching or deploying', () => {
   const ci = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
@@ -141,10 +176,18 @@ test('a rerun can push after the previous refresh committed; no-op and concurren
     git(first, 'add', '.');
     git(first, 'commit', '-m', 'Initial catalog');
     git(first, 'push', '-u', 'origin', 'main');
+    const bin = join(root, 'bin');
+    mkdirSync(bin);
+    writeFileSync(join(bin, 'sleep'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    const installHelper = cwd => {
+      mkdirSync(join(cwd, 'scripts'));
+      copyFileSync(new URL('../scripts/push-with-retry.sh', import.meta.url), join(cwd, 'scripts/push-with-retry.sh'));
+    };
+    installHelper(first);
     const originalSha = git(first, 'rev-parse', 'HEAD');
     const output = join(root, 'github-output');
     const runCommit = cwd => spawnSync('bash', ['-e', '-c', commit], {
-      cwd, env: { ...process.env, GITHUB_OUTPUT: output }, encoding: 'utf8',
+      cwd, env: { ...process.env, GITHUB_OUTPUT: output, PATH: `${bin}:${process.env.PATH}` }, encoding: 'utf8',
     });
     writeFileSync(join(first, 'public/pricing.json'), '{"attempt":1}\n');
     const firstResult = runCommit(first);
@@ -159,6 +202,7 @@ test('a rerun can push after the previous refresh committed; no-op and concurren
     git(retry, 'remote', 'add', 'origin', remote);
     git(retry, 'fetch', '--depth=1', 'origin', `+${ref}:refs/remotes/origin/main`);
     git(retry, 'checkout', '-B', 'main', 'origin/main');
+    installHelper(retry);
     writeFileSync(join(retry, 'public/pricing.json'), '{"attempt":2}\n');
     const retryResult = runCommit(retry);
     assert.equal(retryResult.status, 0, retryResult.stderr);
@@ -178,11 +222,12 @@ test('a rerun can push after the previous refresh committed; no-op and concurren
     git(first, 'push');
     const concurrentSha = git(first, 'rev-parse', 'HEAD');
     writeFileSync(join(retry, 'public/pricing.json'), '{"attempt":3}\n');
-    const rejected = runCommit(retry);
-    assert.notEqual(rejected.status, 0);
-    assert.match(rejected.stderr, /rejected/);
-    assert.equal(git(remote, 'rev-parse', 'main'), concurrentSha, 'never overwrite concurrent work');
-    assert.equal(readFileSync(output, 'utf8'), '', 'failed push must not enable deploy');
+    const rebased = runCommit(retry);
+    assert.equal(rebased.status, 0, rebased.stderr);
+    assert.match(rebased.stderr, /rejected/);
+    assert.equal(git(retry, 'rev-parse', 'HEAD^'), concurrentSha, 'preserve concurrent work');
+    assert.equal(git(remote, 'rev-parse', 'main'), git(retry, 'rev-parse', 'HEAD'));
+    assert.match(readFileSync(output, 'utf8'), /changed=true/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
