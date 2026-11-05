@@ -607,17 +607,16 @@ test('HY4 histories separate legacy snapshots by original model ID without a bac
     { id: 'tencent/Hy4-preview', provider: 'deepinfra' },
     { id: 'tencent/hy4', provider: 'tencent' },
   ] };
-  await withAssets(pricing, async () => {
-    for (const [id, providers] of [['hy4-preview', ['legacy-preview', 'new-preview']], ['hy4', ['bare-base', 'base']]]) {
-      const db = new MockD1(rows);
-      const res = await requestHistory(id, {}, db);
-      assert.equal(res.status, 200);
-      const body = await res.json();
-      assert.equal(body.canonical_id, id);
-      assert.equal(body.point_count, 1);
-      assert.deepEqual(body.series[0].offerings.map((m) => m.provider).sort(), providers);
-      assert.match(db.captured[0].sql, /WHERE canonical_model IN \(\?, \?\) AND utc_day >= \? AND utc_day <= \?/);
-      assert.deepEqual(db.captured[0].bindings.slice(0, 2), ['hy4', 'hy4-preview']);
-    }
-  });
+  for (const [id, providers] of [['hy4-preview', ['legacy-preview', 'new-preview']], ['hy4', ['bare-base', 'base']]]) {
+    const db = new MockD1(rows);
+    const context = makeContext(`/api/v1/models/${id}/history`, '', db);
+    context.env.ASSETS = { fetch: async () => new Response(JSON.stringify(pricing)) };
+    const { status, body } = await getJson(context);
+    assert.equal(status, 200);
+    assert.equal(body.canonical_id, id);
+    assert.equal(body.point_count, 1);
+    assert.deepEqual(body.series[0].offerings.map((m) => m.provider).sort(), providers);
+    assert.match(db.captured[0].sql, /WHERE canonical_model IN \(\?, \?\) AND utc_day >= \? AND utc_day <= \?/);
+    assert.deepEqual(db.captured[0].bindings.slice(0, 2), ['hy4', 'hy4-preview']);
+  }
 });
