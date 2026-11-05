@@ -51,7 +51,7 @@
 import { appendFile, readFile } from 'node:fs/promises';
 import {
   perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseBatchrate, openRouterEndpointSlug, selectOpenRouterEndpoints, parseNeuralwatt, parseMerius, parseAster,
-  parseCoralbricks, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
+  parseCoralbricks, parseSingularity, parseRuninfra, parsePrimalabs, dropIndirectPrimalabsRows, parseLlmgateway, dropCoveredLlmgatewayRows,
   parseRunanywhere, parseEngy, parseOpenscale,
   parseAlchemy, ALCHEMY_MODELS_DOC_URL, ALCHEMY_MODELS_API_URL,
   parseConcentrate, reconcileConcentrate, concentrateJoin, concentrateCuratedSection,
@@ -84,6 +84,13 @@ import { normalizeOpenRouterEndpointCapabilities } from '../shared/openrouter-en
 // ── direct providers config ───────────────────────────────────────────────────
 
 const DIRECT_PROVIDERS = [
+  {
+    key: 'primalabs',
+    name: 'Prima Labs',
+    url: 'https://api.primalabs.ai/v1/models',
+    apiKeyEnv: 'PRIMALABS_API_KEY',
+    parse: parsePrimalabs,
+  },
   {
     key: 'deepinfra',
     name: 'DeepInfra',
@@ -260,6 +267,17 @@ const OR_CONCURRENCY = 20;
 //  fetchJson, fetchJsonWithRetry, checkCoverageDrop — all imported from ./lib.mjs)
 
 const MANUAL_PROVIDER_META = {
+  primalabs: {
+    privacy_policy_url: 'https://www.primalabs.ai/privacy',
+    terms_of_service_url: 'https://www.primalabs.ai/terms',
+    status_page_url: null,
+    headquarters: null,
+    datacenters: null,
+    // Serverless content ZDR: docs.primalabs.ai/platform/data-retention.
+    retains_prompts: false,
+    may_train: false,
+    retention_days: 0,
+  },
   ember: {
     privacy_policy_url: 'https://www.embercloud.ai/privacy',
     terms_of_service_url: 'https://www.embercloud.ai/terms',
@@ -1435,6 +1453,7 @@ async function main() {
   if (variantIds > 0) console.log(`  Normalized ${variantIds} provider-spelled delivery-variant ids to colon form`);
 
   // ── Dedup with 3-tier precedence ──
+  tieredModels = dropIndirectPrimalabsRows(tieredModels, (m) => pricingSource.get(m));
   out.models = dedupModels(tieredModels);
   const deduped = tieredModels.length - out.models.length;
   if (deduped > 0) console.log(`  Deduped ${deduped} overlapping rows (direct > OpenRouter > CSV)`);
