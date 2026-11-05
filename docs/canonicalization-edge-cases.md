@@ -235,3 +235,10 @@ These keys never touch dedup, org lookup, SEO model pages or the API's
 `/models/:canonicalId` — every variant stays its own row with its own id.
 Regression: "DeepSeek V4.1 Flash" used to resolve to RunInfra's
 `deepseek-v4-1-flash` only; it now selects all 44 offerings.
+
+
+## HY4 preview is not the newer HY4 release
+
+Preserve `hy4-preview` as a distinct canonical ID from `hy4`, including the browser mirror. Tencent's [August preview announcement](https://www.tencent.com/tencent-releases-and-open-sources-tencent-hy4-preview/) describes a preview-first release; its [November HY4 announcement](https://www.tencent.com/tencent-launches-hy4-joining-the-ranks-of-the-worlds-leading-open-source-ai-models/) introduces vision and says weights will follow in the coming days. The [preview model card](https://huggingface.co/tencent/Hy4-preview) publishes weights under Apache-2.0, but that does not establish the newer HY4's license or current weight availability.
+
+Stripping this particular preview suffix combined distinct releases in deduplication, enrichment and open-weight voting, producing a false metadata conflict. Do not resolve it by applying the preview's open-weight classification or license to all `hy4` records. Other known preview suffixes retain their existing normalization behavior.

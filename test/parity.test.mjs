@@ -73,7 +73,7 @@ test('app.js canonicalModelId() matches shared canonicalId() for key inputs', ()
          .replace(/-preview-(\d{2})-(\d{4})$/, '')
          .replace(/-preview-(\d{4})-(\d{2})-(\d{2})$/, '')
          .replace(/-preview-(\d{2})-(\d{2})$/, '')
-         .replace(/-preview$/, '')
+         .replace(/-preview$/, (suffix, _offset, model) => /^hy4-preview$/i.test(model) ? suffix : '')
          .replace(/-(\d{8})$/, '')
          .replace(/-(\d{6})$/, '')
          .toLowerCase().trim();
@@ -92,6 +92,9 @@ test('app.js canonicalModelId() matches shared canonicalId() for key inputs', ()
     'org/model-250712',
     'z-ai/glm-5.2-fp8',
     'org/model-preview',
+    'tencent/Hy4-preview',
+    'tencent/hy4',
+    'hy4-preview:free',
   ];
   for (const id of cases) {
     assert.equal(appCanonicalId(id), canonicalId(id),
