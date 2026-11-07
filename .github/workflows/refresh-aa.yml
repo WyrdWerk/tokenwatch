@@ -63,6 +63,7 @@ jobs:
         env:
           SINGULARITY_API_KEY: ${{ secrets.SINGULARITY_API_KEY }}
           RUNINFRA_API_KEY: ${{ secrets.RUNINFRA_API_KEY }}
+          PRIMALABS_API_KEY: ${{ secrets.PRIMALABS_API_KEY }}
           LLMGATEWAY_API_KEY: ${{ secrets.LLMGATEWAY_API_KEY }}
           REFUSELESS_API_KEY: ${{ secrets.REFUSELESS_API_KEY }}
           ALCHEMY_INFERENCE_API_KEY: ${{ secrets.ALCHEMY_INFERENCE_API_KEY }}

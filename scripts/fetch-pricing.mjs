@@ -51,7 +51,7 @@
 import { appendFile, readFile } from 'node:fs/promises';
 import {
   perTokToPerM, centsToDollars, passthrough, parseArilo, parseSference, parseAvian, parseBatchrate, openRouterEndpointSlug, selectOpenRouterEndpoints, parseNeuralwatt, parseMerius, parseAster,
-  parseCoralbricks, parseSingularity, parseRuninfra, parseLlmgateway, dropCoveredLlmgatewayRows,
+  parseCoralbricks, parseSingularity, parseRuninfra, parsePrimalabs, dropIndirectPrimalabsRows, parseLlmgateway, dropCoveredLlmgatewayRows,
   parseRunanywhere, parseEngy, parseOpenscale,
   parseAlchemy, ALCHEMY_MODELS_DOC_URL, ALCHEMY_MODELS_API_URL,
   parseConcentrate, reconcileConcentrate, concentrateJoin, concentrateCuratedSection,
@@ -84,6 +84,13 @@ import { normalizeOpenRouterEndpointCapabilities } from '../shared/openrouter-en
 // ── direct providers config ───────────────────────────────────────────────────
 
 const DIRECT_PROVIDERS = [
+  {
+    key: 'primalabs',
+    name: 'Prima Labs',
+    url: 'https://api.primalabs.ai/v1/models',
+    apiKeyEnv: 'PRIMALABS_API_KEY',
+    parse: parsePrimalabs,
+  },
   {
     key: 'deepinfra',
     name: 'DeepInfra',
@@ -260,6 +267,17 @@ const OR_CONCURRENCY = 20;
 //  fetchJson, fetchJsonWithRetry, checkCoverageDrop — all imported from ./lib.mjs)
 
 const MANUAL_PROVIDER_META = {
+  primalabs: {
+    privacy_policy_url: 'https://www.primalabs.ai/privacy',
+    terms_of_service_url: 'https://www.primalabs.ai/terms',
+    status_page_url: null,
+    headquarters: null,
+    datacenters: null,
+    // Serverless content ZDR: docs.primalabs.ai/platform/data-retention.
+    retains_prompts: false,
+    may_train: false,
+    retention_days: 0,
+  },
   ember: {
     privacy_policy_url: 'https://www.embercloud.ai/privacy',
     terms_of_service_url: 'https://www.embercloud.ai/terms',
@@ -452,18 +470,18 @@ const MANUAL_PROVIDER_META = {
     retention_days: 0,       // Bodies never retained; usage records (tokens, timestamps, spend) for billing only
   },
   engy: {
-    // Policies reviewed 2026-10-24 (privacy effective 2026-10-21).
+    // Policies reviewed 2026-11-05 (privacy effective 2026-10-21).
     privacy_policy_url: 'https://engy.ai/privacy',
     terms_of_service_url: 'https://engy.ai/terms',
-    status_page_url: null,   // Docs link a status page at /status; not verified as a status host
+    status_page_url: 'https://engy.ai/status',
     headquarters: null,      // No jurisdiction or entity address published on the legal pages
     datacenters: null,       // Served by engy-operated or independent network GPU workers; not disclosed
     // Gateway is ZDR for content on every model, but requests may land on a
     // worker whose independent operator holds admin access. End-to-end ZDR
     // requires the per-request/provider ZDR flag; we tag the default, unflagged path.
-    retains_prompts: false,  // Privacy: gateway never stores prompts/completions/tool calls/images
+    retains_prompts: null,   // https://engy.ai/privacy: unflagged worker retention is not guaranteed
     may_train: false,        // Privacy + Terms: no training unless the customer opts out of ZDR
-    retention_days: 0,       // Content: none. qwen3.6-35b-a3b integrity-audit token IDs purge within 30 days
+    retention_days: null,    // No guaranteed end-to-end retention window for unflagged requests
     retention_note: 'Gateway stores no request content. End-to-end ZDR requires the ZDR flag — unflagged requests may reach a worker run by an independent operator. Integrity audits (qwen3.6-35b-a3b only) keep response token IDs up to 30 days.',
   },
   openscale: {
@@ -1435,6 +1453,7 @@ async function main() {
   if (variantIds > 0) console.log(`  Normalized ${variantIds} provider-spelled delivery-variant ids to colon form`);
 
   // ── Dedup with 3-tier precedence ──
+  tieredModels = dropIndirectPrimalabsRows(tieredModels, (m) => pricingSource.get(m));
   out.models = dedupModels(tieredModels);
   const deduped = tieredModels.length - out.models.length;
   if (deduped > 0) console.log(`  Deduped ${deduped} overlapping rows (direct > OpenRouter > CSV)`);

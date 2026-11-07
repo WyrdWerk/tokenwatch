@@ -106,6 +106,7 @@ export function selectOpenRouterEndpoints(endpoints, modelId) {
   const variantId = deliveryVariant(modelId) !== null;
   const best = new Map();
   for (const ep of endpoints || []) {
+    if (normalizeProvider(ep?.provider_name) === 'primalabs') continue;
     const tier = variantId ? null : openRouterServiceTier(ep?.tag);
     const key = `${normalizeProvider(ep?.provider_name)}|${tier || ''}`;
     const cur = best.get(key);
@@ -396,6 +397,50 @@ export function parseSingularity(data) {
       },
     }];
   });
+}
+
+/** Prima Labs /v1/models reports USD/token, not USD/M. */
+export function parsePrimalabs(data) {
+  if (!Array.isArray(data?.data)) throw new Error('Prima Labs catalog must contain a data array');
+  const rate = (value) => {
+    if (!['string', 'number'].includes(typeof value) || String(value).trim() === '') return null;
+    const n = Number(value);
+    const perM = perTokToPerM(n);
+    return Number.isFinite(perM) && n >= 0 ? perM : null;
+  };
+  const limit = (value) => Number.isInteger(value) && value > 0 ? value : null;
+  return data.data.flatMap((m) => {
+    if (typeof m?.id !== 'string' || !m.id.trim()) return [];
+    if (Array.isArray(m.output_modalities) && (m.output_modalities.length !== 1 || m.output_modalities[0] !== 'text')) return [];
+    const input = rate(m.pricing?.prompt);
+    const output = rate(m.pricing?.completion);
+    if (input === null || output === null || (input === 0 && output === 0)) return [];
+    const bareId = m.id.replace(/^primalabs-ai\//i, '');
+    return [{
+      id: m.id,
+      name: m.name || bareId,
+      org: /^mimo-/i.test(bareId) ? 'xiaomi' : orgFromBareModelId(bareId),
+      provider: 'primalabs',
+      provider_display: 'Prima Labs',
+      quantization: quantFromId(bareId),
+      discount: 0,
+      context_length: limit(m.context_length),
+      max_completion_tokens: limit(m.max_output_tokens),
+      supports_tool_choice: typeof m.supports_function_calling === 'boolean' ? m.supports_function_calling : null,
+      supports_implicit_caching: typeof m.supports_prompt_caching === 'boolean' ? m.supports_prompt_caching : null,
+      pricing: {
+        input,
+        output,
+        cache_read: rate(m.pricing?.input_cache_read),
+        cache_write: rate(m.pricing?.input_cache_write),
+      },
+    }];
+  });
+}
+
+/** Never silently restore aggregator pricing if Prima Labs is unavailable. */
+export function dropIndirectPrimalabsRows(rows, sourceOf) {
+  return rows.filter((m) => normalizeProvider(m.provider) !== 'primalabs' || sourceOf(m) === 'direct');
 }
 
 /** RunInfra https://api.runinfra.ai/v1/models → text records (prices already $/M). */
@@ -1298,6 +1343,10 @@ export const PROVIDER_NAME_MAP = {
   'singularity api': 'singularity',
   'runinfra': 'runinfra',
   'run infra': 'runinfra',
+  'primalabs': 'primalabs',
+  'prima labs': 'primalabs',
+  'primalabs-ai': 'primalabs',
+  'primalabs ai': 'primalabs',
   'runanywhere': 'runanywhere',
   'wally cloud': 'runanywhere',
   'wally': 'runanywhere',

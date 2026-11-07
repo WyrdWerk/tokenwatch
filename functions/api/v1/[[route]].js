@@ -342,6 +342,12 @@ async function historyResponse(context, pricing, rawId) {
   const today = utcDay(new Date());
   const startDay = windowStartDay(today, days);
 
+  // Legacy snapshots stored both HY4 releases under `hy4`; model_id retains
+  // the original release identity, so reads need no production backfill.
+  const splitHy4 = target === 'hy4' || target === 'hy4-preview';
+  const modelPredicate = splitHy4 ? 'canonical_model IN (?, ?)' : 'canonical_model = ?';
+  const bindings = splitHy4 ? ['hy4', 'hy4-preview', startDay, today] : [target, startDay, today];
+
   let rows;
   try {
     const result = await db
@@ -349,12 +355,13 @@ async function historyResponse(context, pricing, rawId) {
         `SELECT utc_day, offering_key, provider, model_id, quantization,
                 input_price, output_price, cache_read, cache_write, input_billing, discount
            FROM price_snapshot
-          WHERE canonical_model = ? AND utc_day >= ? AND utc_day <= ?
+          WHERE ${modelPredicate} AND utc_day >= ? AND utc_day <= ?
           ORDER BY utc_day ASC`,
       )
-      .bind(target, startDay, today)
+      .bind(...bindings)
       .all();
     rows = result?.results ?? [];
+    if (splitHy4) rows = rows.filter((row) => canonicalId(row.model_id) === target);
   } catch (err) {
     return json({ error: 'Failed to read price history', detail: err.message }, 503);
   }

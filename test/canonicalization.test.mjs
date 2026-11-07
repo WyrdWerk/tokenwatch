@@ -1,5 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { dedupModels } from '../scripts/lib.mjs';
 import { canonicalId, orgLookupKey, quantFromId } from '../shared/normalize.mjs';
 
 // ── canonicalId: org/ prefix stripping ────────────────────────────────────────
@@ -145,4 +147,22 @@ test('quantFromId returns null for non-quant suffixes (turbo/SKU/size tokens pre
   assert.equal(quantFromId('org/model-highspeed'), null);
   assert.equal(quantFromId('org/qwen3-30b-a3b'), null); // size tokens are NOT quants
   assert.equal(quantFromId('anthropic/claude-sonnet-5'), null);
+});
+
+
+test('HY4 preview remains a distinct release in canonical keys, dedup, and the browser', async () => {
+  const source = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  const implementation = source.match(/function canonicalModelId\(id\) \{[\s\S]*?\n\}/)?.[0];
+  assert.ok(implementation, 'browser canonicalModelId exists');
+  const browserCanonicalId = new Function(`${implementation}; return canonicalModelId;`)();
+  for (const id of ['tencent/Hy4-preview', 'tencent/hy4-preview', 'hy4-preview', 'hy4-preview:free', 'hy4-preview:thinking']) {
+    assert.equal(canonicalId(id), 'hy4-preview');
+    assert.equal(browserCanonicalId(id), 'hy4-preview');
+    assert.equal(orgLookupKey(id), 'hy4-preview');
+    assert.equal(canonicalId(canonicalId(id)), 'hy4-preview');
+  }
+  assert.equal(canonicalId('tencent/hy4'), 'hy4');
+  assert.equal(browserCanonicalId('tencent/hy4'), 'hy4');
+  const offerings = ['tencent/Hy4-preview', 'tencent/hy4'].map((id) => ({ id, provider: 'tencent' }));
+  assert.equal(dedupModels(offerings).length, 2);
 });
