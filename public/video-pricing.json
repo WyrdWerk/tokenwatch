@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-08T17:22:44.708Z",
+  "generated_at": "2026-11-09T20:16:41.988Z",
   "models": [
     {
       "id": "kling-video-v3-pro",
@@ -182,21 +182,6 @@
       ]
     },
     {
-      "id": "google-gemini-omni-flash-v1.1",
-      "name": "Gemini Omni Flash 1.1 Image to Video",
-      "org": "google",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.03
-        }
-      ]
-    },
-    {
       "id": "alibaba-wan-3.0-prime",
       "name": "Wan 3.0 Prime",
       "org": "alibaba",
@@ -212,8 +197,8 @@
       ]
     },
     {
-      "id": "google-gemini-omni-flash-v1.2",
-      "name": "Gemini Omni Flash 1.2 Image to Video",
+      "id": "google-gemini-omni-flash-v1.1",
+      "name": "Gemini Omni Flash 1.1 Image to Video",
       "org": "google",
       "provider": "fal",
       "supported_durations": [],
@@ -222,7 +207,7 @@
         {
           "resolution": null,
           "audio": null,
-          "cost_per_second": 0.0273
+          "cost_per_second": 0.03
         }
       ]
     },
@@ -238,6 +223,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.115
+        }
+      ]
+    },
+    {
+      "id": "google-gemini-omni-flash-v1.2",
+      "name": "Gemini Omni Flash 1.2 Image to Video",
+      "org": "google",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.0273
         }
       ]
     },
@@ -332,21 +332,6 @@
       ]
     },
     {
-      "id": "veed-fabric-1.0",
-      "name": "Fabric 1.0",
-      "org": "veed",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.08
-        }
-      ]
-    },
-    {
       "id": "bytedance-omnihuman-v2",
       "name": "Bytedance Omnihuman V2",
       "org": "bytedance",
@@ -358,6 +343,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.105
+        }
+      ]
+    },
+    {
+      "id": "veed-fabric-1.0",
+      "name": "Fabric 1.0",
+      "org": "veed",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.08
         }
       ]
     },
@@ -377,21 +377,6 @@
       ]
     },
     {
-      "id": "blackforestlabs-flux-3-max-keyframes-to-video",
-      "name": "FLUX 3 Max Keyframes to Video",
-      "org": "blackforestlabs",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.0425
-        }
-      ]
-    },
-    {
       "id": "minimax-hailuo-02-standard",
       "name": "MiniMax Hailuo 02 [Standard] (Image to Video)",
       "org": "minimax",
@@ -403,6 +388,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.045
+        }
+      ]
+    },
+    {
+      "id": "blackforestlabs-flux-3-max-keyframes-to-video",
+      "name": "FLUX 3 Max Keyframes to Video",
+      "org": "blackforestlabs",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.0425
         }
       ]
     },
@@ -497,36 +497,6 @@
       ]
     },
     {
-      "id": "tbc-mischief-1",
-      "name": "Mischief 1",
-      "org": "tbc",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.005
-        }
-      ]
-    },
-    {
-      "id": "wan-25-preview",
-      "name": "Wan 2.5 Image to Video",
-      "org": "alibaba",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.05
-        }
-      ]
-    },
-    {
       "id": "minimax-h3-max-camera-controls",
       "name": "H3 Max Camera Controls",
       "org": "minimax",
@@ -557,6 +527,21 @@
       ]
     },
     {
+      "id": "wan-25-preview",
+      "name": "Wan 2.5 Image to Video",
+      "org": "alibaba",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.05
+        }
+      ]
+    },
+    {
       "id": "kling-video-v3-turbo-standard",
       "name": "Kling Video V3 Standard Turbo Image to Video",
       "org": "kuaishou",
@@ -568,6 +553,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.112
+        }
+      ]
+    },
+    {
+      "id": "tbc-mischief-1",
+      "name": "Mischief 1",
+      "org": "tbc",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.005
         }
       ]
     },
@@ -782,21 +782,6 @@
       ]
     },
     {
-      "id": "alibaba-happy-horse",
-      "name": "Happy Horse",
-      "org": "alibaba",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.14
-        }
-      ]
-    },
-    {
       "id": "pixverse-c1",
       "name": "PixVerse C1 Image To Video",
       "org": "pixsocial",
@@ -808,6 +793,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.005
+        }
+      ]
+    },
+    {
+      "id": "alibaba-happy-horse",
+      "name": "Happy Horse",
+      "org": "alibaba",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.14
         }
       ]
     },
@@ -857,21 +857,6 @@
       ]
     },
     {
-      "id": "veed-fabric-1.0-fast",
-      "name": "Fabric 1.0 Fast",
-      "org": "veed",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.1
-        }
-      ]
-    },
-    {
       "id": "blackforestlabs-flux-3-draft",
       "name": "Flux 3 Image To Video Draft",
       "org": "blackforestlabs",
@@ -883,6 +868,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.03
+        }
+      ]
+    },
+    {
+      "id": "veed-fabric-1.0-fast",
+      "name": "Fabric 1.0 Fast",
+      "org": "veed",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.1
         }
       ]
     },
@@ -973,6 +973,141 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.005
+        }
+      ]
+    },
+    {
+      "id": "longcat-video-480p",
+      "name": "LongCat Video",
+      "org": "anthropic",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.025
+        }
+      ]
+    },
+    {
+      "id": "longcat-video-720p",
+      "name": "LongCat Video",
+      "org": "anthropic",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.04
+        }
+      ]
+    },
+    {
+      "id": "moonvalley-marey-i2v",
+      "name": "Marey Realism V1.5",
+      "org": "moonvalley",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.3
+        }
+      ]
+    },
+    {
+      "id": "framepack-f1",
+      "name": "Framepack F1",
+      "org": "fal",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.0333
+        }
+      ]
+    },
+    {
+      "id": "ai-avatar-single-text",
+      "name": "AI Avatar Single Text",
+      "org": "fal",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.2
+        }
+      ]
+    },
+    {
+      "id": "moonvalley-marey-t2v",
+      "name": "Marey Realism V1.5",
+      "org": "moonvalley",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.3
+        }
+      ]
+    },
+    {
+      "id": "framepack-flf2v",
+      "name": "Framepack",
+      "org": "fal",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.0333
+        }
+      ]
+    },
+    {
+      "id": "veed-avatars",
+      "name": "Avatars",
+      "org": "veed",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.005833333333333333
+        }
+      ]
+    },
+    {
+      "id": "heygen-v2-video-agent",
+      "name": "Heygen",
+      "org": "heygen",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.034
         }
       ]
     },
