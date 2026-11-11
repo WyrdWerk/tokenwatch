@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-11T00:18:43.853Z",
+  "generated_at": "2026-11-11T08:36:53.344Z",
   "models": [
     {
       "id": "flux-schnell",
@@ -2104,6 +2104,83 @@
           "variant": null,
           "cost_per_unit": 0.1,
           "cost_per_million": null
+        }
+      ]
+    },
+    {
+      "id": "minimax/minimax-h3-image-highspeed",
+      "name": "MiniMax: MiniMax H3 Image Highspeed",
+      "org": "minimax",
+      "provider": "minimax",
+      "output_modalities": [
+        "image"
+      ],
+      "supported_parameters": {
+        "resolution": {
+          "type": "enum",
+          "values": [
+            "1K",
+            "2K",
+            "4K"
+          ]
+        },
+        "aspect_ratio": {
+          "type": "enum",
+          "values": [
+            "1:1",
+            "1:2",
+            "1:3",
+            "2:1",
+            "2:3",
+            "3:1",
+            "2.35:1",
+            "3:2",
+            "3:4",
+            "4:3",
+            "4:5",
+            "5:2",
+            "5:4",
+            "5:7",
+            "7:5",
+            "9:16",
+            "16:9",
+            "9:19.5",
+            "19.5:9",
+            "9:20",
+            "20:9",
+            "9:21",
+            "21:9",
+            "auto"
+          ]
+        },
+        "output_format": {
+          "type": "enum",
+          "values": [
+            "jpeg",
+            "png",
+            "webp"
+          ]
+        },
+        "n": {
+          "type": "range",
+          "min": 1,
+          "max": 10
+        },
+        "input_references": {
+          "type": "range",
+          "min": 0,
+          "max": 16
+        },
+        "size": {
+          "type": "boolean"
+        }
+      },
+      "pricing": [
+        {
+          "unit": "token",
+          "variant": null,
+          "cost_per_unit": 0.0000076,
+          "cost_per_million": 7.6
         }
       ]
     },
