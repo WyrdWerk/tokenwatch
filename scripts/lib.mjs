@@ -35,7 +35,7 @@ export function parseArilo(data) {
       org: 'deepseek',
       provider: 'arilo',
       // Provider-confirmed SKU details not exposed in the public catalog:
-      // https://github.com/WyrdWerk/tokenwatch/issues/22#issuecomment-5992990470
+      // https://github.com/thelaggingway/tokenwatch/issues/22#issuecomment-5992990470
       quantization: 'mxfp4',
       max_completion_tokens: 60000,
       discount: 0,

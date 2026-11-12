@@ -8,7 +8,7 @@
 - **Social & Profile Links:**
   - **X (Twitter):** [x.com/thelaggingway](https://x.com/thelaggingway)
   - **LinkedIn:** [linkedin.com/in/yash-jain-65295511b](https://www.linkedin.com/in/yash-jain-65295511b/)
-  - **GitHub:** [github.com/WyrdWerk/tokenwatch](https://github.com/WyrdWerk/tokenwatch)
+  - **GitHub:** [github.com/thelaggingway/tokenwatch](https://github.com/thelaggingway/tokenwatch)
   - **WyrdWerk Services:** Slack-native agent deployments, AI readiness audits (₹15–20K / $500), and monthly advisory retainers for 10–100 employee teams.
 
 ---

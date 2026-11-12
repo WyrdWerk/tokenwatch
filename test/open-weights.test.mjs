@@ -362,7 +362,7 @@ function conflictIssueDouble(issues) {
     rest: { issues: { listForRepo, create: record('create'), update: record('update'), createComment: record('comment') } },
   } };
 }
-const issueContext = { repo: { owner: 'WyrdWerk', repo: 'tokenwatch' }, serverUrl: 'https://github.com', runId: 1 };
+const issueContext = { repo: { owner: 'thelaggingway', repo: 'tokenwatch' }, serverUrl: 'https://github.com', runId: 1 };
 const sampleConflict = [{ id: 'a-model', sources: [{ provider: 'p1', open_weights: true }, { provider: 'p2', open_weights: false }] }];
 
 test('conflict report opens one issue, then edits it in place', async () => {

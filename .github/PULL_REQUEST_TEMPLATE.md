@@ -1,5 +1,5 @@
 <!-- Adding or updating a provider? Please use the provider request issue form instead:
-     https://github.com/WyrdWerk/tokenwatch/issues/new?template=provider-request.yml -->
+     https://github.com/thelaggingway/tokenwatch/issues/new?template=provider-request.yml -->
 
 ## What and why
 

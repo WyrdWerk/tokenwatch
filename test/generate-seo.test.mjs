@@ -274,7 +274,7 @@ test('methodology gives attributed, workload-specific examples without conflatin
   assert.match(html, /Balanced uncached[\s\S]*?<td>Output[\s\S]*?\$2\.00/);
   assert.match(html, /Output-heavy generation[\s\S]*?<td>Output[\s\S]*?\$1\.20/);
   assert.match(html, /Yash Jain/);
-  assert.match(html, /https:\/\/github\.com\/WyrdWerk\/tokenwatch\/issues/);
+  assert.match(html, /https:\/\/github\.com\/thelaggingway\/tokenwatch\/issues/);
   assert.match(html, /href="\/pricing\.json"/);
   assert.match(html, /provider-specific offerings/);
   assert.match(html, /Creative Writing ratings are dated 2026-10-02/);

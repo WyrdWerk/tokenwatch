@@ -177,7 +177,7 @@ Presets: Agentic (2.5/97/0.5), Balanced (30/50/20), Heavy output (10/0/90), No c
 | DeepInfra, EmberCloud, Wafer, Synthetic, SambaNova, HyperCharm, Sference, Neuralwatt, Merius, Aster Labs, Avian | 1 | Direct `/v1/models` fetch (authoritative for their own offerings) |
 | Engy | 1 | Public [`/v1/models`](https://api.engy.ai/v1/models), no key; per-token input/output/cache-read prices converted to USD/M |
 | Batchrate | 1 | Public `https://batchrate.ai/pricing.json` (batch-only, `:batch` ids; micro-USD per 1M ÷1e6) |
-| Arilo.id | 1 | Public [`/v1/models`](https://api.arilo.id/v1/models); only `deepseek-v4.1-flash`, as requested in [issue #22](https://github.com/WyrdWerk/tokenwatch/issues/22) |
+| Arilo.id | 1 | Public [`/v1/models`](https://api.arilo.id/v1/models); only `deepseek-v4.1-flash`, as requested in [issue #22](https://github.com/thelaggingway/tokenwatch/issues/22) |
 | CoralBricks | 1 | Public [`/api/public/models`](https://www.coralbricks.ai/api/public/models), the catalog behind [coralbricks.ai/models](https://www.coralbricks.ai/models) (no key) |
 | SingularityAPI, RunInfra, Prima Labs | 1 | Auth-gated `/v1/models` (`SINGULARITY_API_KEY`, `RUNINFRA_API_KEY`, `PRIMALABS_API_KEY`) |
 | OpenRouter `/endpoints` | 2 | De-aggregated per-backend pricing (Fireworks, Together, Novita, SiliconFlow, etc.) |
@@ -190,7 +190,7 @@ Refuseless publishes prices only on [refuseless.com/pricing](https://refuseless.
 
 Engy's public [models endpoint](https://api.engy.ai/v1/models) supplies model IDs, input/output modalities, context windows, and per-token `prompt`, `completion`, and `input_cache_read` prices. TokenWatch converts these to USD per million tokens on each refresh; unpublished cache-write prices and output-token limits remain unknown. No key is needed to fetch pricing, although [inference requests require an API key](https://engy.ai/docs). The [privacy policy](https://engy.ai/privacy) promises no gateway content retention or training by default, but end-to-end ZDR requires `provider.zdr: true` to restrict routing to certified workers. Unflagged requests can reach independently operated workers, so TokenWatch does not assign a provider-wide ZDR badge. HQ, datacenters, and an unconditional end-to-end retention window remain unknown; the [status page](https://engy.ai/status) is linked in provider metadata.
 
-Arilo's public catalog supplies `cost.input`, `cost.output`, and `cost.cache_read` in USD per million tokens, plus `max_context_tokens`. Prices refresh from that API without credentials; other models and the `-alt` SKU are excluded. The provider's [October 5 clarification](https://github.com/WyrdWerk/tokenwatch/issues/22#issuecomment-5992990470) confirms MXFP4, a 60,000-token output limit, no separate cache-write charge, and that the original $10/1.111B subscription quote is stale. The coding-plan badge indicates availability, not a discount to PAYG rates. Hong Kong and Ireland are provider-reported datacenter locations; headquarters remains unknown. ZDR remains unconfirmed: the provider says diagnostic logging is non-persistent and upstream hosts use ZDR, but its [privacy policy §2](https://arilo.id/privacy) still permits brief diagnostic content logging and image-description caching. Training is opt-in through the Research Program (§3); the 30-day request-log period (§8) is not a prompt-retention limit.
+Arilo's public catalog supplies `cost.input`, `cost.output`, and `cost.cache_read` in USD per million tokens, plus `max_context_tokens`. Prices refresh from that API without credentials; other models and the `-alt` SKU are excluded. The provider's [October 5 clarification](https://github.com/thelaggingway/tokenwatch/issues/22#issuecomment-5992990470) confirms MXFP4, a 60,000-token output limit, no separate cache-write charge, and that the original $10/1.111B subscription quote is stale. The coding-plan badge indicates availability, not a discount to PAYG rates. Hong Kong and Ireland are provider-reported datacenter locations; headquarters remains unknown. ZDR remains unconfirmed: the provider says diagnostic logging is non-persistent and upstream hosts use ZDR, but its [privacy policy §2](https://arilo.id/privacy) still permits brief diagnostic content logging and image-description caching. Training is opt-in through the Research Program (§3); the 30-day request-log period (§8) is not a prompt-retention limit.
 
 **Prima Labs direct catalog.**
 
@@ -308,7 +308,7 @@ Safety checks:
 
 ## Contributing
 
-Want a provider listed or corrected? Open a [provider request](https://github.com/WyrdWerk/tokenwatch/issues/new?template=provider-request.yml) with its machine-readable pricing source and policy links — we write and maintain the fetcher, so please don't send prices as a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for how requests are handled and for other contributions.
+Want a provider listed or corrected? Open a [provider request](https://github.com/thelaggingway/tokenwatch/issues/new?template=provider-request.yml) with its machine-readable pricing source and policy links — we write and maintain the fetcher, so please don't send prices as a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for how requests are handled and for other contributions.
 
 ## License
 

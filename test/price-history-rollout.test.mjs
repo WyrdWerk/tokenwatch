@@ -79,7 +79,7 @@ test('production history config matches the verified database without replacing 
 });
 
 const context = {
-  repo: { owner: 'WyrdWerk', repo: 'tokenwatch' },
+  repo: { owner: 'thelaggingway', repo: 'tokenwatch' },
   serverUrl: 'https://github.com',
   runId: 12345,
 };
@@ -110,7 +110,7 @@ test('history failure opens one issue with the run URL and redacted error', asyn
   await reportHistoryFailure({ github, context, error: 'D1 failed: test-secret', secrets: ['test-secret'] });
   assert.equal(calls.length, 1);
   assert.equal(calls[0].action, 'create');
-  assert.match(calls[0].body, /https:\/\/github.com\/WyrdWerk\/tokenwatch\/actions\/runs\/12345/);
+  assert.match(calls[0].body, /https:\/\/github.com\/thelaggingway\/tokenwatch\/actions\/runs\/12345/);
   assert.match(calls[0].body, /D1 failed: \[REDACTED\]/);
   assert.doesNotMatch(calls[0].body, /test-secret/);
 });
