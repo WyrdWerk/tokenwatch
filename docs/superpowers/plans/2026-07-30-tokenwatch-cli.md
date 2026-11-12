@@ -4,7 +4,7 @@
 
 **Goal:** A zero-dependency Node ESM CLI (`tokenwatch`) that fetches TokenWatch's published pricing snapshot once, caches it locally, and answers all filter/search/cost queries against the local cache with stable `--json`/`--jsonl` output for humans and headless coding agents.
 
-**Architecture:** A separate repo `WyrdWerk/tokenwatch-cli` (required so `npm i -g github:WyrdWerk/tokenwatch-cli` installs from the repo root). Pure layered core (`core/`: normalize, cost, query, format, cache — no I/O, no TTY) consumed by a thin `cli/` dispatcher that handles arg parsing, TTY detection, exit codes, and output selection. The interactive TUI is a separate future package and is explicitly out of scope.
+**Architecture:** A separate repo `thelaggingway/tokenwatch-cli` (required so `npm i -g github:thelaggingway/tokenwatch-cli` installs from the repo root). Pure layered core (`core/`: normalize, cost, query, format, cache — no I/O, no TTY) consumed by a thin `cli/` dispatcher that handles arg parsing, TTY detection, exit codes, and output selection. The interactive TUI is a separate future package and is explicitly out of scope.
 
 **Tech Stack:** Node ≥ 20 (global `fetch`, `node:util parseArgs`, `node:test`), zero runtime dependencies, plain ESM `.js` with JSDoc.
 
@@ -12,7 +12,7 @@
 
 - **Zero runtime dependencies.** `package.json` `dependencies` is `{}`. Only Node built-ins (`node:util`, `node:path`, `node:os`, `node:fs/promises`, `node:test`, `node:assert`, `node:process`).
 - **Pure Node ESM.** `"type": "module"` in `package.json`. All source files `.js`.
-- **Install target:** `npm i -g github:WyrdWerk/tokenwatch-cli` must produce a working `tokenwatch` bin with no build step and no `prepare` script (plain JS, no transpile).
+- **Install target:** `npm i -g github:thelaggingway/tokenwatch-cli` must produce a working `tokenwatch` bin with no build step and no `prepare` script (plain JS, no transpile).
 - **Repo location:** new sibling directory `../tokenwatch-cli` relative to the TokenWatch site repo. The site repo is NOT modified by any task in this plan.
 - **Parity contract:** cost/canonicalization numbers MUST match the site's `public/app.js` and `shared/normalize.mjs` verbatim (ported in Tasks 2–3).
 - **No network in tests.** `core/cache.js` takes an injectable `fetch` and `--data-url` accepts `file://`/local paths so tests are offline and deterministic.
@@ -88,7 +88,7 @@ Create `../tokenwatch-cli/package.json`:
   "scripts": { "test": "node --test test/*.test.js" },
   "files": ["src", "README.md"],
   "license": "MIT",
-  "repository": { "type": "git", "url": "git+https://github.com/WyrdWerk/tokenwatch-cli.git" }
+  "repository": { "type": "git", "url": "git+https://github.com/thelaggingway/tokenwatch-cli.git" }
 }
 ```
 
@@ -120,7 +120,7 @@ Create `../tokenwatch-cli/README.md`:
 
 Terminal CLI for TokenWatch pay-as-you-go LLM pricing data.
 
-Install: `npm i -g github:WyrdWerk/tokenwatch-cli`
+Install: `npm i -g github:thelaggingway/tokenwatch-cli`
 
 Usage: see `tokenwatch --help` (implemented in Task 7).
 ```
@@ -1434,7 +1434,7 @@ Terminal CLI for [TokenWatch](https://tokenwatch.wyrdwerk.com) pay-as-you-go LLM
 ## Install
 
 ```sh
-npm i -g github:WyrdWerk/tokenwatch-cli
+npm i -g github:thelaggingway/tokenwatch-cli
 ```
 
 Requires Node ≥ 20. Zero dependencies.
