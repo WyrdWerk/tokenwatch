@@ -777,14 +777,14 @@ At line 200, change:
 ```html
       <p class="footer-links">
         <a href="https://tiny.cc/payginference" target="_blank" rel="noopener">Original spreadsheet</a>
-        · <a href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">Source</a>
+        · <a href="https://github.com/thelaggingway/tokenwatch" target="_blank" rel="noopener">Source</a>
       </p>
 ```
 to:
 ```html
       <p class="footer-links">
         <a href="https://tiny.cc/payginference" target="_blank" rel="noopener">Original spreadsheet</a>
-        · <a href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">Source</a>
+        · <a href="https://github.com/thelaggingway/tokenwatch" target="_blank" rel="noopener">Source</a>
         · Quality benchmarks via <a href="https://artificialanalysis.ai/" target="_blank" rel="noopener">Artificial Analysis</a> &amp; <a href="https://lmarena.ai/" target="_blank" rel="noopener">LMArena</a> (design arena)
       </p>
 ```
@@ -794,13 +794,13 @@ to:
 Read `public/image.html` lines 116-125. At line 123, change:
 ```html
       <p class="footer-links">
-        <a href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">Source</a>
+        <a href="https://github.com/thelaggingway/tokenwatch" target="_blank" rel="noopener">Source</a>
       </p>
 ```
 to:
 ```html
       <p class="footer-links">
-        <a href="https://github.com/WyrdWerk/tokenwatch" target="_blank" rel="noopener">Source</a>
+        <a href="https://github.com/thelaggingway/tokenwatch" target="_blank" rel="noopener">Source</a>
         · Quality benchmarks via <a href="https://artificialanalysis.ai/" target="_blank" rel="noopener">Artificial Analysis</a> &amp; <a href="https://lmarena.ai/" target="_blank" rel="noopener">LMArena</a> (design arena)
       </p>
 ```

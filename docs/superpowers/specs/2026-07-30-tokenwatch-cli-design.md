@@ -28,7 +28,7 @@ The split is a packaging guarantee, not a lazy-import trick: headless machines n
 
 ### Goals
 
-- One-command install from GitHub (`npm i -g github:WyrdWerk/tokenwatch-cli`).
+- One-command install from GitHub (`npm i -g github:thelaggingway/tokenwatch-cli`).
 - Works headlessly with zero interactive prompts when stdout is not a TTY.
 - Fetches data **once** at first invocation, caches locally, and answers all subsequent queries against the local cache with **no further network calls** until the cache is stale.
 - Every command exposes a stable `--json` / `--jsonl` output mode.
@@ -206,7 +206,7 @@ Port `canonicalId(id)` (L48-70) and `orgLookupKey(id)` (L71-77) unchanged. Key b
 
 **Proposed order:**
 
-1. **GitHub install (v1):** `npm i -g github:WyrdWerk/tokenwatch-cli`. Zero infra. Caveat: a `prepare` script or committed `dist/` is required so the install produces a runnable binary; the zero-dep core makes this trivial.
+1. **GitHub install (v1):** `npm i -g github:thelaggingway/tokenwatch-cli`. Zero infra. Caveat: a `prepare` script or committed `dist/` is required so the install produces a runnable binary; the zero-dep core makes this trivial.
 2. **Compiled binaries (later):** `bun build --compile` per-platform binaries attached to GitHub Releases + a curl `install.sh`. No runtime needed on the user machine.
 3. **npm publish (later):** once the interface stabilizes.
 
@@ -229,7 +229,7 @@ Runtime: **Node** (not Bun) as the assumed runtime for v1 — most dev and agent
 2. **`generated_at` parsing:** confirm format is always ISO 8601 (sample shows `2026-07-30T14:23:11.156Z`).
 3. **Text model record field names:** field-verify `models[]` shape against a real record (deferred from this spec per §3.2) before implementing `types.ts`.
 4. **Image/video default fetch:** lazy (only when those subcommands run) vs eager at first invocation. Proposed: lazy.
-5. **Single repo or monorepo:** does `tokenwatch-cli` live in this repo (e.g. `cli/`) or a separate `WyrdWerk/tokenwatch-cli` repo? Affects the GitHub-install path and CI.
+5. **Single repo or monorepo:** does `tokenwatch-cli` live in this repo (e.g. `cli/`) or a separate `thelaggingway/tokenwatch-cli` repo? Affects the GitHub-install path and CI.
 6. **Cache location on Windows:** `~/.cache` is Unix-y; use `os.tmpdir()` or an env-driven `XDG_CACHE_HOME`/`LOCALAPPDATA` split.
 
 ---

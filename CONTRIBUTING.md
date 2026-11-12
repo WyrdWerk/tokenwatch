@@ -2,7 +2,7 @@
 
 ## Adding or updating an inference provider
 
-**Open an issue with the [provider request form](https://github.com/WyrdWerk/tokenwatch/issues/new?template=provider-request.yml).** Please don't open a pull request that adds prices, CSV rows or hardcoded tables: TokenWatch fetches every price from the provider's own published source on each refresh, and maintainers write and maintain that integration.
+**Open an issue with the [provider request form](https://github.com/thelaggingway/tokenwatch/issues/new?template=provider-request.yml).** Please don't open a pull request that adds prices, CSV rows or hardcoded tables: TokenWatch fetches every price from the provider's own published source on each refresh, and maintainers write and maintain that integration.
 
 What we need from you is in the form: where the machine-readable prices live, the pricing page, privacy policy, terms, and what the policy says about retention and training. An optional contact lets us reach you if your pricing source breaks.
 
