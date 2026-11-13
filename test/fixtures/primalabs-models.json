@@ -1,0 +1,154 @@
+{
+  "data": [
+    {
+      "id": "primalabs-ai/GLM-5.3-Flash",
+      "context_length": 262144,
+      "pricing": {
+        "prompt": "0.00000015",
+        "completion": "0.0000005",
+        "input_cache_read": "0.00000003"
+      },
+      "supported_endpoints": [
+        "/v1/chat/completions",
+        "/v1/messages",
+        "/v1/responses"
+      ],
+      "supports_function_calling": true,
+      "supports_reasoning": true,
+      "supports_vision": true,
+      "supports_prompt_caching": false,
+      "supports_response_schema": true,
+      "max_output_tokens": 262144,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "output_modalities": [
+        "text"
+      ]
+    },
+    {
+      "id": "primalabs-ai/Nemotron-3.5-Lightning-NVFP4",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.00000015",
+        "completion": "0.0000005",
+        "input_cache_read": "0.00000003"
+      },
+      "supported_endpoints": [
+        "/v1/chat/completions",
+        "/v1/messages",
+        "/v1/responses"
+      ],
+      "supports_function_calling": true,
+      "supports_reasoning": true,
+      "supports_vision": false,
+      "supports_prompt_caching": false,
+      "max_output_tokens": 1048576,
+      "input_modalities": [
+        "text"
+      ],
+      "output_modalities": [
+        "text"
+      ]
+    },
+    {
+      "id": "primalabs-ai/Kimi-K3.1-Pro",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.0000018",
+        "completion": "0.000009",
+        "input_cache_read": "0.00000018"
+      },
+      "supported_endpoints": [
+        "/v1/chat/completions",
+        "/v1/messages",
+        "/v1/responses"
+      ],
+      "supports_function_calling": true,
+      "supports_reasoning": true,
+      "supports_vision": true,
+      "supports_prompt_caching": true,
+      "supports_response_schema": true,
+      "max_output_tokens": 1048576,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "output_modalities": [
+        "text"
+      ]
+    },
+    {
+      "id": "primalabs-ai/Nemotron-3.5-Super-VL-NVFP4",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.00000025",
+        "completion": "0.0000015",
+        "input_cache_read": "0.00000005"
+      },
+      "supported_endpoints": [
+        "/v1/chat/completions",
+        "/v1/messages",
+        "/v1/responses"
+      ],
+      "supports_function_calling": true,
+      "supports_reasoning": true,
+      "supports_vision": true,
+      "supports_prompt_caching": true,
+      "supports_response_schema": true,
+      "max_output_tokens": 1048576,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "output_modalities": [
+        "text"
+      ]
+    },
+    {
+      "id": "primalabs-ai/MiMo-V2.6-Pro",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.0000035",
+        "completion": "0.000007",
+        "input_cache_read": "0.00000003"
+      },
+      "supported_endpoints": [
+        "/v1/chat/completions",
+        "/v1/messages",
+        "/v1/responses"
+      ],
+      "output_modalities": [
+        "text"
+      ]
+    },
+    {
+      "id": "primalabs-ai/DeepSeek-V4.1-Flash-1017",
+      "context_length": 1048576,
+      "pricing": {
+        "prompt": "0.00000024",
+        "completion": "0.00000096",
+        "input_cache_read": "0.0000000048"
+      },
+      "supported_endpoints": [
+        "/v1/chat/completions",
+        "/v1/messages",
+        "/v1/responses"
+      ],
+      "supports_function_calling": true,
+      "supports_reasoning": true,
+      "supports_vision": true,
+      "supports_prompt_caching": true,
+      "supports_response_schema": true,
+      "max_output_tokens": 1048576,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "output_modalities": [
+        "text"
+      ]
+    }
+  ]
+}

@@ -59,9 +59,11 @@ class MockD1 {
           self.failNext = null;
           throw err;
         }
-        const [model, start, end] = record.bindings;
+        const splitHy4 = record.sql.includes('canonical_model IN (?, ?)');
+        const models = splitHy4 ? record.bindings.slice(0, 2) : record.bindings.slice(0, 1);
+        const [start, end] = record.bindings.slice(splitHy4 ? 2 : 1);
         const results = self.rows
-          .filter((row) => row.canonical_model === model && row.utc_day >= start && row.utc_day <= end)
+          .filter((row) => models.includes(row.canonical_model) && row.utc_day >= start && row.utc_day <= end)
           .sort((a, b) => a.utc_day.localeCompare(b.utc_day) || a.offering_key.localeCompare(b.offering_key));
         return { results };
       },
@@ -590,4 +592,31 @@ test('retention keeps day 90 and prunes day 91 across a writer run', async () =>
   // And the API still returns at most 90 points for the surviving window.
   const { body } = await getJson(makeContext(HISTORY_PATH, '?days=90', db));
   assert.equal(body.point_count, 90);
+});
+
+
+test('HY4 histories separate legacy snapshots by original model ID without a backfill', async () => {
+  const day = new Date().toISOString().slice(0, 10);
+  const rows = [
+    { canonical_model: 'hy4', model_id: 'tencent/Hy4-preview', provider: 'legacy-preview', offering_key: 'hy4|legacy-preview||' },
+    { canonical_model: 'hy4', model_id: 'tencent/hy4', provider: 'base', offering_key: 'hy4|base||' },
+    { canonical_model: 'hy4-preview', model_id: 'tencent/hy4-preview', provider: 'new-preview', offering_key: 'hy4-preview|new-preview||' },
+    { canonical_model: 'hy4', model_id: 'hy4', provider: 'bare-base', offering_key: 'hy4|bare-base||' },
+  ].map((row) => ({ ...row, utc_day: day, input_price: 1, output_price: 2, cache_read: 0.1, cache_write: null, discount: 0 }));
+  const pricing = { models: [
+    { id: 'tencent/Hy4-preview', provider: 'deepinfra' },
+    { id: 'tencent/hy4', provider: 'tencent' },
+  ] };
+  for (const [id, providers] of [['hy4-preview', ['legacy-preview', 'new-preview']], ['hy4', ['bare-base', 'base']]]) {
+    const db = new MockD1(rows);
+    const context = makeContext(`/api/v1/models/${id}/history`, '', db);
+    context.env.ASSETS = { fetch: async () => new Response(JSON.stringify(pricing)) };
+    const { status, body } = await getJson(context);
+    assert.equal(status, 200);
+    assert.equal(body.canonical_id, id);
+    assert.equal(body.point_count, 1);
+    assert.deepEqual(body.series[0].offerings.map((m) => m.provider).sort(), providers);
+    assert.match(db.captured[0].sql, /WHERE canonical_model IN \(\?, \?\) AND utc_day >= \? AND utc_day <= \?/);
+    assert.deepEqual(db.captured[0].bindings.slice(0, 2), ['hy4', 'hy4-preview']);
+  }
 });

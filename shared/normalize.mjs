@@ -27,6 +27,7 @@
  * (e.g. gemini-3.1-pro vs gemini-3.1-pro-preview-customtools) to collide in
  * /models/:id/providers. Do NOT reintroduce that catch-all.
  *
+ * HY4-preview is a distinct release from HY4; its preview suffix is preserved.
  * Turbo variants kept separate (different SKUs).
  * Quantization suffixes baked into the ID (e.g. glm-5.2-fp8) are left as-is —
  * they are distinct model entries, not collapsed.
@@ -39,7 +40,7 @@ export function canonicalId(id) {
        .replace(/-preview-(\d{2})-(\d{4})$/, '')    // -preview-09-2025
        .replace(/-preview-(\d{4})-(\d{2})-(\d{2})$/, '') // -preview-2024-08-06
        .replace(/-preview-(\d{2})-(\d{2})$/, '')    // -preview-05-06
-       .replace(/-preview$/, '')
+       .replace(/-preview$/, (suffix, _offset, model) => /^hy4-preview$/i.test(model) ? suffix : '')
        .replace(/-(\d{8})$/, '')                    // -20260420
        .replace(/-(\d{6})$/, '')                    // -250712
        .toLowerCase().trim();

@@ -411,3 +411,21 @@ test('models.dev enrichment preserves explicit booleans, unknowns, and license',
   assert.equal(index.get('deepseek').get('deepseek-v3.3').open_weights, null);
   assert.equal(index.get('deepseek').get('deepseek-v3.3').license, 'apache-2.0');
 });
+
+
+test('HY4 preview open weights and license do not leak into the newer HY4 release', () => {
+  const records = {
+    'tencent/Hy4-preview': { open_weights: true, license: 'apache-2.0' },
+    'tencent/hy4': { open_weights: false },
+  };
+  const index = buildIndexFromApi({ deepinfra: { models: records } });
+  const offerings = resolveOpenWeightsForOfferings([
+    { id: 'tencent/Hy4-preview', org: 'tencent' },
+    { id: 'tencent/hy4', org: 'tencent' },
+  ], index);
+  assert.deepEqual(offerings.map((m) => [m.open_weights, m.license]), [[true, 'apache-2.0'], [false, null]]);
+  const pricing = { models: Object.entries(records).map(([id, modelsdev]) => ({ id, provider: 'deepinfra', modelsdev })) };
+  assert.deepEqual(findUnreviewedConflicts(pricing, {}), []);
+  pricing.models.push({ id: 'hy4-preview', provider: 'test-provider', modelsdev: { open_weights: false } });
+  assert.deepEqual(findUnreviewedConflicts(pricing, {}).map((m) => m.id), ['hy4-preview']);
+});
