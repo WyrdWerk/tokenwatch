@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-12T21:58:24.135Z",
+  "generated_at": "2026-11-13T11:41:49.735Z",
   "models": [
     {
       "id": "kling-video-v3-pro",
@@ -47,21 +47,6 @@
       ]
     },
     {
-      "id": "kling-video-v2.5-turbo-pro",
-      "name": "Kling Video",
-      "org": "kuaishou",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.07
-        }
-      ]
-    },
-    {
       "id": "kling-v4",
       "name": "Kling 4.0 Image to Video",
       "org": "kuaishou",
@@ -73,6 +58,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.157
+        }
+      ]
+    },
+    {
+      "id": "kling-video-v2.5-turbo-pro",
+      "name": "Kling Video",
+      "org": "kuaishou",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.07
         }
       ]
     },
@@ -152,8 +152,8 @@
       ]
     },
     {
-      "id": "minimax-h3-max-lip-sync",
-      "name": "H3 Max Lip Sync Image to Video",
+      "id": "minimax-h3",
+      "name": "MiniMax H3 Image to Video",
       "org": "minimax",
       "provider": "fal",
       "supported_durations": [],
@@ -167,8 +167,8 @@
       ]
     },
     {
-      "id": "minimax-h3",
-      "name": "MiniMax H3 Image to Video",
+      "id": "minimax-h3-max-lip-sync",
+      "name": "H3 Max Lip Sync Image to Video",
       "org": "minimax",
       "provider": "fal",
       "supported_durations": [],
@@ -422,6 +422,21 @@
       ]
     },
     {
+      "id": "heygen-heygen-video",
+      "name": "HeyGen Video Image to Video",
+      "org": "heygen",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.01
+        }
+      ]
+    },
+    {
       "id": "wan-v2.7",
       "name": "Wan",
       "org": "alibaba",
@@ -452,21 +467,6 @@
       ]
     },
     {
-      "id": "heygen-heygen-video",
-      "name": "HeyGen Video Image to Video",
-      "org": "heygen",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.01
-        }
-      ]
-    },
-    {
       "id": "blackforestlabs-flux-3",
       "name": "FLUX 3 Image to Video",
       "org": "blackforestlabs",
@@ -478,21 +478,6 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.085
-        }
-      ]
-    },
-    {
-      "id": "kling-video-v3-turbo-pro",
-      "name": "Kling Video V3 Turbo Pro Image to Video",
-      "org": "kuaishou",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.14
         }
       ]
     },
@@ -512,9 +497,9 @@
       ]
     },
     {
-      "id": "ltx-2.3-fast",
-      "name": "LTX 2.3 Video Fast",
-      "org": "lightricks",
+      "id": "kling-video-v3-turbo-pro",
+      "name": "Kling Video V3 Turbo Pro Image to Video",
+      "org": "kuaishou",
       "provider": "fal",
       "supported_durations": [],
       "supported_resolutions": [],
@@ -522,7 +507,22 @@
         {
           "resolution": null,
           "audio": null,
-          "cost_per_second": 0.06
+          "cost_per_second": 0.14
+        }
+      ]
+    },
+    {
+      "id": "kling-video-v3-turbo-standard",
+      "name": "Kling Video V3 Standard Turbo Image to Video",
+      "org": "kuaishou",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.112
         }
       ]
     },
@@ -542,6 +542,21 @@
       ]
     },
     {
+      "id": "ltx-2.3-fast",
+      "name": "LTX 2.3 Video Fast",
+      "org": "lightricks",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.06
+        }
+      ]
+    },
+    {
       "id": "kling-video-v3-4k",
       "name": "Kling Video",
       "org": "kuaishou",
@@ -553,21 +568,6 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.42
-        }
-      ]
-    },
-    {
-      "id": "kling-video-v3-turbo-standard",
-      "name": "Kling Video V3 Standard Turbo Image to Video",
-      "org": "kuaishou",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.112
         }
       ]
     },
@@ -617,36 +617,6 @@
       ]
     },
     {
-      "id": "wan-v2.6",
-      "name": "Wan v2.6 Image to Video",
-      "org": "alibaba",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.1
-        }
-      ]
-    },
-    {
-      "id": "minimax-hailuo-02-pro",
-      "name": "MiniMax Hailuo 02 [Pro] (Image to Video)",
-      "org": "minimax",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.08
-        }
-      ]
-    },
-    {
       "id": "tbc-mischief-1",
       "name": "Mischief 1",
       "org": "tbc",
@@ -662,6 +632,21 @@
       ]
     },
     {
+      "id": "wan-v2.6",
+      "name": "Wan v2.6 Image to Video",
+      "org": "alibaba",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.1
+        }
+      ]
+    },
+    {
       "id": "sync-lipsync-v3",
       "name": "sync-3 Avatar Image to Video",
       "org": "fal",
@@ -673,6 +658,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.13333333333333333
+        }
+      ]
+    },
+    {
+      "id": "minimax-hailuo-02-pro",
+      "name": "MiniMax Hailuo 02 [Pro] (Image to Video)",
+      "org": "minimax",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.08
         }
       ]
     },
@@ -707,21 +707,6 @@
       ]
     },
     {
-      "id": "kling-video-o3-4k",
-      "name": "Kling Video",
-      "org": "kuaishou",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.42
-        }
-      ]
-    },
-    {
       "id": "minimax-hailuo-02-fast",
       "name": "Minimax",
       "org": "minimax",
@@ -733,6 +718,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.017
+        }
+      ]
+    },
+    {
+      "id": "kling-video-o3-4k",
+      "name": "Kling Video",
+      "org": "kuaishou",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.42
         }
       ]
     },
@@ -782,21 +782,6 @@
       ]
     },
     {
-      "id": "pixverse-c1",
-      "name": "PixVerse C1 Image To Video",
-      "org": "pixsocial",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.005
-        }
-      ]
-    },
-    {
       "id": "kling-video-o1-standard",
       "name": "Kling O1 First Frame Last Frame to Video [Standard]",
       "org": "kuaishou",
@@ -808,6 +793,21 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.084
+        }
+      ]
+    },
+    {
+      "id": "pixverse-c1",
+      "name": "PixVerse C1 Image To Video",
+      "org": "pixsocial",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.005
         }
       ]
     },
@@ -842,21 +842,6 @@
       ]
     },
     {
-      "id": "blackforestlabs-flux-3-draft",
-      "name": "Flux 3 Image To Video Draft",
-      "org": "blackforestlabs",
-      "provider": "fal",
-      "supported_durations": [],
-      "supported_resolutions": [],
-      "pricing": [
-        {
-          "resolution": null,
-          "audio": null,
-          "cost_per_second": 0.03
-        }
-      ]
-    },
-    {
       "id": "veed-fabric-1.0-fast",
       "name": "Fabric 1.0 Fast",
       "org": "veed",
@@ -868,6 +853,36 @@
           "resolution": null,
           "audio": null,
           "cost_per_second": 0.1
+        }
+      ]
+    },
+    {
+      "id": "pixverse-v6-max",
+      "name": "PixVerse V6 Max Image To Video",
+      "org": "pixsocial",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.009
+        }
+      ]
+    },
+    {
+      "id": "blackforestlabs-flux-3-draft",
+      "name": "Flux 3 Image To Video Draft",
+      "org": "blackforestlabs",
+      "provider": "fal",
+      "supported_durations": [],
+      "supported_resolutions": [],
+      "pricing": [
+        {
+          "resolution": null,
+          "audio": null,
+          "cost_per_second": 0.03
         }
       ]
     },
